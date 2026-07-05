@@ -1,0 +1,7 @@
+# Upstream snapshot cache used by /skill-diff change-feed. Never published.
+.baselines/*
+!.baselines/.gitkeep
+
+# OS / editor cruft
+.DS_Store
+*.swp
