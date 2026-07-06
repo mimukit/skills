@@ -1,0 +1,24 @@
+{
+  "commitkit": {
+    "sources": [
+      {
+        "repo": "github/awesome-copilot",
+        "path": "skills/git-commit/SKILL.md",
+        "branch": "main",
+        "last_reviewed_sha": null,
+        "last_reviewed_at": null
+      }
+    ]
+  },
+  "humankit": {
+    "sources": [
+      {
+        "repo": "blader/humanizer",
+        "path": "SKILL.md",
+        "branch": "main",
+        "last_reviewed_sha": null,
+        "last_reviewed_at": null
+      }
+    ]
+  }
+}

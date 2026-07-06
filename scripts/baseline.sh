@@ -5,7 +5,7 @@
 #
 # Usage:
 #   scripts/baseline.sh [diff] [skill]   diff live upstream vs snapshot (default)
-#   scripts/baseline.sh save [skill]     refresh the snapshot to live upstream
+#   scripts/baseline.sh save [skill]     refresh snapshot + stamp baselines.json watermark
 #   scripts/baseline.sh list             list skills that have baseline entries
 set -euo pipefail
 
@@ -43,6 +43,15 @@ fetch_upstream() {
   return 1
 }
 
+# Best-effort: the latest commit SHA touching <path> on <branch>. Empty on any
+# failure (rate limit, network, 404) — this must never abort a save.
+fetch_sha() {
+  local repo="$1" branch="$2" path="$3" api
+  api="https://api.github.com/repos/$repo/commits?path=$path&sha=$branch&per_page=1"
+  curl -fsSL -H 'Accept: application/vnd.github+json' "$api" 2>/dev/null \
+    | jq -r '.[0].sha // empty' 2>/dev/null || true
+}
+
 # Iterate a skill's sources, calling `handle <name> <i> <repo> <branch> <path>`.
 each_source() {
   local name="$1" handle="$2" count i repo branch path
@@ -75,13 +84,25 @@ do_diff() {
   fi
 }
 
+# `save` is the sole action that commits the review watermark: it refreshes the
+# snapshot AND stamps last_reviewed_sha / last_reviewed_at in baselines.json, so
+# the diffkit skill's "mark reviewed" step is a single command. (`diff` never writes.)
 do_save() {
   local name="$1" i="$2" repo="$3" branch="$4" path="$5"
-  local snap="$SNAPSHOT_DIR/${name}__${i}.md" live
+  local snap="$SNAPSHOT_DIR/${name}__${i}.md" live sha today tmp
   live="$(fetch_upstream "$repo" "$branch" "$path")" || { warn "fetch failed for $name[$i]"; return; }
   mkdir -p "$SNAPSHOT_DIR"
   printf '%s' "$live" > "$snap"
-  echo "${C_GREEN}saved${C_RESET} snapshot $snap"
+
+  sha="$(fetch_sha "$repo" "$branch" "$path")"
+  today="$(date +%F)"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/baselines.XXXXXX")"
+  jq --arg n "$name" --argjson i "$i" --arg sha "$sha" --arg date "$today" \
+    '.[$n].sources[$i].last_reviewed_sha = (if ($sha | length) > 0 then $sha else null end)
+     | .[$n].sources[$i].last_reviewed_at = $date' \
+    "$BASELINES_JSON" > "$tmp" && mv "$tmp" "$BASELINES_JSON"
+
+  echo "${C_GREEN}saved${C_RESET} $name[$i] — snapshot + baselines.json (sha ${sha:-none}, $today)"
 }
 
 cmd="${1:-diff}"
