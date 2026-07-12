@@ -26,11 +26,15 @@ Makefile                 command surface (run `make help`)
 
 ## Skills
 
-| Skill | What it does | Baseline |
-|-------|--------------|----------|
-| `diffkit` | Compare a skill against its upstream base; surface & optionally apply improvements | — (original) |
-| `commitkit` | *(draft)* conventional git commits | `github/awesome-copilot` |
-| `humankit` | *(draft)* strip AI-writing tells from prose | `blader/humanizer` |
+| Skill | What it does | Visibility | Baseline |
+|-------|--------------|------------|----------|
+| `skillkit` | Author a new skill from scratch — conventions, testing, and publishing included | internal | — (original) |
+| `diffkit` | Compare a skill against its upstream base; surface & optionally apply improvements | internal | — (original) |
+| `commitkit` | conventional git commits from the diff | public | `github/awesome-copilot` |
+| `prkit` | draft & open a GitHub PR from the branch diff | public | — (original) |
+| `humankit` | *(draft)* strip AI-writing tells from prose | public | `blader/humanizer` |
+
+**Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills (`diffkit`, `skillkit`) are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published. `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
 
 ## Using a skill
 
