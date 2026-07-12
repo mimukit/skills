@@ -96,10 +96,10 @@ When the user delegated the commit ("commit", "commit my changes"), just do this
 ### 6. Report the commits as a table
 After all groups are committed, print a summary table of what you created so the user sees the result at a glance:
 
-| # | scope | summary | files |
-|---|-------|---------|-------|
-| 1 | `auth` | add token refresh retry | `auth/token.ts`, `auth/token.test.ts` |
-| 2 | `repo` | bump ci node version | `.github/workflows/ci.yml` |
+| # | commit message | files |
+|---|----------------|-------|
+| 1 | `feat(auth): add token refresh retry` | `auth/token.ts`, `auth/token.test.ts` |
+| 2 | `chore(repo): bump ci node version` | `.github/workflows/ci.yml` |
 
 List each commit's changed/created files in the last column (get them with `git show --stat --oneline <ref>` or `git diff-tree --no-commit-id --name-only -r <ref>` for the commits you just made). If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
 
