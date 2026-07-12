@@ -10,7 +10,7 @@ metadata:
 
 # skillkit
 
-Authoring skill for this collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then a test plan you can actually run. Every skill here is authored from scratch — never forked — and obeys [`AGENTS.md`](../../AGENTS.md); skillkit exists so you don't re-derive those rules each time.
+Authoring skill for this collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then a test plan you can actually run. Every skill here is authored from scratch — never forked — and obeys [`AGENTS.md`](../../../AGENTS.md); skillkit exists so you don't re-derive those rules each time.
 
 ## Invocation
 

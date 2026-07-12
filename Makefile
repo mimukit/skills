@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 SHELL := /usr/bin/env bash
 
-## link [name=<skill>]    Symlink a skill into ~/.claude/skills (no name → picker)
+## link [name=<skill>]    Symlink a skill into ~/.claude/skills + ~/.agents/skills (no name → picker)
 link:
 	@scripts/link.sh $(name)
 

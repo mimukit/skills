@@ -19,16 +19,17 @@ The repo itself isn't renamed — `mimukit/skills` is branded by the owner handl
 ## Layout
 
 ```
-skills/<name>/SKILL.md   one flat skill per directory
-scripts/                 bash helpers (link, unlink, list, lint)
-Makefile                 command surface (run `make help`)
+skills/<name>/SKILL.md          one flat skill per directory (published + dev-linked)
+.agents/skills/<name>/SKILL.md   internal, project-scoped skills, always on in this repo
+scripts/                        bash helpers (link, unlink, list, lint)
+Makefile                        command surface (run `make help`)
 ```
 
 ## Skills
 
 | Skill | What it does | Visibility |
 |-------|--------------|------------|
-| `skillkit` | Author a new skill from scratch — conventions, testing, and publishing included | internal |
+| `skillkit` | Author a new skill from scratch — conventions, testing, and publishing included | internal · lives in `.agents/skills/` |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
 | `humankit` | strip AI-writing tells from prose | public |
@@ -46,14 +47,14 @@ npx skills add mimukit/skills -s commitkit  # just one
 
 ## Developing a skill
 
-Fast inner loop — symlink your working copy straight into `~/.claude/skills`:
+Fast inner loop — symlink your working copy into every AI tool's skills dir at once (`~/.claude/skills` for Claude Code, `~/.agents/skills` for Codex, opencode, antigravity, …):
 
 ```sh
 make link name=commitkit     # save-and-test against the live repo
 make unlink name=commitkit   # remove the dev symlink
 ```
 
-Run either with no `name=` to get an interactive picker showing each skill's current link status. `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
+Run either with no `name=` to get an interactive picker showing each skill's current link status (`partial` = linked in some tool dirs but not all). `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
 
 Ship a skill by committing + pushing, then consume it through skills.sh like any other skill. See [PUBLISHING.md](./PUBLISHING.md) for how the skills.sh directory listing works, the pre-push checklist, and first-time repo setup.
 

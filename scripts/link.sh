@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Symlink a skill from this repo into ~/.claude/skills for live, save-and-test dev.
+# Symlink a skill from this repo into every AI tool's skills dir
+# (~/.claude/skills and ~/.agents/skills) for live, save-and-test dev.
 # Usage: scripts/link.sh [skill-name]   (no name → interactive picker)
 set -euo pipefail
 
@@ -12,19 +13,21 @@ name="${1:-}"
 skill_exists "$name" || die "no skill at $SKILLS_DIR/$name"
 
 src="$SKILLS_DIR/$name"
-dest="$CLAUDE_SKILLS/$name"
 
-case "$(link_status "$name")" in
-  linked)
-    info "already linked: $dest -> $src"
-    exit 0 ;;
-  foreign)
-    info "replacing symlink at $dest (was -> $(readlink "$dest"))"
-    rm "$dest" ;;
-  real)
-    die "$dest exists and is not a symlink (likely a real install). Remove/rename it first." ;;
-esac
-
-mkdir -p "$CLAUDE_SKILLS"
-ln -s "$src" "$dest"
-echo "${C_GREEN}linked${C_RESET} $dest -> $src"
+for root in "${SKILL_DEST_DIRS[@]}"; do
+  dest="$root/$name"
+  case "$(link_status "$name" "$root")" in
+    linked)
+      info "already linked: $dest -> $src"
+      continue ;;
+    foreign)
+      info "replacing symlink at $dest (was -> $(readlink "$dest"))"
+      rm "$dest" ;;
+    real)
+      warn "$dest exists and is not a symlink (likely a real install) — skipping"
+      continue ;;
+  esac
+  mkdir -p "$root"
+  ln -s "$src" "$dest"
+  echo "${C_GREEN}linked${C_RESET} $dest -> $src"
+done

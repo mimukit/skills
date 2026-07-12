@@ -41,9 +41,10 @@ The repo-root `skills.sh.json` groups how public skills render on the skills.sh 
 
 ## Layout
 
-- Flat: `skills/<name>/SKILL.md` — one skill per directory.
+- Flat: `skills/<name>/SKILL.md` — one skill per directory. This is home for **public** skills and any skill you dev-link for testing.
+- **Internal, always-on repo skills live in `.agents/skills/<name>/`** instead (e.g. `skillkit`). Checked in there, they're auto-discovered by any tool that reads `.agents/skills` and by Claude Code via a committed relative symlink at `.claude/skills/<name>` — no `make link` needed. This is the right home for a meta-skill that only makes sense *inside this repo*; it keeps such skills off the global tool dirs and out of the `skills/`-based `make lint`/`make list`/skills.sh machinery by design.
 - Skills are **authored from scratch, never forked.** A skill may be "my version of" an upstream skill, rewritten to fit these conventions.
-- Bash lives in `scripts/`, surfaced through the `Makefile` (`make help`).
+- Bash lives in `scripts/`, surfaced through the `Makefile` (`make help`). `make link`/`unlink` mirror a dev symlink into **both** `~/.claude/skills` and `~/.agents/skills` so the skill is live in every AI tool at once.
 
 ## Frontmatter template
 
