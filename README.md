@@ -31,7 +31,7 @@ Makefile                 command surface (run `make help`)
 | `skillkit` | Author a new skill from scratch — conventions, testing, and publishing included | internal |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
-| `humankit` | *(draft)* strip AI-writing tells from prose | public |
+| `humankit` | strip AI-writing tells from prose | public |
 
 **Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills (`skillkit`) are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published. `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
 
