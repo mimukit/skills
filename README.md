@@ -53,7 +53,7 @@ make unlink name=commitkit   # remove the dev symlink
 
 Run either with no `name=` to get an interactive picker showing each skill's current link status. `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
 
-Ship a skill by committing + pushing, then consume it through skills.sh like any other skill.
+Ship a skill by committing + pushing, then consume it through skills.sh like any other skill. See [PUBLISHING.md](./PUBLISHING.md) for how the skills.sh directory listing works, the pre-push checklist, and first-time repo setup.
 
 ## License
 
