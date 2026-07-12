@@ -1,7 +1,7 @@
 ---
 name: qakit
 description: >-
-  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/tests for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
+  Generate a step-by-step manual QA and test plan for a feature just implemented, grounded in the actual code changes, and save it to ./docs/qa for a human to run. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
 license: MIT
 metadata:
   internal: false
@@ -9,7 +9,7 @@ metadata:
 
 # qakit
 
-Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `./docs/tests/` so a person can walk it top to bottom and sign off on the feature by hand.
+Turn a feature an AI agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code actually changed rather than a generic checklist. The plan is written to `./docs/qa/` so a person can walk it top to bottom and sign off on the feature by hand.
 
 This is **manual** QA — steps a human performs and observes (click, type, run a command, read output), not automated test code. The value is a disciplined, diff-grounded plan: what to test, in what order, with what setup, and how to know it passed — including the things that *can't* be verified without a human eye.
 
@@ -46,7 +46,7 @@ Walk every dimension below and generate cases for each one that applies to the f
 Prioritize: tag each case Critical (must pass to ship) or Normal. Don't pad — one clear case per behavior beats ten redundant ones. Scale the count to the feature's surface area and risk.
 
 ### 3. Write the plan file
-Write to `./docs/tests/<feature-slug>-qa.md` (slug = short kebab-case name of the feature, e.g. `login-throttle-qa.md`). Create `./docs/tests/` if it doesn't exist. If a plan for this feature already exists, ask before overwriting.
+Write to `./docs/qa/<feature-slug>-qa.md` (slug = short kebab-case name of the feature, e.g. `login-throttle-qa.md`). Create `./docs/qa/` if it doesn't exist. If a plan for this feature already exists, ask before overwriting.
 
 Structure the file like this:
 
