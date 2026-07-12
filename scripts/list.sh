@@ -15,4 +15,4 @@ done < <(skill_names)
 
 [[ "$count" -eq 0 ]] && info "no skills found under $SKILLS_DIR"
 echo
-echo "${C_DIM}$count skills · ${C_GREEN}●${C_DIM} linked  ${C_YELLOW}◑${C_DIM} partial  ${C_YELLOW}◆${C_DIM} foreign  ${C_BLUE}■${C_DIM} real  ○ unlinked${C_RESET}"
+echo "${C_DIM}$count skills · ${C_GREEN}●${C_DIM} linked  ${C_GREEN}⇄${C_DIM} swapped  ${C_YELLOW}◑${C_DIM} partial  ${C_YELLOW}◆${C_DIM} foreign  ${C_BLUE}■${C_DIM} real  ○ unlinked${C_RESET}"

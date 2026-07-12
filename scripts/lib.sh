@@ -13,6 +13,15 @@ CLAUDE_SKILLS="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
 AGENTS_SKILLS="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 SKILL_DEST_DIRS=("$CLAUDE_SKILLS" "$AGENTS_SKILLS")
 
+# When a dev link collides with a real install (e.g. a skills.sh install of the
+# same name), `link` moves the real one aside to this sibling and `unlink`
+# restores it — so the two never fight over the same path.
+BACKUP_SUFFIX="${SKILL_BACKUP_SUFFIX:-.skshbak}"
+backup_path() { echo "${2:-$CLAUDE_SKILLS}/$1$BACKUP_SUFFIX"; }
+# -e OR -L: the backup may itself be a symlink (skills.sh points ~/.claude/skills
+# entries at the real copy under ~/.agents/skills), and a dangling one still counts.
+has_backup()  { local b; b="$(backup_path "$1" "${2:-$CLAUDE_SKILLS}")"; [[ -e "$b" || -L "$b" ]]; }
+
 # --- colors (only when stderr is a tty) --------------------------------------
 if [[ -t 2 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   C_DIM="$(tput dim)"; C_RED="$(tput setaf 1)"; C_GREEN="$(tput setaf 2)"
@@ -57,13 +66,15 @@ link_status() {
 
 # Aggregate a skill's dev-link status across all SKILL_DEST_DIRS:
 #   linked    — our symlink in every dest
+#   swapped   — our symlink in every dest, over a backed-up real install
 #   unlinked  — absent from every dest
 #   real      — a non-symlink install in at least one dest (don't touch)
 #   partial   — present in some dests but not a clean link in all
 agg_status() {
-  local name="$1" root st all_linked=1 any_present=0 any_real=0
+  local name="$1" root st all_linked=1 any_present=0 any_real=0 any_backup=0
   for root in "${SKILL_DEST_DIRS[@]}"; do
     st="$(link_status "$name" "$root")"
+    has_backup "$name" "$root" && any_backup=1
     case "$st" in
       linked)   any_present=1 ;;
       foreign)  any_present=1; all_linked=0 ;;
@@ -72,7 +83,8 @@ agg_status() {
     esac
   done
   if [[ "$any_real" -eq 1 ]]; then echo real
-  elif [[ "$all_linked" -eq 1 ]]; then echo linked
+  elif [[ "$all_linked" -eq 1 ]]; then
+    [[ "$any_backup" -eq 1 ]] && echo swapped || echo linked
   elif [[ "$any_present" -eq 0 ]]; then echo unlinked
   else echo partial
   fi
@@ -82,6 +94,7 @@ agg_status() {
 status_badge() {
   case "$1" in
     linked)   echo "${C_GREEN}●${C_RESET} linked" ;;
+    swapped)  echo "${C_GREEN}⇄${C_RESET} swapped" ;;
     partial)  echo "${C_YELLOW}◑${C_RESET} partial" ;;
     foreign)  echo "${C_YELLOW}◆${C_RESET} foreign" ;;
     real)     echo "${C_BLUE}■${C_RESET} real" ;;
@@ -101,7 +114,7 @@ pick_skill() {
     [[ -z "$n" ]] && continue
     st="$(agg_status "$n")"
     # "linked" filter (unlink picker): show anything with a dev link present.
-    if [[ "$filter" == "linked" && "$st" != "linked" && "$st" != "partial" && "$st" != "foreign" ]]; then continue; fi
+    if [[ "$filter" == "linked" && "$st" != "linked" && "$st" != "swapped" && "$st" != "partial" && "$st" != "foreign" ]]; then continue; fi
     names+=("$n")
   done < <(skill_names)
 

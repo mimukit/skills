@@ -54,7 +54,26 @@ make link name=commitkit     # save-and-test against the live repo
 make unlink name=commitkit   # remove the dev symlink
 ```
 
-Run either with no `name=` to get an interactive picker showing each skill's current link status (`partial` = linked in some tool dirs but not all). `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
+Run either with no `name=` to get an interactive picker showing each skill's current link status. `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
+
+### Link status
+
+`make list` (and the pickers) report each skill's dev-link status, aggregated across both target dirs (`~/.claude/skills` and `~/.agents/skills`):
+
+| Badge | Status | Meaning |
+|-------|--------|---------|
+| `●` | **linked** | Your dev symlink is in place in *every* target dir, pointing at the repo copy — live for save-and-test, no conflict. |
+| `⇄` | **swapped** | Linked, but over a backed-up real install. A same-named install (e.g. a skills.sh `commitkit`) was moved aside to `<name>.skshbak` so the repo copy can run under its real name. `make unlink` restores it. |
+| `◑` | **partial** | Present in some target dirs but not a clean link in all — usually a half-finished link/unlink. Re-run `make link` to fix. |
+| `◆` | **foreign** | A symlink exists but points somewhere other than this repo's copy (an old location or another checkout). `make link` replaces it. |
+| `■` | **real** | A non-symlink install lives there (typically from skills.sh). Plain operations won't touch it; `make link` turns it into `swapped`. |
+| `○` | **unlinked** | Not present in any target dir — the skill exists only in the repo, not active in any AI tool. |
+
+Quick model: `●`/`⇄` mean the repo copy is what's live; `○`/`■`/`◆` mean it isn't; `◑` means the two dirs disagree and need a re-link.
+
+### Swapping over a published install
+
+If you've already installed a skill from skills.sh and want to iterate on the repo copy under the same name, just `make link` it. When the dev link collides with a real install, `make link` moves the published one aside to a `<name>.skshbak` sibling (status becomes `⇄ swapped`) and symlinks the repo copy in its place. `make unlink` removes the symlink and restores the backup — so you test the real thing, then get your published install back untouched. If a `.skshbak` backup already exists, `make link` refuses that dir rather than clobber it.
 
 Ship a skill by committing + pushing, then consume it through skills.sh like any other skill. See [PUBLISHING.md](./PUBLISHING.md) for how the skills.sh directory listing works, the pre-push checklist, and first-time repo setup.
 

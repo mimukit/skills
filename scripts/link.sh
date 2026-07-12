@@ -20,12 +20,18 @@ for root in "${SKILL_DEST_DIRS[@]}"; do
     linked)
       info "already linked: $dest -> $src"
       continue ;;
-    foreign)
-      info "replacing symlink at $dest (was -> $(readlink "$dest"))"
-      rm "$dest" ;;
-    real)
-      warn "$dest exists and is not a symlink (likely a real install) — skipping"
-      continue ;;
+    foreign|real)
+      # Anything that isn't our own dev link gets moved aside, never deleted —
+      # a `real` dir is a skills.sh install; a `foreign` symlink is the link
+      # skills.sh drops in ~/.claude/skills pointing at the real copy under
+      # ~/.agents/skills. `mv` preserves either kind so `unlink` can restore it.
+      bak="$(backup_path "$name" "$root")"
+      if [[ -e "$bak" || -L "$bak" ]]; then
+        warn "$dest collides with an existing install but a backup already exists at $bak — skipping to avoid clobbering it"
+        continue
+      fi
+      info "backing up existing install: $dest -> $bak"
+      mv "$dest" "$bak" ;;
   esac
   mkdir -p "$root"
   ln -s "$src" "$dest"
