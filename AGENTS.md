@@ -7,7 +7,7 @@ Conventions for AI agents authoring or maintaining skills in this repository —
 Every skill uses a **`kit` suffix** — a personal brand hidden in the owner's name, mu**kit**, that also reads as "a kit for X."
 
 Rules:
-- **One word, lowercase**, functional term first with `kit` appended: `commitkit`, `humankit`, `diffkit`.
+- **One word, lowercase**, functional term first with `kit` appended: `commitkit`, `humankit`, `prkit`.
 - **The functional word must lead** so the skill stays searchable — people search `commit`, not `kit`. Never bury the term behind a prefix.
 - **Shorten an awkward root** rather than force a clumsy join: `humanize` → `humankit`, not `humanizekit`.
 - **Avoid collisions** with well-known tools: `speckit` (GitHub spec-kit), `shipkit` (SaaS boilerplate), and anything already popular.
@@ -26,16 +26,15 @@ Rules:
 
 Skills here fall into two classes, declared explicitly in frontmatter as `metadata.internal: true|false`:
 
-- **`internal: true`** — a repo-only maintenance/meta skill (e.g. `diffkit`, `skillkit`). It may lean on this repo's machinery: `AGENTS.md`, the `Makefile`, `baselines.json`, repo-relative links. skills.sh honors this native field by **hiding the skill from discovery** — it only installs when someone sets `INSTALL_INTERNAL_SKILLS=1`, so internal skills are effectively unpublished.
-- **`internal: false`** — a publishable skill (e.g. `commitkit`, `humankit`). It must be **portable**: self-contained (conventions inlined, no repo-relative links, no hard dependency on `make`/`baselines.json`/`AGENTS.md`/`scripts/`), machine/OS-agnostic, and environment-degrading — it writes files when a filesystem is available and otherwise prints its output as a codeblock. Once pushed to the public repo, skills.sh discovers `skills/<name>/SKILL.md` automatically and lists it via install telemetry; there is no separate publish step.
+- **`internal: true`** — a repo-only maintenance/meta skill (e.g. `skillkit`). It may lean on this repo's machinery: `AGENTS.md`, the `Makefile`, repo-relative links. skills.sh honors this native field by **hiding the skill from discovery** — it only installs when someone sets `INSTALL_INTERNAL_SKILLS=1`, so internal skills are effectively unpublished.
+- **`internal: false`** — a publishable skill (e.g. `commitkit`, `humankit`). It must be **portable**: self-contained (conventions inlined, no repo-relative links, no hard dependency on `make`/`AGENTS.md`/`scripts/`), machine/OS-agnostic, and environment-degrading — it writes files when a filesystem is available and otherwise prints its output as a codeblock. Once pushed to the public repo, skills.sh discovers `skills/<name>/SKILL.md` automatically and lists it via install telemetry; there is no separate publish step.
 
 `make lint` enforces the marker on every skill and flags likely portability breaks in public skills.
 
 ## Layout
 
 - Flat: `skills/<name>/SKILL.md` — one skill per directory.
-- Skills are **authored from scratch, never forked.**
-- For a skill that is "my version of" an upstream skill, record provenance in the root `baselines.json` (repo, path, branch, last-reviewed marker). Snapshots cache in the gitignored `.baselines/`. Use the `diffkit` skill to compare against upstream.
+- Skills are **authored from scratch, never forked.** A skill may be "my version of" an upstream skill, rewritten to fit these conventions.
 - Bash lives in `scripts/`, surfaced through the `Makefile` (`make help`).
 
 ## Frontmatter template

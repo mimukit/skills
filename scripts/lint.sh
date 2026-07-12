@@ -75,8 +75,8 @@ check_skill() {
     if grep -qE '\]\(\.\.?/' "$file"; then
       issues+=("W:public skill has a repo-relative link (../…) — won't resolve once installed")
     fi
-    if grep -qiE '\bmake (lint|link|unlink|list|diff|save)\b|baselines\.json|AGENTS\.md|(^|[^.])scripts/' "$file"; then
-      issues+=("W:public skill references repo machinery (make/baselines.json/AGENTS.md/scripts) — keep it self-contained")
+    if grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
+      issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
   fi
 

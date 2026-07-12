@@ -23,13 +23,11 @@ Ask what the skill should do and *when it should trigger* (the real user phrasin
 
 ### 2. Visibility (internal or public?)
 Ask whether this is an **internal** repo-only skill or a **public** publishable one — it changes the rules for everything downstream (see `AGENTS.md` → *Visibility*).
-- **internal** (like diffkit, skillkit): a maintenance/meta skill for this repo. Repo coupling is fine — it may reference `AGENTS.md`, `make`, `baselines.json`, and use repo-relative links. Stamp `metadata.internal: true`. skills.sh hides it from discovery.
+- **internal** (like skillkit): a maintenance/meta skill for this repo. Repo coupling is fine — it may reference `AGENTS.md`, `make`, and use repo-relative links. Stamp `metadata.internal: true`. skills.sh hides it from discovery.
 - **public** (like commitkit, humankit): a shareable skill. It **must** follow the Portability rules below and stamp `metadata.internal: false`. It gets discovered and listed on skills.sh automatically once pushed.
 
 ### 3. Provenance (original vs. "my version of")
-Ask: is this **original**, or **your version of an upstream skill**?
-- **Original** (like diffkit): no `baselines.json` entry.
-- **Upstream-inspired**: collect `repo` (e.g. `owner/name`), `path` (to the upstream `SKILL.md`), and `branch`. You'll wire this in step 5 so [`diffkit`](../diffkit/SKILL.md) can track it later.
+Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas (step 1).
 
 ### 4. Propose names
 Suggest **3–5 `kit` names** and recommend one. Rules (from `AGENTS.md`): one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`), and avoid collisions with well-known tools. Let the user pick. The chosen name **must** equal the directory name.
@@ -37,15 +35,6 @@ Suggest **3–5 `kit` names** and recommend one. Rules (from `AGENTS.md`): one l
 ### 5. Draft
 Create `skills/<name>/SKILL.md` from the frontmatter template in `AGENTS.md`, applying the **Quality bar** below, and stamp `metadata.internal` from step 2. Keep it lean — prefer one file.
 - If **public**, apply the **Portability** checklist below as a hard gate — the skill must stand alone once installed.
-- If **upstream** (step 3), add the entry to `baselines.json` with both watermarks `null`:
-
-```json
-"<name>": {
-  "sources": [
-    { "repo": "<owner/name>", "path": "<path/to/SKILL.md>", "branch": "main", "last_reviewed_sha": null, "last_reviewed_at": null }
-  ]
-}
-```
 
 ### 6. Review loop
 Show the draft. Take edits and iterate until the user explicitly approves. Don't proceed to testing on a draft the user hasn't signed off.
@@ -61,7 +50,7 @@ The file is scratch: tell the user it's untracked and to delete it (or gitignore
 
 ### 8. Finish
 - Run `make lint name=<name>`; fix any `E:` and address `W:` before handing off. For public skills, lint also flags likely portability breaks.
-- Update the **README skills table** (`README.md`): a row with the name, a one-line description, its visibility (internal/public), and the baseline column (`— (original)` or the upstream `repo`).
+- Update the **README skills table** (`README.md`): a row with the name, a one-line description, and its visibility (internal/public).
 - Hand off: surface a suggested conventional commit message (e.g. `feat(<name>): add <name> skill`) for the user to run. **Do not commit automatically** — committing is the user's call.
 
 ## Quality bar
@@ -81,7 +70,7 @@ Apply these while drafting; they are the difference between a skill that trigger
 
 A public skill is installed on its own into arbitrary environments — only its own directory travels, so it must stand alone:
 
-- **Self-contained** — inline the conventions it relies on. No repo-relative links (`../…`), and no hard dependency on `make`, `baselines.json`, `AGENTS.md`, or repo `scripts/`. If it needs a helper script, bundle it inside the skill's own directory.
+- **Self-contained** — inline the conventions it relies on. No repo-relative links (`../…`), and no hard dependency on `make`, `AGENTS.md`, or repo `scripts/`. If it needs a helper script, bundle it inside the skill's own directory.
 - **Machine/OS-agnostic** — no absolute paths, no platform-specific assumptions; prefer instructions that work on any shell or none.
 - **Environment-degrading output** — when a filesystem and shell are available, write/edit files directly; when they aren't (e.g. a browser-based agent), print the finished artifact as a codeblock for the user to save, and skip repo-only steps like `make link`/`make lint`.
 
@@ -89,5 +78,5 @@ Internal skills are exempt — they live and die in this repo and may use its ma
 
 ## Notes
 
-- skillkit is **internal** (`metadata.internal: true`) and **original** (no `baselines.json` entry). Like diffkit, it's a meta/maintenance skill for this collection, not a published skill.
+- skillkit is **internal** (`metadata.internal: true`) — a meta/maintenance skill for this collection, not a published skill.
 - Add scripts or satellite files to a *new* skill only when it genuinely needs one — never speculatively. Per-skill scripts live in the skill's own directory; the repo-root `scripts/` is for repo management only.
