@@ -11,6 +11,11 @@
       "title": "Writing",
       "description": "Make prose read like a person wrote it.",
       "skills": ["humankit"]
+    },
+    {
+      "title": "Testing & QA",
+      "description": "Plans to verify what you just built.",
+      "skills": ["qakit"]
     }
   ]
 }
