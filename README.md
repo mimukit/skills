@@ -1,5 +1,7 @@
 # mimukit/skills
 
+[![lint](https://github.com/mimukit/skills/actions/workflows/lint.yml/badge.svg)](https://github.com/mimukit/skills/actions/workflows/lint.yml)
+
 My personal collection of AI agent skills for day-to-day development — installable and managed with [skills.sh](https://www.skills.sh).
 
 Every skill here is **authored from scratch**, never forked. Some are *my version of* a popular upstream skill, rewritten to fit this collection's conventions.
