@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Git & GitHub",
+      "description": "Commits and pull requests written from the real diff.",
+      "skills": ["commitkit", "prkit"]
+    }
+  ]
+}
