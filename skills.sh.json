@@ -6,6 +6,11 @@
       "title": "Git & GitHub",
       "description": "Commits and pull requests written from the real diff.",
       "skills": ["commitkit", "prkit"]
+    },
+    {
+      "title": "Writing",
+      "description": "Make prose read like a person wrote it.",
+      "skills": ["humankit"]
     }
   ]
 }
