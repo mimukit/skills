@@ -31,6 +31,14 @@ Skills here fall into two classes, declared explicitly in frontmatter as `metada
 
 `make lint` enforces the marker on every skill and flags likely portability breaks in public skills.
 
+## Directory page: `skills.sh.json`
+
+The repo-root `skills.sh.json` groups how public skills render on the skills.sh directory page (it does not affect CLI installs). **Whenever you add, rename, or remove a public (`internal: false`) skill, update `skills.sh.json` in the same change** so the grouping stays in sync:
+
+- Add every new public skill to the most fitting group's `skills` array (create a new group only when an existing one doesn't fit); rename or drop entries when a skill is renamed or removed.
+- Never list `internal: true` skills — skills.sh hides them from discovery, and they are silently ignored here anyway.
+- Skills left out of every group fall into an "Other skills" section positioned by `notGrouped` — that's an acceptable landing spot until a skill earns a group.
+
 ## Layout
 
 - Flat: `skills/<name>/SKILL.md` — one skill per directory.
