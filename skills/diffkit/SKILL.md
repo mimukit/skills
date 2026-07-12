@@ -3,6 +3,8 @@ name: diffkit
 description: Compare one of your own skills against the upstream "base" skill it was inspired by, to surface what you could adopt or update. Use when the user runs "/diffkit <name>", asks to check a skill against its upstream/baseline, or wants to see what changed upstream since they last reviewed a skill. Reads baselines.json, fetches the upstream SKILL.md, does a semantic gap analysis plus a change-feed diff, then optionally drafts the accepted improvements into the local skill.
 license: MIT
 allowed-tools: Read, Edit, Write, Bash, WebFetch
+metadata:
+  internal: true
 ---
 
 # diffkit
