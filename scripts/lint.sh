@@ -5,6 +5,8 @@
 #   - name is one lowercase word ending in `kit`
 #   - description front-loads a "Use when" trigger
 #   - license: is present
+#   - metadata.internal: true|false is declared (visibility marker)
+#   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
 # Usage: scripts/lint.sh [skill-name ...]   (default: all skills)
 # Exit status is non-zero if any errors (not warnings) were found.
 set -euo pipefail
@@ -58,6 +60,25 @@ check_skill() {
 
   # license present
   printf '%s\n' "$fm" | grep -qi '^license:' || issues+=("W:no license: field")
+
+  # visibility marker: metadata.internal must be declared true|false
+  local internal_val
+  internal_val="$(printf '%s\n' "$fm" | sed -n 's/^[[:space:]]*internal:[[:space:]]*//p' | head -1 | tr -d '"'"'"' ')"
+  if [[ -z "$internal_val" ]]; then
+    issues+=("E:no metadata.internal: true|false marker (declare internal vs public)")
+  elif [[ "$internal_val" != "true" && "$internal_val" != "false" ]]; then
+    issues+=("E:metadata.internal must be true or false (got '$internal_val')")
+  fi
+
+  # public skills (internal:false) must be portable / self-contained
+  if [[ "$internal_val" == "false" ]]; then
+    if grep -qE '\]\(\.\.?/' "$file"; then
+      issues+=("W:public skill has a repo-relative link (../…) — won't resolve once installed")
+    fi
+    if grep -qiE '\bmake (lint|link|unlink|list|diff|save)\b|baselines\.json|AGENTS\.md|(^|[^.])scripts/' "$file"; then
+      issues+=("W:public skill references repo machinery (make/baselines.json/AGENTS.md/scripts) — keep it self-contained")
+    fi
+  fi
 
   if [[ ${#issues[@]} -eq 0 ]]; then
     echo "  ${C_GREEN}✓${C_RESET} $name"
