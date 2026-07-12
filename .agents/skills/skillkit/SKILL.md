@@ -40,7 +40,7 @@ Create `skills/<name>/SKILL.md` from the frontmatter template in `AGENTS.md`, ap
 Show the draft. Take edits and iterate until the user explicitly approves. Don't proceed to testing on a draft the user hasn't signed off.
 
 ### 7. Test plan + live test
-Write a **disposable test-plan file** at the repo root, `<name>-testplan.md`, so the user can follow it in a fresh session. It contains:
+Write a **disposable test-plan file** at `./docs/tests/<skillname>-qa.md` (create `./docs/tests/` if it doesn't exist), so the user can follow it in a fresh session. It contains:
 - **Setup / cleanup** — `make link name=<name>` and, when done, `make unlink name=<name>`; a note to test in a **fresh session** (the skill list loads at startup).
 - **3–5 trigger prompts** that *should* fire the skill (varied, realistic phrasings), each with expected behavior and a pass box.
 - **2–3 near-miss prompts** that should *not* fire it (guards against overtriggering), each with why it should stay silent.
