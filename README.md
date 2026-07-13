@@ -35,6 +35,7 @@ Makefile                        command surface (run `make help`)
 | `humankit` | strip AI-writing tells from prose | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `grillkit` | interrogate a plan one decision at a time before you build | public |
+| `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 
 **Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills (`skillkit`) are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published. `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
 

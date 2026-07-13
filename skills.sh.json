@@ -21,6 +21,11 @@
       "title": "Planning & Design",
       "description": "Pressure-test a plan before you write any code.",
       "skills": ["grillkit"]
+    },
+    {
+      "title": "Context & Handoffs",
+      "description": "Carry work across sessions and agents without losing the thread.",
+      "skills": ["handoffkit"]
     }
   ]
 }
