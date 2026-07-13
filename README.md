@@ -57,7 +57,7 @@ make link name=commitkit     # save-and-test against the live repo
 make unlink name=commitkit   # remove the dev symlink
 ```
 
-Run either with no `name=` to get an interactive picker showing each skill's current link status. `make list` prints the same status table, and `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md).
+Run either with no `name=` to get an interactive picker showing each skill's current link status. `make list` prints the same status table, `make lint` checks every skill against the repo conventions in [AGENTS.md](./AGENTS.md), and `make security` runs a heuristic security scan — a local stand-in for the scanners skills.sh runs at publish time (Gen / Socket / Snyk) — so a risky flag surfaces here before it lands on the public directory page.
 
 ### Link status
 

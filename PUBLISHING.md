@@ -18,8 +18,9 @@ Internal skills (`metadata.internal: true`, e.g. `skillkit`) are hidden from dis
 - [ ] Each public skill is **self-contained**: conventions inlined, no repo-relative links, no hard dependency on `make`/`AGENTS.md`/`scripts/`, and it degrades gracefully when there's no filesystem (prints its output instead of writing files).
 - [ ] Every directory name matches its frontmatter `name` exactly, is lowercase-hyphenated, 1–64 chars, no leading/trailing or consecutive hyphens.
 - [ ] Each `description` front-loads an English **"Use when …"** trigger — skills.sh routes activation primarily off the description, so treat it as a routing rule, not a title.
-- [ ] `README.md` skills table matches what's actually in `skills/` (no advertised-but-missing entries).
+- [ ] `make security` shows no **High Risk** skill — it's a local heuristic stand-in for the scanners skills.sh runs at publish time (Gen / Socket / Snyk), so a High here previews a public flag on the directory page. Med/Low are informational (e.g. a skill that legitimately runs the shell); High means evasion-flavored wording or a destructive command to fix first.
 - [ ] Working tree is committed; `git status` is clean.
+- [ ] `README.md` skills table matches what's actually in `skills/` (no advertised-but-missing entries).
 
 ## First-time push
 

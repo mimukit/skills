@@ -17,9 +17,13 @@ list:
 lint:
 	@scripts/lint.sh $(name)
 
+## security [name=<skill>] Heuristic security scan (local stand-in for skills.sh scanners)
+security:
+	@scripts/security.sh $(name)
+
 ## help                   Show this help
 help:
 	@echo "mimukit/skills — targets:"
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/^## /  /'
 
-.PHONY: link unlink list lint help
+.PHONY: link unlink list lint security help
