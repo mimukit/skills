@@ -23,3 +23,6 @@ Naming follows the `kit` convention in [AGENTS.md](./AGENTS.md): functional word
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `taskkit` | The `TASK.md` → numbered plan doc → implement → append-summary loop for working issues one at a time |
 | `repokit` | Generate a one-line GitHub "About" description + topics/tags from repo contents and apply them via `gh` |
+| `plankit` | Brainstorm and plan a project, feature, spec, or PRD before any code — turn a rough idea into a structured plan document |
+| `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one |
+| `implementkit` | Implement a plan, spec, issue, or fix — carry an agreed design through to working, committed code |
