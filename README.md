@@ -37,6 +37,8 @@ Makefile                        command surface (run `make help`)
 | `grillkit` | interrogate a plan one decision at a time before you build | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 
+Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
+
 **Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills (`skillkit`) are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published. `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
 
 ## Using a skill
