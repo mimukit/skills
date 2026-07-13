@@ -10,19 +10,54 @@ The backlog of skills I want to build next. Shipped skills live in the [README S
 
 Naming follows the `kit` convention in [AGENTS.md](./AGENTS.md): functional word first, `kit` appended.
 
+## The development workflow
+
+The skills here aren't a random pile — they compose into one end-to-end flow for building a software feature. This is the target the backlog builds toward.
+
+```
+issuekit     ← (optional entry) pick/triage an existing issue, or start fresh
+   ▼
+plankit      → brainstorm, write docs/plans/plan-*.md
+   ▼
+grillkit     → interrogate + harden that same doc
+   ▼
+issuekit     → create GitHub issues from the hardened plan-*.md
+   ▼
+implementkit → code only; mode (straight vs TDD) resolved by precedence
+   ▼           (prompt → CLAUDE.md → repo inference → ask once); runs its tests
+commitkit    → one clean Conventional commit
+   ▼
+reviewkit    → convention-fit self-review (working tree OR branch diff)
+   ▼
+verifykit    → browser/computer-use: drive the real feature, capture screenshots + video
+   ▼
+prkit        → open PR: "Fixes #", attach verifykit's proof artifacts
+   ▼
+issuekit     → sync PR→issue, close, triage
+```
+
+**On-demand, off the default path:** `qakit` (manual test checklist for risky/release features), `researchkit` (feeds `plankit`), `debugkit` (when something breaks), `testkit` (brownfield test retrofit).
+
+**Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
+
+Shipped skills already wired into the flow: `grillkit`, `commitkit`, `prkit`, `qakit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
+
 ## Backlog
+
+Ordered by priority: the top five complete the workflow above; the rest are off-flow tools.
 
 | Skill | What it does |
 |-------|--------------|
-| `trackerkit` | Maintain GitHub issue trackers — sync issues ↔ merged PRs, cross-check status, update/prune scope, keep parent→child links, post plans and decisions as comments |
-| `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
+| `plankit` | Brainstorm and plan a project, feature, spec, or PRD before any code — turn a rough idea into a structured `docs/plans/plan-*.md` document |
+| `implementkit` | Implement a plan, spec, or issue into working code (no commit — that's `commitkit`'s job); picks straight-through vs TDD mode by precedence (prompt → `CLAUDE.md` → repo inference → ask once) and runs its tests before declaring done |
+| `reviewkit` | Review AI-agent-implemented code specifically — my convention-fit take on catching the failure modes of agent-generated changes; runs against the working tree or the branch diff |
+| `verifykit` | Prove a frontend feature actually works — drive it via browser MCP / computer use and capture screenshots + video as proof for `prkit` to attach to the PR |
+| `issuekit` | Own the full GitHub issue lifecycle — create issues from `plan-*.md`, then track, sync issues ↔ merged PRs, triage, cross-check status, keep parent→child links, and post plans/decisions as comments |
+| `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one (feeds `plankit`) |
 | `debugkit` | My root-cause ritual — reproduce, isolate, find the true cause, propose a fix; covers infra (docker/dokploy failures) and WordPress local→prod migration cases |
-| `reviewkit` | Review AI-agent-implemented code specifically — my convention-fit take on catching the failure modes of agent-generated changes |
-| `testkit` | Write automated tests — unit, integration, and e2e — from the actual code under test |
-| `tddkit` | Drive test-driven development — red → green → refactor, tests before implementation (builds on `testkit`) |
-| `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
-| `taskkit` | The `TASK.md` → numbered plan doc → implement → append-summary loop for working issues one at a time |
+| `testkit` | Write automated tests — unit, integration, and e2e — for an existing brownfield project that has none |
 | `repokit` | Generate a one-line GitHub "About" description + topics/tags from repo contents and apply them via `gh` |
-| `plankit` | Brainstorm and plan a project, feature, spec, or PRD before any code — turn a rough idea into a structured plan document |
-| `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one |
-| `implementkit` | Implement a plan, spec, issue, or fix — carry an agreed design through to working, committed code |
+| `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
+| `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
+
+**Merged / dropped** (don't re-add): `tddkit` → folded into `implementkit` as a mode; `taskkit` + `trackerkit` → merged into `issuekit`; `prdkit` / `speckit` → dropped (`plankit` + `grillkit` already produce the plan doc, and `speckit` collides with GitHub spec-kit).
