@@ -16,6 +16,11 @@
       "title": "Testing & QA",
       "description": "Plans to verify what you just built.",
       "skills": ["qakit"]
+    },
+    {
+      "title": "Planning & Design",
+      "description": "Pressure-test a plan before you write any code.",
+      "skills": ["grillkit"]
     }
   ]
 }
