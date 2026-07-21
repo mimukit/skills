@@ -81,7 +81,7 @@ If the repo has its own issue-title style (visible in `gh issue list` or an `.gi
 
 issuekit tracks where an issue sits in the workflow with a small, **flat** set of status labels. It **uses** these labels — it never creates them. Provisioning labels is the job of a companion skill, **repokit**. When a label this skill needs is absent from the repo, **stop and tell the user how to add it** (run `repokit`, or the exact `gh label create` line) rather than creating it yourself or skipping silently.
 
-The canonical map — exactly one **status** label is active at a time, moving left to right through the workflow; the three side-exits apply whenever they fit:
+The canonical map — exactly one **status** label is active at a time, moving left to right through the workflow; the three side-exits apply whenever they fit. This table is the **shared contract with [repokit](https://www.skills.sh)**, the skill that provisions these labels — repokit mirrors this exact set (names, colors, meanings); if you change one table, change the other so they never drift:
 
 | label | color | means | typically set by |
 |-------|-------|-------|------------------|

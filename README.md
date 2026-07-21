@@ -33,6 +33,7 @@ Makefile                        command surface (run `make help`)
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
 | `issuekit` | create, sync, and triage GitHub issues across the workflow | public |
+| `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `grillkit` | interrogate a plan one decision at a time before you build | public |

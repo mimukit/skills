@@ -55,7 +55,6 @@ Ordered by priority: the top four complete the workflow above; the rest are off-
 | `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one (feeds `plankit`) |
 | `debugkit` | My root-cause ritual — reproduce, isolate, find the true cause, propose a fix; covers infra (docker/dokploy failures) and WordPress local→prod migration cases |
 | `testkit` | Write automated tests — unit, integration, and e2e — for an existing brownfield project that has none |
-| `repokit` | Generate a one-line GitHub "About" description + topics/tags from repo contents and apply them via `gh` |
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
