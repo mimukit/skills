@@ -34,6 +34,7 @@ Makefile                        command surface (run `make help`)
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
 | `issuekit` | create, sync, and triage GitHub issues across the workflow | public |
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
+| `orcakit` | bridge a `ready` GitHub issue to an isolated Orca worktree and back | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |

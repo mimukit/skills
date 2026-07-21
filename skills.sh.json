@@ -4,8 +4,8 @@
   "groupings": [
     {
       "title": "Git & GitHub",
-      "description": "Commits, pull requests, issues, and repo metadata driven from the real diff and plan.",
-      "skills": ["commitkit", "prkit", "issuekit", "repokit"]
+      "description": "Commits, pull requests, issues, repo metadata, and issue-to-worktree glue driven from the real diff and plan.",
+      "skills": ["commitkit", "prkit", "issuekit", "repokit", "orcakit"]
     },
     {
       "title": "Writing",
