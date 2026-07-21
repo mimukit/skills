@@ -53,10 +53,10 @@ The start-event glue. Runs straight through after the guard — its steps are ch
 
    ```sh
    orca worktree create --name issue-<n>-<slug> --base-branch origin/main \
-     --issue <n> --comment "starting #<n> (<title>)"
+     --issue <n> --no-parent --comment "starting #<n> (<title>)"
    ```
 
-   `--issue` populates the live worktree↔issue link; `--base-branch origin/main` guarantees a clean base every time (never branch off a sibling feature branch); `--comment` records the checkpoint in one shot.
+   `--issue` populates the live worktree↔issue link; `--base-branch origin/main` guarantees a clean base every time (never branch off a sibling feature branch); `--comment` records the checkpoint in one shot. `--no-parent` keeps the worktree a top-level sibling: without it, `orca` infers a parent from whatever terminal you run in (typically the main checkout) and records a spurious child lineage — cosmetic, but it nests every issue worktree under the main one. Each issue is independent parallel work, so it should never inherit a parent.
 5. **Flip the label** `ready → in-progress` (inline `gh`, trivial):
 
    ```sh
