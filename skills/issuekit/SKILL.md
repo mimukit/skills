@@ -43,6 +43,38 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance — the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs — nothing changes on GitHub unprompted.** Never merge PRs.
 
+## Title convention (every issue this skill creates)
+
+Issue titles follow the same shape as [commitkit](https://www.conventionalcommits.org)'s commit subjects, so the tracker and the git log read as one workflow. **Format:**
+
+```
+type(scope): short imperative summary
+```
+
+Pick the `type` from what the issue delivers, not the files it touches — the set mirrors commitkit's, with one addition (`epic`) for parent issues:
+
+| type | when |
+|------|------|
+| `epic` | a **parent** issue that groups child issues/sub-issues |
+| `feat` | a new capability the user can see |
+| `fix` | a bug fix |
+| `docs` | documentation only |
+| `refactor` | behavior-preserving code change |
+| `perf` | a performance improvement |
+| `test` | adding or fixing tests |
+| `build` / `ci` | build system, deps, or pipeline |
+| `style` | formatting/whitespace, no logic |
+| `chore` | routine maintenance that fits nothing above |
+
+Rules — apply them to **every** title you generate:
+
+- **`(scope)` is mandatory** — the module, package, directory, or feature area the work belongs to (`feat(auth): …`). For genuinely global work (repo-wide config, tooling, cross-cutting cleanup) fall back to `repo`: `chore(repo): …`.
+- **Entirely lowercase** — never capitalize any word in the title, including the first. Proper nouns and acronyms (`OIDC`, `SSO`, `CI`) are the only exceptions.
+- **Imperative mood**, stating the *effect* ("add sso login"), not the activity ("changes to auth"). **No trailing period.** Keep it concise.
+- A parent epic and its children **share the scope** so the group is obvious in the list: `epic(auth): …` over `feat(auth): oidc login end to end`, `feat(auth): sso account linking`.
+
+If the repo has its own issue-title style (visible in `gh issue list` or an `.github/ISSUE_TEMPLATE/`), follow that instead and say you did — see [Notes](#notes).
+
 ---
 
 ## Mode: `create`
@@ -69,11 +101,11 @@ Present the proposal as a **preview table** and stop for approval — do **not**
 
 | # | Type | Title | Parent | Checklist |
 |---|------|-------|--------|-----------|
-| 1 | epic | `auth: add SSO login` | — | — |
-| 2 | child | `auth: OIDC login end to end` | #1 | provider · session · token refresh · UI |
-| 3 | child | `auth: SSO account linking` | #1 | link existing · unlink · conflict handling |
+| 1 | epic | `epic(auth): add sso login` | — | — |
+| 2 | child | `feat(auth): oidc login end to end` | #1 | provider · session · token refresh · UI |
+| 3 | child | `feat(auth): sso account linking` | #1 | link existing · unlink · conflict handling |
 
-Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. Let the user add, drop, retitle, reparent, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
+Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. Let the user add, drop, retitle, reparent, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
 
 For an **ad-hoc** description, skip the table: draft one issue (title + body) and confirm it before creating.
 
@@ -84,10 +116,10 @@ For an **ad-hoc** description, skip the table: draft one issue (title + body) an
 gh issue list --state all --limit 200 --json number,title,state
 ```
 
-Then write each issue with a clear title (imperative, matching the repo's issue/commit style) and a body that carries the relevant slice of the plan — context, acceptance criteria, and any decisions. Create parents before children so child bodies can reference them.
+Then write each issue with a title in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates) and a body that carries the relevant slice of the plan — context, acceptance criteria, and any decisions. Create parents before children so child bodies can reference them.
 
 ```sh
-gh issue create --title "auth: add SSO login" --body-file <bodyfile>
+gh issue create --title "epic(auth): add sso login" --body-file <bodyfile>
 ```
 
 Use a temp file for each body (multi-line markdown through `--body` is flaky) and clean it up after.
@@ -148,7 +180,7 @@ gh issue list --state open --json number,title
 
 For each merged PR that *should* have closed an issue (evident from the branch, title, plan, or the user telling you), **preview it and confirm before closing**:
 
-> PR #10 (`auth: add SSO login`) merged, but issue #42 is still open → close #42 with a comment linking the PR?
+> PR #10 (`feat(auth): add sso login`) merged, but issue #42 is still open → close #42 with a comment linking the PR?
 
 On approval:
 
