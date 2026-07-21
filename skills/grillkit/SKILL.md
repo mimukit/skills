@@ -14,6 +14,7 @@ Interview the user relentlessly about their idea until the two of you reach a ge
 
 ## How to grill
 
+- **Open by reflecting the idea back.** Before the first question, restate the subject in your own words — the goal you understand, the shape you're about to grill. This surfaces a misread up front, so you and the user are grilling the same idea rather than diverging silently for ten questions.
 - **Walk the design tree.** Move branch by branch through the plan, resolving dependencies between decisions in order — an early choice often constrains a later one, so settle the upstream decision before raising what depends on it.
 - **One question at a time.** Ask a single question, then wait for the answer before asking the next. Batching questions is bewildering and lets half of them go unanswered. Use `AskUserQuestion` tool or similar tool for better UX if available.
 - **Always recommend an answer.** For every question, state the option you'd pick and why. A naked question offloads the thinking; a recommendation gives the user something concrete to accept, reject, or refine.
