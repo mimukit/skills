@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with three modes — create issues from a plan-*.md or a description, sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle with three modes — create issues from a plan-*.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
 license: MIT
 allowed-tools: Bash, Read, Edit
 metadata:
@@ -77,6 +77,38 @@ If the repo has its own issue-title style (visible in `gh issue list` or an `.gi
 
 ---
 
+## Lifecycle labels (every mode)
+
+issuekit tracks where an issue sits in the workflow with a small, **flat** set of status labels. It **uses** these labels — it never creates them. Provisioning labels is the job of a companion skill, **repokit**. When a label this skill needs is absent from the repo, **stop and tell the user how to add it** (run `repokit`, or the exact `gh label create` line) rather than creating it yourself or skipping silently.
+
+The canonical map — exactly one **status** label is active at a time, moving left to right through the workflow; the three side-exits apply whenever they fit:
+
+| label | color | means | typically set by |
+|-------|-------|-------|------------------|
+| `triage` | `FBCA04` | filed, not yet assessed or broken down | create (ad-hoc), triage |
+| `ready` | `0E8A16` | specified and **independent** — safe to take into its own git worktree now | issuekit create |
+| `blocked` | `D93F0B` | has an unmet prerequisite; the blocker is named in the body as `Blocked by #N` | issuekit create / sync |
+| `in-progress` | `1D76DB` | actively being worked in a worktree | the implement step / a human |
+| `in-review` | `5319E7` | a PR is open, awaiting review or merge | a PR-authoring skill / sync |
+| `needs-info` | `D4C5F9` | stalled pending more detail before it can proceed | triage |
+| `wontfix` | `FFFFFF` | will not be actioned | triage |
+| `duplicate` | `CFD3D7` | superseded by another issue | triage |
+
+A **closed** issue needs no `done` label — the closed state is the signal.
+
+**`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint — those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a `Blocked by #N` line in its body: the label says *that* it's blocked, the body says *by what*. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
+
+**Type lives in the title, not a label.** Issues already carry `feat(scope):` / `fix(scope):` per the [title convention](#title-convention-every-issue-this-skill-creates), so this map has no `type:` labels — only lifecycle status.
+
+**When a needed label is missing**, check once with `gh label list`, then report the gap instead of mutating around it:
+
+> Label `blocked` isn't in this repo. Provision the workflow labels with **repokit**, or add just this one:
+> `gh label create blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"`
+
+Apply a label only once it exists (`gh issue edit <n> --add-label <label>`) and — like every mutation in this skill — [preview it and get an OK first](#preflight-every-mode).
+
+---
+
 ## Mode: `create`
 
 Turn work into issues. Two inputs — a plan file (the main path) or a plain description (start fresh).
@@ -94,18 +126,19 @@ Two principles govern the breakdown — apply them **before** you present anythi
 
 - **Fewest issues by default.** Actively look for scopes where several related tasks can collapse into **one issue with a checklist** instead of separate issues. Merge aggressively; only split into its own issue/sub-issue when a task is genuinely independent — different lifecycle, owner, or PR. Default to the *smallest* number of issues and sub-issues that still tracks the work honestly. The user can always ask to split one further; starting consolidated and splitting on request beats starting fragmented.
 - **Vertical slices.** Size each issue/sub-issue so it completes **one testable feature end to end** whenever possible — a slice a person could verify on its own — rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues; fold those layers into the one vertical slice as checklist items.
+- **Independent by default.** Size and sequence issues so each can be picked up in its own git worktree and worked **in parallel** — no issue waiting on another. When two candidate slices share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them into one issue, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it — the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a `Blocked by #N` line, everything else gets `ready`. This is what makes the tracker safe to fan out across worktrees.
 
 **Milestones are opt-in.** Do **not** create GitHub milestones by default — map a plan's phases onto issues and checklists instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api repos/{owner}/{repo}/milestones`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
 
 Present the proposal as a **preview table** and stop for approval — do **not** create anything yet:
 
-| # | Type | Title | Parent | Checklist |
-|---|------|-------|--------|-----------|
-| 1 | epic | `epic(auth): add sso login` | — | — |
-| 2 | child | `feat(auth): oidc login end to end` | #1 | provider · session · token refresh · UI |
-| 3 | child | `feat(auth): sso account linking` | #1 | link existing · unlink · conflict handling |
+| # | Type | Title | Parent | Depends on | Checklist |
+|---|------|-------|--------|-----------|-----------|
+| 1 | epic | `epic(auth): add sso login` | — | — | — |
+| 2 | child | `feat(auth): oidc login end to end` | #1 | — | provider · session · token refresh · UI |
+| 3 | child | `feat(auth): sso account linking` | #1 | #2 | link existing · unlink · conflict handling |
 
-Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. Let the user add, drop, retitle, reparent, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
+Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase, the epic and its children sharing the `auth` scope. Each child is a vertical slice with its layers folded into a checklist, not one issue per layer. The **Depends on** column is where independence is decided out loud: a blank cell means the issue is `ready` — pick it up in its own worktree now — while a `#N` means it's `blocked` by that issue (row 3 waits on row 2). Keep the column as empty as honesty allows; a mostly-blank column is a tracker the user can fan out in parallel. Let the user add, drop, retitle, reparent, **resequence to break a dependency**, or **split** any row before you proceed — offer splitting explicitly when a slice is large. This guard is the point — never spray a repo with auto-generated issues.
 
 For an **ad-hoc** description, skip the table: draft one issue (title + body) and confirm it before creating.
 
@@ -145,7 +178,17 @@ If that call fails — sub-issues disabled, older GitHub Enterprise, or insuffic
 - [ ] #44 session + token refresh
 ```
 
-### 5. Write the issue numbers back into the plan
+### 5. Label lifecycle state and record dependencies
+Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line written into its body naming the prerequisite. Confirm each label exists first (`gh label list`) — if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself.
+
+```sh
+gh issue edit 43 --add-label ready
+gh issue edit 44 --add-label blocked   # body carries: Blocked by #43
+```
+
+Preview the label set alongside the issues and get an OK before applying — a mutation like any other.
+
+### 6. Write the issue numbers back into the plan
 Once issues exist, annotate the source `plan-*.md` so it stays the source of truth — add the ref next to each task it maps to:
 
 ```markdown
@@ -156,8 +199,8 @@ Once issues exist, annotate the source `plan-*.md` so it stays the source of tru
 
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
-### 6. Report
-Print a table of what you created — number, title, parent, URL — and note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
+### 7. Report
+Print a table of what you created — number, title, parent, URL, and lifecycle label — and call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set** (and what each waits on). Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
 
 ---
 
@@ -168,7 +211,7 @@ Reconcile and repair the PR↔issue relationship. **Sync deliberately does not w
 | Who | Owns |
 |-----|------|
 | PR-authoring skill | write `Closes #N` into a **new** PR at open time (forward, happy path) |
-| **issuekit sync** | reconcile drift after merge, repair a missing link on an **existing** PR, tick parent checklists, labels only if the repo uses them |
+| **issuekit sync** | reconcile drift after merge, repair a missing link on an **existing** PR, tick parent checklists, advance lifecycle labels and unblock dependents |
 
 ### 1. Reconcile — merged PR whose issue never closed
 Find PRs merged recently whose linked issue is still open because the `Closes #` keyword was missing:
@@ -205,11 +248,18 @@ gh issue view <parent> --json body -q .body   # read
 gh issue edit <parent> --body-file <updated>  # write back with - [x] #child
 ```
 
-### 4. Labels — only if a scheme already exists
-If — and only if — the repo already uses status labels (`in-progress`, `in-review`, `done`, or similar, discoverable via `gh label list`), move issues through them as PRs advance. If there's no such scheme, **skip silently** — don't invent one.
+### 4. Labels — advance lifecycle state, unblock what's freed
+Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and — the dependency payoff — when an issue that was a **blocker** closes, find the issues whose body says `Blocked by #<it>` and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
+
+```sh
+gh issue edit 44 --remove-label blocked --add-label ready
+gh issue comment 44 --body "Unblocked: #43 (the prerequisite) merged."
+```
+
+As everywhere in sync, **preview each move and wait for the OK** — never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line — issuekit uses labels, it doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
 ### 5. Report
-Summarize what changed: issues closed, PR bodies repaired, checklists ticked, labels moved — each an action the user approved.
+Summarize what changed: issues closed, PR bodies repaired, checklists ticked, issues advanced or **unblocked** (`blocked` → `ready`) — each an action the user approved.
 
 ---
 
@@ -231,7 +281,10 @@ Produce a **status report** — a table — surfacing:
 - **Stale** — no update in a long while (e.g. 30–60 days; scale to the repo's pace).
 - **Orphaned** — no labels, no assignee, no parent.
 - **Closed-parent / open-children** (and its inverse) — broken hierarchy.
-- **Missing labels** — relative to the repo's own scheme, if it has one.
+- **Stale block** — an issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
+- **Dangling / circular dependency** — a `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
+- **Unmarked** — an open issue carrying no [lifecycle label](#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `ready` / `blocked`).
+- **Missing labels** — relative to the [lifecycle map](#lifecycle-labels-every-mode) (or the repo's own scheme, if it predates it); when the map's labels aren't provisioned, say so and point at **repokit** rather than creating them.
 - **Status cross-checks** — issues whose linked PR merged but that are still open (hand off to `sync` for the actual close).
 
 ### 3. Offer fixes
