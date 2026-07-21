@@ -14,8 +14,8 @@
     },
     {
       "title": "Testing & QA",
-      "description": "Plans to verify what you just built.",
-      "skills": ["qakit"]
+      "description": "Review AI-written changes and plan how to verify what you just built.",
+      "skills": ["reviewkit", "qakit"]
     },
     {
       "title": "Planning & Design",

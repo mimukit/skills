@@ -40,15 +40,14 @@ issuekit     → sync PR→issue, close, triage
 
 **Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
 
-Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `prkit`, `qakit`, `issuekit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
+Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
 
 ## Backlog
 
-Ordered by priority: the top two complete the workflow above; the rest are off-flow tools.
+Ordered by priority: the top row (`verifykit`) completes the workflow above; the rest are off-flow tools.
 
 | Skill | What it does |
 |-------|--------------|
-| `reviewkit` | Review AI-agent-implemented code specifically — my convention-fit take on catching the failure modes of agent-generated changes; runs against the working tree or the branch diff |
 | `verifykit` | Prove a frontend feature actually works — drive it via browser MCP / computer use and capture screenshots + video as proof for `prkit` to attach to the PR |
 | `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one (feeds `plankit`) |
 | `debugkit` | My root-cause ritual — reproduce, isolate, find the true cause, propose a fix; covers infra (docker/dokploy failures) and WordPress local→prod migration cases |
