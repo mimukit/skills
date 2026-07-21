@@ -59,5 +59,6 @@ Ordered by priority: the top five complete the workflow above; the rest are off-
 | `repokit` | Generate a one-line GitHub "About" description + topics/tags from repo contents and apply them via `gh` |
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
+| `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
 
 **Merged / dropped** (don't re-add): `tddkit` → folded into `implementkit` as a mode; `taskkit` + `trackerkit` → merged into `issuekit`; `prdkit` / `speckit` → dropped (`plankit` + `grillkit` already produce the plan doc, and `speckit` collides with GitHub spec-kit).
