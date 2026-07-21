@@ -43,19 +43,32 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # which repo? (the current
 
 **Safety stance — the whole skill.** A repo's description, topics, and labels are outward-facing state. **Preview every mutation and get an OK before it runs — nothing changes on GitHub unprompted.** Always echo the exact command(s) you run, so the change is auditable and replayable.
 
+**Re-run safe.** Every mode reconciles against what's already there — running repokit a second time on an unchanged repo proposes nothing and mutates nothing. It's always safe to re-run.
+
+## Detect (every mode)
+
+Read the repo's current state once before proposing anything — it's the raw material every mode reconciles against, and it surfaces guardrails early. Fetch what the chosen mode needs plus the guardrail flags:
+
+```sh
+# guardrail flags + about state
+gh repo view --json isArchived,isFork,isTemplate,description
+gh api repos/{owner}/{repo}/topics --jq '.names'    # current topics (about mode)
+gh label list --json name,color,description          # current labels (labels mode)
+```
+
+Check the guardrail flags **before** any mutation:
+
+- **Archived** (`isArchived: true`) — GitHub rejects metadata edits on an archived repo; **stop** and tell the user to unarchive first.
+- **Fork or template** (`isFork` / `isTemplate`) — its metadata is often inherited or throwaway; **confirm the user means to edit *this* repo** before continuing.
+
 ---
 
 ## Mode: `about`
 
 Infer the description and topics, reconcile against what's there, apply on approval.
 
-### 1. Read what's already set
-So you never silently clobber curated metadata:
-
-```sh
-gh repo view --json description --jq .description                # current About line
-gh api repos/{owner}/{repo}/topics --jq '.names'                 # current topics
-```
+### 1. Start from what's already set
+You read the current description and topics in [Detect](#detect-every-mode) — carry them in so you reconcile against curated metadata instead of clobbering it.
 
 ### 2. Gather signal from the repo
 Read the cheap, high-signal sources first; only dig deeper when they're thin:
@@ -92,7 +105,7 @@ To *replace the whole topic set* in one call instead of add/remove reconciliatio
 
 ## Mode: `labels`
 
-Provision the issue-workflow **lifecycle labels** so [issuekit](https://www.skills.sh) (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them.
+Provision the issue-workflow **lifecycle labels** so [issuekit](https://www.skills.sh) (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them. This mode **stands alone** — the lifecycle labels are useful for any issue workflow, so it never checks whether issuekit is installed before provisioning them.
 
 ### The canonical set
 Provision exactly this map. **Keep it identical to issuekit's lifecycle-labels table** — the two skills mirror one label vocabulary; if you change one, change the other so they never drift.
@@ -110,10 +123,13 @@ Provision exactly this map. **Keep it identical to issuekit's lifecycle-labels t
 
 Colors are 6-hex, no leading `#`.
 
-### 1. Read the repo's current labels
-```sh
-gh label list --json name,color,description
-```
+### 1. Check for an existing status scheme first
+You read the repo's labels in [Detect](#detect-every-mode). Before diffing, look for a **different-but-equivalent status scheme** the repo already runs — e.g. `status: blocked`, `S-ready`, `blocked ⛔`, or a `needs-*` family that already covers this ground. If one exists, **don't silently add a parallel set** (two ways to say "blocked" is worse than none). Surface it and ask which way to go:
+
+- **Map onto theirs** — treat the repo's labels as canonical; skip provisioning and (optionally) note the name mapping so issuekit-style workflows can be pointed at the existing names.
+- **Add the canonical set** — the repo's scheme is incidental or abandoned; provision ours alongside it, and offer to retire the old labels only if the user explicitly asks.
+
+Absent any existing status scheme, go straight to the diff.
 
 ### 2. Diff against the canonical set and preview
 Sort each canonical label into one of three buckets and show the plan before touching anything:
@@ -146,5 +162,5 @@ List what was created, updated, and left as-is, and confirm the repo now carries
 
 - **Never** delete a repo's topics wholesale or its labels outside the canonical set without an explicit ask; the default is additive/reconciling, not destructive.
 - The `labels` map is a **shared contract with issuekit** — the same eight labels, colors, and meanings. Treat issuekit's lifecycle-labels table as the mirror image and keep them in lockstep.
-- If the repo already runs its own label scheme or has a curated About/topics, surface that and defer to it rather than overwriting — offer the canonical set as an addition, not a replacement.
+- Defer to what the repo already curates: an existing status-label scheme is handled in [labels step 1](#mode-labels), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical set as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output — the JSON fields are a stable contract, the display text isn't.
