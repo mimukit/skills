@@ -40,15 +40,14 @@ issuekit     → sync PR→issue, close, triage
 
 **Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
 
-Shipped skills already wired into the flow: `grillkit`, `commitkit`, `prkit`, `qakit`, `issuekit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
+Shipped skills already wired into the flow: `plankit`, `grillkit`, `commitkit`, `prkit`, `qakit`, `issuekit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
 
 ## Backlog
 
-Ordered by priority: the top four complete the workflow above; the rest are off-flow tools.
+Ordered by priority: the top three complete the workflow above; the rest are off-flow tools.
 
 | Skill | What it does |
 |-------|--------------|
-| `plankit` | Brainstorm and plan a project, feature, spec, or PRD before any code — turn a rough idea into a structured `docs/plans/plan-*.md` document |
 | `implementkit` | Implement a plan, spec, or issue into working code (no commit — that's `commitkit`'s job); picks straight-through vs TDD mode by precedence (prompt → `CLAUDE.md` → repo inference → ask once) and runs its tests before declaring done |
 | `reviewkit` | Review AI-agent-implemented code specifically — my convention-fit take on catching the failure modes of agent-generated changes; runs against the working tree or the branch diff |
 | `verifykit` | Prove a frontend feature actually works — drive it via browser MCP / computer use and capture screenshots + video as proof for `prkit` to attach to the PR |

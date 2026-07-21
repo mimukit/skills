@@ -19,8 +19,8 @@
     },
     {
       "title": "Planning & Design",
-      "description": "Pressure-test a plan before you write any code.",
-      "skills": ["grillkit"]
+      "description": "Draft a plan from a rough idea, then pressure-test it before you write any code.",
+      "skills": ["plankit", "grillkit"]
     },
     {
       "title": "Context & Handoffs",
