@@ -10,7 +10,7 @@ metadata:
 
 # skillkit
 
-Authoring skill for this collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then a test plan you can actually run. Every skill here is authored from scratch — never forked — and obeys [`AGENTS.md`](../../../AGENTS.md); skillkit exists so you don't re-derive those rules each time.
+Authoring skill for this collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then dev-links it so you can try it live. Every skill here is authored from scratch — never forked — and obeys [`AGENTS.md`](../../../AGENTS.md); skillkit exists so you don't re-derive those rules each time.
 
 ## Invocation
 
@@ -39,14 +39,12 @@ Create `skills/<name>/SKILL.md` from the frontmatter template in `AGENTS.md`, ap
 ### 6. Review loop
 Show the draft. Take edits and iterate until the user explicitly approves. Don't proceed to testing on a draft the user hasn't signed off.
 
-### 7. Test plan + live test
-Write a **disposable test-plan file** at `./docs/tests/<skillname>-qa.md` (create `./docs/tests/` if it doesn't exist), so the user can follow it in a fresh session. It contains:
-- **Setup / cleanup** — `make link name=<name>` and, when done, `make unlink name=<name>`; a note to test in a **fresh session** (the skill list loads at startup).
-- **3–5 trigger prompts** that *should* fire the skill (varied, realistic phrasings), each with expected behavior and a pass box.
-- **2–3 near-miss prompts** that should *not* fire it (guards against overtriggering), each with why it should stay silent.
-- **Behavioral assertions** — a checklist for a real run (asks intent before drafting, applies visibility rules, proposes 3–5 kit names, passes `make lint`, stops at the commit hand-off).
+### 7. Live test
+Don't link the skill yourself — hand the user the commands to drive the live trial. Tell them to inject it with `make link name=<name>` and then test it in a **fresh session** (the skill list loads at startup, so a running session won't see the new skill). No scratch test-plan file; testing here is done live and directly. Suggest they exercise it against reality:
+- fire it with a few varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* (guards against overtriggering);
+- confirm the real run behaves — asks intent before drafting, applies the visibility rules, proposes 3–5 kit names, passes `make lint`, and stops at the commit hand-off.
 
-The file is scratch: tell the user it's untracked and to delete it (or gitignore it) when finished — it isn't meant to ship. Then inject the skill for the live trial with `make link name=<name>`.
+When done testing, they remove the dev link with `make unlink name=<name>`.
 
 ### 8. Finish
 - Run `make lint name=<name>`; fix any `E:` and address `W:` before handing off. For public skills, lint also flags likely portability breaks.
