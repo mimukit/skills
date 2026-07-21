@@ -23,6 +23,11 @@
       "skills": ["plankit", "grillkit"]
     },
     {
+      "title": "Building",
+      "description": "Turn a hardened plan, spec, or issue into working code — straight-through or test-driven, gated on the repo's own tests and build.",
+      "skills": ["implementkit"]
+    },
+    {
       "title": "Context & Handoffs",
       "description": "Carry work across sessions and agents without losing the thread.",
       "skills": ["handoffkit"]

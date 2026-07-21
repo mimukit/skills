@@ -38,6 +38,7 @@ Makefile                        command surface (run `make help`)
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |
 | `grillkit` | interrogate any idea one decision at a time before you commit | public |
+| `implementkit` | implement a plan, spec, or issue into code (straight-through or TDD), gated on tests + build | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
