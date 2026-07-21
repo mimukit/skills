@@ -122,11 +122,20 @@ Read the plan's structure — phases, milestones, tasks — and decide the shape
 - a **parent epic + N child issues** when the plan has distinct sub-tasks worth tracking separately, or
 - a **flat list** (or single issue) when it doesn't.
 
-Two principles govern the breakdown — apply them **before** you present anything:
+Four principles govern the breakdown — apply them **before** you present anything:
 
 - **Fewest issues by default.** Actively look for scopes where several related tasks can collapse into **one issue with a checklist** instead of separate issues. Merge aggressively; only split into its own issue/sub-issue when a task is genuinely independent — different lifecycle, owner, or PR. Default to the *smallest* number of issues and sub-issues that still tracks the work honestly. The user can always ask to split one further; starting consolidated and splitting on request beats starting fragmented.
-- **Vertical slices.** Size each issue/sub-issue so it completes **one testable feature end to end** whenever possible — a slice a person could verify on its own — rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues; fold those layers into the one vertical slice as checklist items.
+- **Vertical slices.** Size each issue/sub-issue so it completes **one testable feature end to end** whenever possible — a slice a person could verify on its own — rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues; fold those layers into the one vertical slice as checklist items. Size it, too, so one slice **fits in a single fresh agent context / worktree session** — if a slice couldn't plausibly be finished in one sitting, it's a sign to split it.
 - **Independent by default.** Size and sequence issues so each can be picked up in its own git worktree and worked **in parallel** — no issue waiting on another. When two candidate slices share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them into one issue, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it — the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a `Blocked by #N` line, everything else gets `ready`. This is what makes the tracker safe to fan out across worktrees.
+- **Prefactor first.** Before slicing the feature, look for a simplifying refactor that makes the real change trivial — *"make the change easy, then make the easy change."* File that refactor as its own `ready` issue (behavior-preserving → `refactor(scope):`) that the feature slices then build on. A clean prefactor often *removes* a dependency that would otherwise force a `blocked` chain, so it earns its keep even as an extra issue.
+
+**Wide mechanical refactors.** When a change has broad blast radius and genuinely can't be one vertical slice — renaming a shared column, retyping a symbol used everywhere — don't file it as one giant issue. Sequence it **expand → migrate → contract**:
+
+- **expand** — add the new form alongside the old; nothing breaks yet. `ready`.
+- **migrate** — update call sites in batches by area, each batch its own issue [`blocked`](#lifecycle-labels-every-mode) by the expand issue (`Blocked by #<expand>`). The batches are independent of *each other* — fan them out in parallel.
+- **contract** — delete the old form once nothing uses it, `blocked` by all the migrate batches.
+
+This turns one un-sliceable change into a fan of mostly-parallel issues with honest `Blocked by #N` edges, and reuses the existing `ready`/`blocked` machinery — no new labels. If the batches can't each stay green on their own, add one final integrate-and-verify issue blocked by them all.
 
 **Milestones are opt-in.** Do **not** create GitHub milestones by default — map a plan's phases onto issues and checklists instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api repos/{owner}/{repo}/milestones`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
 
@@ -150,6 +159,11 @@ gh issue list --state all --limit 200 --json number,title,state
 ```
 
 Then write each issue with a title in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates) and a body that carries the relevant slice of the plan — context, acceptance criteria, and any decisions. Create parents before children so child bodies can reference them.
+
+Two conventions for the body:
+
+- **Write acceptance criteria as `- [ ]` checkboxes** — a concrete, verifiable definition of done for *this* issue. (Distinct from the sub-issue/parent checklist below, which tracks child issues.)
+- **Don't hard-code file paths** — they go stale as the branch evolves; describe the change by behavior and area instead. The one exception is a **decision-rich snippet** (a schema, state machine, type, reducer) where the decision *is* the code — include it, trimmed to just the substantive part.
 
 ```sh
 gh issue create --title "epic(auth): add sso login" --body-file <bodyfile>
