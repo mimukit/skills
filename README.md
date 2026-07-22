@@ -41,6 +41,7 @@ Makefile                        command surface (run `make help`)
 | `grillkit` | interrogate any idea one decision at a time before you commit | public |
 | `implementkit` | implement a plan, spec, or issue into code (straight-through or TDD), gated on tests + build | public |
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |
+| `verifykit` | drive a built frontend feature in a browser and capture screenshots + a GIF as PR-ready proof, published to a hidden git ref | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.

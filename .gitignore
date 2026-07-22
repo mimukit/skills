@@ -4,3 +4,6 @@
 
 # Scratch QA / test plans — disposable, never tracked
 docs/tests/
+
+# verifykit proof bundles — published to refs/verify-assets/*, never committed
+docs/verify/

@@ -40,11 +40,11 @@ issuekit     → sync PR→issue, close, triage
 
 **Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
 
-Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`. Building `verifykit` also means **teaching `prkit` to attach image/video artifacts** — `gh` can't inline them, so it needs an upload path via the GitHub API or a gist.
+Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`, `verifykit`. Remaining coupling: **teaching `prkit` to embed `verifykit`'s proof artifacts** in the PR body — `verifykit` publishes screenshots + a GIF to a hidden `refs/verify-assets/*` ref (zero clone bloat, renders inline via SHA-pinned raw URLs); `prkit` still needs a Proof section that embeds them.
 
 ## Backlog
 
-Ordered by priority: the top row (`verifykit`) completes the workflow above; the rest are off-flow tools.
+Ordered by priority — these are all off-flow tools now that the core workflow is shipped.
 
 | Skill | What it does |
 |-------|--------------|
