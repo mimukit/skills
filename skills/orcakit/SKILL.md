@@ -80,7 +80,13 @@ The land-event glue. Its steps are destructive and outward-facing, so it **previ
    gh issue edit <dep> --remove-label blocked --add-label ready
    ```
 
-4. **Remove the worktree** via orca-cli (`orca worktree rm …` for the `issue-<n>-…` worktree).
+4. **Remove the worktree** via orca-cli. `rm` takes the target through a **named `--worktree` selector**, not a positional — pass the issue selector, which `finish` already has in hand:
+
+   ```sh
+   orca worktree rm --worktree issue:<n> --json
+   ```
+
+   (Other valid selectors: `name:<displayName>`, `branch:<branch>`, `path:<path>`, `id:<repo-id>::<path>`. A bare positional id is rejected as `Unknown command`.)
 
 Report what changed: issue closed, dependents unblocked, worktree removed.
 
