@@ -1,6 +1,6 @@
 # Skill ideas
 
-The backlog of skills I want to build next. Shipped skills live in the [README Skills table](./README.md#skills) — this file only ever holds unfinished work.
+The backlog of skills I want to build next. This file only ever holds **unfinished work** — for the list of skills already built, see the [README Skills table](./README.md#skills).
 
 **How this backlog works**
 
@@ -10,41 +10,9 @@ The backlog of skills I want to build next. Shipped skills live in the [README S
 
 Naming follows the `kit` convention in [AGENTS.md](./AGENTS.md): functional word first, `kit` appended.
 
-## The development workflow
-
-The skills here aren't a random pile — they compose into one end-to-end flow for building a software feature. This is the target the backlog builds toward.
-
-```
-issuekit     ← (optional entry) pick/triage an existing issue, or start fresh
-   ▼
-plankit      → brainstorm, write docs/plans/plan-*.md
-   ▼
-grillkit     → interrogate + harden that same doc
-   ▼
-issuekit     → create GitHub issues from the hardened plan-*.md
-   ▼
-implementkit → code only; mode (straight vs TDD) resolved by precedence
-   ▼           (prompt → CLAUDE.md → repo inference → ask once); runs its tests
-commitkit    → one clean Conventional commit
-   ▼
-reviewkit    → convention-fit self-review (working tree OR branch diff)
-   ▼
-verifykit    → browser/computer-use: drive the real feature, capture screenshots + video
-   ▼
-prkit        → open PR: "Fixes #", attach verifykit's proof artifacts
-   ▼
-issuekit     → sync PR→issue, close, triage
-```
-
-**On-demand, off the default path:** `qakit` (manual test checklist for risky/release features), `researchkit` (feeds `plankit`), `debugkit` (when something breaks), `testkit` (brownfield test retrofit).
-
-**Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
-
-Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`, `verifykit`. The `prkit` ↔ `verifykit` coupling is done: `verifykit` publishes screenshots + a GIF to a hidden `refs/verify-assets/*` ref (zero clone bloat, renders inline via SHA-pinned raw URLs), and `prkit` embeds them in a Proof section of the PR body. The core flow is fully wired end to end; remaining work is the off-flow tools below.
-
 ## Backlog
 
-Ordered by priority — these are all off-flow tools now that the core workflow is shipped.
+Ordered by priority (top = build next).
 
 | Skill | What it does |
 |-------|--------------|
