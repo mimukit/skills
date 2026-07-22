@@ -10,7 +10,7 @@ How this repo gets from local to the [skills.sh](https://www.skills.sh) director
 2. Each skill is a folder with a valid `SKILL.md` (frontmatter + body).
 3. Someone installs it with the CLI at least once.
 
-Internal skills (`metadata.internal: true`, e.g. `skillkit`) are hidden from discovery — they only install under `INSTALL_INTERNAL_SKILLS=1` — so they never appear on the directory page. Only the public skills (`internal: false`) are listed.
+Internal skills (`metadata.internal: true`) are hidden from discovery — they only install under `INSTALL_INTERNAL_SKILLS=1` — so they never appear on the directory page. Only the public skills (`internal: false`) are listed.
 
 ## Pre-push checklist
 

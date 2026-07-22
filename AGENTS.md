@@ -33,7 +33,7 @@ Rules:
 
 Skills here fall into two classes, declared explicitly in frontmatter as `metadata.internal: true|false`:
 
-- **`internal: true`** — a repo-only maintenance/meta skill (e.g. `skillkit`). It may lean on this repo's machinery: `AGENTS.md`, the `Makefile`, repo-relative links. skills.sh honors this native field by **hiding the skill from discovery** — it only installs when someone sets `INSTALL_INTERNAL_SKILLS=1`, so internal skills are effectively unpublished.
+- **`internal: true`** — a repo-only maintenance/meta skill. It may lean on this repo's machinery: `AGENTS.md`, the `Makefile`, repo-relative links. skills.sh honors this native field by **hiding the skill from discovery** — it only installs when someone sets `INSTALL_INTERNAL_SKILLS=1`, so internal skills are effectively unpublished.
 - **`internal: false`** — a publishable skill (e.g. `commitkit`, `humankit`). It must be **portable**: self-contained (conventions inlined, no repo-relative links, no hard dependency on `make`/`AGENTS.md`/`scripts/`), machine/OS-agnostic, and environment-degrading — it writes files when a filesystem is available and otherwise prints its output as a codeblock. Once pushed to the public repo, skills.sh discovers `skills/<name>/SKILL.md` automatically and lists it via install telemetry; there is no separate publish step.
 
 `make lint` enforces the marker on every skill and flags likely portability breaks in public skills.
@@ -49,7 +49,7 @@ The repo-root `skills.sh.json` groups how public skills render on the skills.sh 
 ## Layout
 
 - Flat: `skills/<name>/SKILL.md` — one skill per directory. This is home for **public** skills and any skill you dev-link for testing.
-- **Internal, always-on repo skills live in `.agents/skills/<name>/`** instead (e.g. `skillkit`). Checked in there, they're auto-discovered by any tool that reads `.agents/skills` and by Claude Code via a committed relative symlink at `.claude/skills/<name>` — no `make link` needed. This is the right home for a meta-skill that only makes sense *inside this repo*; it keeps such skills off the global tool dirs and out of the `skills/`-based `make lint`/`make list`/skills.sh machinery by design.
+- **Internal, always-on repo skills live in `.agents/skills/<name>/`** instead (none currently). Checked in there, they're auto-discovered by any tool that reads `.agents/skills` and by Claude Code via a committed relative symlink at `.claude/skills/<name>` — no `make link` needed. This is the right home for a meta-skill that only makes sense *inside this repo*; it keeps such skills off the global tool dirs and out of the `skills/`-based `make lint`/`make list`/skills.sh machinery by design.
 - Skills are **authored from scratch, never forked.** A skill may be "my version of" an upstream skill, rewritten to fit these conventions.
 - Bash lives in `scripts/`, surfaced through the `Makefile` (`make help`). `make link`/`unlink` mirror a dev symlink into **both** `~/.claude/skills` and `~/.agents/skills` so the skill is live in every AI tool at once. When a dev link collides with a **real install of the same name** (e.g. a `skills.sh` install of `commitkit`), `make link` moves the real one aside to a `<name>.skshbak` sibling and symlinks over it — the skill shows as `⇄ swapped` in `make list` — and `make unlink` restores the backup, so you can live-test the repo copy under its real name without losing the published install.
 

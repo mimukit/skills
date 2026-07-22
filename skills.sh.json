@@ -28,6 +28,11 @@
       "skills": ["implementkit"]
     },
     {
+      "title": "Skill Authoring",
+      "description": "Author new kit-convention skills from scratch — intent interview, naming, drafting, and live testing.",
+      "skills": ["skillkit"]
+    },
+    {
       "title": "Context & Handoffs",
       "description": "Carry work across sessions and agents without losing the thread — the ubiquitous language, the decisions behind it, and the state in flight.",
       "skills": ["handoffkit", "domainkit"]

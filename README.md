@@ -29,7 +29,7 @@ Makefile                        command surface (run `make help`)
 
 | Skill | What it does | Visibility |
 |-------|--------------|------------|
-| `skillkit` | Author a new skill from scratch — conventions, testing, and publishing included | internal · lives in `.agents/skills/` |
+| `skillkit` | author a new skill from scratch — conventions, testing, and publishing included | public |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
 | `issuekit` | create, sync, and triage GitHub issues across the workflow | public |
@@ -48,7 +48,7 @@ Makefile                        command surface (run `make help`)
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
 
-**Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills (`skillkit`) are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published. `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
+**Visibility** is declared per skill as `metadata.internal` in frontmatter. `internal` skills are repo-only maintenance tools — skills.sh hides them from discovery, so they aren't published (none currently; the slot lives at `.agents/skills/`). `public` skills are portable and self-contained; pushing them to this repo is all it takes for skills.sh to list them via install telemetry. See [AGENTS.md](./AGENTS.md) for the convention.
 
 ## Using a skill
 
