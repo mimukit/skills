@@ -67,7 +67,8 @@ Structure the file like this (the outer fence below is shown with four backticks
 _Generated <date> · covers <commit range or brief scope>_
 
 ## Summary
-One or two sentences: what the feature does and what "working" means.
+- What the feature does — one short sentence.
+- What "working" means — one short sentence.
 
 ## Preconditions
 - Environment / branch / build to test on
@@ -99,7 +100,10 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
 <command to run>
 ```
 
-**Expected:** <observable result>
+**Expected**
+- <observable result>
+- <another observable result, if any>
+
 **Actual:** _(tester fills in)_
 
 - [ ] Pass
@@ -133,6 +137,8 @@ Rules for good cases:
 - **Concrete and reproducible** — real values and exact steps, not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
 - **One behavior per case** — a failure should point at exactly one thing.
 - **Observable expected result** — what the tester sees or measures, not internal state they can't check.
+- **Expected results as bullets** — write **Expected** as one bullet per observable outcome, never a paragraph, so the tester ticks them off one at a time.
+- **Short lines, not walls of prose** — prefer short sentences and bullet sublists over paragraphs throughout the generated plan (steps, expected, not-covered).
 - **Honest about gaps** — list what the plan can't verify under *Not covered* rather than pretending coverage.
 - **Commands go in ```sh code blocks on their own line** — never inline a terminal command in prose or a table cell, so the tester can copy-paste it as-is. Group related commands that run together into a single block; keep unrelated ones in separate blocks.
 
