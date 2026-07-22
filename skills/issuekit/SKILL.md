@@ -245,7 +245,7 @@ On approval:
 gh issue close 42 --comment "Closed by #10 (merged)."
 ```
 
-Closing is a lifecycle transition too — strip any active status label (`in-review`, `in-progress`, …) in the same action so a closed issue never carries a stale status (see [step 4](#4-labels--advance-lifecycle-state-unblock-what-s-freed)). Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
+Closing is a lifecycle transition too — strip any active status label (`in-review`, `in-progress`, …) in the same action so a closed issue never carries a stale status (see [Labels — advance lifecycle state](#4-labels--advance-lifecycle-state-unblock-whats-freed)). Never auto-close — always show the pairing and wait for the OK. **If which issue a PR should have closed is ambiguous, ask rather than guess** — closing the wrong issue is worse than leaving one open.
 
 ### 2. Repair — missing link on an existing open PR
 If an **open** PR should reference an issue but doesn't, add `Closes #N` to its body (editing the existing PR, not opening a new one):

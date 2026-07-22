@@ -27,13 +27,13 @@ Ask whether this is an **internal** repo-only skill or a **public** publishable 
 - **public** (like commitkit, humankit): a shareable skill. It **must** follow the Portability rules below and stamp `metadata.internal: false`. It gets discovered and listed on skills.sh automatically once pushed.
 
 ### 3. Provenance (original vs. "my version of")
-Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas (step 1).
+Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas ([Gather intent](#1-gather-intent)).
 
 ### 4. Propose names
 Suggest **3–5 `kit` names** and recommend one. Rules (from `AGENTS.md`): one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`), and avoid collisions with well-known tools. Let the user pick. The chosen name **must** equal the directory name.
 
 ### 5. Draft
-Create `skills/<name>/SKILL.md` from the frontmatter template in `AGENTS.md`, applying the **Quality bar** below, and stamp `metadata.internal` from step 2. Keep it lean — prefer one file.
+Create `skills/<name>/SKILL.md` from the frontmatter template in `AGENTS.md`, applying the **Quality bar** below, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). Keep it lean — prefer one file.
 - If **public**, apply the **Portability** checklist below as a hard gate — the skill must stand alone once installed.
 
 ### 6. Review loop
