@@ -7,6 +7,8 @@
 #   - license: is present
 #   - metadata.internal: true|false is declared (visibility marker)
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
+#   - every intra-doc [..](#anchor) link resolves to a real heading (error)
+#   - no number-based "step N" cross-references — they rot on reorder (warn)
 # Usage: scripts/lint.sh [skill-name ...]   (default: all skills)
 # Exit status is non-zero if any errors (not warnings) were found.
 set -euo pipefail
@@ -19,6 +21,53 @@ warns=0
 # Extract the top YAML frontmatter block (between the first two `---` lines).
 frontmatter() {
   awk 'NR==1 && $0!="---"{exit} NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$1"
+}
+
+# Verify reference integrity within a SKILL.md. Builds the set of GitHub heading
+# anchors (matching github-slugger: lowercase, drop punctuation, spaces→hyphens,
+# no hyphen-collapse, duplicate slugs get -1/-2 suffixes) and checks every
+# intra-doc [..](#anchor) link against it. Also flags number-based "step N"
+# references: those bind to a step's *position*, so reordering silently points
+# them at the wrong step — a named anchor link binds to identity instead and
+# breaks loudly here if the heading moves or is renamed. Code fences are skipped.
+# Emits TAB-separated  <E|W>\t<line>\t<message>  rows.
+check_anchors() {
+  LC_ALL=C awk '
+    function slug(h,   s) {
+      s = tolower(h)
+      gsub(/[^a-z0-9 _-]/, "", s)
+      gsub(/ /, "-", s)
+      return s
+    }
+    /^```/ || /^~~~/ { infence = !infence; next }
+    infence { next }
+    /^#+[ \t]/ {
+      h = $0
+      sub(/^#+[ \t]+/, "", h)
+      s = slug(h)
+      if (s in seen) { cnt[s]++; s = s "-" cnt[s] } else { seen[s] = 1 }
+      anchors[s] = 1
+      next
+    }
+    {
+      line = $0
+      while (match(line, /\]\(#[^)]+\)/)) {
+        a = substr(line, RSTART + 3, RLENGTH - 4)   # strip leading ](#  and trailing )
+        nlink++; lln[nlink] = FNR; lan[nlink] = a
+        line = substr(line, RSTART + RLENGTH)
+      }
+      if (match($0, /[Ss]teps?[ ]+#?[0-9]+/)) {
+        nstep++; sln[nstep] = FNR; stx[nstep] = substr($0, RSTART, RLENGTH)
+      }
+    }
+    END {
+      for (i = 1; i <= nlink; i++)
+        if (!(lan[i] in anchors))
+          printf "E\t%d\tbroken intra-doc anchor: #%s\n", lln[i], lan[i]
+      for (i = 1; i <= nstep; i++)
+        printf "W\t%d\tnumber-based step reference \"%s\" — use a named anchor link\n", sln[i], stx[i]
+    }
+  ' "$1"
 }
 
 check_skill() {
@@ -79,6 +128,17 @@ check_skill() {
       issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
   fi
+
+  # reference integrity: intra-doc anchors resolve; no number-based step refs
+  local _sev _ln _msg
+  while IFS=$'\t' read -r _sev _ln _msg; do
+    [[ -z "${_sev:-}" ]] && continue
+    if [[ "$_sev" == "E" ]]; then
+      issues+=("E:$_msg (line $_ln)")
+    else
+      issues+=("W:$_msg (line $_ln)")
+    fi
+  done < <(check_anchors "$file")
 
   if [[ ${#issues[@]} -eq 0 ]]; then
     echo "  ${C_GREEN}✓${C_RESET} $name"
