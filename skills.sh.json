@@ -29,8 +29,8 @@
     },
     {
       "title": "Context & Handoffs",
-      "description": "Carry work across sessions and agents without losing the thread.",
-      "skills": ["handoffkit"]
+      "description": "Carry work across sessions and agents without losing the thread — the ubiquitous language, the decisions behind it, and the state in flight.",
+      "skills": ["handoffkit", "domainkit"]
     }
   ]
 }

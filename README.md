@@ -44,6 +44,7 @@ Makefile                        command surface (run `make help`)
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |
 | `verifykit` | drive a built frontend feature in a browser and capture screenshots + a GIF as PR-ready proof, published to a hidden git ref | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
+| `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
 
