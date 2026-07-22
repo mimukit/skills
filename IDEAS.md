@@ -40,7 +40,7 @@ issuekit     → sync PR→issue, close, triage
 
 **Cross-cutting, any step:** `humankit` (polish plan/PR/issue prose), `handoffkit` (session handoff).
 
-Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`, `verifykit`. Remaining coupling: **teaching `prkit` to embed `verifykit`'s proof artifacts** in the PR body — `verifykit` publishes screenshots + a GIF to a hidden `refs/verify-assets/*` ref (zero clone bloat, renders inline via SHA-pinned raw URLs); `prkit` still needs a Proof section that embeds them.
+Shipped skills already wired into the flow: `plankit`, `grillkit`, `implementkit`, `commitkit`, `reviewkit`, `prkit`, `qakit`, `issuekit`, `verifykit`. The `prkit` ↔ `verifykit` coupling is done: `verifykit` publishes screenshots + a GIF to a hidden `refs/verify-assets/*` ref (zero clone bloat, renders inline via SHA-pinned raw URLs), and `prkit` embeds them in a Proof section of the PR body. The core flow is fully wired end to end; remaining work is the off-flow tools below.
 
 ## Backlog
 
@@ -48,8 +48,6 @@ Ordered by priority — these are all off-flow tools now that the core workflow 
 
 | Skill | What it does |
 |-------|--------------|
-| `verifykit` | Prove a frontend feature actually works — drive it via browser MCP / computer use and capture screenshots + video as proof for `prkit` to attach to the PR |
-| `researchkit` | Research a topic, tech, tool, architecture, or service on demand — compare the options and recommend the right one (feeds `plankit`) |
 | `debugkit` | My root-cause ritual — reproduce, isolate, find the true cause, propose a fix; covers infra (docker/dokploy failures) and WordPress local→prod migration cases |
 | `testkit` | Write automated tests — unit, integration, and e2e — for an existing brownfield project that has none |
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |

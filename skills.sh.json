@@ -19,8 +19,8 @@
     },
     {
       "title": "Planning & Design",
-      "description": "Draft a plan from a rough idea, then pressure-test it before you write any code.",
-      "skills": ["plankit", "grillkit"]
+      "description": "Research a technical decision, draft a plan from a rough idea, then pressure-test it before you write any code.",
+      "skills": ["researchkit", "plankit", "grillkit"]
     },
     {
       "title": "Building",
