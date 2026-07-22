@@ -22,6 +22,13 @@ Rules:
 - **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing here — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keeping prose on one line per paragraph makes editing and reflowing painless.
 - This applies to prose and bullets only. Leave line structure intact where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+## Cross-referencing steps
+
+- **Never reference a step by its number** (`see step 4`, `from step 2`). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one — and no tool can detect a stale-but-valid number. Reference the step's *identity* instead.
+- For a step that has a heading, link to it by name with a GitHub anchor: `see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)`. GitHub builds the anchor from the full heading text (lowercase, punctuation dropped, spaces → hyphens, consecutive hyphens preserved, `'` removed — `what's` → `whats`). Numbered headings are fine to keep; the anchor and the link move together.
+- For a step that's a list item inside a section (no heading, no anchor), name the action in prose (`` `start`'s **Adopt check** step``) rather than citing its ordinal.
+- `make lint` enforces both halves: every intra-doc `](#anchor)` link must resolve to a real heading (error), and any surviving `step N` reference is flagged (warning). Rename or move a referenced heading and the link breaks *loudly* in lint instead of rotting silently.
+
 ## Visibility: internal vs public
 
 Skills here fall into two classes, declared explicitly in frontmatter as `metadata.internal: true|false`:
