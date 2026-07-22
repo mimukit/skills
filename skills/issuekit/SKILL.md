@@ -276,6 +276,20 @@ As everywhere in sync, **preview each move and wait for the OK** — never auto-
 ### 5. Report
 Summarize what changed: issues closed, PR bodies repaired, checklists ticked, issues advanced or **unblocked** (`blocked` → `ready`) — each an action the user approved.
 
+Then close with the **actionable set** — a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
+
+```sh
+gh issue list --state open --label in-progress --json number,title
+gh issue list --state open --label ready --json number,title
+```
+
+| # | Title | Status |
+|---|-------|--------|
+| 43 | `feat(auth): oidc login end to end` | `in-progress` |
+| 44 | `feat(auth): sso account linking` | `ready` |
+
+List `in-progress` rows first, then `ready`. If both sets are empty, say so instead of printing an empty table.
+
 ---
 
 ## Mode: `triage`
