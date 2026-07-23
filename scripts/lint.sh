@@ -8,7 +8,7 @@
 #   - metadata.internal: true|false is declared (visibility marker)
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
-#   - no number-based "step N" cross-references — they rot on reorder (warn)
+#   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
 # Usage: scripts/lint.sh [skill-name ...]   (default: all skills)
 # Exit status is non-zero if any errors (not warnings) were found.
 set -euo pipefail
@@ -26,7 +26,7 @@ frontmatter() {
 # Verify reference integrity within a SKILL.md. Builds the set of GitHub heading
 # anchors (matching github-slugger: lowercase, drop punctuation, spaces→hyphens,
 # no hyphen-collapse, duplicate slugs get -1/-2 suffixes) and checks every
-# intra-doc [..](#anchor) link against it. Also flags number-based "step N"
+# intra-doc [..](#anchor) link against it. Also flags number-based step/section
 # references: those bind to a step's *position*, so reordering silently points
 # them at the wrong step — a named anchor link binds to identity instead and
 # breaks loudly here if the heading moves or is renamed. Code fences are skipped.
@@ -56,7 +56,7 @@ check_anchors() {
         nlink++; lln[nlink] = FNR; lan[nlink] = a
         line = substr(line, RSTART + RLENGTH)
       }
-      if (match($0, /[Ss]teps?[ ]+#?[0-9]+/)) {
+      if (match($0, /[Ss]teps?([ ]+#?|-)[0-9]+|§[0-9]+/)) {
         nstep++; sln[nstep] = FNR; stx[nstep] = substr($0, RSTART, RLENGTH)
       }
     }
