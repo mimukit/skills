@@ -3,14 +3,14 @@ name: skillkit
 description: >-
   Create a new AI agent skill from scratch — kit-convention naming, drafting, live testing, and publishing included. Use when the user wants to author, scaffold, or draft a new skill, runs "/skillkit", or says something like "help me make a skill for X". Interviews for intent, proposes on-brand kit names, drafts a conventions-compliant SKILL.md.
 license: MIT
-allowed-tools: Read, Edit, Write, Bash
+allowed-tools: Read, Edit, Write, Bash, AskUserQuestion, WebSearch, WebFetch
 metadata:
   internal: false
 ---
 
 # skillkit
 
-Authoring skill for a personal skill collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `skills/<name>/SKILL.md`, then hands the user a live-test loop to try it for real. Every skill is authored from scratch — never forked — and follows the conventions inlined below; skillkit exists so you don't re-derive those rules each time.
+Authoring skill for a personal skill collection. It turns a rough idea ("I want a skill that does X") into a lean, conventions-compliant `SKILL.md` in the host collection's skill layout, then hands the user a live-test loop to try it for real. Every skill is authored from scratch — never forked — and follows the conventions inlined below; skillkit exists so you don't re-derive those rules each time.
 
 ## Invocation
 
@@ -30,10 +30,10 @@ Ask whether this is an **internal** repo-only skill or a **public** publishable 
 Ask: is this **original**, or **your version of an upstream skill**? Either way it's authored from scratch here; the answer just informs how much you lean on the upstream for structure ideas ([Gather intent](#1-gather-intent)).
 
 ### 4. Propose names
-Suggest **3–5 `kit` names** and recommend one. Rules: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`), and avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular). Let the user pick. The chosen name **must** equal the directory name.
+Follow the host collection's naming convention when it has one. Otherwise suggest **3–5 `kit` names** and recommend one: one lowercase word, the **functional term leads** so it stays searchable (people search `commit`, not `kit`), `kit` appended, and shorten an awkward root rather than force a clumsy join (`humanize` → `humankit`, not `humanizekit`). Avoid collisions with well-known tools (`speckit`, `shipkit`, anything already popular): when network access exists, search the candidate on the web and in the skills.sh directory; when offline, state that the popularity check was skipped. Let the user pick. The chosen name **must** equal the directory name.
 
 ### 5. Draft
-Create `skills/<name>/SKILL.md` from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). Keep it lean — prefer one file.
+Create the skill in the host collection's documented layout from the [Frontmatter template](#frontmatter-template) below, applying the **Quality bar**, and stamp `metadata.internal` from [Visibility](#2-visibility-internal-or-public). In a collection repo this is commonly `skills/<name>/SKILL.md`; standalone, use the agent's discovered skills directory such as `.claude/skills/<name>/SKILL.md`. Keep it lean — prefer one file.
 - If **public**, apply the **Portability** checklist below as a hard gate — the skill must stand alone once installed.
 
 ### 6. Review loop
@@ -42,7 +42,7 @@ Show the draft. Take edits and iterate until the user explicitly approves. Don't
 ### 7. Live test
 Don't install the skill yourself — hand the user the commands to drive the live trial. If the collection provides dev-link tooling (check its README or Makefile for a link/unlink target), tell them to inject the skill with that; otherwise have them symlink or copy `skills/<name>` into their agent's skills directory (e.g. `~/.claude/skills/<name>`). Then test in a **fresh session** — the skill list loads at startup, so a running session won't see the new skill. No scratch test-plan file; testing here is done live and directly. Suggest they exercise it against reality:
 - fire it with a few varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* (guards against overtriggering);
-- confirm the real run behaves — asks intent before drafting, applies the visibility rules, proposes 3–5 kit names, and stops at the commit hand-off.
+- confirm the real run follows the drafted procedure end to end and produces the artifact or outcome the skill promises.
 
 When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
 
