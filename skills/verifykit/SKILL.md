@@ -54,7 +54,7 @@ verifykit reuses state; it never manufactures it. In order: **reuse** an already
 Walk each selected flow along its primary happy path as a user would. Capture a **screenshot at every meaningful state** (initial, mid-flow, error/empty states the change introduces, success), and a **short animated GIF** of the whole flow. Keep the GIF proof-grade, not cinema — a few frames per second, modest width, a short clip. When stitching frames into a GIF, `ffmpeg` works well if present:
 
 ```sh
-ffmpeg -y -i frame-%02d.png -vf "fps=3,scale=800:-1" flow.gif
+ffmpeg -y -framerate 2 -i frame-%02d.png -vf "scale=800:-1" flow.gif
 ```
 
 Cap the frame rate and width so the GIF stays small (a proof GIF is typically a few hundred KB; screenshots ~100 KB).
@@ -67,17 +67,21 @@ Save the captures to `docs/verify/<slug>/` — the screenshots, the GIF, and a `
 
 GitHub can't inline media from `gh`, and committing proof GIFs to the branch bloats the repo's history for every clone forever. Instead, publish to a **hidden git ref** (`refs/verify-assets/<slug>`) — the assets live in the repo but a normal `git clone` never fetches that namespace, so there's zero clone bloat, and they render inline in a PR body via SHA-pinned `raw.githubusercontent.com` URLs. This needs a **public** repo (GitHub's image proxy can't authenticate into a private one).
 
-The fragile git plumbing lives in the bundled **`verify-assets.sh`** next to this file — call it, don't hand-run the plumbing:
+The fragile git plumbing lives in the bundled **`verify-assets.sh`** next to this file — resolve the installed skill directory and call the script there; the current working directory is the target project, not the skill directory. Don't hand-run the plumbing:
 
 ```sh
-# only publish when origin is public; otherwise the URLs won't render
-./verify-assets.sh check || echo "private repo — skip publish, link the local bundle instead"
+VERIFY_ASSETS="<path-to-this-skill>/verify-assets.sh"
 
-# publish the bundle; prints the commit SHA to embed
-SHA=$(./verify-assets.sh publish <slug> docs/verify/<slug>/*)
+if bash "$VERIFY_ASSETS" check; then
+  # publish the bundle; prints the commit SHA to embed
+  SHA=$(bash "$VERIFY_ASSETS" publish <slug> docs/verify/<slug>/*)
 
-# resolve the inline-rendering URL for each file
-./verify-assets.sh url <slug> "$SHA" flow.gif
+  # resolve the inline-rendering URL for each file
+  bash "$VERIFY_ASSETS" url <slug> "$SHA" flow.gif
+else
+  # private repo: skip publishing and write proof.md with local paths
+  echo "private repo — link the local bundle in proof.md for manual attachment"
+fi
 ```
 
 The script also offers `list` (show all `refs/verify-assets/*`) and `delete <slug>` (remove a ref after its PR merges).
