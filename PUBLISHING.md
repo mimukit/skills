@@ -21,10 +21,11 @@ Internal skills (`metadata.internal: true`) are hidden from discovery — they o
 - [ ] `make security` shows no **High Risk** skill — it's a local heuristic stand-in for the scanners skills.sh runs at publish time (Gen / Socket / Snyk), so a High here previews a public flag on the directory page. Med/Low are informational (e.g. a skill that legitimately runs the shell); High means evasion-flavored wording or a destructive command to fix first.
 - [ ] Working tree is committed; `git status` is clean.
 - [ ] `README.md` skills table matches what's actually in `skills/` (no advertised-but-missing entries).
+- [ ] When a public skill was added, renamed, or removed, `skills.sh.json` includes the same change in the appropriate grouping.
 
 ## First-time push
 
-The repo has no remote yet. Create the public GitHub repo and push `main` in one step with the `gh` CLI (authenticated as the repo owner):
+If the repo has no remote yet, create the public GitHub repo and push `main` in one step with the `gh` CLI (authenticated as the repo owner):
 
 ```sh
 gh repo create mimukit/skills --public --source=. --remote=origin --push \
