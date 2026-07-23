@@ -3,7 +3,7 @@ name: prkit
 description: >-
   Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff, then created with the gh CLI, embedding verifykit proof artifacts inline when a bundle is present. Use when the user asks to open a PR, says "create a pull request", "raise a PR", "submit this for review", or "gh pr create" — even if they don't spell out the title or body.
 license: MIT
-allowed-tools: Bash, Read
+allowed-tools: Bash, Read, Write
 metadata:
   internal: false
 ---
@@ -28,6 +28,7 @@ git branch --show-current
 ```
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login` — don't try to work around it.
+- If `git branch --show-current` is empty, stop: detached HEAD needs a branch before a PR can be opened. Offer to create or switch to one.
 - If the current branch is the default branch (`main`/`master`), stop: a PR needs a feature branch. Offer to create one (`git switch -c <name>`) before continuing.
 
 ### 2. Gather context
@@ -41,7 +42,7 @@ git diff origin/<base>...HEAD --stat                     # files touched
 git diff origin/<base>...HEAD                            # the actual changes
 ```
 
-Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`. Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
+Read the base branch from `gh`'s structured JSON rather than parsing the display text of `git remote show origin` — the JSON field is a stable contract, the human-readable output isn't. Re-check the current branch against this authoritative base and stop if they match, including repos whose default is `develop` or `trunk`. If `gh` can't answer, fall back to `git symbolic-ref --short refs/remotes/origin/HEAD`; if `origin/HEAD` is unset, repair it with `git remote set-head origin --auto` and retry. Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
 
 Use the commits, branch name (e.g. `fix/login-123`), and diff to determine the scope, the type of change, and any issue reference (`#123`, `fixes #123`). If a linked issue clearly matters and you can't find it, ask — don't invent one.
 
@@ -81,8 +82,8 @@ First check for an existing PR on this branch so you update instead of duplicati
 gh pr view --json url,state 2>/dev/null
 ```
 
-- **If one exists**: update it — `gh pr edit --title "…" --body-file <file>` — rather than opening a second.
-- **If not**: write the body to a temp file and create from it. Passing multi-line markdown with checkboxes through `--body` is flaky; `--body-file` is reliable.
+- **If the command returns a PR with `state` equal to `OPEN`**: update it — `gh pr edit --title "…" --body-file <file>` — rather than opening a second.
+- **If no PR exists, or the returned PR is merged/closed**: write the body to a temp file and create a new one. Passing multi-line markdown with checkboxes through `--body` is flaky; `--body-file` is reliable.
 
 ```sh
 gh pr create --base <base> --title "…" --body-file <bodyfile>
