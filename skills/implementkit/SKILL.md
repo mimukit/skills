@@ -3,7 +3,7 @@ name: implementkit
 description: >-
   Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-*.md", "implement #42", "do this TDD", or hands off a hardened spec to be turned into code — even if they don't name a mode.
 license: MIT
-allowed-tools: Bash, Read, Edit, Write
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 metadata:
   internal: false
 ---
@@ -50,7 +50,7 @@ Pick **straight-through** or **TDD** by this precedence, taking the first tier t
 
 Repeat per slice until the input is fully implemented. Match the surrounding code's conventions, naming, and structure in either mode — reuse what exists rather than reinventing it.
 
-**Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the step-5 done-gate. TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
+**Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the [done-gate](#5-run-the-done-gate). TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
 
 ### 5. Run the done-gate
 "Done" means the repo's checks are green, not just that code was written. Discover the commands from the repo itself (`package.json` scripts, `Makefile`, `pyproject.toml`, `justfile`, CI config) rather than guessing, and run:
@@ -70,7 +70,7 @@ Leave every change **unstaged** — do not `git add`, do not commit, do not draf
 - the **files** created and changed,
 - the **gate result** (which commands ran and that they passed).
 
-Then point the user to commitkit as the next step. Don't run it yourself.
+Then point the user to commitkit when installed, or say plainly that the next step is to group and commit the changes. Don't run it yourself.
 
 ## Notes
 
