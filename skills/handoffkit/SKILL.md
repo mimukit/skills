@@ -69,4 +69,4 @@ Capabilities the next session should reach for — e.g. a commit skill to land t
 
 **Default — print to the terminal.** Emit the finished handoff as a single copy-pastable Markdown codeblock. Do not write a file. This is what happens unless the user explicitly asks to save one.
 
-**On explicit request — save a file.** Only when the user asks for a handoff *file* (e.g. "save the handoff", "write it to a doc"), write it into `./docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<date>-<slug>.md` — an ISO date prefix (e.g. `handoff-2026-07-13-auth-migration.md`) so handoffs sort chronologically and don't clobber. Then tell the user the exact path.
+**On explicit request — save a file.** Only when the user asks for a handoff *file* (e.g. "save the handoff", "write it to a doc"), write it into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<date>-<slug>.md` — an ISO date prefix (e.g. `handoff-2026-07-13-auth-migration.md`) so handoffs sort chronologically. If that name already exists, append `-2`, then the next available integer. Tell the user the exact path.
