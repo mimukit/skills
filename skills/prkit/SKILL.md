@@ -92,7 +92,19 @@ gh pr create --base <base> --title "…" --body-file <bodyfile>
 
 Use a path in the system temp dir for the body file and remove it afterward.
 
-### 8. After creating
+### 8. Advance the linked issue
+Opening the PR is the moment the linked issue moves from being worked to awaiting review, so flip its lifecycle label `in-progress` → `in-review` (the same transition issuekit's `sync` mode performs when a PR opens). Only when the PR references an issue — the `#123` / `Closes #123` found in [Gather context](#2-gather-context); skip this step entirely if there is none.
+
+- **Prefer issuekit when it's installed** — invoke it to reconcile the label so the tracker logic lives in one place. Otherwise fall back to the equivalent `gh` call yourself:
+
+```sh
+gh issue edit <n> --remove-label in-progress --add-label in-review
+```
+
+- **Preview the mutation and get an OK before it runs** — relabeling an issue is an outward-facing change, so name the issue and the flip and wait for confirmation; never relabel silently.
+- If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
+
+### 9. After creating
 Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft.
 
 ## Notes
@@ -101,4 +113,5 @@ Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run,
 - Uncommitted changes are not in a PR. If `git status` shows staged or unstaged work the user seems to want included, point it out and offer to commit first — don't silently leave it behind or commit it without asking.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
 - **Proof embedding is optional and self-contained** — prkit only *reads* verifykit's `proof.md` and embeds it; it never runs the publish itself (that's verifykit's job, with its own bundled script). No verifykit bundle → no Proof section, and prkit works exactly as it always has.
+- **Advancing the linked issue is optional and previewed** — the `in-progress → in-review` flip only happens when the PR references an issue, prefers issuekit when installed but falls back to a plain `gh issue edit`, and never runs without an OK. No linked issue → prkit opens the PR exactly as before.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.
