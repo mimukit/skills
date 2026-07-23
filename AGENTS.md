@@ -22,6 +22,16 @@ Rules:
 - **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing here — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keeping prose on one line per paragraph makes editing and reflowing painless.
 - This applies to prose and bullets only. Leave line structure intact where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+## Documentation artifact naming
+
+When a skill creates a durable Markdown artifact under `docs/`, use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end. Examples: `docs/plans/plan-sso-login-2026-07-23.md`, `docs/research/research-auth-providers-2026-07-23.md`, `docs/qa/qa-login-throttling-2026-07-23.md`, `docs/reviews/review-auth-refactor-2026-07-23.md`, and `docs/handoffs/handoff-auth-migration-2026-07-23.md`.
+
+- **Creation date, not modification date.** Keep the filename stable when the artifact is edited; record a later update date inside the document if useful.
+- **Same subject means update in place.** Do not create a second file for the same artifact. For genuinely distinct artifacts that would collide on type, slug, and date, make the slug more specific; only as a last resort insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`) so the filename still ends with the date.
+- **ADRs keep their sequence.** Use `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`, with a zero-padded monotonically increasing decision number. The number is the decision order; the date is its creation date.
+- **Bundles put the convention on the directory.** For a multi-file artifact such as visual verification, use `docs/verify/verify-<slug>-YYYY-MM-DD/` and keep structural children such as `notes.md` and `proof.md` fixed inside it.
+- **Existing project convention wins.** A public skill may honor a target repository's established artifact location or naming scheme. Its own documented fallback must follow this convention and inline the rule because public skills cannot depend on this file.
+
 ## Cross-referencing steps
 
 - **Never reference a step by its number** (`see step 4`, `from step 2`). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one — and no tool can detect a stale-but-valid number. Reference the step's *identity* instead.

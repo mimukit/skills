@@ -1,6 +1,8 @@
 ```markdown
 # Plan — orcakit
 
+_Created 2026-07-22._
+
 A thin glue skill that bridges a GitHub issue to an Orca worktree and back.
 
 ## Context
@@ -160,4 +162,3 @@ The Phase-1 open questions, settled in a grillkit session and folded into the
   behavior; it only sequences issuekit and orca-cli.
 
 ```
-

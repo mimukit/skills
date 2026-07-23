@@ -26,7 +26,7 @@ The hosting/attachment mechanism was **prototyped end-to-end against `mimukit/sk
 | Filenames | **Prefixed with the slug** (e.g. `login-throttle-flow.gif`) — the flat ref namespace has no folders, so the prefix is the grouping. |
 | Deterministic ops | Live in a **bundled `verify-assets.sh`** (`publish | list | url | delete`) that the skill *calls* — the LLM never hand-runs the fragile plumbing. Self-contained: only `git` + `gh`, so it stays portable per the public-skill rule. |
 | Repo visibility requirement | Inline rendering needs a **public** repo (GitHub's image proxy can't authenticate into a private one). On a private repo, degrade with a clear message rather than embedding dead links. |
-| Bundle directory | `docs/verify/<slug>/` (screenshots, GIF, a short `notes.md`), and it is **gitignored** — assets are published to the hidden ref, not committed to the branch. |
+| Bundle directory | `docs/verify/verify-<slug>-YYYY-MM-DD/` (screenshots, GIF, a short `notes.md`), and it is **gitignored** — assets are published to the hidden ref, not committed to the branch. |
 | Visibility / portability | Public skill (`internal: false`). Degrades gracefully when no MCP, no shell, no `gh`, or a private repo — prints instructions instead of failing. |
 
 ### Asset-size reality (measured, informs the above)
@@ -41,16 +41,16 @@ The hosting/attachment mechanism was **prototyped end-to-end against `mimukit/sk
 - **1.3** Capture-tool detection & precedence: probe browser MCP → computer use → none; record which was used.
 - **1.4** Auth handling: reuse existing session/state; ask once if gated and none; else degrade and note the boundary.
 - **1.5** Drive each selected flow: walk the primary happy path, capturing a screenshot at each meaningful state and a short GIF of the full flow (`ffmpeg` stitch, capped fps/scale).
-- **1.6** Write the proof bundle to `docs/verify/<slug>/` (gitignored): screenshots, GIF, and `notes.md` (flows driven, tool used, per-step pass/fail, environment, auth boundary if any).
+- **1.6** Write the proof bundle to `docs/verify/verify-<slug>-YYYY-MM-DD/` (gitignored): screenshots, GIF, and `notes.md` (flows driven, tool used, per-step pass/fail, environment, auth boundary if any).
 - **1.7** Bundle the `verify-assets.sh` helper in the skill directory (`publish | list | url | delete`).
 - **1.8** Hand off: report the bundle path and offer `prkit`. Degrade gracefully (no MCP / no shell → print the manual capture recipe).
 - **1.9** Repo conventions: `kit`-suffix name, front-loaded "Use when …" description, `internal: false`, no hard-wrapped prose, portable. Author via `skillkit`.
 
 ### Phase 2 — Upgrade `prkit` to embed proof
 
-**Decoupling correction (from implementation):** prkit is a portable public skill and must not depend on verifykit's bundled `verify-assets.sh`. So publishing stays entirely in verifykit; prkit only *reads* a manifest. verifykit (Phase 1.7) publishes the assets and writes a ready-to-embed **`docs/verify/<slug>/proof.md`**; prkit splices that fragment in. This is the hand-off contract.
+**Decoupling correction (from implementation):** prkit is a portable public skill and must not depend on verifykit's bundled `verify-assets.sh`. So publishing stays entirely in verifykit; prkit only *reads* a manifest. verifykit (Phase 1.7) publishes the assets and writes a ready-to-embed **`docs/verify/verify-<slug>-YYYY-MM-DD/proof.md`**; prkit splices that fragment in. This is the hand-off contract.
 
-- **2.1** After building the PR body, discover a proof bundle in `docs/verify/<slug>/` (slug = linked issue number, else feature-slug) matching this branch/issue.
+- **2.1** After building the PR body, discover a proof bundle in `docs/verify/verify-<slug>-YYYY-MM-DD/` (slug = linked issue number, else feature slug) matching this branch/issue.
 - **2.2** If its `proof.md` has published SHA-pinned URLs, splice the fragment into a **Proof** section as-is — no publish, no git plumbing in prkit.
 - **2.3** Only when a bundle exists; otherwise prkit behaves exactly as today.
 - **2.4** Degrade: no bundle → no Proof section; bundle with local-path `proof.md` (private repo / publish skipped) → note the local artifact paths for manual attachment rather than embedding dead links.

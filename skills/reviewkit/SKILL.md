@@ -101,7 +101,7 @@ Do not edit source or apply fixes. If the user wants the fixes made, hand off: t
 
 ### 7. Optional — save the report
 
-After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy — e.g. to paste into a PR description — write it to `docs/reviews/<branch-or-feature-slug>-review.md`, creating `docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
+After showing the review, offer to save it (don't save unprompted). If the user wants a durable copy — e.g. to paste into a PR description — write it to `docs/reviews/review-<branch-or-feature-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug and the review's ISO creation date (for example, `review-auth-refactor-2026-07-23.md`). Keep that date stable if the same report is edited. For a genuine same-day collision between distinct reviews, make the slug more specific; only as a last resort insert a sequence immediately before the date (`review-auth-refactor-02-2026-07-23.md`). Create `docs/reviews/` if needed. Keep the saved file identical to what you printed, with a one-line header noting the date and the reviewed range. If there's no filesystem, skip this step and leave the inline report as the deliverable.
 
 ## Notes
 

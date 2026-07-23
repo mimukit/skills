@@ -1,7 +1,7 @@
 ---
 name: implementkit
 description: >-
-  Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-*.md", "implement #42", "do this TDD", or hands off a hardened spec to be turned into code — even if they don't name a mode.
+  Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-<slug>-YYYY-MM-DD.md", "implement #42", "do this TDD", or hands off a hardened spec to be turned into code — even if they don't name a mode.
 license: MIT
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 metadata:
@@ -16,7 +16,7 @@ Its defining feature is **mode resolution**: the same request builds differently
 
 ## When this fires
 
-The user hands off something concrete to be built: "implement this plan", "build issue #42", "write the code for `docs/plans/plan-sso.md`", "implement this spec", "do this the TDD way". It is the `implementkit` step of the plan → grill → file → **build** → commit workflow.
+The user hands off something concrete to be built: "implement this plan", "build issue #42", "write the code for `docs/plans/plan-sso-2026-07-23.md`", "implement this spec", "do this the TDD way". It is the `implementkit` step of the plan → grill → file → **build** → commit workflow.
 
 Two hard boundaries:
 
@@ -26,7 +26,7 @@ Two hard boundaries:
 ## Procedure
 
 ### 1. Take an explicit input
-Require the user to name what to build — a plan file (`docs/plans/plan-*.md`), an issue (`#42`, or a URL/id `gh` can fetch), or a freeform spec written in the prompt. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
+Require the user to name what to build — a plan file (`docs/plans/plan-<slug>-YYYY-MM-DD.md`), an issue (`#42`, or a URL/id `gh` can fetch), or a freeform spec written in the prompt. Do **not** hunt for an input: if nothing is named, stop and ask what to implement. Read the named input in full (for an issue, fetch it with `gh issue view <n>`; if `gh` isn't available, ask the user to paste it).
 
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes. A bare title, a one-line ask, or a spec with unresolved core decisions does **not** — stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.

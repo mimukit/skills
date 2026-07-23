@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle with three modes — create issues from a plan-*.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
+  Own the GitHub issue lifecycle with three modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, reconciled, or reviewed with the gh CLI.
 license: MIT
 allowed-tools: Bash, Read, Edit, Write
 metadata:
@@ -114,7 +114,7 @@ Apply a label only once it exists (`gh issue edit <n> --add-label <label>`) and 
 Turn work into issues. Two inputs — a plan file (the main path) or a plain description (start fresh).
 
 ### 1. Find the input
-- **Plan path:** a `plan-*.md`. Resolve it by precedence: an explicit path in the prompt → the newest `docs/plans/plan-*.md` → ask which plan.
+- **Plan path:** a `plan-<slug>-YYYY-MM-DD.md`. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (creation date is the filename suffix) → ask which plan.
 - **Ad-hoc path:** a plain description with no plan. This is the "start fresh, just file it" case → one well-formed issue.
 
 ### 2. Decompose a plan into a proposed breakdown
@@ -205,7 +205,7 @@ gh issue edit 44 --add-label blocked   # body carries: Blocked by #43
 Preview the label set alongside the issues and get an OK before applying — a mutation like any other.
 
 ### 6. Write the issue numbers back into the plan
-Once issues exist, annotate the source `plan-*.md` so it stays the source of truth — add the ref next to each task it maps to:
+Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth — add the ref next to each task it maps to without changing its creation-date suffix:
 
 ```markdown
 ### Phase 2 — auth (#41)

@@ -29,7 +29,7 @@ Keep going until the open decisions are resolved and the user confirms you share
 
 grillkit's job is the shared understanding, not a particular file — so end with the recap and let the user decide where it goes. After recapping, **ask** what to do with the settled decisions:
 
-- **Update an existing file in place** — e.g. fold the hardened decisions back into the plan document you grilled (the workflow path when the input was a `plan-*.md`). Rewrite that same file; don't spawn a parallel copy.
+- **Update an existing file in place** — e.g. fold the hardened decisions back into the plan document you grilled (the workflow path when the input was a `plan-<slug>-YYYY-MM-DD.md`). Rewrite that same file; don't spawn a parallel copy or change its creation-date suffix.
 - **Write a standalone note** — drop the decisions into a new file in the current directory, wherever the user wants it.
 - **Nothing** — leave the recap in the conversation and stop.
 

@@ -58,7 +58,7 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
 **plans (filesystem, available even without `gh`):**
-- list `docs/plans/plan-*.md` (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence); when `gh` is present, cross-check titles against the issue list to flag plans never turned into issues.
+- list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence); when `gh` is present, cross-check titles against the issue list to flag plans never turned into issues.
 
 ### 3. Rank — crown one finish-first move
 

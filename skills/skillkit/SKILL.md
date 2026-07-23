@@ -70,6 +70,9 @@ metadata:
 ### Prose formatting
 **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keep line structure only where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+### Documentation artifact naming
+When a skill creates a durable Markdown artifact under `docs/`, follow the host collection's convention when it has one. Otherwise use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end (for example, `docs/plans/plan-sso-login-2026-07-23.md`). Keep that creation date stable when the file is edited. Update the same artifact in place; for a genuine same-day collision, make the slug more specific and only then insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`). ADRs retain their sequence as `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`. Multi-file artifacts put the convention on their bundle directory, such as `docs/verify/verify-<slug>-YYYY-MM-DD/`, while structural child names remain fixed. Inline the applicable rule in every public skill that creates such an artifact so the installed skill remains self-contained.
+
 ### Cross-referencing steps
 **Never reference a step by its number** (a bare "see step N" citation). A bare number binds to a step's *position*, so inserting or reordering steps silently makes it point at the wrong one. Reference the step's *identity* instead: for a step with a heading, link to it by name with a GitHub anchor (`[Gather intent](#1-gather-intent)` — GitHub builds the anchor from the full heading text: lowercase, punctuation dropped, spaces → hyphens); for a list item with no heading, name the action in prose rather than citing its ordinal.
 
@@ -85,6 +88,7 @@ Apply these while drafting; they are the difference between a skill that trigger
 - **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability).
 - **Prune no-ops** — test every line for relevance; delete weak sentences rather than trimming them. Explain the *why* behind a rule when it isn't obvious.
 - **No hard-wrapping** — per [Prose formatting](#prose-formatting).
+- **Durable docs artifacts** — when the skill writes Markdown under `docs/`, apply [Documentation artifact naming](#documentation-artifact-naming) and inline the applicable convention in a public skill.
 - **kit naming + frontmatter** — obey the naming rules in [Propose names](#4-propose-names) and the [Frontmatter template](#frontmatter-template) exactly; `name` must match the directory; declare `metadata.internal`.
 
 ## Portability (public skills only)

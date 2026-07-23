@@ -5,7 +5,7 @@
 The owner wants to track two living project-memory artifacts, sourced from [mattpocock/skills `domain-modeling`](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling):
 
 - **`CONTEXT.md`** — a Domain-Driven-Design **domain glossary**: project-specific terms, tight 1–2 sentence definitions of *what a term is*, and an `_Avoid_` list of rejected synonyms. Not a status file, not general programming concepts.
-- **`docs/adr/NNNN-slug.md`** — Architecture Decision Records: why a hard-to-reverse, trade-off decision was made.
+- **`docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`** — Architecture Decision Records: why a hard-to-reverse, trade-off decision was made.
 
 A researchkit pass over the upstream repo (fetched 2026-07-22) surfaced the load-bearing correction: upstream's `CONTEXT.md` is a **glossary**, not the capped "project status snapshot" the owner first described. The owner then confirmed they want the **glossary** interpretation (no token cap) plus **ADR** tracking — and explicitly *not* a status file.
 
@@ -22,7 +22,7 @@ Locked in a grillkit session:
 | **Core job** | **Scribe of the domain model.** Detect the moment (a term needs pinning down / a decision meets the ADR bar) → **offer** → write on consent. Maintains both artifacts; one skill, two artifacts. |
 | **Two artifacts, one skill** | Glossary = *what terms mean*; ADR = *why a decision was made*. Same moment (design/decision time), same `docs/`-adjacent memory space — bundled, not split into two skills. |
 | **`CONTEXT.md` = glossary** | DDD domain glossary, upstream's format: header (context name + 1–2 sentence description) → terms grouped by optional subheading, each with a tight *what-it-is* definition and an `_Avoid_` synonym list. **No token/char cap** (a glossary grows with the domain; you never evict terms). Forbids general programming concepts. Be opinionated — pick one canonical term. Multi-context projects get a `CONTEXT-MAP.md` at root pointing to per-context files. |
-| **ADR = `docs/adr/NNNN-slug.md`** | Upstream's format verbatim: sequential zero-padded numbering (scan `docs/adr/` for the highest, increment); minimal by default (title + 1–3 sentence *context/decision/why*); optional `Status` (`proposed \| accepted \| deprecated \| superseded by ADR-NNNN`), `Considered Options`, `Consequences`. ADRs are **immutable** — reverse by writing a new one that supersedes. Directory created only when the first ADR is needed. |
+| **ADR = `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`** | Sequential zero-padded numbering (scan `docs/adr/` for the highest, increment) plus an ISO creation-date suffix; minimal by default (title + 1–3 sentence *context/decision/why*); optional `Status` (`proposed \| accepted \| deprecated \| superseded by ADR-NNNN`), `Considered Options`, `Consequences`. ADRs are **immutable** — reverse by writing a new one that supersedes. Directory created only when the first ADR is needed. |
 | **ADR trigger (three-part bar)** | Write an ADR only when **all three** hold: hard-to-reverse, surprising-without-context, and a genuine trade-off among real alternatives. |
 | **Invocation** | **Model-invoked** — the `description` triggers on "a domain term crystallized" / "a hard-to-reverse trade-off decision was settled," so it auto-fires *inside* grillkit / plankit / implementkit flow. **Never run by hand.** |
 | **Consent gate** | Both writes are consent-gated: detect → offer ("record this term / write an ADR?") → write only on yes. Never writes unprompted. |
@@ -51,12 +51,12 @@ Single lean `SKILL.md`. Upstream ships satellite `CONTEXT-FORMAT.md` / `ADR-FORM
 1. **Detect the moment** — a term is vague/overloaded/conflicting, or a settled decision meets the three-part ADR bar. In-flow, this fires while grilling/planning/implementing.
 2. **Locate existing artifacts** — read `CONTEXT.md` (or `CONTEXT-MAP.md` → the right context file); `Glob docs/adr/` for the highest number.
 3. **Offer** — surface the proposed glossary entry or ADR and ask before writing (consent gate).
-4. **Write on consent** — glossary: add/adjust the term in place, keep it a pure glossary (no specs/implementation), be opinionated about the canonical term. ADR: create `docs/adr/NNNN-slug.md` (next number, zero-padded), minimal by default, optional sections only when they add value.
+4. **Write on consent** — glossary: add/adjust the term in place, keep it a pure glossary (no specs/implementation), be opinionated about the canonical term. ADR: create `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` (next number, zero-padded, plus creation date), minimal by default, optional sections only when they add value.
 5. **Defer interrogation** — if the term/decision is genuinely unsettled, hand back to grillkit rather than guessing; domainkit records settled understanding, it doesn't manufacture it.
 
 ### Phase 4 — Inlined formats
 - **CONTEXT.md (glossary)** — header + terms (definition + `_Avoid_`), single-vs-multi context (`CONTEXT-MAP.md`), allowed/forbidden content, definition style, opinionated tone. No cap.
-- **ADR** — `docs/adr/NNNN-slug.md`, numbering rule, minimal structure, optional `Status`/`Considered Options`/`Consequences`, immutability + supersession, the three-part write bar.
+- **ADR** — `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`, numbering and creation-date rules, minimal structure, optional `Status`/`Considered Options`/`Consequences`, immutability + supersession, the three-part write bar.
 
 ### Phase 5 — Degradation
 - **No filesystem** → print the proposed glossary entry / ADR as a codeblock instead of writing (portable, environment-degrading per AGENTS.md).

@@ -1,8 +1,10 @@
 # Plan — statuskit
 
+_Created 2026-07-23._
+
 ## Context
 
-The kit collection has grown into a full workflow — `plankit → grillkit → issuekit → implementkit → prkit → commitkit`, plus satellites (repokit, reviewkit, qakit, verifykit, orcakit…). Each kit answers *one* question well, but nothing answers the **meta** question you ask when you sit back down at a project: *"Where is this thing right now, and what's my single best next move?"* Today you reconstruct that by hand — `git status`, scroll the issue tracker, check open PRs, remember which `plan-*.md` was never filed — then decide which kit to run.
+The kit collection has grown into a full workflow — `plankit → grillkit → issuekit → implementkit → prkit → commitkit`, plus satellites (repokit, reviewkit, qakit, verifykit, orcakit…). Each kit answers *one* question well, but nothing answers the **meta** question you ask when you sit back down at a project: *"Where is this thing right now, and what's my single best next move?"* Today you reconstruct that by hand — `git status`, scroll the issue tracker, check open PRs, remember which `plan-<slug>-YYYY-MM-DD.md` was never filed — then decide which kit to run.
 
 **statuskit** is that missing front door. It surveys the whole project read-only (git working tree, GitHub issues, open PRs + CI, unfiled plans), prints a **status dashboard**, and ranks the next actions with **one clearly-bolded top move** — then routes you to the right existing kit to do it (issuekit, implementkit, prkit, commitkit, plankit…). It never mutates anything itself; the kit it hands off to does, behind that kit's own guards.
 
@@ -56,7 +58,7 @@ One subsection per signal source, each a small set of read-only commands. **git 
 - **GitHub issues** *(gh only)* — `gh issue list --state open --json number,title,labels,updatedAt` → bucket by lifecycle label (in-progress / ready / blocked / in-review). Counts + the actionable set only — no drift detection.
 - **open PRs** *(gh only)* — `gh pr list --json number,title,statusCheckRollup,reviewDecision,isDraft,updatedAt` → classify: your red/change-requested PR (actionable), approved+green (surface-only), awaiting others (surface-only). Cap the list for speed on big repos.
 - **stale-tracker boolean** *(gh only)* — one cross-check: count merged PRs whose linked issue is still open. A single number, used only to decide whether "reconcile" ranks; never itemized.
-- **unfiled plans** — list `docs/plans/plan-*.md` (filesystem — available even without gh); cross-check titles against `gh issue list` *when gh is present* to flag plans never turned into issues.
+- **unfiled plans** — list `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (filesystem — available even without gh); cross-check titles against `gh issue list` *when gh is present* to flag plans never turned into issues.
 
 ### Phase 5 — Rank + recommend (the finish-first core)
 Map collected signals onto candidate actions, each tagged with its owning kit/command, then crown the highest rung (most-recently-active breaks intra-rung ties; the rest become runners-up). Two ladders, chosen by whether gh is available:
