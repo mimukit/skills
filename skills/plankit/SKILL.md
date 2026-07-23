@@ -1,7 +1,7 @@
 ---
 name: plankit
 description: >-
-  Turn a rough idea into a structured plan document (docs/plans/plan-*.md) before any code — brainstorm the approach, settle the big decisions, and write a plan that grillkit can harden and issuekit can turn into issues. Use when the user says "plan this feature", "brainstorm a plan/PRD/spec", "write a plan doc", "help me think through X before building", or runs "/plankit" — the front of the plan → grill → file workflow.
+  Turn a rough feature or change into a structured plan document (docs/plans/plan-*.md) before any code — brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature", "brainstorm a plan/PRD/spec", "write a plan doc", "help me think through this change before building", or runs "/plankit" — the front of the plan → grill → file workflow.
 license: MIT
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 metadata:
@@ -14,10 +14,9 @@ Turn a rough idea — a feature, a project, a spec, a PRD — into a structured 
 
 ## When this fires
 
-The user wants to think a piece of work through *before* building it — "plan this feature", "brainstorm a plan / PRD / spec", "write a plan doc", "help me think through X first", "/plankit". Two things it deliberately does **not** do:
+The user wants to think a piece of work through *before* building it — "plan this feature", "brainstorm a plan / PRD / spec", "write a plan doc", "help me think through X first", "/plankit". One distinction matters:
 
 - **It is not the adversarial interrogator** — that's grillkit. plankit asks enough to draft a coherent plan and records the thin spots as open questions; grillkit is what pressure-tests them one decision at a time.
-- **It does not implement** — plankit stops at the plan document. Writing the code from it is a separate step.
 
 ## Procedure
 
@@ -40,14 +39,14 @@ Resolve the structural decisions a coherent draft needs — the architecture, th
 Write `docs/plans/plan-<slug>.md`, where `<slug>` is a short kebab-case name for the feature (`plan-sso-login.md`). Use the [plan-doc format](#plan-doc-format) below — it is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file.
 
 ### 6. Hand off
-Report where the plan landed and offer the next step, in order:
+Report where the plan landed and offer the next step, in order, naming a sibling kit only when it is installed and otherwise describing the action in plain language:
 
 - **grillkit** — pressure-test and harden the draft (it can update this same file in place).
 - **issuekit** — turn the hardened plan into GitHub issues.
 
-If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off decision, **domainkit** records it (a `CONTEXT.md` glossary entry or a `docs/adr/` record) — leave that to it rather than inventing a format here.
+If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off decision, offer **domainkit** when installed; otherwise offer to record a glossary entry or ADR directly.
 
-Do not start either yourself, and never write application code or create issues from here — plankit's job ends at the document.
+Do not start either yourself.
 
 ## Plan-doc format
 
@@ -65,8 +64,7 @@ The problem, why it matters now, and the outcome that means success.
 | <the choice> | <what we picked and, briefly, why> |
 
 ## Approach
-The plan body as phases/milestones/tasks — each a concrete, verifiable unit of
-work. This is the structure issuekit reads to propose an issue breakdown.
+The plan body as phases/milestones/tasks — each a concrete, verifiable unit of work. This is the structure issuekit reads to propose an issue breakdown.
 
 ## Open questions
 Unresolved or thin spots, written as targets for grillkit to interrogate.
