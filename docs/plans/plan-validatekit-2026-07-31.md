@@ -175,6 +175,7 @@ The three states:
 
 - Add `validatekit` to the **Planning & Design** group in `skills.sh.json`, positioned **ahead of plankit** (it is upstream), and widen that group's description to cover validating an idea before planning it. Required by AGENTS.md in the same change.
 - Add a `validatekit` row to the README Skills table.
+- **Add the inverse drift line to plankit.** Once this skill exists and is named, `skills/plankit/SKILL.md` gains one line: if planning reveals the work is an unvalidated commercial bet rather than a scoped piece of work, stop and point at validatekit. (Deferred here from the builder-mode harvest because it was blocked on this skill shipping.)
 - `make lint name=validatekit` clean.
 - Live-test with `make link` in a fresh session: once against a bare idea with no repo (the primary web-chat case), once inside a repo to exercise the artifact path, and once with a deliberately evidence-free idea to confirm the skill actually returns **Contradicted** instead of softening.
 
