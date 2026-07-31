@@ -37,6 +37,7 @@ Makefile                        command surface (run `make help`)
 | `orcakit` | bridge a `ready` GitHub issue to an isolated Orca worktree and back | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
+| `validatekit` | pressure-test a startup idea and grade the evidence behind it before you build | public |
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |
 | `grillkit` | interrogate any idea one decision at a time before you commit | public |
 | `researchkit` | research the options for a technical decision against primary sources and recommend one | public |
