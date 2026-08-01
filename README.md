@@ -32,6 +32,7 @@ Makefile                        command surface (run `make help`)
 | `skillkit` | author a new skill from scratch — conventions, testing, and publishing included | public |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
+| `mergekit` | pull an open PR into a worktree, sync it, set it up for manual review, then merge it on your say-so | public |
 | `issuekit` | create, sync, and triage GitHub issues across the workflow | public |
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
 | `orcakit` | bridge a `ready` GitHub issue to an isolated Orca worktree and back | public |
