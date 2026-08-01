@@ -1,8 +1,10 @@
 # plan: delete orcakit
 
-**Status:** deferred — tracked now, implemented later
+**Status:** partly executed — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting shipped early, with the gitkit caller refactor on 2026-08-02. **orcakit now has no behavior of its own left**: both actions are pointers at issuekit. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
 **Date:** 2026-08-02
 **Depends on:** [plan-gitkit-worktree-convention-2026-08-02.md](plan-gitkit-worktree-convention-2026-08-02.md)
+
+**What already landed, and why early.** The gitkit rollout could not reroute afkkit's front door without a `ready` guard to point it at — gitkit has none — so the `start` mode was pulled forward rather than leaving afkkit's safety property unenforced for the duration. orcakit still exists, now as a deprecated wrapper delegating to issuekit and gitkit, with no `orca` CLI calls and no hard-coded `origin/main`.
 
 ## Why
 
@@ -40,16 +42,16 @@ The split is clean because the seam is real: issuekit answers *"is this issue wo
 1. gitkit ships and every caller is refactored onto it.
 2. Both machines have run the gitkit workflow for a sustained stretch, including at least one full `ready → worktree → PR → merge → teardown` cycle **on the VPS**, where Orca does not exist.
 3. The Orca external-worktree observation path is confirmed working locally (the open question in the gitkit plan).
-4. afkkit no longer instructs the human to run `orcakit start <n>` — see below.
+4. ~~afkkit no longer instructs the human to run `orcakit start <n>`.~~ **Met 2026-08-02** — afkkit now points at issuekit `start`.
 
 ## Mechanical checklist
 
-- [ ] Add `start` mode to `skills/issuekit/SKILL.md`; extend `sync` with the merged-PR precondition and the preview-and-confirm gate.
+- [x] Add `start` **and `close`** modes to `skills/issuekit/SKILL.md` — done 2026-08-02. **Two deviations from the table below.** (1) The merged-PR precondition and preview gate went into a dedicated mode rather than into `sync`: `sync` sweeps the whole tracker for drift and never touches the filesystem, while the new mode lands one named issue and tears its worktree down — folding a worktree deletion into a whole-tracker sweep would have been the wrong blast radius. It reuses `sync`'s reconciliation sections rather than restating them. (2) The mode is named **`close`**, not `finish`, because that is the verb the owner actually uses when giving the command. orcakit keeps its own `finish` action name (its published trigger) and points at `issuekit close`.
 - [ ] Delete `skills/orcakit/`.
 - [ ] `skills.sh.json` — remove `"orcakit"` from the "Git & GitHub" group.
-- [ ] `README.md` — remove the orcakit row (currently *"bridge a `ready` GitHub issue to an isolated Orca worktree and back"*).
-- [ ] `skills/afkkit/SKILL.md` — four references to fix: the input contract, the manual-prerequisite paragraph, the `afkkit all` batch paragraph, and the worktree-discovery line. Each becomes issuekit `start` + gitkit rather than `orcakit start`.
-- [ ] `skills/statuskit/SKILL.md` — the ladder routes a `ready` issue to `implementkit` / `orcakit`; retarget to issuekit / gitkit.
+- [ ] `README.md` — remove the orcakit row (now marked deprecated, pointing at issuekit + gitkit).
+- [x] `skills/afkkit/SKILL.md` — all references retargeted to issuekit `start` + gitkit, 2026-08-02.
+- [x] `skills/statuskit/SKILL.md` — the `ready`-issue rung now routes to `issuekit start` + gitkit, 2026-08-02.
 - [ ] `docs/plans/plan-orcakit-2026-07-22.md` — leave in place as history; add a status line pointing at this plan.
 - [ ] `make lint` clean.
 

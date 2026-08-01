@@ -1,6 +1,6 @@
 # plan: gitkit — one worktree convention for local Orca and the remote devbox
 
-**Status:** proposed
+**Status:** in progress — gitkit shipped and tested; callers refactored 2026-08-02. Remaining: migrate the existing worktrees, then run both machines through a full cycle.
 **Date:** 2026-08-02
 
 ## The problem
@@ -159,7 +159,7 @@ Four skills, four answers, and only prkit's recovers from an unset `origin/HEAD`
 | **prkit** | base ref, sync policy, branch creation | Keeps its base-ref *ladder* — as gitkit's, not its own. Drops the standalone "always rebase" rule in favor of gitkit's owned-vs-under-review rule (which yields rebase here anyway, so behavior is unchanged — only the source of truth moves). Its default-branch guard (*"a PR needs a feature branch… offer `git switch -c <name>`"*) calls gitkit for the branch name. |
 | **reviewkit** | base ref | Drops its three-step base detection; calls gitkit. Everything downstream (`git diff <base>...HEAD`) is unchanged. |
 | **orcakit** | worktree lifecycle, base ref, branch naming | Drops `orca worktree create` / `orca worktree rm`; stops hard-coding `origin/main`. Residue is the `ready` guard plus label flips. **Slated for deletion** — see [plan-orcakit-deletion-2026-08-02.md](plan-orcakit-deletion-2026-08-02.md). |
-| **afkkit** | worktree lookup | Worktree discovery goes through gitkit `list` (branch-keyed) instead of `orca worktree list` / `git worktree list`. Its three verification commands stay — they check the *session's* location, which is afkkit's own concern. The manual prerequisite becomes a gitkit call rather than `orcakit start`. |
+| **afkkit** | worktree lookup | Worktree discovery goes through gitkit `list` (branch-keyed) instead of `orca worktree list` / `git worktree list`. Its three verification commands stay — they check the *session's* location, which is afkkit's own concern. The manual prerequisite becomes **issuekit `start`** rather than `orcakit start` (see the correction below). |
 | **statuskit** | branch naming, base ref | Its branch→issue heuristic parses `issue-N` / slug patterns — that parser belongs with the producer, so it sources the pattern from gitkit. "Is this a feature branch?" needs gitkit's base ref rather than assuming `main`/`master`. Routes worktree work to gitkit. |
 
 ### Skills that do not change — and why
@@ -170,7 +170,7 @@ Confirmed by audit, not assumed:
 |---|---|
 | **commitkit** | No branch, base-ref, worktree, or sync surface. Operates on the index and working tree only. |
 | **implementkit** | Entirely cwd-relative, no worktree or branch awareness. This is *why* afkkit can dispatch it into a worktree unchanged — keep it that way. |
-| **issuekit** | References worktrees only as sizing doctrine (*"safe to take into its own git worktree now"*). No commands. Prose may link gitkit; no behavior change. Grows a `start` mode later, under the orcakit deletion plan. |
+| **issuekit** | ~~No behavior change; grows a `start` mode later, under the orcakit deletion plan.~~ **Corrected 2026-08-02: the `start` mode was pulled forward into this change** — see below. |
 | **repokit** | Worktree wording appears only inside label descriptions it provisions. Text, not behavior. |
 | **verifykit** | Uses its own `refs/verify-assets/<slug>` namespace and an isolated index; explicitly *"never touches the working tree or current branch."* Worktree-safe by construction — leave alone. |
 | **qakit** | "branch to test on" is a form field in generated output, not an operation. |
@@ -178,6 +178,14 @@ Confirmed by audit, not assumed:
 | **plankit**, **researchkit**, **grillkit**, **humankit**, **validatekit**, **skillkit**, **handoffkit** | No git surface at all. |
 
 That is all 20 skills accounted for: 6 change, 14 do not.
+
+### Correction, 2026-08-02: issuekit gains `start` in this change, not later
+
+Executing the refactor surfaced a gap in the table above. It says afkkit's manual prerequisite *"becomes a gitkit call rather than `orcakit start`"* — but gitkit only makes a worktree. It does not read the `ready` label and does not flip `ready → in-progress`, and that guard is afkkit's entire safety property: the reason an unattended run can never get ahead of human judgment. Routing afkkit's front door straight at gitkit would have deleted the gate and left nothing in its place.
+
+The orcakit deletion plan already had the answer — a new issuekit `start` mode owning the guard, the label flip, and a gitkit call for the worktree — but scheduled it *after* this change. So the sequencing was wrong, not the design. **`start` was pulled forward and shipped here**, and afkkit's prerequisite now reads issuekit `start <n>`.
+
+The knock-on: that satisfies precondition 4 of the deletion plan, and it makes orcakit a pure wrapper over issuekit + gitkit with nothing of its own left. orcakit is refactored onto both (no `orca` CLI, no hard-coded `origin/main`) and now carries a deprecation notice pointing at them, but is **not** deleted — the deletion plan's other preconditions, chiefly a full cycle on the VPS, are still unmet.
 
 ### Registry
 
