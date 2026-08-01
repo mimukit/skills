@@ -1,6 +1,6 @@
 # plan: delete orcakit
 
-**Status:** partly executed — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting shipped early, with the gitkit caller refactor on 2026-08-02. **orcakit now has no behavior of its own left**: both actions are pointers at issuekit. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
+**Status:** deprecation shipped 2026-08-02 — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting landed with the gitkit caller refactor, and orcakit is now a stub that warns and routes. **No skill, script, or config depends on it**; the only live references left are the README row and its `skills.sh.json` entry, both of which advertise the deprecation on purpose. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
 **Date:** 2026-08-02
 **Depends on:** [plan-gitkit-worktree-convention-2026-08-02.md](plan-gitkit-worktree-convention-2026-08-02.md)
 
@@ -47,9 +47,10 @@ The split is clean because the seam is real: issuekit answers *"is this issue wo
 ## Mechanical checklist
 
 - [x] Add `start` **and `close`** modes to `skills/issuekit/SKILL.md` — done 2026-08-02. **Two deviations from the table below.** (1) The merged-PR precondition and preview gate went into a dedicated mode rather than into `sync`: `sync` sweeps the whole tracker for drift and never touches the filesystem, while the new mode lands one named issue and tears its worktree down — folding a worktree deletion into a whole-tracker sweep would have been the wrong blast radius. It reuses `sync`'s reconciliation sections rather than restating them. (2) The mode is named **`close`**, not `finish`, because that is the verb the owner actually uses when giving the command. orcakit keeps its own `finish` action name (its published trigger) and points at `issuekit close`.
-- [ ] Delete `skills/orcakit/`.
-- [ ] `skills.sh.json` — remove `"orcakit"` from the "Git & GitHub" group.
-- [ ] `README.md` — remove the orcakit row (now marked deprecated, pointing at issuekit + gitkit).
+- [x] Reduce `skills/orcakit/SKILL.md` to a deprecation stub — done 2026-08-02. Warns, maps each old action to its replacement, invokes it, and stops if issuekit is absent rather than falling back.
+- [ ] Delete `skills/orcakit/` — after a release or two of the stub.
+- [ ] `skills.sh.json` — remove `"orcakit"` from the "Git & GitHub" group. **Keep it listed while deprecated**, so anyone browsing the directory sees the notice instead of a silent disappearance.
+- [ ] `README.md` — remove the orcakit row (marked deprecated and pending removal in the meantime).
 - [x] `skills/afkkit/SKILL.md` — all references retargeted to issuekit `start` + gitkit, 2026-08-02.
 - [x] `skills/statuskit/SKILL.md` — the `ready`-issue rung now routes to `issuekit start` + gitkit, 2026-08-02.
 - [ ] `docs/plans/plan-orcakit-2026-07-22.md` — leave in place as history; add a status line pointing at this plan.
@@ -64,7 +65,12 @@ Options, undecided:
 - **Delete outright.** Simplest. Existing installs quietly rot.
 - **Ship a deprecation release first** — rewrite `SKILL.md` to a short notice pointing at issuekit + gitkit, leave it for a release or two, then delete. Costs a cycle, gives anyone who installed it a signal.
 
-Lean toward the deprecation release if telemetry shows any installs; delete outright if it is only you.
+~~Lean toward the deprecation release if telemetry shows any installs; delete outright if it is only you.~~
+
+**Decided 2026-08-02: deprecation release.** `SKILL.md` is now a stub that prints a warning, maps the old action to its replacement, and invokes it. Two things fell out of writing it:
+
+- **The stub carries no fallback.** The earlier wrapper kept inline `gh` commands for when issuekit is absent; those are gone. A deprecated skill quietly reimplementing its replacement is the exact divergence the deprecation exists to end, so a missing issuekit is now a stop-and-report, not a second code path.
+- **Its `description` was narrowed to fire only on the literal name.** It previously advertised "start issue #N" and "spin up a worktree for #N" — the same triggers issuekit `start` now claims. Two skills competing for one phrase is a live routing bug, and the deprecated one winning would put a warning in front of a working command. orcakit now fires only on "orcakit"; issuekit owns the English.
 
 ## Risks
 
