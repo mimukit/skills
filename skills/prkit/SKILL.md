@@ -105,7 +105,7 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
 
 ### 9. After creating
-Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft.
+Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft. prkit's job ends here — when the reviewer is ready to pull the PR down, test it by hand, and land it, that's mergekit's half of the PR's life.
 
 ## Notes
 
