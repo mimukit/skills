@@ -7,8 +7,10 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
 ## The loop at a glance
 
 ```
-   DECIDE   validatekit ─── is it worth building at all?
-            researchkit ─── which option do we pick?
+   ORIENT   statuskit ──▶ one next move, routed to the kit that does it
+            ▼
+   DECIDE   validatekit ──▶ validated / unproven / contradicted
+            researchkit ──▶ one recommended option, with cited evidence
             ▼
    PLAN     plankit ──▶ grillkit ──▶ plan doc, stamped `Grilled:`
             ▼
@@ -21,11 +23,70 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
    SHIP     prkit ──▶ PR open, issue ──▶ in-review
             ▼
    LAND     mergekit start ──▶ mergekit finish ──▶ issuekit close
+
+            gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge
+                          borrowed by issuekit start, prkit, mergekit, issuekit close
+            domainkit ┄┄▶ CONTEXT.md glossary + ADRs, as PLAN settles decisions
 ```
 
-Read it top to bottom: each phase's output is the next phase's input, and the arrows inside a row are the order you run those kits.
+The same loop, rendered (GitHub only — the ASCII above is what an agent or terminal reader sees):
 
-Four kits sit off the spine. `domainkit` scribes the glossary and ADRs as planning settles decisions. `gitkit` supplies the worktree, branch, and rebase-vs-merge rules the other kits borrow. `repokit` provisions the label vocabulary the loop depends on, once per repo. `afkkit` runs the whole BUILD → SHIP span unattended. `handoffkit`, `humankit`, and `skillkit` are invoked on demand.
+```mermaid
+flowchart TD
+    ST["statuskit<br>read-only sweep · crowns one next move"]
+
+    subgraph decide["DECIDE"]
+        direction LR
+        V["validatekit<br>is it worth building at all?"]
+        R["researchkit<br>which option do we pick?"]
+    end
+
+    subgraph plan["PLAN"]
+        direction LR
+        P["plankit"] --> G["grillkit"] --> PD["plan doc<br>stamped Grilled:"]
+    end
+
+    F["issuekit create<br>ready / blocked / needs-planning"]
+    S["issuekit start<br>worktree · ready to in-progress"]
+
+    subgraph build["BUILD"]
+        direction LR
+        I["implementkit"] --> C["commitkit"] --> RV["reviewkit"] --> Q["verifykit / qakit"]
+    end
+
+    SH["prkit<br>PR open · issue to in-review"]
+
+    subgraph land["LAND"]
+        direction LR
+        M1["mergekit start"] --> M2["mergekit finish"] --> M3["issuekit close"]
+    end
+
+    GK["gitkit<br>worktree · branch name · base ref · rebase vs merge"]
+    DK["domainkit<br>CONTEXT.md glossary + ADRs"]
+
+    V --> P
+    R --> P
+    PD --> F --> S --> I
+    Q --> SH --> M1
+
+    ST -.-> F
+    ST -.-> S
+    ST -.-> I
+    ST -.-> SH
+
+    GK -.-> S
+    GK -.-> SH
+    GK -.-> M1
+    GK -.-> M3
+
+    G -.-> DK
+```
+
+Read either one top to bottom. Every connector is an arrow pointing the way the work flows: a solid arrow (`──▶`, `▼`) is a step — the next kit you run, or the thing this one produces. A dotted arrow (`┄┄▶`) is a layer being called rather than a step you take.
+
+The dotted edges are not steps in the sequence. `gitkit` is the layer the phases call into: `issuekit start` asks it for a worktree, `prkit` asks for the base ref and gets "rebase" back, `mergekit` asks the same question once the PR is shared and gets "merge", and `issuekit close` has it tear the worktree down. `domainkit` runs the other way — planning settles a term or a hard-to-reverse trade-off, and it writes that down. Neither is usually invoked by name. `statuskit` sits above the loop rather than in it: read-only, launches nothing, and its whole job is telling you which row to jump to, so it can point at any of them.
+
+Three kits stay off the map entirely. `repokit` provisions the label vocabulary the loop depends on — run it once per repo, before any of this. `afkkit` runs the whole BUILD → SHIP span unattended. `handoffkit`, `humankit`, and `skillkit` are invoked on demand.
 
 ## Orientation: start with statuskit
 
