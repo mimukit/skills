@@ -9,7 +9,11 @@
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
 #   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
-# Usage: scripts/lint.sh [skill-name ...]   (default: all skills)
+# On a full run it also cross-checks the human-facing WORKFLOW.md map against the
+# skills it names — skill names, `<kit> <mode>` invocations, and lifecycle labels
+# must still exist in the source SKILL.md files (error), so the map breaks loudly
+# instead of rotting when a mode or label is renamed.
+# Usage: scripts/lint.sh [skill-name ...]   (default: all skills + WORKFLOW.md)
 # Exit status is non-zero if any errors (not warnings) were found.
 set -euo pipefail
 
@@ -158,14 +162,87 @@ check_skill() {
   done
 }
 
+# Does a whole `word` appear inside any backtick span of a skill's SKILL.md?
+# Modes in this collection are written backticked (`create`, `list`, `fix`), so a
+# mode WORKFLOW.md names should show up inside a code span in its own skill.
+skill_backtick_has_word() {
+  local kit="$1" word="$2" f="$SKILLS_DIR/$kit/SKILL.md"
+  [[ -f "$f" ]] || return 1
+  grep -oE '`[^`]+`' "$f" | grep -qwF -- "$word"
+}
+
+# Cross-check the human-facing WORKFLOW.md map against the skills it describes.
+# It duplicates skill facts on purpose — modes, labels, names — so a reader gets
+# one map; nothing else keeps it honest, so guard the three that rot on a rename:
+#   A. every `kit` skill it names still exists as a skill directory
+#   B. every `<kit> <mode>` invocation names a mode that skill actually defines
+#   C. every lifecycle label in the vocabulary section still lives in issuekit
+# Cheap greps over backtick spans — a loud tripwire, not a proof. Full runs only.
+check_workflow_doc() {
+  local doc="$REPO_ROOT/WORKFLOW.md"
+  [[ -f "$doc" ]] || return 0
+  local wissues=() kit mode pair lbl
+
+  # A. skill names it references must resolve to a real skill directory
+  while IFS= read -r kit; do
+    [[ -z "$kit" ]] && continue
+    skill_exists "$kit" || wissues+=("names skill '$kit', which has no skills/$kit/SKILL.md")
+  done < <(grep -oE '`[^`]+`' "$doc" | grep -oE '[a-z][a-z0-9]*kit' | sort -u)
+
+  # B. `<kit> <mode>` invocations must name a mode the skill actually defines
+  while IFS= read -r pair; do
+    [[ -z "$pair" ]] && continue
+    kit="${pair%% *}"; mode="${pair#* }"
+    skill_exists "$kit" || continue        # a missing skill is already flagged in A
+    skill_backtick_has_word "$kit" "$mode" \
+      || wissues+=("invokes '$kit $mode', but skills/$kit/SKILL.md defines no such mode")
+  done < <(
+    grep -oE '`[^`]+`' "$doc" | sed 's/`//g' \
+      | awk '{ kit = $1; mode = $2
+               if (kit !~ /^[a-z][a-z0-9]*kit$/) next
+               gsub(/[^a-z-].*$/, "", mode)
+               if (mode == "") next
+               print kit " " mode }' \
+      | sort -u
+  )
+
+  # C. lifecycle labels named in the vocabulary section must still exist in issuekit
+  while IFS= read -r lbl; do
+    [[ -z "$lbl" ]] && continue
+    grep -qF -- "$lbl" "$SKILLS_DIR/issuekit/SKILL.md" \
+      || wissues+=("vocabulary label '$lbl' is gone from issuekit/SKILL.md")
+  done < <(
+    awk '/^### The label vocabulary/ { inl = 1; next }
+         inl && /^###? / { inl = 0 }
+         inl { print }' "$doc" \
+      | grep -oE '`[^`]+`' | sed 's/`//g' \
+      | grep -E '^[a-z][a-z-]+$' | grep -vE 'kit$' | sort -u
+  )
+
+  if [[ ${#wissues[@]} -eq 0 ]]; then
+    echo "  ${C_GREEN}✓${C_RESET} WORKFLOW.md"
+    return
+  fi
+  echo "  ${C_RED}✗${C_RESET} WORKFLOW.md"
+  local i
+  for i in "${wissues[@]}"; do
+    echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
+  done
+}
+
+run_all=0
 targets=("$@")
 if [[ ${#targets[@]} -eq 0 ]]; then
+  run_all=1
   while IFS= read -r n; do [[ -n "$n" ]] && targets+=("$n"); done < <(skill_names)
 fi
 
 for name in "${targets[@]}"; do
   check_skill "$name"
 done
+
+# WORKFLOW.md cross-check only on a full run — a single-skill lint stays scoped.
+[[ "$run_all" -eq 1 ]] && check_workflow_doc
 
 echo
 echo "${C_DIM}${errors} error(s), ${warns} warning(s)${C_RESET}"
