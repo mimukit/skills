@@ -81,7 +81,7 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 
 | # | State | Move → |
 |---|-------|--------|
-| 1 | your PR is red or change-requested | fix CI / address review — `mergekit` |
+| 1 | your PR is red or change-requested | fix CI / address review — `mergekit fix` |
 | 2 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
 | 3 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
 | 4 | a stash | restore it to finish the work, or drop it if obsolete |
