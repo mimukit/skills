@@ -6,6 +6,8 @@ My personal collection of AI agent skills for day-to-day development — install
 
 Every skill here is **authored from scratch**, never forked. Some are *my version of* a popular upstream skill, rewritten to fit this collection's conventions.
 
+Each skill works standalone, but they're designed as one loop — **decide → plan → file → build → ship → land**. [WORKFLOW.md](./WORKFLOW.md) is the day-to-day guide: every skill's modes, the handoffs between them, and the order to run them in. If you're not sure what to run, `statuskit` will tell you.
+
 ## Naming philosophy
 
 Skills here follow one convention: a **`kit` suffix** — functional word first, `kit` appended (`commitkit`, `humankit`, `prkit`).
@@ -50,6 +52,8 @@ Makefile                        command surface (run `make help`)
 | `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
 | `afkkit` | run a grilled `ready` issue from worktree to open PR unattended — implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
+
+How these fit together in practice — the modes each one exposes, what hands off to what, and a worked end-to-end day — is in [WORKFLOW.md](./WORKFLOW.md).
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
 
