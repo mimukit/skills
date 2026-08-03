@@ -7,26 +7,25 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
 ## The loop at a glance
 
 ```
-                          ┌──────────── validatekit ─── is it worth building?
-   DECIDE                 │
-                          └──────────── researchkit ─── which option do we pick?
-                                              │
-   PLAN         plankit ──▶ grillkit ──▶ (Grilled: stamp)
-                    │            │
-                    └─ domainkit ┘  glossary + ADRs, as a byproduct
-                                              │
-   FILE                         issuekit create ──▶ ready / blocked / needs-planning
-                                              │
-   START                        issuekit start ──▶ gitkit worktree, ready → in-progress
-                                              │
-   BUILD        implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit
-                                              │
-   SHIP                            prkit ──▶ in-review
-                                              │
-   LAND                mergekit start ──▶ mergekit finish ──▶ issuekit close
+   DECIDE   validatekit ─── is it worth building at all?
+            researchkit ─── which option do we pick?
+            ▼
+   PLAN     plankit ──▶ grillkit ──▶ plan doc, stamped `Grilled:`
+            ▼
+   FILE     issuekit create ──▶ ready / blocked / needs-planning
+            ▼
+   START    issuekit start ──▶ worktree, ready ──▶ in-progress
+            ▼
+   BUILD    implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit
+            ▼
+   SHIP     prkit ──▶ PR open, issue ──▶ in-review
+            ▼
+   LAND     mergekit start ──▶ mergekit finish ──▶ issuekit close
 ```
 
-`afkkit` runs the whole BUILD + SHIP span unattended. `repokit` provisions the label vocabulary the loop depends on. `handoffkit`, `humankit`, and `skillkit` sit off to the side and are invoked on demand.
+Read it top to bottom: each phase's output is the next phase's input, and the arrows inside a row are the order you run those kits.
+
+Four kits sit off the spine. `domainkit` scribes the glossary and ADRs as planning settles decisions. `gitkit` supplies the worktree, branch, and rebase-vs-merge rules the other kits borrow. `repokit` provisions the label vocabulary the loop depends on, once per repo. `afkkit` runs the whole BUILD → SHIP span unattended. `handoffkit`, `humankit`, and `skillkit` are invoked on demand.
 
 ## Orientation: start with statuskit
 
