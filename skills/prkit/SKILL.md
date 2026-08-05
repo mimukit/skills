@@ -41,7 +41,7 @@ git diff origin/<base>...HEAD --stat                     # files touched
 git diff origin/<base>...HEAD                            # the actual changes
 ```
 
-**gitkit owns base-ref resolution** — its ladder runs `gh repo view --json defaultBranchRef` first, falls back to `git symbolic-ref --short refs/remotes/origin/HEAD`, repairs an unset `origin/HEAD` with `git remote set-head origin --auto` and retries, then checks which of `origin/main` / `origin/master` exists, and asks rather than guessing past that. Don't re-derive it here; repos whose default is `develop` or `trunk` are real, and getting this wrong silently produces an empty or enormous diff. Re-check the current branch against the base gitkit returns and stop if they match.
+**gitkit owns base-ref resolution** — ask it for the base rather than re-deriving the ladder here; repos whose default is `develop` or `trunk` are real, and getting this wrong silently produces an empty or enormous diff. Without gitkit, `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` is the authoritative fallback — and ask rather than guess when it can't answer. Re-check the current branch against the base gitkit returns and stop if they match.
 
 Diff against `origin/<base>` (the just-fetched remote tip), not a local `<base>` that may be behind — otherwise the title, body, and file list are computed against commits that are no longer the merge target.
 
@@ -55,7 +55,7 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 ```
 
 - **Behind by zero**: nothing to do — go to [Push the branch](#4-push-the-branch).
-- **Behind**: the branch needs `origin/<base>` brought in. Apply **gitkit's sync rule** — *rebase a branch you exclusively own and have not published for review; merge the base into a branch that is under review or shared.* At PR-open time the branch has no review on it yet, so this resolves to **rebase** (`git rebase origin/<base>`): nothing points at those commit SHAs, nothing breaks, and the PR gets a clean diff instead of a merge commit muddying it. That flips once the PR exists — a branch under review gets the base *merged* in, because rebasing would mark every review thread outdated. Rebasing rewrites the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule).
+- **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**; at PR-open time — a branch you own, with no review on it yet — it resolves to **rebase** (`git rebase origin/<base>`), giving the PR a clean diff. (That flips to *merge* once the PR exists and review threads anchor to its commits — gitkit's rule, not restated here.) Rebasing rewrites the branch, so **offer it and confirm before running** — never sync silently (mirrors the "never force-push without an ask" rule).
 - **Rebase conflicts**: if the rebase stops on a conflict, **stop and surface it** — list the conflicted files (`git diff --name-only --diff-filter=U`) and resolve them (or hand them back to the user), then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
 
 After a successful rebase, re-read the diff (`git diff origin/<base>...HEAD`) so the title and body reflect the rebased result.
