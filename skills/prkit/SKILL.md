@@ -3,7 +3,7 @@ name: prkit
 description: >-
   Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff, then created with the gh CLI, embedding verifykit proof artifacts inline when a bundle is present. Use when the user asks to open a PR, says "create a pull request", "raise a PR", "submit this for review", or "gh pr create" — even if they don't spell out the title or body.
 license: MIT
-allowed-tools: Bash, Read, Write
+allowed-tools: Bash, Read, Write, Skill
 metadata:
   internal: false
 ---

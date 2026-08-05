@@ -3,7 +3,7 @@ name: researchkit
 description: >-
   Research the credible options for a technical decision and recommend one — a tool, library, framework, architecture, or service — grounded in primary sources with cited, dated evidence. Use when the user asks "which should I use, A or B", "compare X and Y", "evaluate options for Z", "what's the best tool/library/service for …", "should we use X or Y", "research X before we build", or runs "/researchkit" — the decision research that front-runs a plan.
 license: MIT
-allowed-tools: WebSearch, WebFetch, Read, Grep, Glob, Write
+allowed-tools: WebSearch, WebFetch, Read, Grep, Glob, Write, AskUserQuestion
 metadata:
   internal: false
 ---

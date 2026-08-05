@@ -3,7 +3,7 @@ name: issuekit
 description: >-
   Own the GitHub issue lifecycle with five modes — create issues from a plan-<slug>-YYYY-MM-DD.md or a description (kept independent for parallel git-worktree work, with any prerequisite labeled `blocked`), start a `ready` issue into its own worktree, close one out once its PR merges (close the issue, unblock dependents, tear the worktree down), sync PR↔issue links after merge, and triage the tracker. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "begin working #42", "close #42", "close out #42", "wrap up #42 now the PR merged", "sync my issues", "close the issue this PR fixed", "triage the backlog", "issuekit", or wants issues opened, started, landed, reconciled, or reviewed with the gh CLI.
 license: MIT
-allowed-tools: Bash, Read, Edit, Write
+allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
   internal: false
 ---
