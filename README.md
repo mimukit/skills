@@ -38,7 +38,7 @@ Makefile                        command surface (run `make help`)
 | `mergekit` | pull an open PR into a worktree, sync it, set it up for manual review, then merge it on your say-so | public |
 | `issuekit` | create, start, close, sync, and triage GitHub issues across the workflow | public |
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
-| `orcakit` | **deprecated, pending removal** — warns and routes to `issuekit` (`start`/`close`) + `gitkit`, which own everything it did | public |
+| `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `validatekit` | pressure-test a startup idea and grade the evidence behind it before you build | public |
