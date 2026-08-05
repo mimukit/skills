@@ -136,7 +136,7 @@ Dispatch a subagent (worktree) to invoke **reviewkit** against the branch diff. 
 
 Bounded at **two fix rounds**. Per round:
 
-1. Dispatch a subagent (worktree) to invoke **implementkit** in fix mode against the concrete blocker list from [Review](#5-review).
+1. Dispatch a subagent (worktree) to invoke **implementkit** with a **fix round** — the concrete blocker list from [Review](#5-review) as its input.
 2. Commit the fixes (**commitkit**).
 3. Re-review (**reviewkit**) — **delta-scoped**: point it at the fix commits and the surviving blocker list, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it on the strongest model is the most expensive thing this pipeline can do. Only re-review while **blockers** remain; nits are fixed once in the first round and never trigger another round.
 
