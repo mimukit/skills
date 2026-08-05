@@ -9,6 +9,7 @@
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
 #   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
+#   - a closing hand-off section exists, so the skill recaps and routes (warn)
 # On a full run it also cross-checks the human-facing WORKFLOW.md map against the
 # skills it names — skill names, `<kit> <mode>` invocations, and lifecycle labels
 # must still exist in the source SKILL.md files (error), so the map breaks loudly
@@ -74,6 +75,30 @@ check_anchors() {
   ' "$1"
 }
 
+# Skills exempt from the closing hand-off requirement, by design rather than by
+# oversight: gitkit is the primitives layer other skills call, and states outright
+# that preparing a worktree implies nothing about what to do in it; orcakit is a
+# deprecation shim whose entire body is already a route to its replacement.
+HANDOFF_EXEMPT=" gitkit orcakit "
+
+# Does the skill close with a hand-off — a recap of what it did plus the next move?
+# (AGENTS.md § "Closing a skill: the hand-off".) `Hand off` is canonical; the rest
+# are grandfathered headings from skills written before the convention. This can
+# only check that such a section *exists* — whether its three beats are any good
+# is a review judgment, not something a grep can settle. Code fences are skipped.
+has_closing_section() {
+  awk '
+    /^```/ || /^~~~/ { infence = !infence; next }
+    infence { next }
+    /^#+[ \t]/ {
+      h = tolower($0)
+      sub(/^#+[ \t]+/, "", h)
+      if (h ~ /hand[ -]?off|hand over|report|output|finish|after creating/) found = 1
+    }
+    END { exit !found }
+  ' "$1"
+}
+
 check_skill() {
   local name="$1" file="$SKILLS_DIR/$1/SKILL.md" fm fname desc_has
 
@@ -131,6 +156,11 @@ check_skill() {
     if grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
       issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
+  fi
+
+  # closing hand-off: recap what changed, then name the next move
+  if [[ "$HANDOFF_EXEMPT" != *" $name "* ]] && ! has_closing_section "$file"; then
+    issues+=("W:no closing section — end with '## Hand off' (what changed · where it landed · next)")
   fi
 
   # reference integrity: intra-doc anchors resolve; no number-based step refs
