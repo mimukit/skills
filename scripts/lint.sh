@@ -191,6 +191,56 @@ check_skill() {
   done
 }
 
+# --- Shared-contract tables -------------------------------------------------
+# Two tables are deliberately duplicated across public skills (each must stand
+# alone once installed, so neither pair can point at a single source file):
+#   - the lifecycle label map: issuekit ↔ repokit (names + colors must match;
+#     the meaning columns intentionally differ in wording)
+#   - the commit-type table: commitkit ↔ issuekit (issuekit adds `epic`)
+# Nothing else keeps the copies aligned, so diff them here on full runs.
+
+# Emit "name color" pairs from a SKILL.md's label table rows
+# (`| `label` | `RRGGBB` | … |`).
+label_pairs() {
+  grep -oE '^\| *`[a-z-]+` *\| *`[0-9A-Fa-f]{6}` *\|' "$1" \
+    | sed -E 's/^\| *`([a-z-]+)` *\| *`([0-9A-Fa-f]{6})` *\|.*/\1 \2/' | sort -u
+}
+
+# Emit the type tokens from a SKILL.md's commit-type table: backticked words in
+# the first cell of rows whose second cell is prose (not a 6-hex color, which
+# would be the label map).
+type_tokens() {
+  awk -F'|' '/^\|/ { c1 = $2; c2 = $3
+      if (c1 ~ /`[a-z]+`/ && c2 !~ /`[0-9A-Fa-f]{6}`/) print c1 }' "$1" \
+    | grep -oE '`[a-z]+`' | tr -d '`' | sort -u
+}
+
+check_shared_tables() {
+  local tissues=() d
+  d="$(diff <(label_pairs "$SKILLS_DIR/issuekit/SKILL.md") \
+            <(label_pairs "$SKILLS_DIR/repokit/SKILL.md") | grep -E '^[<>]' || true)"
+  [[ -n "$d" ]] && while IFS= read -r line; do
+    tissues+=("label map drift (issuekit '<' vs repokit '>'): ${line}")
+  done <<<"$d"
+
+  d="$(diff <(type_tokens "$SKILLS_DIR/commitkit/SKILL.md") \
+            <(type_tokens "$SKILLS_DIR/issuekit/SKILL.md" | grep -vx 'epic') \
+        | grep -E '^[<>]' || true)"
+  [[ -n "$d" ]] && while IFS= read -r line; do
+    tissues+=("type table drift (commitkit '<' vs issuekit '>', epic excluded): ${line}")
+  done <<<"$d"
+
+  if [[ ${#tissues[@]} -eq 0 ]]; then
+    echo "  ${C_GREEN}✓${C_RESET} shared tables (label map · type table)"
+    return
+  fi
+  echo "  ${C_RED}✗${C_RESET} shared tables"
+  local i
+  for i in "${tissues[@]}"; do
+    echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
+  done
+}
+
 # Does a whole `word` appear inside any backtick span of a skill's SKILL.md?
 # Modes in this collection are written backticked (`create`, `list`, `fix`), so a
 # mode WORKFLOW.md names should show up inside a code span in its own skill.
@@ -270,7 +320,8 @@ for name in "${targets[@]}"; do
   check_skill "$name"
 done
 
-# WORKFLOW.md cross-check only on a full run — a single-skill lint stays scoped.
+# Cross-file checks only on a full run — a single-skill lint stays scoped.
+[[ "$run_all" -eq 1 ]] && check_shared_tables
 [[ "$run_all" -eq 1 ]] && check_workflow_doc
 
 echo
