@@ -162,7 +162,9 @@ Git worktrees store **absolute** paths. If a repo is bind-mounted into a contain
 - Mount both at the **same absolute path** inside and outside the container. This is the robust answer.
 - Second belt, on git 2.48+: `git config worktree.useRelativePaths true` and `git worktree repair --relative-paths`. Relative pointers survive remapping *as long as the repo and the worktree root keep their relative positions* — which argues for siding them, e.g. `~/code/<repo>` and `~/worktrees/<repo>`.
 
-A GUI dev tool that manages worktrees is welcome to **observe** these — Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines. No skill should ever call a vendor worktree CLI: the moment one does, the two machines diverge.
+A GUI dev tool that manages worktrees is welcome to **observe** these — Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines.
+
+**No skill may create or remove a worktree through a vendor CLI**: the moment one does, the two machines diverge. A vendor's own *metadata* about a worktree — the issue its card links to, a status, a comment — is a different layer and is fair game, because it exists only inside that tool and has no git equivalent to diverge from. A companion skill may reconcile that layer (**orcakit** does, for Orca) as long as the worktree itself is still created and destroyed here. gitkit never calls in that direction: it must keep working on a machine where no such tool is installed.
 
 ## Notes
 
