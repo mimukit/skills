@@ -1,6 +1,8 @@
 # plan: delete orcakit
 
-**Status:** deprecation shipped 2026-08-02 — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting landed with the gitkit caller refactor, and orcakit is now a stub that warns and routes. **No skill, script, or config depends on it**; the only live references left are the README row and its `skills.sh.json` entry, both of which advertise the deprecation on purpose. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
+**Status: superseded 2026-08-05 — the deletion is cancelled.** orcakit was reactivated with a different job: not sequencing the tracker and Orca worktrees (that half really did move to issuekit and gitkit, and stays there), but reconciling Orca's *metadata* layer with the worktrees gitkit creates. See [plan-orcakit-reactivation-2026-08-05.md](plan-orcakit-reactivation-2026-08-05.md). Everything below is the record of the deprecation, which shipped and was correct for what orcakit was at the time; the open checkboxes will not be actioned.
+
+**Original status:** deprecation shipped 2026-08-02 — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting landed with the gitkit caller refactor, and orcakit is now a stub that warns and routes. **No skill, script, or config depends on it**; the only live references left are the README row and its `skills.sh.json` entry, both of which advertise the deprecation on purpose. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
 **Date:** 2026-08-02
 **Depends on:** [plan-gitkit-worktree-convention-2026-08-02.md](plan-gitkit-worktree-convention-2026-08-02.md)
 
