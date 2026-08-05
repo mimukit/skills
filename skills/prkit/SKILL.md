@@ -105,8 +105,12 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - **Preview the mutation and get an OK before it runs** — relabeling an issue is an outward-facing change, so name the issue and the flip and wait for confirmation; never relabel silently.
 - If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
 
-### 9. After creating
-Print the PR URL. Mention that CI will run if configured. Offer, don't auto-run, the common follow-ups: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or marking ready with `gh pr ready` if it was a draft. prkit's job ends here — when the reviewer is ready to pull the PR down, test it by hand, and land it, that's mergekit's half of the PR's life.
+### 9. Hand off
+**What changed** — the PR created or updated (title and number), whether a sync rebase ran, whether a proof section was embedded, and whether the linked issue was flipped to `in-review`.
+
+**Where it landed** — the PR URL and the branch it points at. Mention that CI will run if configured.
+
+**Next** — the PR now waits on review, so the move is on the reviewer's side: **mergekit** `start <n>` when it's installed pulls it down into a worktree for local review and QA; otherwise review it on GitHub. First offer, don't auto-run, the small follow-ups when they apply: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or `gh pr ready` for a draft. prkit's job ends here.
 
 ## Notes
 
