@@ -45,6 +45,7 @@ orca status --json      # app running? runtime reachable?
 - **`orca` not installed** → this machine has no Orca, so there is nothing to reconcile. Say exactly that and stop. Do not fall back to anything: worktrees are already fine without Orca, and nothing else in the workflow depends on this skill.
 - **Runtime not reachable** → `orca open` starts the app and waits. Ask before launching a desktop app on someone's machine.
 - **`gh` missing or unauthenticated** → `list` still works but every verdict degrades to "unknown tracker state", and `clean` **cannot run at all**, because its whole safety rests on knowing a PR merged. Say which and stop rather than guessing.
+- **A rejected `orca` flag or selector** → the CLI moves fast; check `orca <command> --help` before concluding the operation is unsupported. The goal (the link, the status, the removal) is the contract — the exact flag spelling isn't.
 
 Orca must also be configured to surface externally-created worktrees, or it won't see anything gitkit made:
 
@@ -250,7 +251,7 @@ This is the one `orca worktree create` in the skill, and it exists only to read 
 ## Notes
 
 - **orcakit is machine-local and always optional.** No Orca on the box means no-op, and nothing else in the workflow may depend on it. gitkit, issuekit, and the rest never call it — they'd break on every machine without the app. It's a janitor you run, not a link in a chain.
-- **Worktree facts belong to gitkit**, and orcakit restates none of them. The path convention, branch naming, base-ref resolution, and teardown rules all live there. If you find a second copy of any of them here, that's the bug.
+- **Worktree facts belong to gitkit.** The default path convention appears here only as a declared portability fallback for machines without gitkit; everything else — branch naming, base-ref resolution, teardown rules — lives there, and any *other* copy of a gitkit fact here is the bug.
 - **Tracker facts belong to issuekit.** orcakit reads issue and PR state to judge a workspace; it writes none of it.
 - **Destructive steps preview and confirm; read-only ones run straight through.** `list` never asks. `link` previews a batch. `clean` previews a batch and takes one OK. `align` confirms before it creates its throwaway.
 - **No shell available?** Then you can't reach the `orca` CLI or `gh`. Reason from what the user gives you and **print the exact commands** as a codeblock for them to run — never report a workspace linked or removed that you could not perform.
