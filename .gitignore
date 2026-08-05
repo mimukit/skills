@@ -7,3 +7,6 @@ docs/tests/
 
 # verifykit proof bundles — published to refs/verify-assets/*, never committed
 docs/verify/
+
+# statuskit snapshots — point-in-time scratch dashboards, never tracked
+docs/status/

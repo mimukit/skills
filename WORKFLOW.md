@@ -90,7 +90,7 @@ Three kits stay off the map entirely. `repokit` provisions the label vocabulary 
 
 ## Orientation: start with statuskit
 
-`/statuskit` is a read-only sweep of the working tree, open issues, open PRs, and unfiled plans. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you and it persists no state — each run is a fresh read.
+`/statuskit` is a read-only sweep of the working tree, open issues, open PRs, and unfiled plans. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you, and each run is a fresh read — no cache, always re-derived from git and GitHub. By default it also saves the dashboard as a gitignored scratch snapshot under `docs/status/`, with the ranked moves as a tickable checklist; add "just print it" to skip the file.
 
 Its priority ladder, when `gh` is available:
 
