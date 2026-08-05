@@ -77,9 +77,8 @@ check_anchors() {
 
 # Skills exempt from the closing hand-off requirement, by design rather than by
 # oversight: gitkit is the primitives layer other skills call, and states outright
-# that preparing a worktree implies nothing about what to do in it; orcakit is a
-# deprecation shim whose entire body is already a route to its replacement.
-HANDOFF_EXEMPT=" gitkit orcakit "
+# that preparing a worktree implies nothing about what to do in it.
+HANDOFF_EXEMPT=" gitkit "
 
 # Does the skill close with a hand-off — a recap of what it did plus the next move?
 # (AGENTS.md § "Closing a skill: the hand-off".) `Hand off` is canonical; the rest
