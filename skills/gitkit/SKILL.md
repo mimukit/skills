@@ -100,7 +100,7 @@ Report the path and the branch. Creating a worktree does not imply doing anythin
 ### Remove
 
 ```sh
-git -C "$REPO" worktree remove "$PATH"
+git -C "$REPO" worktree remove "$WT"
 git -C "$REPO" branch -d "$BRANCH"     # only a branch you created, and only if merged
 ```
 
