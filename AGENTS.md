@@ -39,6 +39,18 @@ When a skill creates a durable Markdown artifact under `docs/`, use `<type>-<slu
 - For a step that's a list item inside a section (no heading, no anchor), name the action in prose (`` `start`'s **Adopt check** step``) rather than citing its ordinal.
 - `make lint` enforces both halves: every intra-doc `](#anchor)` link must resolve to a real heading (error), and any surviving `step N` reference is flagged (warning). Rename or move a referenced heading and the link breaks *loudly* in lint instead of rotting silently.
 
+## Closing a skill: the hand-off
+
+**Every skill ends by reporting what it did and naming what comes next.** A skill that goes quiet at the end leaves the user to reconstruct both — what actually changed on disk, and which of a dozen kits owns the next move. That reconstruction is the exact work these skills exist to remove, and it's most expensive right at the point the user has stopped paying attention.
+
+- **Name the closing section `## Hand off`** (or `### N. Hand off` inside a numbered procedure; a mode-per-section skill gets one per mode). Some skills predate this and close under `Report`, `Output`, `Finish`, or `After creating` — those are grandfathered and lint accepts them, but anything new or rewritten uses `Hand off`.
+- **Three beats, in order.** *What changed* — the mutations, concretely, including the ones that didn't happen. *Where it landed* — paths, branches, URLs, so nothing has to be hunted for. *Next* — the single best move. Fold a beat into a line when it's trivial; drop one only when it's genuinely empty (a read-only skill changed nothing), never pad it.
+- **Crown one next move, not a menu.** Ranking is the skill's job — it just did the work and knows what the state is. Runners-up are fine after the crowned move; a list of five equal options isn't a recommendation.
+- **Route, don't launch.** Name the kit and its one-line invocation; don't invoke it. The user decides whether to take the suggestion, and a skill that chains itself into the next one takes that call away.
+- **Name a sibling kit only when it's installed, and always give the plain fallback** ("open a PR with **prkit**, otherwise `gh pr create`"). Public skills get installed alone into repos that have none of the others — a next step that assumes the ecosystem is a dead end there.
+- **Say when there is no next step.** A terminal skill that invents a follow-up to look useful is worse than one that stops.
+- `make lint` warns when a skill has no recognized closing section at all. It can't judge whether the three beats are any good — that's a review job, not a grep.
+
 ## Visibility: internal vs public
 
 Skills here fall into two classes, declared explicitly in frontmatter as `metadata.internal: true|false`:
