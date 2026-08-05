@@ -10,7 +10,7 @@ metadata:
 
 # orcakit
 
-[Orca](https://orca.computer) shows one **workspace** per git worktree, with a card carrying the linked issue, a status, and any terminals running in it. Worktrees themselves come from plain `git worktree` — gitkit's convention, issuekit's `start`, or your own hands — and Orca discovers them on its own.
+[Orca](https://www.onorca.dev/) shows one **workspace** per git worktree, with a card carrying the linked issue, a status, and any terminals running in it. Worktrees themselves come from plain `git worktree` — gitkit's convention, issuekit's `start`, or your own hands — and Orca discovers them on its own.
 
 What nothing owns is the **drift between the two**. A worktree named `issue-42-add-sso-login` sits in the sidebar with no issue attached, so its card says nothing. An issue closes and its PR merges, but the workspace stays forever, and three weeks later the sidebar is mostly finished work. orcakit owns exactly that reconciliation: **Orca's view of your worktrees, made to match the tracker.**
 
