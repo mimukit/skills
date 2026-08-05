@@ -81,6 +81,8 @@ Unresolved or thin spots, written as targets for grillkit to interrogate.
 Explicit scope boundaries — what this plan deliberately does not cover.
 ```
 
+A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title** — grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
+
 ## Notes
 
 - **Plan only.** No application code, no issues — those are separate steps (implementkit, issuekit). plankit hands off; it doesn't cross into them.
