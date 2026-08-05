@@ -15,24 +15,74 @@ Interview the user relentlessly about their idea until the two of you reach a ge
 ## How to grill
 
 - **Open by reflecting the idea back.** Before the first question, restate the subject in your own words — the goal you understand, the shape you're about to grill. This surfaces a misread up front, so you and the user are grilling the same idea rather than diverging silently for ten questions.
-- **Work the tree in rounds.** The **frontier** is every decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, then wait for the user's answers before the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one.
+- **Work the tree in rounds.** The **frontier** is every decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, then wait for the user's answers before the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one. [Asking the round](#asking-the-round) is the format.
 - **Each round reshapes the tree.** The answers settle decisions, which pushes the frontier outward and unblocks the questions that depended on them. Recompute the frontier and ask the next round.
 - **Always recommend an answer.** For every question, state the option you'd pick and why. A naked question offloads the thinking; a recommendation gives the user something concrete to accept, reject, or refine.
 - **Probe the soft spots.** Push hardest on unstated assumptions, hand-waved edge cases, error and failure paths, scope boundaries, and anything described vaguely. If an answer is thin, follow up in the next round rather than letting it stand.
 
-Format every question like so:
+## Asking the round
+
+A grill is only as good as the user's ability to answer it fast. Dense paragraphs with choices buried mid-sentence make a good question unanswerable — the reader has to parse prose to find the decision. Every rule below exists to keep a round scannable in one pass.
+
+### The shape of a round
 
 ```
-❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+### Round 2 — 3 open decisions
+Blocked behind this round: storage format, migration path.
 
-➡️ <your recommended answer>
+❓ **Q4 — Where does the doc map live?**
+Stakes: `update` needs a code-path → page lookup without reading every page, and `audit`'s recency prefilter needs to know which paths a page describes.
+
+- **(a) Per-page colocated metadata** — can't drift from the page, one grep pass, invisible in every renderer
+- **(b) YAML frontmatter** — GitHub renders it as a visible table, and it may collide with an engine's own schema
+- **(c) Central manifest** — one more file to keep in sync
+- **(d) Re-derive each run** — no drift, but throws away the cheapness `audit` depends on
+
+➡️ **(a)** — as an HTML comment under the visible stamp: `<!-- wikikit: documents: src/cli/**, package.json -->`
+
+---
+
+❓ **Q5 — Contributor docs: in or out?**
+Stakes: dev-env setup and release steps are *derivable from the repo*; a CONTRIBUTING.md is a social contract that isn't in the repo at all.
+
+- **(a) Split on that seam** — mechanical half becomes how-tos, the social half stays out
+- **(b) All in** — pulls PR etiquette and CoC into scope, which can only be invented
+- **(c) All out** — loses two how-tos that verify cleanly
+
+➡️ **(a)** — `how-to/set-up-a-dev-environment.md` and `how-to/cut-a-release.md` join the doc set; root `CONTRIBUTING.md` is never written, only linked.
+
+---
+
+⏳ **Q6 — Which renderer serves these pages?** — waiting on a sub-agent checking the repo for a docs generator. It gates the frontmatter decision, so it lands next round.
+
+Reply `4a 5b`, or "go with your picks" to take both.
 ```
+
+### The rules that produce it
+
+- **Options are a list, never prose.** One option per line, always — even for a binary. `Options: (a) …, (b) …, (c) …` inside a sentence is the single worst readability offender in a grill. Forcing a two-way choice into list shape is also what surfaces a seam you'd otherwise bury in sentence four.
+- **Each option carries its own trade-off.** Put the reason to reject (b) on (b)'s line. A recommendation that argues against three options the reader last saw 200 characters ago makes them ping-pong up and down the round.
+- **Stakes first, two sentences max.** Label it `Stakes:` and say why the decision is load-bearing — what breaks or stays undecided downstream. Everything else belongs on the option lines.
+- **The recommendation is one line.** `➡️ **(a)** — <the concrete form it takes>`. Point at the letter, then add only what the list couldn't carry: the exact syntax, path, or shape you'd write. Never restate the option's own description.
+- **Rule off between questions.** A `---` renders as a horizontal line in every terminal and stops questions bleeding into each other.
+- **Number continuously across rounds.** Q1–Q3 in round one, Q4 onward in round two. Restarting at Q1 each round makes "Q2" ambiguous the moment anyone refers back — including your own recap in [Hand off](#hand-off).
+- **Code spans are for literals only.** Paths, filenames, flags, commands, identifiers. Use *italics* for conceptual emphasis. Code-spanning ordinary prose words turns the round into rainbow noise and hides the spans that are real references.
+- **Show what's pending, don't hide it.** When a sub-agent is still fetching a fact a question depends on, list that question with `⏳` and name what it's waiting for. A visible branch that goes unasked reads as forgotten; one line explains it's blocked, not dropped.
+- **Head the round and close it.** The header gives a progress signal — how many decisions are open now, and what they unblock — which is otherwise unknowable and makes a long grill feel endless. The closing line names the reply format so the user doesn't invent one every round.
+
+### Offer the picker when you have one
+
+With `AskUserQuestion` available, run the round **hybrid**: print the full text round first — stakes, trade-offs, evidence, recommendation — then call the tool for the picks alone. The user clicks instead of retyping letters, and the reasoning still gets read.
+
+- Keep the tool's labels short; the rationale lives in the text round, not in the option descriptions.
+- Put the recommended option first and mark it `(Recommended)` so the picker agrees with the `➡️` line.
+- The tool caps at 4 questions per call and 4 options per question, and it always appends an "Other" escape for the user's own answer. A wider frontier means batching calls or falling back to the text round alone — never trim the frontier to fit the widget.
 
 ## Facts are your job, decisions are theirs
 
 Finding *facts* is never the user's job. If something is discoverable by reading the codebase, docs, or config, find it yourself instead of asking — reserve your questions for genuine *decisions*, the judgment calls that are the user's to make.
 
-When a frontier question needs a fact from the environment (filesystem, tools, config) and you have a sub-agent tool, **dispatch a sub-agent to find it — and don't block on it.** A running exploration is just an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. With no sub-agent tool available, look the fact up inline before you put the dependent question to the user.
+When a frontier question needs a fact from the environment (filesystem, tools, config) and you have a sub-agent tool, **dispatch a sub-agent to find it — and don't block on it.** A running exploration is just an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now and list the blocked one with `⏳` so the user can see it's pending rather than missing. With no sub-agent tool available, look the fact up inline before you put the dependent question to the user.
 
 ## When to stop
 
