@@ -1,29 +1,42 @@
 ---
 name: grillkit
 description: >-
-  Grill the user relentlessly about any idea, plan, or design — one decision at a time, each with a recommended answer, until you both share the same picture. Use when the user wants to stress-test or pressure-test an idea, says "grill me", "grill this plan", "poke holes in this", "interrogate my design", or otherwise asks to interrogate a concept before committing to it — a rough idea, a plan file, an architecture, or a PR.
+  Grill the user relentlessly about any idea, plan, or design — a round of unblocked decisions at a time, each with a recommended answer, until you both share the same picture. Use when the user wants to stress-test or pressure-test an idea, says "grill me", "grill this plan", "poke holes in this", "interrogate my design", or otherwise asks to interrogate a concept before committing to it — a rough idea, a plan file, an architecture, or a PR.
 license: MIT
-allowed-tools: Bash, Read, Grep, Glob, Write, Edit, AskUserQuestion, Skill
+allowed-tools: Bash, Read, Grep, Glob, Write, Edit, AskUserQuestion, Task, Agent, Skill
 metadata:
   internal: false
 ---
 
 # grillkit
 
-Interview the user relentlessly about their idea until the two of you reach a genuinely shared understanding. The subject can be anything — a rough concept, a design in their head, an existing plan file, an architecture, a PR — you don't need a formal plan to grill. Do not start building; the point is to surface every unresolved decision *first*.
+Interview the user relentlessly about their idea until the two of you reach a genuinely shared understanding. The subject can be anything — a rough concept, a design in their head, an existing plan file, an architecture, a PR — you don't need a formal plan to grill. Map it as a **design tree**: every decision branches into the decisions that hang off it. Do not start building; the point is to surface every unresolved decision *first*.
 
 ## How to grill
 
 - **Open by reflecting the idea back.** Before the first question, restate the subject in your own words — the goal you understand, the shape you're about to grill. This surfaces a misread up front, so you and the user are grilling the same idea rather than diverging silently for ten questions.
-- **Walk the design tree.** Move branch by branch through the plan, resolving dependencies between decisions in order — an early choice often constrains a later one, so settle the upstream decision before raising what depends on it.
-- **One question at a time.** Ask a single question, then wait for the answer before asking the next. Batching questions is bewildering and lets half of them go unanswered. Use `AskUserQuestion` (or the host's equivalent) when available.
+- **Work the tree in rounds.** The **frontier** is every decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, numbered, then wait for the user's answers before the next round. A question whose answer depends on another question still open in this round belongs to a *later* round, not this one.
+- **Each round reshapes the tree.** The answers settle decisions, which pushes the frontier outward and unblocks the questions that depended on them. Recompute the frontier and ask the next round.
 - **Always recommend an answer.** For every question, state the option you'd pick and why. A naked question offloads the thinking; a recommendation gives the user something concrete to accept, reject, or refine.
-- **Look up facts; ask only for decisions.** If something is discoverable by reading the codebase, docs, or config, find it yourself instead of asking. Reserve your questions for genuine *decisions* — the judgment calls that are the user's to make.
-- **Probe the soft spots.** Push hardest on unstated assumptions, hand-waved edge cases, error and failure paths, scope boundaries, and anything described vaguely. If an answer is thin, follow up rather than moving on.
+- **Probe the soft spots.** Push hardest on unstated assumptions, hand-waved edge cases, error and failure paths, scope boundaries, and anything described vaguely. If an answer is thin, follow up in the next round rather than letting it stand.
+
+Format every question like so:
+
+```
+❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+
+➡️ <your recommended answer>
+```
+
+## Facts are your job, decisions are theirs
+
+Finding *facts* is never the user's job. If something is discoverable by reading the codebase, docs, or config, find it yourself instead of asking — reserve your questions for genuine *decisions*, the judgment calls that are the user's to make.
+
+When a frontier question needs a fact from the environment (filesystem, tools, config) and you have a sub-agent tool, **dispatch a sub-agent to find it — and don't block on it.** A running exploration is just an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now. With no sub-agent tool available, look the fact up inline before you put the dependent question to the user.
 
 ## When to stop
 
-Keep going until the open decisions are resolved and the user confirms you share the same understanding. Then hand off, and do not begin implementing until the user explicitly says to proceed.
+The grill is done when the frontier is empty — every branch of the design tree visited, nothing left silently assumed. Then hand off, and do not begin implementing until the user explicitly says to proceed.
 
 ## What to do with the result
 
