@@ -12,11 +12,11 @@ metadata:
 
 The **away-from-keyboard** orchestrator. Hand it a groomed `ready` issue and it drives the middle of the dev workflow — the part that needs no human judgment once the issue is well-specified — from an isolated worktree to an open pull request: implement, commit, review, fix, write a manual QA plan, open the PR, and flip the issue to `in-review`. The human gates stay where judgment lives: planning and grilling happen *before* (the `ready` label is the entry contract), review and merge happen *after*.
 
-afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences** companion kits — implementkit, commitkit, reviewkit, qakit, prkit — plus a manual, human-run issuekit `start` step at the very front, and owns exactly one thing they don't: the **escalation policy** that decides, at every step, whether to keep going or stop cleanly and leave the issue for a human. It is the autonomous sibling of statuskit: statuskit tells a human what to do next; afkkit does the next several things itself and stops at the boundary where a human is genuinely required.
+afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences** companion kits — issuekit `start` at the very front, then implementkit, commitkit, reviewkit, qakit, prkit — and owns exactly one thing they don't: the **escalation policy** that decides, at every step, whether to keep going or stop cleanly and leave the issue for a human. It is the autonomous sibling of statuskit: statuskit tells a human what to do next; afkkit does the next several things itself and stops at the boundary where a human is genuinely required.
 
 ## The contract
 
-- **Input:** an issue whose worktree the human has already created manually. A human runs **issuekit `start <n>`** themselves — which refuses anything not labeled `ready`, gets the worktree from gitkit (off a freshly resolved base ref), and flips `ready → in-progress` — then switches into that worktree and launches (or resumes) the afkkit conductor session from inside it. That manual step is the whole safety property: an issue only reaches issuekit's `ready` guard after a human grill session (see the lifecycle below), so afkkit never works anything that hasn't already had human judgment applied. afkkit itself never invokes issuekit `start` — it only verifies the precondition (see [Confirm the worktree](#1-confirm-the-worktree)).
+- **Input:** an issue number, or `all`. afkkit invokes **issuekit `start <n>`** itself to acquire the worktree — issuekit refuses anything not labeled `ready`, gets the worktree from gitkit (off a freshly resolved base ref, adopting an existing one rather than recreating it), and flips `ready → in-progress`. That guard is the safety property, and it holds no matter who types the command: an issue only reaches `ready` after a human grill session (see the lifecycle below), and afkkit can neither promote an issue to `ready` nor start one that isn't (see [Start the issue](#1-start-the-issue)).
 - **Output on success:** an open PR whose body carries the implementation's documented assumptions, any unresolved review nits, and a pointer to a committed QA plan — and the issue moved to `in-review`.
 - **Output on a blocked run:** **no PR.** The worktree and its commits stay intact, a comment on the issue names the precise stuck-state, the issue is labeled for whoever must pick it up, and — in a batch — the next issue starts. afkkit never publishes half-broken work.
 
@@ -41,16 +41,18 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 ```
 
 - If `gh` is missing or unauthenticated, stop and point to `https://cli.github.com` / `gh auth login` — don't work around it.
-- **Companion-kit check.** afkkit is glue: it needs implementkit, commitkit, reviewkit, qakit, and prkit to do the actual work. Check which are installed. If a kit a step needs is absent, **stop and name it** rather than improvising its job badly — an orchestrator missing its steps degrades by refusing clearly, not by half-doing the work. (Each step below also names the plain `gh` fallback where the action is trivial enough to run directly.) issuekit `start` is a prerequisite the human runs manually before invoking afkkit (see [Confirm the worktree](#1-confirm-the-worktree)) — afkkit never dispatches it itself, so it's outside this check.
+- **Companion-kit check.** afkkit is glue: it needs implementkit, commitkit, reviewkit, qakit, and prkit to do the actual work. Check which are installed. If a kit a step needs is absent, **stop and name it** rather than improvising its job badly — an orchestrator missing its steps degrades by refusing clearly, not by half-doing the work. (Each step below also names the plain `gh` fallback where the action is trivial enough to run directly.)
+- **issuekit is required, and has no fallback.** It owns the `ready` guard afkkit's whole safety property rests on (see [Start the issue](#1-start-the-issue)). If it isn't installed, **refuse the run and say to install it** — do not reach for `gh` and re-implement the guard. This is the one companion afkkit will not degrade around, because a second copy of a gate is a gate that can drift open, and the copy inside an unattended orchestrator is exactly the one nobody would notice drifting.
 - **No shell / CLI available** (e.g. a browser-based agent)? You can't run `gh`, git, or spawn subagents. Say so and stop — afkkit is an execution orchestrator; there's nothing to reason out in prose. Point the user at running the individual kits interactively instead.
 
 ## How the conductor runs each step
 
 afkkit runs as a **conductor session**: the session you invoke it in sequences the pipeline, and each heavy step runs as a **subagent** dispatched to work inside the issue's worktree. This keeps the conductor's context small (the bulk of the tokens live in the subagents) and lets each step run on the model that fits it.
 
-- **Dispatch a subagent per step** with the Task tool (agent type `general-purpose`), passing it three things: the **worktree path** (created manually by the human via issuekit `start <n>` before this run began), the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it) — the conductor's own working directory is that same worktree, not the main checkout (see [Confirm the worktree](#1-confirm-the-worktree)).
+- **Dispatch a subagent per step** with the Task tool (agent type `general-purpose`), passing it three things: the **worktree path** that [Start the issue](#1-start-the-issue) returned for *this* issue, the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it).
+- **The worktree path is carried run state, not the conductor's location.** The conductor's own working directory is irrelevant and never changes — it holds each issue's path and dispatches into it. That's what lets one conductor session walk a batch of issues, each in its own worktree, without ever being inside any of them.
 - **Each subagent returns a small structured result** the conductor acts on: pass/fail, and the step's payload (the gate's assumptions list, the review's blocker/nit findings, the QA doc path). The conductor holds the thread; the subagents hold the work.
-- **The conductor never edits code or runs the build itself** — it dispatches, reads the result, and decides the next move (continue, loop, or escalate). That decision — the escalation policy — is the one thing afkkit owns.
+- **The conductor never edits code or runs the build itself** — it dispatches, reads the result, and decides the next move (continue, loop, or escalate). That decision — the escalation policy — is the one thing afkkit owns. The single exception is [Start the issue](#1-start-the-issue), which the conductor runs inline: acquiring the workspace is not work *in* the workspace, and the conductor needs the returned path in its own hands to dispatch everything else into.
 - **No subagent capability?** Degrade to running the steps inline in sequence in the conductor session. You lose per-step model routing (everything runs on the conductor's model) but the pipeline and escalation policy are unchanged. Say you're running inline.
 
 ## Model routing
@@ -78,22 +80,31 @@ Write the **alias** (`opus`, `fable`, `haiku`), never a pinned model ID — an a
 
 Run these in order for each issue. Any step that can't proceed hands to [the escalation contract](#the-escalation-contract) and the issue stops there — cleanly, with no PR.
 
-### 1. Confirm the worktree
+### 1. Start the issue
 
-afkkit does not create or switch worktrees — that's a manual step the human does *before* invoking afkkit, by running **issuekit** `start <n>` themselves. issuekit's `ready`-label guard is the entry gate: it refuses any issue not labeled `ready`, gets the worktree from **gitkit** (branch `issue-<n>-<slug>`, cut from the resolved base ref), and flips the label `ready → in-progress`. The human then switches into that worktree and launches (or resumes) the afkkit conductor session from inside it.
+Invoke **issuekit** `start <n>` to acquire the worktree. afkkit adds nothing to it and re-implements none of it: issuekit refuses any issue not labeled `ready`, asks **gitkit** for the worktree (branch `issue-<n>-<slug>`, cut from the resolved base ref, adopting an existing one rather than recreating it), and flips the label `ready → in-progress`.
 
-afkkit's own job here is to verify that precondition actually holds, not to take it on faith:
+This runs **inline in the conductor**, not as a dispatched subagent — it's a handful of `gh` and git calls, and the conductor needs the returned path in its own hands to dispatch every step below into.
+
+**Say the run is unattended when you invoke it.** issuekit previews every mutation and waits for an OK, and it carves out exactly one exemption for an unattended caller: `start`'s `ready → in-progress` flip. That exemption is safe precisely because the guard has already refused everything unworkable — the flip only ever happens to an issue a human grilled into `ready`. Nothing else afkkit touches is exempt, and afkkit never asks for a broader one.
+
+Then verify what came back rather than taking it on faith:
 
 ```sh
-git branch --show-current                                # must be the issue's branch, not the base branch
-git rev-parse --show-toplevel                            # must be the worktree path, not the main checkout
-gh issue view <n> --json labels -q '.labels[].name'      # must include in-progress, not ready
+git -C <worktree> rev-parse --show-toplevel              # the returned path is a real worktree
+git -C <worktree> branch --show-current                  # the issue's branch is checked out there
+gh issue view <n> --json labels -q '.labels[].name'      # now reads in-progress
 ```
 
-- If the current branch is the repo's base branch (ask **gitkit** which that is rather than assuming `main`), or the working directory is the primary checkout rather than a distinct worktree, **don't just error — stop and ask the human to confirm**: state plainly that this looks like the base branch/checkout rather than an issue worktree, and ask them to verify they've run issuekit `start <n>` and switched into the resulting worktree before afkkit continues. Don't guess or proceed on an assumption either way.
-- If the issue is still labeled `ready` (issuekit `start` hasn't run yet), stop and tell the human to run it manually, switch into the resulting worktree, and re-invoke afkkit from there. This is a hard preflight stop, not a pipeline escalation — nothing has happened yet, so there's no comment or label churn.
+Hold that path as this issue's run state; every subagent below is dispatched into it.
 
-If a worktree for this issue already exists (the re-run path — an issue that was escalated to `needs-planning`, grilled by a human back to `ready`, and re-run), the human re-runs issuekit `start <n>` themselves; gitkit adopts the existing worktree rather than recreating it, and they switch in as before.
+**If issuekit refuses, that's a preflight stop, not [an escalation](#the-escalation-contract)** — nothing has happened yet, so there's no comment and no label churn. Report the reason issuekit gave and, in a batch, move to the next issue:
+
+- **`needs-planning`** → the decisions aren't settled; it needs a human grill session first.
+- **`blocked`** → name the `Blocked by #N` prerequisite and its state.
+- **closed, or carrying no lifecycle label** → say which; issuekit `triage` is what classifies it.
+
+An issue already `in-progress` is **not** a refusal. issuekit takes its adopt path — gitkit hands back the existing worktree, the label is left alone — and afkkit continues. That covers both the re-run path (an issue escalated to `needs-planning`, grilled back to `ready`, and re-run) and a worktree a human staged by hand, on the same code path as a first run rather than as a special case.
 
 ### 2. Spec gate
 
@@ -145,9 +156,9 @@ This is the successful terminus: an open PR, a QA plan, and an `in-review` issue
 
 Nobody watched this run, so the report *is* the handover — a human is reading it cold, after the fact, to work out what they now have to do.
 
-**What changed** — one outcome line for the issue: **opened** (PR link) or **escalated** (which label, one-line reason, issue link). In a batch, accumulate these; the batch summary is emitted at the end (see [Batch mode](#batch-mode-all)).
+**What changed** — one outcome line for the issue: **opened** (PR link), **escalated** (which label, one-line reason, issue link), or **skipped** (issuekit refused it at [Start the issue](#1-start-the-issue) — the reason, and the fact that nothing was mutated). In a batch, accumulate these; the batch summary is emitted at the end (see [Batch mode](#batch-mode-all)).
 
-**Where it landed** — the worktree path and branch, which survive either way. On an escalation this is load-bearing: the commits are real work sitting on disk, and a human who doesn't know where they are will start over.
+**Where it landed** — the worktree path and branch, which survive both an open PR and an escalation. On an escalation this is load-bearing: the commits are real work sitting on disk, and a human who doesn't know where they are will start over. A skipped issue has no worktree — say that plainly rather than printing a path that doesn't exist.
 
 **Next** — route by outcome, naming a sibling kit only when it's installed and otherwise describing the action plainly:
 
@@ -171,11 +182,19 @@ The one policy afkkit owns. Whenever a step can't proceed, **escalate** rather t
 
 ## Batch mode: `all`
 
-Because [Confirm the worktree](#1-confirm-the-worktree) is a manual human step, `afkkit all` requires the worktrees to already exist: run issuekit `start <n>` yourself for every `ready` issue you want in this batch *before* invoking `afkkit all` — each run flips that issue's label `ready → in-progress` and gets its worktree from gitkit. afkkit then discovers the pre-staged worktrees **through gitkit's branch-keyed lookup** — a worktree is found by its branch (`issue-<n>-<slug>`), never by scanning a directory or guessing at a path — and walks them **sequentially**, running [Confirm the worktree](#1-confirm-the-worktree) and the rest of the pipeline on each without ever invoking issuekit `start` itself.
+`afkkit all` takes its queue straight from the tracker — `gh issue list --label ready` — and walks it **sequentially**, running the full pipeline from [Start the issue](#1-start-the-issue) onward on each.
+
+**One confirmation, up front.** Print the queue it's about to drain — number and title per issue — and wait for a single OK before starting anything. The human is by definition still at the keyboard the moment they type `afkkit all`, so this costs nothing, and it's the last chance to pull an issue that was promoted to `ready` too early. After that OK the run is unattended: no further prompts, whatever happens. A single-issue invocation (`afkkit 42`) needs no confirmation — naming the number *is* the intent.
+
+**The queue is fixed at the moment of that OK** — the snapshot the human saw, not a live `gh issue list` re-read before each issue. The run mutates labels as it goes (`ready → in-progress`, and `→ needs-planning` on a planning escalation), so re-reading would drain issues nobody approved and could re-pick one the run itself just moved. Approve the list, work the list.
+
+**Issues start just in time**, each at the top of its own pipeline run, never all up front. Two reasons, both about what a half-finished batch leaves behind: a worktree branches off a base ref fetched at the moment it's created rather than one that went stale waiting its turn in a queue, and a batch that stops early leaves the issues it never reached untouched in `ready` instead of flipped to `in-progress` with orphaned worktrees behind them.
+
+**`all` drains `ready` only.** An issue already `in-progress` may have a human sitting in its worktree, so the batch passes over it; name it explicitly (`afkkit 42`) to include it, and issuekit's adopt path picks up the existing worktree. List any such issues in the up-front preview so it's clear what was left out and why.
 
 Sequential, not parallel: v1 keeps merge-conflict and resource behavior predictable, and a returning human faces one PR at a time rather than a pile of concurrent branches off the base. Process oldest-first (or by the order the user names). Each issue is independent — an escalation is logged and the walk continues to the next.
 
-At the end, print the **batch summary**: how many PRs opened (with links), how many escalated and to which state (`needs-planning` vs still `in-progress`, with links and one-line reasons), then the single crowned next move from [Hand off](#9-hand-off). That summary plus GitHub's own PR notifications is the whole signal surface — afkkit writes no run-report artifact and sends no push notifications. Success is the PR itself; a blocked issue is a comment and a label the human sees on return.
+At the end, print the **batch summary**: how many PRs opened (with links), how many escalated and to which state (`needs-planning` vs still `in-progress`, with links and one-line reasons), how many were skipped before starting and why, then the single crowned next move from [Hand off](#9-hand-off). That summary plus GitHub's own PR notifications is the whole signal surface — afkkit writes no run-report artifact and sends no push notifications. Success is the PR itself; a blocked issue is a comment and a label the human sees on return.
 
 ## Non-goals
 
@@ -184,12 +203,12 @@ afkkit is deliberately narrow — the middle of the workflow, nothing else:
 - **No planning or grilling.** It never invents product decisions; a thin spec goes back to the human queue as `needs-planning`. plankit and grillkit stay interactive and out of the unattended path.
 - **No PR-feedback loop, no merge, no teardown.** The span ends at PR open. Responding to a human's review comments is a designed-for *later phase*, not v1. Merging is a human gate. The land-side reconciliation — issuekit `close` (close the issue, unblock dependents, remove the worktree via gitkit) — runs *after* merge, also out of span.
 - **No parallel batches, no browser verification, no notifications** in v1 — issues run sequentially, verification is qakit's manual plan (not verifykit's browser capture), and GitHub plus the session summary are the only signal.
-- **No new worktree, tracker, or PR logic, and no worktree creation of its own.** gitkit owns the worktree lifecycle and the base ref; issuekit owns the tracker vocabulary and the `start` guard the human runs before afkkit begins (see [Confirm the worktree](#1-confirm-the-worktree)); prkit owns the PR. afkkit only sequences the rest and owns the escalation policy.
+- **No new worktree, tracker, or PR logic.** gitkit owns the worktree lifecycle and the base ref; issuekit owns the tracker vocabulary and the `ready` guard, which afkkit *invokes* but never re-implements, overrides, or works around (see [Start the issue](#1-start-the-issue)); prkit owns the PR. afkkit only sequences them and owns the escalation policy. Invoking a gate is not owning one — the moment afkkit would have to decide *whether* an issue is workable, it has left its span.
 - **No config file.** Model routing is the table above plus a spoken inline override.
 
 ## Notes
 
-- **The `ready` label is the safety property.** afkkit works only what a human already grilled into `ready` — enforced by issuekit's guard when the human manually runs issuekit `start <n>`, not by afkkit itself. afkkit only verifies that guard already fired (see [Confirm the worktree](#1-confirm-the-worktree)); it cannot get ahead of human judgment because it refuses to start on anything else.
+- **The `ready` label is the safety property — not who types the command.** Human judgment enters at the grill session that *earns* an issue its `ready` label; typing `issuekit start 42` adds none of its own. So afkkit invoking `start` itself preserves the gate verbatim rather than weakening it: issuekit still refuses everything not `ready`, and afkkit can neither promote an issue to `ready` nor start one that isn't. It cannot get ahead of human judgment because the only door it has is the one locked against exactly that.
 - **Escalation is a success, not a failure.** Stopping cleanly at a wall — no PR, work preserved, issue labeled by cause — is afkkit doing its job. The failure mode it exists to prevent is pushing a half-broken or wrongly-assumed change all the way to a PR.
-- **Idempotent per issue.** Re-running afkkit on an issue whose worktree already exists picks up from it and continues, after the human re-runs issuekit `start <n>` themselves, which adopts (rather than recreates) that worktree via gitkit — the intended path for an issue that was escalated to `needs-planning`, grilled back to `ready`, and re-run.
+- **Idempotent per issue.** Re-running afkkit on an issue whose worktree already exists picks up from it and continues: issuekit `start` adopts that worktree through gitkit rather than recreating it, and leaves the `in-progress` label alone. That's the intended path for an issue escalated to `needs-planning`, grilled back to `ready`, and re-run — and it runs the same code as a first run.
 - **Follow the repo over these defaults.** If a repo has its own review depth, QA location, or PR template, the companion kits already honor those; afkkit doesn't override them.

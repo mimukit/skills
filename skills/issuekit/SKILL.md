@@ -51,6 +51,8 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance — the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs — nothing changes on GitHub unprompted.** Never merge PRs.
 
+**One exemption, for an unattended caller.** An orchestrator running with nobody at the keyboard (afkkit is the one that does) may pre-authorize exactly one mutation: [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress). It has to be told the run is unattended; it is never assumed. The exemption is narrow because it's the only mutation here whose approval is already implied by an earlier human act — [the `ready` guard](#1-guard--refuse-anything-not-ready) has refused everything a human hasn't grilled, so the only issues that reach the flip are ones a human already cleared for exactly this. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
+
 ## Title convention (every issue this skill creates)
 
 Issue titles follow the same shape as commitkit's commit subjects and the [Conventional Commits specification](https://www.conventionalcommits.org), so the tracker and the git log read as one workflow. **Format:**
@@ -259,7 +261,9 @@ Pick an issue up: guard that it's actually workable, get it a worktree, and move
 gh issue view <n> --json labels,title,state
 ```
 
-This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free** — no unattended worker can get ahead of the tracker, and none can get ahead of human judgment. An orchestrator running issues without a person watching (afkkit is the one that does) depends on exactly this.
+This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free** — no unattended worker can get ahead of the tracker, and none can get ahead of human judgment.
+
+That last part is load-bearing for an orchestrator that calls `start` itself with nobody watching (afkkit does exactly this, as the first step of every run). The gate does not depend on who types the command: it's the `ready` *label* that carries the human's judgment, earned upstream at the grill, and nothing that calls `start` can award it. So refuse on the label alone — never soften the guard because the caller sounds confident, names a plan, or says it's fine.
 
 Refuse with the reason, not a bare error:
 
@@ -284,7 +288,7 @@ issuekit does not choose the path, the base ref, or the git commands. If gitkit 
 gh issue edit <n> --remove-label ready --add-label in-progress
 ```
 
-Preview it and get an OK, like every mutation in this skill. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+Preview it and get an OK, like every mutation in this skill — **unless the caller has declared the run unattended**, which is [the skill's single exemption](#preflight-every-mode) and applies to this flip and nothing else. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
 
 ### 5. Hand off
 
@@ -292,7 +296,7 @@ Preview it and get an OK, like every mutation in this skill. If the issue was al
 
 **Where it landed** — the branch and the worktree path, and whether it was created fresh or adopted.
 
-**Next** — the ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** is what takes it from here to an open PR — mention it only if the issue is genuinely groomed.
+**Next** — the ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** takes it from here to an open PR — and since afkkit calls `start` itself, mention it as `afkkit <n>` from anywhere rather than as something to run from inside the worktree; it adopts the worktree this run just prepared.
 
 **Stop there** — `start` prepares the ground and nothing else. It does not implement, does not launch an agent, and does not commit; naming the next step is routing, not doing it.
 
