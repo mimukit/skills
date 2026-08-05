@@ -86,7 +86,7 @@ Read either one top to bottom. Every connector is an arrow pointing the way the 
 
 The dotted edges are not steps in the sequence. `gitkit` is the layer the phases call into: `issuekit start` asks it for a worktree, `prkit` asks for the base ref and gets "rebase" back, `mergekit` asks the same question once the PR is shared and gets "merge", and `issuekit close` has it tear the worktree down. `domainkit` runs the other way — planning settles a term or a hard-to-reverse trade-off, and it writes that down. Neither is usually invoked by name. `statuskit` sits above the loop rather than in it: read-only, launches nothing, and its whole job is telling you which row to jump to, so it can point at any of them.
 
-Three kits stay off the map entirely. `repokit` provisions the label vocabulary the loop depends on — run it once per repo, before any of this. `afkkit` runs the whole BUILD → SHIP span unattended. `handoffkit`, `humankit`, and `skillkit` are invoked on demand.
+Three kits stay off the map entirely. `repokit` provisions the label vocabulary the loop depends on — run it once per repo, before any of this. `afkkit` runs the whole START → SHIP span unattended, calling `issuekit start` itself at the front. `handoffkit`, `humankit`, and `skillkit` are invoked on demand.
 
 ## Orientation: start with statuskit
 
@@ -284,13 +284,13 @@ If the tracker has drifted more broadly — several merged PRs whose issues are 
 
 ## Unattended: afkkit
 
-`afkkit` runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** `implementkit → commitkit → reviewkit → fix loop → qakit → prkit` and owns exactly one thing they don't: the escalation policy. Think of it as the autonomous sibling of `statuskit` — `statuskit` tells you what to do next, `afkkit` does the next several things and stops where a human is genuinely required.
+`afkkit` runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** `issuekit start → implementkit → commitkit → reviewkit → fix loop → qakit → prkit` and owns exactly one thing they don't: the escalation policy. Think of it as the autonomous sibling of `statuskit` — `statuskit` tells you what to do next, `afkkit` does the next several things and stops where a human is genuinely required.
 
-**You create the worktree first.** Run `issuekit start <n>` yourself, switch into the worktree, and launch `afkkit` from inside it. It verifies that precondition but never invokes `start` — which is what keeps `issuekit`'s `ready` guard as the real safety property.
+**It gets its own worktree.** `afkkit` calls `issuekit start <n>` as its first step and dispatches every later step into the path that comes back, so you run it from anywhere — no `cd` first. The `ready` guard is still the safety property and is untouched by this: the human judgment lives in the *label*, earned at the grill, and nothing that calls `start` can award it. `issuekit` grants exactly one concession to an unattended caller — `start`'s `ready → in-progress` flip runs without a preview — and nothing else in the skill widens.
 
-Invoke it per issue (`afkkit 42`) or as a batch (`afkkit all`, over the pre-staged worktrees, walked sequentially).
+Invoke it per issue (`afkkit 42`) or as a batch (`afkkit all`, which drains the `ready` queue sequentially, starting each issue just in time). A batch prints the queue and waits for one OK before it begins; a single issue doesn't ask, because naming the number is the intent.
 
-The span **starts** at a worktree with an `in-progress` issue and **ends** at an open PR. It does not plan, does not grill, does not merge, and does not tear anything down. When it hits a wall it escalates rather than pushing through: no PR, work and commits kept intact, a stuck-state comment on the issue, and a label set by cause — a *planning* gap flips the issue back to `needs-planning`, an *execution* gap keeps it `in-progress`, because the issue isn't waiting on a decision. Then it moves on to the next issue in the batch.
+The span **starts** at a `ready` issue and **ends** at an open PR. It does not plan, does not grill, does not merge, and does not tear anything down. When it hits a wall it escalates rather than pushing through: no PR, work and commits kept intact, a stuck-state comment on the issue, and a label set by cause — a *planning* gap flips the issue back to `needs-planning`, an *execution* gap keeps it `in-progress`, because the issue isn't waiting on a decision. Then it moves on to the next issue in the batch.
 
 ## The side kits
 
@@ -326,7 +326,7 @@ issuekit start 42                   # → gitkit worktree, ready → in-progress
 /qakit                              # → docs/qa/qa-<slug>-2026-08-03.md
 /prkit                              # → PR open, issue → in-review
 
-# Or all of that unattended, after issuekit start
+# Or all of that unattended, worktree included
 afkkit 42
 
 # Landing it
