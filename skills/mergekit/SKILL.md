@@ -132,9 +132,15 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 
 **Name what is missing.** "No QA plan in this repo's conventional location" is information; printing nothing where a QA plan would go is not.
 
-### 6. Hand over
+### 6. Hand off
 
-End with two lines: the worktree path, and the single command that starts the app. Then stop — the human reviews and tests. mergekit does not judge the code, and does not proceed to `finish` on its own.
+**What changed** — whether the worktree was adopted or created, and whether a sync merge was pushed. Nothing else here mutates anything.
+
+**Where it landed** — two lines: the worktree path, and the single command that starts the app.
+
+**Next** — the reviewer reads, runs, and forms an opinion; then `finish <n>` executes whichever verdict they reach (merge, or a fix round). Say both halves, so it's clear merging isn't the assumed outcome.
+
+Then stop — the human reviews and tests. mergekit does not judge the code, and does not proceed to `finish` on its own.
 
 ## Mode `finish <n>` — merge or fix
 
@@ -158,6 +164,14 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    Teardown is **idempotent**: a worktree that is already gone reports "already gone" rather than erroring. A dirty worktree stops teardown — show what would be lost instead of forcing the removal.
 
+6. **Hand off.**
+
+   **What changed** — the PR merged (number, title, merge commit), whether the approval was skipped and why, and what the issue-lifecycle handoff did: issue closed, parent ticked, dependents unblocked.
+
+   **Where it landed** — which worktrees were removed and which were deliberately left standing, with paths. An adopted worktree that survives is someone's live workspace; naming it is how they know it's still theirs.
+
+   **Next** — a merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
+
 ### Fix path
 
 The reviewer wants changes. They already have the code checked out and running, so fix it right there — do not hand the work back to whatever opened the PR.
@@ -166,7 +180,7 @@ The reviewer wants changes. They already have the code checked out and running, 
 2. Run the repo's test and build gate.
 3. Commit in the repo's own style, preferring an installed commit skill.
 4. Push. The PR updates in place; the reviewer stays in the same worktree with the app still running.
-5. Return to the review — re-print only what changed. Do not merge; that is a fresh decision, and it needs a fresh confirmation.
+5. **Hand off.** Return to the review — re-print only what changed (the commits you added, the gate result, the pushed branch), name the worktree still standing with the app still running, and give the next move: re-test the fixed behavior, then `finish <n>` again for the merge decision. Do not merge; that is a fresh decision, and it needs a fresh confirmation.
 
 ## Mode `fix <n>` — service review feedback on your own PR
 
@@ -205,6 +219,14 @@ Close the loop so the reviewer sees it handled, each mutation previewed and conf
 - **Reply and resolve** each thread you actually fixed, pointing at the commit that did it. Leave any thread you *didn't* address open, with a note on why — **never resolve a thread you didn't fix.**
 - **Re-request review** when the decision was `CHANGES_REQUESTED` (`gh pr edit <n> --add-reviewer <login>`, or the `requested_reviewers` REST endpoint).
 - **Do not merge.** Servicing feedback earns a fresh review, not a landing — merging is `finish`'s job, behind its human gate.
+
+### 5. Hand off
+
+**What changed** — the punch-list items you fixed and the commits that did it, the gate result, and which threads you replied to, resolved, or deliberately left open.
+
+**Where it landed** — the branch pushed and the PR updated in place, plus the worktree path you worked in.
+
+**Next** — the ball is back in the reviewer's court, so the move is theirs, not yours: the re-requested review, or CI re-running on the push. Name what you *couldn't* service first if anything is left — an ambiguous comment or a gate you couldn't get green is the thing blocking the merge, and it needs the reviewer or the author, not another fix round. Once they approve, `finish <n>` lands it.
 
 ## Notes
 
