@@ -39,6 +39,7 @@ Makefile                        command surface (run `make help`)
 | `issuekit` | create, start, close, sync, and triage GitHub issues across the workflow | public |
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
 | `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |
+| `designkit` | derive a project's design system from the UI it already ships into a spec-compliant `DESIGN.md`, and keep it true as the code moves | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `wikikit` | generate and maintain in-repo reader docs — getting-started, how-tos, architecture, runbooks — with every command verified against the code | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |

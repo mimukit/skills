@@ -9,8 +9,8 @@
     },
     {
       "title": "Writing & Docs",
-      "description": "Make prose read like a person wrote it, and keep a project's reader-facing documentation true to the code.",
-      "skills": ["humankit", "wikikit"]
+      "description": "Make prose read like a person wrote it, and keep a project's in-repo contracts — reader documentation and the design system — true to the code.",
+      "skills": ["humankit", "wikikit", "designkit"]
     },
     {
       "title": "Testing & QA",
