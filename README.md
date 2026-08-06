@@ -47,6 +47,7 @@ Makefile                        command surface (run `make help`)
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |
 | `grillkit` | interrogate any idea one decision at a time before you commit | public |
 | `researchkit` | research the options for a technical decision against primary sources and recommend one | public |
+| `prototypekit` | answer a question by building a throwaway — a drivable state model, a measurement script, or competing UI mocks — then delete the code and keep the answer | public |
 | `implementkit` | implement a plan, spec, or issue into code (straight-through or TDD), gated on tests + build | public |
 | `uikit` | build production UI that reads as a deliberate choice for the project, and audit shipped UI for the tells that give it away | public |
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |

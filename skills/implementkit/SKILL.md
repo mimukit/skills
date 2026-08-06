@@ -31,6 +31,8 @@ Require the user to name what to build — a plan file (`docs/plans/plan-<slug>-
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes. A bare title, a one-line ask, or a spec with unresolved core decisions does **not** — stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.
 
+**Thin for a different reason gets a different route.** When the input is unsettled because *nobody has seen the design work* — the state model looks fine on paper, the screen has never been laid out — no amount of interrogation settles it, because the missing input is evidence rather than a decision. That routes to prototypekit when it's installed, or to a deliberate throwaway spike otherwise; it comes back here once the question is answered.
+
 A **fix round passes this bar by construction** — the findings name the defects, so there is no design to invent; never bounce one as thin. It also skips mode resolution below: apply the named fixes directly in the style the surrounding code already shows, and let the done-gate prove them.
 
 ### 3. Resolve the mode

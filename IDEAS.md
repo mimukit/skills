@@ -21,7 +21,6 @@ Ordered by priority (top = build next).
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
-| `prototypekit` | Throwaway explorations to settle a question — concept spikes, implementation-approach probes, competing UI mocks to compare and choose. Output is disposable by design, never shipped |
 | `promptkit` | Sharpen a vague prompt into a precise one, two modes: quick rewrite of a coding-agent instruction (scope, constraints, acceptance criteria, files), and a deeper authoring pass for production/system prompts |
 
 **Merged / dropped** (don't re-add): `tddkit` → folded into `implementkit` as a mode; `taskkit` + `trackerkit` → merged into `issuekit`; `prdkit` / `speckit` → dropped (`plankit` + `grillkit` already produce the plan doc, and `speckit` collides with GitHub spec-kit).

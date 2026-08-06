@@ -9,8 +9,9 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
 ```
    ORIENT   statuskit ──▶ one next move, routed to the kit that does it
             ▼
-   DECIDE   validatekit ──▶ validated / unproven / contradicted
-            researchkit ──▶ one recommended option, with cited evidence
+   DECIDE   validatekit  ──▶ validated / unproven / contradicted
+            researchkit  ──▶ one recommended option, with cited evidence
+            prototypekit ──▶ one question answered by building, code deleted
             ▼
    PLAN     plankit ──▶ grillkit ──▶ plan doc, stamped `Grilled:`
             ▼
@@ -40,6 +41,7 @@ flowchart TD
         direction LR
         V["validatekit<br>is it worth building at all?"]
         R["researchkit<br>which option do we pick?"]
+        PR["prototypekit<br>does it hold up? which shape?"]
     end
 
     subgraph plan["PLAN"]
@@ -67,6 +69,7 @@ flowchart TD
 
     V --> P
     R --> P
+    PR --> P
     PD --> F --> S --> I
     W --> SH --> M1
 
@@ -111,7 +114,7 @@ Without `gh` it falls back to a git-only ladder over the same shape. No repo yet
 
 ## Phase 1 — Decide
 
-Both of these are entry points. Nothing hands off *into* them; they hand off forward into planning.
+All three are entry points. Nothing hands off *into* them; they hand off forward into planning. They split by what kind of answer you're short of: `validatekit` for whether the thing should exist, `researchkit` for which option to pick, `prototypekit` for anything only building will settle.
 
 ### validatekit — should this exist at all?
 
@@ -127,7 +130,18 @@ Chat output is the deliverable. It writes `docs/validation/validation-<slug>-YYY
 
 For a technical decision with more than one credible answer: a library, a framework, a service, an architecture. It reads primary sources, cites and dates the evidence, and recommends one. Prints inline by default; writes `docs/research/research-<slug>-YYYY-MM-DD.md` only when you ask.
 
-It does not build prototypes to settle its own hypotheses, and it does not read your codebase for reuse patterns — that's planning work. Leftover uncertainties become the open questions `plankit` and `grillkit` pick up.
+It does not build prototypes to settle its own hypotheses, and it does not read your codebase for reuse patterns — that's planning work. Leftover uncertainties become the open questions `plankit` and `grillkit` pick up — and any of them that needs a spike goes to `prototypekit`.
+
+### prototypekit — does it hold up, and which shape?
+
+For the decisions reading can't settle. `researchkit` refuses to build and says so; this is where the cases it refuses land, along with anything where the design is unsettled *because nobody has seen it work*. It gates hard on a stated question — no question, no prototype, and "build me a demo" bounces — then routes to one of two modes:
+
+- **`logic`** — a state model, a reducer, a flow, or a feasibility question. Imports the real code when it exists, invents a self-contained file when it doesn't, and renders either as something a human clicks through or as a script that prints a number.
+- **`ui`** — three structurally different mocks on one route, switchable by a URL param, each naming the axis it diverges on. A winner is evidence, not a starting point: `uikit` builds it for real, from scratch.
+
+The code is throwaway by construction — marked `*.prototype.*`, registered in the repo's private exclude so `commitkit` and `reviewkit` never see it, and deleted at hand-off with per-file confirmation. What survives is a four-line verdict that lands in whatever asked the question; in a plan, it strikes the open question and writes a settled-decisions row.
+
+**Never run it unattended.** The deliverable is a human judgment, so it sits outside `afkkit`'s span for the same reason `validatekit` and `researchkit` do.
 
 ## Phase 2 — Plan
 
