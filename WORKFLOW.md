@@ -18,7 +18,7 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
             ▼
    START    issuekit start ──▶ worktree, ready ──▶ in-progress
             ▼
-   BUILD    implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit
+   BUILD    implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit ──▶ wikikit update
             ▼
    SHIP     prkit ──▶ PR open, issue ──▶ in-review
             ▼
@@ -51,7 +51,7 @@ flowchart TD
 
     subgraph build["BUILD"]
         direction LR
-        I["implementkit"] --> C["commitkit"] --> RV["reviewkit"] --> Q["verifykit / qakit"]
+        I["implementkit"] --> C["commitkit"] --> RV["reviewkit"] --> Q["verifykit / qakit"] --> W["wikikit update<br>docs follow the code"]
     end
 
     SH["prkit<br>PR open · issue to in-review"]
@@ -67,7 +67,7 @@ flowchart TD
     V --> P
     R --> P
     PD --> F --> S --> I
-    Q --> SH --> M1
+    W --> SH --> M1
 
     ST -.-> F
     ST -.-> S
@@ -251,6 +251,19 @@ Two different jobs, often both:
 - **`verifykit`** drives the feature in a real browser and captures screenshots plus a short GIF into `docs/verify/verify-<slug>-YYYY-MM-DD/`. That bundle's `proof.md` is a hand-off contract: `prkit` reads it and splices it straight into the PR's Proof section. Add `docs/verify/` to `.gitignore` — the assets publish to a hidden git ref instead. Frontend changes only, and it degrades honestly: no browser automation available means a manual capture recipe, not faked proof.
 - **`qakit`** writes a manual test plan for a human to run, grounded in the diff, at `docs/qa/qa-<slug>-YYYY-MM-DD.md`. It walks eleven dimensions (happy path, edges, negative, regression, security, data, concurrency, compatibility, accessibility, performance, UX), tags each case by priority, and splits the work honestly: it runs the automated checks itself and records the real output, and leaves only genuine human-judgment steps in the manual list. It won't mark a manual case passed on your behalf.
 
+### wikikit — keep the reader docs true
+
+`wikikit update` is the docs half of the same change. It resolves the working tree first and the branch diff otherwise, maps the changed paths to affected pages through a per-set manifest at `<doc home>/.wikimap.yaml`, and **states which pages it will touch and which it is deliberately leaving alone before it edits anything**. Edits to existing pages go straight in; new pages and deletions are consent-gated. Every page it writes carries a stamp — `` _Verified against `main`@`a1b2c3d` on 2026-08-06._ `` — which is what makes the audit cheap later.
+
+The rule underneath all three modes: **a feature it cannot find in code does not get documented.** Commands come from the real manifest, and a fixed allowlist of side-effect-free probes (`--help`, `--version`, `make -n`, script listings) runs after one consent ask. It never installs, builds, migrates, or deploys to check a claim.
+
+The other two modes are on-demand entry points rather than loop steps:
+
+- `wikikit init` bootstraps a set for a repo that has none — a research pass over the manifests, entry points, routes, env vars, and deploy config, then a consented page map, then the pages. It writes into an existing docs engine's content directory when the repo runs one, falls back to `docs/wiki/`, and owns a marker-delimited front-door zone of the README and nothing else.
+- `wikikit audit` sweeps read-only and writes nothing, ever — `current` / `stale` / `broken` / `unverified` / `missing` per page, with a mandatory coverage line so an audit that reached 12% of the set can't read as a clean bill of health.
+
+It links `domainkit`'s glossary and ADRs rather than restating them, and the GitHub Wiki tab is a hard non-goal — everything is in-repo Markdown reviewed in the same PR.
+
 ## Phase 5 — Ship
 
 ### prkit — open the PR
@@ -296,6 +309,7 @@ The span **starts** at a `ready` issue and **ends** at an open PR. It does not p
 
 - **`handoffkit`** — compacts the session into `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` for a cold pickup: goal, current state, next steps, key files, decisions, blockers, how to verify. It links to specs and plans by path rather than pasting them. You must invoke it explicitly; it's the one skill here that can't be model-selected.
 - **`humankit`** — strips AI-writing tells from prose. Rewrites by default; ask for a diagnosis only and it just reports the tells. Give it a sample of your own writing and it matches your voice.
+- **`wikikit`** — the loop step is `wikikit update` in Phase 4, but its other two modes are entry points you reach for directly: `wikikit init` on a brownfield repo whose docs don't exist, and `wikikit audit` when you suspect the ones that do exist are lying. Read-only for the audit, consent-gated for anything it creates or deletes.
 - **`skillkit`** — authors a new skill in this collection from scratch: naming, drafting, live testing, publishing. It hands you a commit message rather than committing.
 - **`orcakit`** — reconciles the [Orca](https://www.onorca.dev/) desktop app's workspace list with the git worktrees the rest of the loop creates. Four modes: `list` (read-only survey with a verdict per workspace), `link` (attach the issue and a truthful status to cards `gitkit` left blank), `clean` (batch-preview and remove the workspaces whose PR merged and issue closed), `align` (point Orca's worktree base path at `$WORKTREE_ROOT` so future Orca-created worktrees land in the convention). It is **machine-local and optional** — no Orca installed means it no-ops, and nothing else calls it, which is what keeps the rest of the loop identical on a headless box. It never creates a worktree and never writes to the tracker: a merged PR with an open issue gets reported and routed to `issuekit close`, not cleaned behind its back.
 

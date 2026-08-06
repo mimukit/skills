@@ -24,7 +24,6 @@ Ordered by priority (top = build next).
 | `designkit` | Author and maintain a project's `design.md` + brand guideline — tokens, type, color, spacing, voice — as the source `uikit` builds against |
 | `uikit` | Generate stunning production UI/UX for a frontend while avoiding AI slop, reading `designkit`'s guideline. Name keeps a known collision with Apple's UIKit, accepted deliberately — the `kit` suffix disambiguates |
 | `prototypekit` | Throwaway explorations to settle a question — concept spikes, implementation-approach probes, competing UI mocks to compare and choose. Output is disposable by design, never shipped |
-| `wikikit` | Generate and maintain reader-facing product documentation in-repo — getting-started, how-to guides, architecture overview, runbooks. Links to `domainkit`'s CONTEXT.md glossary and ADRs, never rewrites them |
 | `promptkit` | Sharpen a vague prompt into a precise one, two modes: quick rewrite of a coding-agent instruction (scope, constraints, acceptance criteria, files), and a deeper authoring pass for production/system prompts |
 
 **Merged / dropped** (don't re-add): `tddkit` → folded into `implementkit` as a mode; `taskkit` + `trackerkit` → merged into `issuekit`; `prdkit` / `speckit` → dropped (`plankit` + `grillkit` already produce the plan doc, and `speckit` collides with GitHub spec-kit).

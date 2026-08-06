@@ -8,9 +8,9 @@
       "skills": ["gitkit", "commitkit", "prkit", "mergekit", "issuekit", "repokit", "orcakit"]
     },
     {
-      "title": "Writing",
-      "description": "Make prose read like a person wrote it.",
-      "skills": ["humankit"]
+      "title": "Writing & Docs",
+      "description": "Make prose read like a person wrote it, and keep a project's reader-facing documentation true to the code.",
+      "skills": ["humankit", "wikikit"]
     },
     {
       "title": "Testing & QA",

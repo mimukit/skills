@@ -40,6 +40,7 @@ Makefile                        command surface (run `make help`)
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
 | `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |
 | `humankit` | strip AI-writing tells from prose | public |
+| `wikikit` | generate and maintain in-repo reader docs — getting-started, how-tos, architecture, runbooks — with every command verified against the code | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `validatekit` | pressure-test a startup idea and grade the evidence behind it before you build | public |
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |
