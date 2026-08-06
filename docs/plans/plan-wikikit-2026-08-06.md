@@ -2,6 +2,7 @@
 
 _Created 2026-08-06._
 _Grilled: 2026-08-06_
+_Updated 2026-08-06 — the GitHub Wiki non-goal was reversed after shipping; see [Amendment](#amendment--github-wiki-publishing-reinstated-as-an-opt-in-mode)._
 
 ## Context
 
@@ -187,9 +188,24 @@ One closing section per mode, three beats each — what changed, where it landed
 - **GitHub Wiki publishing — rejected, not deferred.** A wiki is a git repo at `<repo>.wiki.git`, so the mirror itself is a ~12-line Action ([`Andrew-Chen-Wang/github-wiki-action@v5`](https://github.com/Andrew-Chen-Wang/github-wiki-action) with `path: docs/wiki` and the built-in `GITHUB_TOKEN` + `contents: write`; [`spenserblack/actions-wiki`](https://github.com/spenserblack/actions-wiki) for PR-shaped edits; [`newrelic/wiki-sync-action`](https://github.com/newrelic/wiki-sync-action) for two-way sync). It was rejected on the three constraints around it, not the mirror: the wiki must be **initialized by hand** through the UI before any push works and `gh` cannot do it; the page namespace is **flat**, so `how-to/deploy.md` and `runbooks/deploy.md` collide; and a public repo's wiki is **world-editable** by default, so a one-way push destroys strangers' edits. No `publish` mode and no offered workflow file.
 - **A central root registry of doc sets — rejected.** Considered as a `.wikikit.yaml` at the repo root keyed by set, which would survive a doc-home move for free. Lost to a per-set `.wikimap.yaml` plus a discovery glob: the manifest travels with the set it describes, and a monorepo needs no file that every package has to remember to update.
 
+## Amendment — GitHub Wiki publishing, reinstated as an opt-in mode
+
+**2026-08-06, after the skill shipped.** The owner asked for a wiki-sync mode anyway, scoped as optional and explicit-ask-only. Re-researching the three constraints before building it found that **one of them was wrong**, and turned up a fourth that is worse:
+
+| Constraint from the grill | Status on re-check |
+|---|---|
+| Wiki must be **initialized by hand**; `gh` cannot do it | **Still true.** The action's own docs: "You must create a dummy page manually!" Handled as a preflight gate that refuses to install a workflow doomed to fail. |
+| Page namespace is **flat**, so `how-to/deploy.md` and `runbooks/deploy.md` collide | **Still true** — Gollum's design; folders exist on disk but page URLs are built from the title alone. Handled by flattening path segments into the page name in the workflow, plus a collision scan that stops rather than tiebreaking. |
+| Public-repo wikis are **world-editable by default** | **False as of now.** GitHub's docs: "only repository collaborators can edit a public repository's wiki," and *Restrict editing to collaborators only* is **on by default**. This constraint no longer exists. |
+| — | **New, and worse than the one it replaces.** Reading `Andrew-Chen-Wang/github-wiki-action`'s source: it removes everything but `.git` from the wiki clone, copies the source dir in, and runs `git push -f origin master` — **under both strategies**, though `action.yml` documents force-push as `init`-only. `ignore` is appended to `.git/info/exclude`, which does not shield already-tracked pages from the wipe. So every wiki-UI edit dies at the next sync, on private repos too. |
+
+The net: the mirror is *buildable* and the original blockers are handleable, but it is destructive and one-way, which is a real property to consent to rather than a footnote. So `publish` ships **fenced** — nothing routes into it, the loop never suggests it, the request must name the wiki, the preflight offers to rescue existing wiki pages before they're destroyed, and the installed workflow starts in `dry-run` so going live is a separate deliberate commit.
+
+The rejection reasoning above is kept as written rather than edited, because the record of *why* it was rejected is what stops it being re-proposed on the old grounds — and one of those grounds turning out to be false is exactly the thing worth remembering.
+
 ## Non-goals
 
-- **No GitHub Wiki publishing, at all.** The doc set is in-repo Markdown, versioned and reviewed with the code. No `publish` mode, no mirror, no offered workflow — see the rejection note above for why.
+- **GitHub Wiki publishing is opt-in, never a default.** Superseded by the amendment above: a `publish` mode exists, fenced behind an explicit ask. The doc set remains in-repo Markdown, versioned and reviewed with the code, and the wiki is a derived, disposable mirror that is never read back as truth.
 - **No glossary, no ADRs.** `domainkit` owns both; wikikit links to them and routes when one is missing.
 - **No process artifacts.** Plans, QA plans, reviews, handoffs, and agent instruction files are never read as sources of truth for reader docs and never written.
 - **No `CONTRIBUTING.md`.** The social contract half of contributor docs isn't in the repo, so it can only be invented. Linked, never written.
