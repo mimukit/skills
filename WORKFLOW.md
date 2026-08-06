@@ -19,6 +19,7 @@ If you only remember one thing: **`statuskit` tells you which of these to run ne
    START    issuekit start ──▶ worktree, ready ──▶ in-progress
             ▼
    BUILD    implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit ──▶ wikikit update
+            (+ uikit on visual surfaces)
             ▼
    SHIP     prkit ──▶ PR open, issue ──▶ in-review
             ▼
@@ -51,7 +52,7 @@ flowchart TD
 
     subgraph build["BUILD"]
         direction LR
-        I["implementkit"] --> C["commitkit"] --> RV["reviewkit"] --> Q["verifykit / qakit"] --> W["wikikit update<br>docs follow the code"]
+        I["implementkit<br>+ uikit on visual surfaces"] --> C["commitkit"] --> RV["reviewkit"] --> Q["verifykit / qakit"] --> W["wikikit update<br>docs follow the code"]
     end
 
     SH["prkit<br>PR open · issue to in-review"]
@@ -220,6 +221,14 @@ Hand it an explicit input: a plan file, an issue (`#42`), or a spec in the promp
 It runs the repo's own test and build/typecheck commands as a done-gate, discovered from `package.json`, `Makefile`, `pyproject.toml`, `justfile`, or CI config. Fixing on red is bounded to roughly three attempts, then it stops rather than green-washing.
 
 It leaves everything **unstaged** and commits nothing. An underspecified input gets bounced back to `grillkit` or `plankit` with the specific gaps named — that's a success, not a failure.
+
+### uikit — make the UI half look chosen
+
+Not a step of its own: `implementkit` delegates to it when the work includes a visual surface, so it rides in on the same invocation and keeps no gate of its own. It exists because nothing else in the loop looks at the screen — `reviewkit` reads source, `verifykit` photographs without judging, and `designkit` explicitly refuses to generate.
+
+It works off a precedence ladder — `DESIGN.md`, then the shipped components, then the product's own subject matter, then stack defaults — so taste gets spent only where nothing else constrains the choice. Before writing anything it declares a **design read**: surface, audience, rung, signature, density. That line is the only durable record of why the UI looks the way it does, and it travels through the hand-off into the PR body.
+
+`uikit audit` is the read-only half, and the one worth knowing about separately: point it at UI that predates the skill and it returns `file:line` findings against a capped catalog of the tells — three equal feature cards, invented metrics, div-built fake dashboards, missing empty states. It writes nothing and routes findings back to `uikit build`.
 
 ### commitkit — land it in git
 

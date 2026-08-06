@@ -24,8 +24,8 @@
     },
     {
       "title": "Building",
-      "description": "Turn a hardened plan, spec, or issue into working code — straight-through or test-driven, gated on the repo's own tests and build.",
-      "skills": ["implementkit"]
+      "description": "Turn a hardened plan, spec, or issue into working code — straight-through or test-driven, gated on the repo's own tests and build — and make the UI half look like somebody chose it.",
+      "skills": ["implementkit", "uikit"]
     },
     {
       "title": "Skill Authoring",

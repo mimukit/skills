@@ -52,6 +52,8 @@ Pick **straight-through** or **TDD** by this precedence, taking the first tier t
 
 Repeat per slice until the input is fully implemented. Match the surrounding code's conventions, naming, and structure in either mode — reuse what exists rather than reinventing it.
 
+**Visual surfaces delegate.** When the work includes UI — a page, a component, a screen — and **uikit** is installed, apply it to those files instead of writing them blind; it carries the project's design constraint and runs its own visual pre-flight. Without it, write the UI directly. implementkit keeps everything else either way: the input contract, the mode resolved above, and the done-gate below, which remains the **only** gate.
+
 **Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the [done-gate](#5-run-the-done-gate). TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
 
 ### 5. Run the done-gate
