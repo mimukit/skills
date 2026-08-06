@@ -25,8 +25,8 @@ The user finishes building something and wants to verify it by hand: "write a QA
 ### 1. Scope the feature
 Ground the plan in what was actually built — a generic plan is worthless. Gather, in order of preference:
 
-- **The diff**, when a repo is present: `git diff`, `git diff --staged`, and `git log --oneline -10` for recent work. Read it to learn exactly which behaviors, endpoints, screens, flags, or commands changed.
-- **The session context** — what the user asked for and what you implemented this session.
+- **The session context** — what the user asked for and what you implemented this session. When you built the feature yourself, this is your best source and it costs nothing: you know its entry points and its failure modes better than the diff shows them.
+- **The change**, when a repo is present: `git diff --stat HEAD` and `git log --oneline -10` to see which files and commits are in scope. A QA plan is written at the level of *behavior* — endpoints, screens, flags, commands, states — not lines, so read full diffs only for the files that carry behavior you can't already name: a route or handler, a form, a CLI entry point, a migration, a config default. Skip lockfiles, build output, and vendored directories entirely, and don't read a full diff for a file whose behavior the session already told you about.
 - **The user**, only if intent is still unclear. Ask what the feature is *supposed* to do and how they normally exercise it (URL, command, screen, credentials) — one focused question, not an interview.
 
 Write down, for yourself: the feature's intended behavior, its entry points, and its dependencies (services, data, auth, config). Everything downstream hangs off this.

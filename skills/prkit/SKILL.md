@@ -36,10 +36,11 @@ Get the base branch from **gitkit**, then read what the branch actually changes 
 
 ```sh
 git fetch origin                                         # refresh remote-tracking refs before anything else
-git log origin/<base>..HEAD --oneline --no-decorate      # commits in this PR
+git log origin/<base>..HEAD --format='%s%n%b'            # commits in this PR, with their bodies
 git diff origin/<base>...HEAD --stat                     # files touched
-git diff origin/<base>...HEAD                            # the actual changes
 ```
+
+**Read the full diff (`git diff origin/<base>...HEAD`) only when the commits don't already explain the change.** On a branch built through this workflow they usually do — commitkit wrote each message from the change itself, so the log is a summary of exactly the material a PR body needs, and re-deriving it from the raw diff produces a worse description at many times the cost. Reach for the full diff when the commit messages are thin or generic (a branch of `wip` and `fix typo` commits, or work that came from outside this workflow), when the stat shows files no commit message accounts for, or when you need a specific detail for the test plan. Skip lockfiles, build output, and vendored directories either way.
 
 **gitkit owns base-ref resolution** — ask it for the base rather than re-deriving the ladder here; repos whose default is `develop` or `trunk` are real, and getting this wrong silently produces an empty or enormous diff. Without gitkit, `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` is the authoritative fallback — and ask rather than guess when it can't answer. Re-check the current branch against the base gitkit returns and stop if they match.
 
@@ -58,7 +59,7 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 - **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**, and it resolves to **rebase** (`git rebase origin/<base>`), giving the PR a clean diff. Whether that needs an OK first turns on one thing gitkit states in full: an **unpublished** branch rebases straight through, because nothing outside this machine points at the commits being rewritten; a branch already pushed previews the rebase and its `--force-with-lease` together and waits. At PR-open time the branch is usually the former, which is why this step normally runs without a prompt.
 - **Rebase conflicts**: if the rebase stops on a conflict, **stop and surface it** — list the conflicted files (`git diff --name-only --diff-filter=U`) and resolve them (or hand them back to the user), then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
 
-After a successful rebase, re-read the diff (`git diff origin/<base>...HEAD`) so the title and body reflect the rebased result.
+**Don't re-read the diff after a clean rebase.** A rebase replays your commits onto a new base; it doesn't change what they say or do, so the title and body you derived above still describe the branch correctly. The one exception is a rebase you resolved **conflicts** in — there you made real edits during the replay, and the resolved result is genuinely different from what you read. Re-read just the files you touched resolving them (`git diff origin/<base>...HEAD -- <paths>`), not the whole branch.
 
 ### 4. Push the branch
 The remote branch must exist before a PR can point at it:
