@@ -38,7 +38,7 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 - **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `finish` merges, and only after the confirmation.
 
-The same preview-and-confirm rule covers every other outward-facing mutation — pushing a sync merge, commenting, relabeling, closing an issue. Show what will happen, wait for the OK.
+The same preview-and-confirm rule covers every other outward-facing mutation — pushing a sync, commenting, relabeling, closing an issue. Show what will happen, wait for the OK.
 
 ## Preflight
 
@@ -101,7 +101,7 @@ So: resolve the head branch, look it up, and **reuse the worktree that already h
 
 The worktree lands wherever gitkit's convention puts it — outside the repository, not in a `.worktrees/` directory inside it. An in-repo worktree gets swept into docker build contexts, bind mounts, and file watchers, and every one of those failures surfaces far from its cause. Nothing here needs a `.git/info/exclude` entry.
 
-### 3. Sync with the base branch — merge, never rebase
+### 3. Sync with the base branch
 
 Bring `origin/<base>` into the PR branch *before* the human reviews, so they review what will actually land:
 
@@ -110,9 +110,11 @@ git fetch origin
 git rev-list --left-right --count origin/<base>...HEAD    # "<behind>\t<ahead>"; left > 0 means behind
 ```
 
-If behind, merge `origin/<base>` into the branch — a PR under review is squarely the *merge* half of gitkit's sync rule, which owns the full statement. **Never rebase, never force-push here:** review threads are anchored to commits, and a force-push marks every one of them outdated, destroying the bot findings and human comments moments before the review that needs them. The PR is landing as a merge commit anyway, so there is no history purity left to protect.
+If behind, **hand the sync to gitkit**, which owns the rebase-versus-merge rule in full. What mergekit owns is the *when*: that the sync happens before a human reads the diff, and that nothing leaves this machine without their OK.
 
-**On conflict:** stop and surface it. List the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, and confirm before writing. Then, before pushing, **run the repo's own test and build gate** — a conflict resolution is a code change, and it can break something CI passed on five minutes ago. Push the sync merge only after the gate is green and the human has OK'd it, so the PR itself becomes mergeable on GitHub. On a fork PR you cannot push; say so, and keep the merge local for review purposes only.
+Two things follow from gitkit's rule that matter specifically here. A PR branch is published, so the sync is in the **preview-and-confirm** class — one prompt covering the rebase and its `--force-with-lease` push, never a silent rewrite of a branch a reviewer may already be looking at. And this is the one place the merge exception's trigger actually fires: [the review pack](#5-print-the-review-pack) already queries unresolved review threads, so **feed that count into the preview** — a rebase marks every one of them outdated, and the reviewer is about to spend their attention on exactly those threads. Name the number, still recommend the rebase, and let them take the merge if the threads are worth more than the history.
+
+**On conflict:** stop and surface it. List the conflicted files (`git diff --name-only --diff-filter=U`), propose a resolution for each, and confirm before writing. Then, before pushing, **run the repo's own test and build gate** — a conflict resolution is a code change, and it can break something CI passed on five minutes ago. Push the sync only after the gate is green and the human has OK'd it, so the PR itself becomes mergeable on GitHub. On a fork PR you cannot push; say so, and keep the sync local for review purposes only.
 
 ### 4. Set the project up
 
@@ -134,7 +136,7 @@ Everything the reviewer needs, assembled once so they don't go hunting:
 
 ### 6. Hand off
 
-**What changed** — whether the worktree was adopted or created, and whether a sync merge was pushed. Nothing else here mutates anything.
+**What changed** — whether the worktree was adopted or created, and whether a sync was pushed (and if so, whether it rebased or took the merge exception, and how many threads it outdated). Nothing else here mutates anything.
 
 **Where it landed** — two lines: the worktree path, and the single command that starts the app.
 
@@ -200,7 +202,7 @@ If there is nothing to service — no unresolved threads and green CI — say so
 
 ### 2. Get the worktree and sync
 
-Adopt the branch's existing worktree exactly as [`start` does](#2-get-a-worktree--adopt-first-create-only-if-needed) — your own PR almost always still has the worktree it was built in — then sync per [the merge-never-rebase rule](#3-sync-with-the-base-branch--merge-never-rebase). It is your branch, but it is *published and under review*, so it is squarely the merge half of gitkit's rule: **never rebase, never force-push**, or you outdate every thread you are about to answer. A PR you opened from a fork you don't control is the read-only case — you cannot push; say so and stop.
+Adopt the branch's existing worktree exactly as [`start` does](#2-get-a-worktree--adopt-first-create-only-if-needed) — your own PR almost always still has the worktree it was built in — then sync exactly as [`start` syncs](#3-sync-with-the-base-branch), through gitkit. It is your branch, but it is *published*, so the sync previews and waits for an OK before anything is pushed. The thread count matters more here than anywhere else: you are about to *answer* those threads, and a rebase outdates the ones you have not replied to yet — so gather the punch list first, and put the number in the preview. A PR you opened from a fork you don't control is the read-only case — you cannot push; say so and stop.
 
 ### 3. Fix, gate, commit, push
 
@@ -233,7 +235,7 @@ Close the loop so the reviewer sees it handled, each mutation previewed and conf
 - **The merge exception is narrow.** mergekit may merge because a human is sitting in front of it. It must therefore never be dispatched as a subagent inside an unattended pipeline — the confirmation would have nobody to come from, and "the orchestrator said yes" is not a human review.
 - **No polling, no queue, no auto-merge.** mergekit runs when you invoke it. It does not watch for PRs, does not enable GitHub's auto-merge, and does not act on a schedule.
 - **`fix` is interactive too.** Reading review feedback and judging what each comment asks for is judgment work — mergekit does not do it unattended, and `fix` never runs inside an automated pipeline. It is the author-side counterpart to `start`: it services the PR but, like every mode here, never merges it.
-- **Never force-push.** Not during sync, not during a fix round, not to tidy history. A reviewer's threads are anchored to the commits you would be rewriting.
+- **Force-push only with a lease, and only behind the gate.** gitkit's sync rule rebases by default, so a PR branch does get rewritten — but always `--force-with-lease`, never bare `--force`, and never without the preview that names how many review threads it outdates. Never force-push to tidy history; the only force-push mergekit performs is the one the human just OK'd as part of a sync.
 - **Read-only on fork PRs.** You can review and merge them; you cannot push fixes to them. Say so at setup, not at failure.
 - **Bot review feedback is reported, not resolved.** mergekit surfaces unresolved threads in the review pack. Triaging bot findings, replying to them, and resolving threads is separate work that belongs earlier in the PR's life, on whatever machine authored it.
 - **No shell or `gh` available** (e.g. a browser-based agent)? Then you can't create a worktree or call `gh`. Print the review pack from what the user provides, and print the setup and merge commands as codeblocks for them to run — never claim a merge happened that you could not perform.

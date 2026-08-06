@@ -202,7 +202,7 @@ You rarely invoke `gitkit` by name; other skills call it. It is the single sourc
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
 - **What a branch is called** — `issue-<n>-<slug>` for tracker work, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
-- **Rebase or merge** — rebase a branch you exclusively own and haven't published for review; merge the base into a branch that's under review or shared.
+- **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. An unpublished branch rebases straight through; a published one previews the rebase and its `--force-with-lease` together, naming how many review threads it outdates.
 
 Invoke it directly for worktree housekeeping: "spin up a worktree for this", "where's the worktree for #42", "tear down this worktree", "clean up my worktrees".
 
@@ -281,13 +281,13 @@ Three modes:
 - **`mergekit list`** — what's waiting on you, most-ready first, drafts and other people's PRs marked. It deliberately does not crown a "next" PR.
 - **`mergekit start <n>`** — pulls the PR into a worktree, syncs it, sets the project up, and prints a review pack: PR metadata, the linked issue and its acceptance criteria, the commit log and diffstat, the QA plan and proof artifacts, unresolved review threads with `file:line`, CI status, and — explicitly — what's *missing*. It ends with the worktree path and the one command that starts the app.
 - **`mergekit finish <n>`** — forks on your verdict. Say it's good and it merges with a merge commit (no squash, no rebase-merge). Say it needs changes and it takes the fix path instead.
-- **`mergekit fix <n>`** — the author's side, for a PR *you* opened that came back with review comments or red CI. It gathers the unresolved threads and failing checks, drives the fixes in the worktree, syncs by merge, pushes, and answers the threads — then stops. It never merges; that's still `finish`, behind its human gate. Interactive only, like the rest of mergekit — it's never dispatched into an unattended run.
+- **`mergekit fix <n>`** — the author's side, for a PR *you* opened that came back with review comments or red CI. It gathers the unresolved threads and failing checks, drives the fixes in the worktree, syncs through `gitkit`, pushes, and answers the threads — then stops. It never merges; that's still `finish`, behind its human gate. Interactive only, like the rest of mergekit — it's never dispatched into an unattended run.
 
 Name a PR without an action and it assumes `start`, because setting a PR up is reversible and merging isn't.
 
 **`mergekit` is the only skill permitted to merge a pull request**, gated on a per-PR human confirmation — never batched, never inferred, never a side effect. It must never be dispatched inside an unattended pipeline.
 
-Note the inversion from `prkit`: once a PR is under review, `mergekit` **merges** the base in and never rebases or force-pushes. Both skills get that rule from `gitkit`.
+`prkit` and `mergekit` sync the same way — both **rebase**, both getting the rule from `gitkit`. What differs is the gate, and only because of branch state: `prkit` syncs a branch that usually isn't pushed yet, so it runs straight through; `mergekit` always syncs a published one, so it previews the rebase and its lease push together and waits, naming the review threads the rewrite will outdate.
 
 ### issuekit close — reconcile the tracker
 
