@@ -74,9 +74,13 @@ Reply `4a 5b`, or "go with your picks" to take both.
 
 With `AskUserQuestion` available, run the round **hybrid**: print the full text round first — stakes, trade-offs, evidence, recommendation — then call the tool for the picks alone. The user clicks instead of retyping letters, and the reasoning still gets read.
 
-- Keep the tool's labels short; the rationale lives in the text round, not in the option descriptions.
-- Put the recommended option first and mark it `(Recommended)` so the picker agrees with the `➡️` line.
-- The tool caps at 4 questions per call and 4 options per question, and it always appends an "Other" escape for the user's own answer. A wider frontier means batching calls or falling back to the text round alone — never trim the frontier to fit the widget.
+- **The picker mirrors the text round exactly** — same questions in the same order, same options in the same order inside each question. The widget is a second view of the round the user just read, not a fresh presentation of it. Reorder either one and the letters stop meaning anything: the user reads the case for `(c)`, then clicks the third option and gets something else.
+- **Write the recommended option as `(a)` whenever the list has no order of its own.** The user takes the recommendation most of the time, so landing it in the first slot means a single click with no arrow keys — and because the picker mirrors the text round, ordering it once at the top gets it right in both views. Keep the merits order instead when the options carry one — a spectrum, escalating scope, a chronology — since scrambling that to save a keystroke costs the reader more than it saves.
+- **Do the ordering while writing the options, never between the two views.** Reordering at picker time is what breaks the letters, and it's unnecessary: `(Recommended)` marks the pick wherever it sits.
+- **Prefix every label with its letter** — `(a) Per-page metadata`, `(b) YAML frontmatter`. That makes the correspondence explicit rather than positional, so a `(b)` still reads as `(b)` even when the widget stamps its own numbering down the side.
+- Mark the recommended option `(Recommended)` at the end of its label, wherever in the order it happens to fall, so the picker agrees with the `➡️` line.
+- Keep the labels short; the rationale lives in the text round, not in the option descriptions.
+- The tool caps at 4 questions per call and 4 options per question, and it always appends an "Other" escape for the user's own answer. A wider frontier means batching calls in round order or falling back to the text round alone — never trim the frontier to fit the widget. A question with a fifth option can't be mirrored at all: either fold two options together in *both* views, or leave that one question to the text round rather than showing the picker a truncated list.
 
 ## Facts are your job, decisions are theirs
 
