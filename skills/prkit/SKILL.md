@@ -62,6 +62,15 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 **Don't re-read the diff after a clean rebase.** A rebase replays your commits onto a new base; it doesn't change what they say or do, so the title and body you derived above still describe the branch correctly. The one exception is a rebase you resolved **conflicts** in — there you made real edits during the replay, and the resolved result is genuinely different from what you read. Re-read just the files you touched resolving them (`git diff origin/<base>...HEAD -- <paths>`), not the whole branch.
 
 ### 4. Push the branch
+
+**First, commit any handed-in path.** When a caller hands prkit a file that must travel with the branch — most often a QA plan at `docs/qa/qa-<slug>-YYYY-MM-DD.md` — and that file is still uncommitted, commit it here rather than leaving it behind or spawning something else to do it. prkit is already the step that touches git, and it was given the path, so there is nothing to rediscover:
+
+```sh
+git add <handed-in path> && git commit -m "docs(qa): add manual QA plan for <feature>"
+```
+
+Only a path the caller **named**. This is not a licence to sweep the working tree — uncommitted work nobody mentioned is still covered by the rule in [Notes](#notes): point it out and offer, don't commit it silently.
+
 The remote branch must exist before a PR can point at it:
 
 ```sh
@@ -107,7 +116,7 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
 
 ### 9. Hand off
-**What changed** — the PR created or updated (title and number), whether a sync rebase ran, whether a proof section was embedded, and whether the linked issue was flipped to `in-review`.
+**What changed** — the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded, and whether the linked issue was flipped to `in-review`.
 
 **Where it landed** — the PR URL and the branch it points at. Mention that CI will run if configured.
 
