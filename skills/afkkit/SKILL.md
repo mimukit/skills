@@ -49,30 +49,60 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 
 afkkit runs as a **conductor session**: the session you invoke it in sequences the pipeline, and each heavy step runs as a **subagent** dispatched to work inside the issue's worktree. This keeps the conductor's context small (the bulk of the tokens live in the subagents) and lets each step run on the model that fits it.
 
-- **Dispatch a subagent per step** with the host's subagent tool — `Task` or `Agent`, whichever the harness exposes (agent type `general-purpose`) — passing it three things: the **worktree path** that [Start the issue](#1-start-the-issue) returned for *this* issue, the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it).
+- **Dispatch a subagent per step** with the host's subagent tool — `Task` or `Agent`, whichever the harness exposes (agent type `general-purpose`) — passing it four things: the **worktree path** that [Start the issue](#1-start-the-issue) returned for *this* issue, the **orientation file path** (see [The orientation file](#the-orientation-file)), the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it); its second is to read the orientation file.
 - **The worktree path is carried run state, not the conductor's location.** The conductor's own working directory is irrelevant and never changes — it holds each issue's path and dispatches into it. That's what lets one conductor session walk a batch of issues, each in its own worktree, without ever being inside any of them.
 - **Each subagent returns a small structured result** the conductor acts on: pass/fail, and the step's payload (the gate's assumptions list, the review's blocker/nit findings, the QA doc path). The conductor holds the thread; the subagents hold the work.
-- **The conductor never edits code or runs the build itself** — it dispatches, reads the result, and decides the next move (continue, loop, or escalate). That decision — the escalation policy — is the one thing afkkit owns. The single exception is [Start the issue](#1-start-the-issue), which the conductor runs inline: acquiring the workspace is not work *in* the workspace, and the conductor needs the returned path in its own hands to dispatch everything else into.
+- **The conductor redistributes payloads; it never re-derives them.** Holding a result is only half the job — a later step usually needs it, and the conductor is the only thing that has it. Pass it forward by *reference* wherever a reference exists (the orientation path, the QA doc path) and by value only when the payload is genuinely small (the surviving blocker list). Never re-type a fact a subagent already wrote down, and never reconstruct one the conductor never received.
+- **What the conductor may do, and may not.** It **dispatches** subagents, **redistributes** their payloads, **reads** the workspace to verify a claim ([the escalation contract](#the-escalation-contract) names the one case that requires it), and **decides** the next move — continue, loop, or escalate. That decision is the escalation policy, the one thing afkkit owns. It **never writes to the workspace**: no editing code, no running a build, no staging, no committing. *Read yes, write no* — that boundary holds without a list of exceptions, and every step that once needed one has been dispatched elsewhere instead.
 - **No subagent capability?** Degrade to running the steps inline in sequence in the conductor session. You lose per-step model routing (everything runs on the conductor's model) but the pipeline and escalation policy are unchanged. Say you're running inline.
+- **Task-tracking tools are not run state.** If the harness offers a task list, using it as a progress display is fine — but it is not durable and has been observed to empty itself mid-pipeline. The pipeline below is the tracker; the issue's labels and comments are the record. Never let a step's status live only in a task tool.
+
+## The orientation file
+
+Every step after the spec gate needs the same handful of repo facts — the test/build commands and what they chain, where the build output lands, the file that establishes the pattern being followed, what a related issue already landed. The gate discovers all of it. Without somewhere to put it, that discovery is thrown away and each later step re-derives it from cold, which is the single most expensive habit in this pipeline: every tool use re-bills the agent's whole accumulated context, so a rediscovery costs far more than the fact is worth.
+
+So the [spec gate](#2-spec-gate) writes it down once, and every later step reads it.
+
+- **Where.** `.afkkit-orientation.md` at the **worktree root**, excluded from git so it never reaches the PR diff — a reviewer should not see the agents' working notes. Register it in the repo's private exclude file, which is local-only and leaves the tracked `.gitignore` untouched:
+
+  ```sh
+  git -C <worktree> rev-parse --git-path info/exclude    # resolve the real path first
+  ```
+
+  **Ask git for that path; never hardcode `.git/info/exclude`.** In a linked worktree — which is the only kind afkkit ever works in — `.git` is a *file* pointing elsewhere, not a directory, so the literal path doesn't exist. Append the filename only if it isn't already listed; the exclude file is shared across the repo's worktrees, so a batch would otherwise add the same line once per issue.
+- **What goes in.** Facts, each with its source: the gate command and its result, paths that exist, the symbol or config that governs the behavior being changed, the issue's acceptance criteria restated concretely. **Never conclusions** — "the auth flow is fine" is not a fact, "`src/auth/session.ts:40` sets the cookie `maxAge` from `SESSION_TTL`" is.
+- **What it is not.** Not a plan, not a design, not a substitute for the issue body. If it grows past roughly a page, the gate is writing an essay instead of an index.
+- **Trade-off, stated plainly.** Every downstream step now inherits the gate's understanding instead of re-deriving it, so a *wrong* orientation propagates silently to the end of the run. That is the price of not paying for the same discovery five times, and it is why the gate stays on the strongest tier and why orientation carries facts-with-sources rather than judgments — a wrong path is caught the moment a step opens it, a wrong conclusion is not.
+- **No writable filesystem?** Fall back to the conductor holding the block and pasting it into each dispatch prompt, and say that's what you're doing. The pipeline is unchanged; only the delivery mechanism is.
 
 ## Model routing
 
-Default per-step models. Two things drive each assignment: **what a mistake costs** — a missed decision at the spec gate poisons every step after it, while a clumsy commit message is cosmetic — and **how often the step runs**, since commit fires up to four times per issue and the PR exactly once. Savings come from the frequent, low-stakes steps; capability is bought where a single wrong call sinks the run.
+Default per-step models. Two things drive each assignment: **what a mistake costs** — a missed decision at the spec gate poisons every step after it, while a clumsy commit message is cosmetic — and **what the step costs to run**, which is not what most people expect.
 
-| Step | Model | Runs | Why |
-|------|-------|------|-----|
-| Spec gate | `opus` | 1× | Gates the whole run — a missed decision-gap poisons every step after it. Runs once, so buying capability here is nearly free. |
-| Implement | `opus` | 1× | The bulk of the work; implementkit's own test + build gate is the safety net underneath it. |
-| Commit | `haiku` | ≤4× | Mechanical — group the diff, write the message. Highest frequency, lowest stakes: a weak message is cosmetic and rewritable. |
-| Review — round 1 | `fable` | 1× | The quality gate, on the strongest model, over the full branch diff. |
-| Review — rounds 2–3 | `fable` | ≤2× | Same model, delta-scoped to the fix commits (see [Fix loop](#6-fix-loop)). |
-| Fix | `opus` | ≤2× | Applying review findings against a concrete list. |
-| QA plan | `opus` | 1× | Grounded generation from the diff. |
-| PR | `opus` | 1× | Title and body from the real commits, plus the three payloads handed in. |
+**How a step's cost actually works.** Every tool use re-bills the agent's entire accumulated context. So cost tracks **context size × turns**, not token volume and not how often the step fires. A measured run bears this out sharply: the highest-frequency step (commit, three times) was under 2% of the bill, while the two steps that *explored the codebase* — each running exactly once — were over 40% of it between them. **The way to make a step cheap is to hand it what it needs, not to ask it to think less.** That is what [the orientation file](#the-orientation-file) is for, and it is why an expensive step is more often fixed by deleting a rediscovery than by dropping a tier.
+
+The **Tool uses** column below is an observed baseline from that run, not a target — read it as "this is what this step needed when it had to find everything itself."
+
+| Step | Model | Runs | Tool uses | Why |
+|------|-------|------|-----------|-----|
+| Spec gate | `opus` | 1× | ~29 | Gates the whole run — a missed decision-gap poisons every step after it, and every later step inherits its orientation. Runs once, so buying capability here is nearly free. |
+| Implement | `opus` | 1× | ~47 | The bulk of the work; implementkit's own test + build gate is the safety net underneath it. |
+| Commit | `haiku` | ≤4× | ~10–20 | Mechanical — group the diff, write the message. A weak message is cosmetic and rewritable. |
+| Review — round 1 | `fable` | 1× | ~16 | The quality gate, over the full branch diff, deliberately on a **different model family** from the one that wrote the code — see below. |
+| Review — rounds 2–3 | `fable` | ≤2× | ~10 | Same model, delta-scoped to the fix commits (see [Fix loop](#6-fix-loop)). |
+| Fix | `opus` | ≤2× | ~26 | Applying review findings against a concrete list. |
+| QA plan | `opus` | 1× | ~35 | Grounded generation from the diff, against a gate that is already green. |
+| PR | `opus` | 1× | ~13 | Title and body from the real commits, plus the payloads handed in. |
+
+**Why review runs on a different family, not a "better" one.** The reviewer's job is to catch what the implementer got wrong — and an implementer and reviewer from the same model family share blind spots by construction. Routing review to `fable` buys *independence*, and the observed behavior is exactly what that's for: the review re-derived claims against the actual files rather than trusting the conductor's prompt about them. **It is not the cheap option** — `fable` ran roughly 4× `opus`'s cost per token in the measured run, making review ~16% of the bill on ~5% of the tokens. That is a deliberate purchase of a second opinion on the quality gate, priced here so nobody mistakes it for a saving.
+
+The same arithmetic runs the other way and is worth stating outright: **moving a step *down* to `fable` would raise its cost, not lower it.** The cheap tier is `haiku`.
 
 Write the **alias** (`opus`, `fable`, `haiku`), never a pinned model ID — an alias follows its tier as the tier moves, a pinned ID rots.
 
-**State the deliberation budget in the prompt.** Don't lean on harness knobs to make a cheap step cheap — dispatch parameters vary by host and change between releases. The cheap steps state their budget **in the subagent's prompt** instead — "this is a mechanical step: read the diff, produce the output, don't go exploring the codebase." That is an instruction the subagent follows, not a setting the harness enforces. Treat it as a nudge; when you need a real cost floor, drop a tier rather than asking harder.
+**State the deliberation budget in the prompt — but only where exploring is the waste.** Don't lean on harness knobs to make a cheap step cheap; dispatch parameters vary by host and change between releases. Say it in the subagent's prompt instead — "this is a mechanical step: read the orientation file and the diff, produce the output, don't go exploring the codebase." Apply that nudge to **QA, PR, and commit**, the steps where orientation and an already-green gate have removed the reason to explore.
+
+**Never budget Implement or the spec gate.** Implement needed ~47 tool uses because the work needed 47, and the gate's exploration is the thing every later step depends on. Nudging either toward a smaller number buys cheaper, worse output — the one trade this pipeline should never make. Treat every budget line as a nudge the subagent follows, not a floor the harness enforces.
 
 **Inline override.** The user can override any step's model at invocation in plain language — "afkkit 42, implement on opus", "afkkit all, review on fable". Honor the override for the named step(s); everything else keeps the table. There is no config file — the table plus the spoken override is the whole routing surface.
 
@@ -82,13 +112,15 @@ Run these in order for each issue. Any step that can't proceed hands to [the esc
 
 ### 1. Start the issue
 
-Invoke **issuekit** `start <n>` to acquire the worktree. afkkit adds nothing to it and re-implements none of it: issuekit refuses any issue not labeled `ready`, asks **gitkit** for the worktree (branch `issue-<n>-<slug>`, cut from the resolved base ref, adopting an existing one rather than recreating it), and flips the label `ready → in-progress`.
+Dispatch a subagent to invoke **issuekit** `start <n>` and return the worktree. afkkit adds nothing to it and re-implements none of it: issuekit refuses any issue not labeled `ready`, asks **gitkit** for the worktree (branch `issue-<n>-<slug>`, cut from the resolved base ref, adopting an existing one rather than recreating it), and flips the label `ready → in-progress`.
 
-This runs **inline in the conductor**, not as a dispatched subagent — it's a handful of `gh` and git calls, and the conductor needs the returned path in its own hands to dispatch every step below into.
+**Dispatch it on the conductor's own model, not the cheap tier.** This step is the only place the `ready` guard becomes legible to afkkit, and its result is not a boolean — issuekit can refuse four distinguishable ways, each routing somewhere different, and one of them isn't a refusal at all. A relay that flattens that distinction breaks the escalation policy silently. The subagent returns either `{worktree, branch, label}` or a structured refusal naming **which** of the cases below it hit, verbatim.
+
+Dispatching rather than running inline is deliberate: issuekit and gitkit are large documents, and running `start` in the conductor pins both into the conductor's context for the rest of the run — re-billed on every turn, for every issue in a batch. The conductor needs the returned *path*, not the machinery that produced it.
 
 **Say the run is unattended when you invoke it.** issuekit previews every mutation and waits for an OK, and it carves out exactly one exemption for an unattended caller: `start`'s `ready → in-progress` flip. That exemption is safe precisely because the guard has already refused everything unworkable — the flip only ever happens to an issue a human grilled into `ready`. Nothing else afkkit touches is exempt, and afkkit never asks for a broader one.
 
-Then verify what came back rather than taking it on faith:
+Then verify what came back rather than taking it on faith — the conductor runs these itself, since reading the workspace is squarely inside its boundary:
 
 ```sh
 git -C <worktree> rev-parse --show-toplevel              # the returned path is a real worktree
@@ -108,7 +140,9 @@ An issue already `in-progress` is **not** a refusal. issuekit takes its adopt pa
 
 ### 2. Spec gate
 
-Dispatch a subagent (worktree) to read the issue body and the relevant code, and classify any gaps between what the issue specifies and what building it requires. The classification is the whole point:
+Dispatch a subagent (worktree) to read the issue body and the relevant code, and classify any gaps between what the issue specifies and what building it requires. It has **two outputs**: the classification below, and — because it is the only step that explores the repo before any code is written — [the orientation file](#the-orientation-file) that every later step reads instead of re-deriving the same facts. Writing it costs the gate nothing; it is already holding everything that goes in it.
+
+The classification is the whole point:
 
 - **Missing decisions** — product choices or trade-offs a human would have to make (which behavior is correct, which of two designs, an unstated requirement). These are exactly what a grill session settles. → **Escalate as a planning gap:** stop before writing any code, this is the cheapest possible failure point. Comment the exact open questions on the issue (phrased as the grill-questions a human should answer), and flip the label `in-progress → needs-planning` so the issue lands in the human's planning queue. Move to the next issue.
 - **Missing mechanics only** — file names, minor edge cases, naming, small ambiguities a competent implementer fills uncontroversially. → **Proceed.** The subagent returns an **assumptions list** — every mechanical choice it's making — which the conductor carries forward to the PR body so the reviewer sees exactly what was assumed.
@@ -132,23 +166,31 @@ Dispatch a subagent (worktree) to invoke **commitkit**, which groups the unstage
 
 Dispatch a subagent (worktree) to invoke **reviewkit** against the branch diff. reviewkit returns severity-ranked findings across its passes. The conductor splits them into **blockers** (correctness, completeness, security — must fix) and **nits** (polish, style — fix once, don't gate on). This split drives the fix loop.
 
+**Tell the subagent it is the fresh reviewer.** reviewkit's own rule is to hand its passes to a fresh subagent rather than self-review code it just wrote — but this dispatch has *already* satisfied that: the agent has no memory of the implementation and is reading the diff cold. Say so in the prompt, and say it must run the passes itself. Otherwise it delegates again, and a second agent re-reads the entire branch diff to reach the same place — the most expensive redundant hop this pipeline can make.
+
 ### 6. Fix loop
 
 Bounded at **two fix rounds**. Per round:
 
 1. Dispatch a subagent (worktree) to invoke **implementkit** with a **fix round** — the concrete blocker list from [Review](#5-review) as its input.
 2. Commit the fixes (**commitkit**).
-3. Re-review (**reviewkit**) — **delta-scoped**: point it at the fix commits and the surviving blocker list, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it on the strongest model is the most expensive thing this pipeline can do. Only re-review while **blockers** remain; nits are fixed once in the first round and never trigger another round.
+3. Re-review (**reviewkit**) — **delta-scoped**: point it at the fix commits and the surviving blocker list, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it is the most expensive thing this pipeline can do. Only re-review while **blockers** remain.
 
-Stop the loop when no blockers survive. If blockers still survive after the second round, or a fix round can't get the gate green, **escalate keeping `in-progress`** — comment the surviving blockers (or the red gate) and move on. No PR opens with known blockers in it. Nits that were never worth a round are carried to the PR body as "known follow-ups".
+**Zero blockers does not mean zero rounds.** A review that clears every blocker and returns nits still gets **one** fix round, if any nit is cheap and concrete — a wrong ARIA attribute, a misleading doc line, a leaked handler. Those cost almost nothing to fix now and become someone's afternoon later. Nits that aren't worth a round go to the PR body as "known follow-ups" instead. Either way, that round is the end of it: **a nit never triggers a re-review**, so the loop always terminates.
+
+Stop the loop when no blockers survive. If blockers still survive after the second round, or a fix round can't get the gate green, **escalate keeping `in-progress`** — comment the surviving blockers (or the red gate) and move on. No PR opens with known blockers in it.
 
 ### 7. QA plan
 
-Dispatch a subagent (worktree) to invoke **qakit**, which writes a manual QA plan grounded in the diff to `docs/qa/qa-<slug>-YYYY-MM-DD.md` and runs any agent-verifiable checks itself. Then commit that doc (**commitkit**) so it travels with the branch. The PR body will point at it.
+Dispatch a subagent (worktree) to invoke **qakit**, which writes a manual QA plan grounded in the diff to `docs/qa/qa-<slug>-YYYY-MM-DD.md` and runs any agent-verifiable checks itself.
+
+**Tell it the gate is already green, and where the build output is.** Both facts are in [the orientation file](#the-orientation-file); the prompt just has to point at them. Without that, this step re-runs the project's whole verification chain — in the measured run it destroyed and rescaffolded a build [Implement](#3-implement) had produced ten minutes earlier, which made QA the second-costliest step in the pipeline for no new information. QA needs built artifacts to *inspect*; it does not need to build them. A rebuild is warranted only when the change under test **is** the build or scaffold path.
+
+Leave the doc uncommitted. [Open the PR](#8-open-the-pr) commits it on its way past — it already has the path, and spawning a whole subagent to commit one file the previous step just wrote is exactly the rediscovery this pipeline is built to avoid.
 
 ### 8. Open the PR
 
-Dispatch a subagent (worktree) to invoke **prkit**, handing it three things to fold into the PR body: the **assumptions list** from the [spec gate](#2-spec-gate), the **unresolved nits** carried from the fix loop, and the **QA-plan path**. prkit writes the title and body from the real commits and diff, pushes the branch, opens the PR, and — its existing behavior — advances the linked issue `in-progress → in-review`. afkkit relies on prkit for that label flip rather than duplicating it; only if prkit is absent does the conductor fall back to `gh issue edit <n> --remove-label in-progress --add-label in-review` after opening the PR by hand.
+Dispatch a subagent (worktree) to invoke **prkit**, handing it four things: the **assumptions list** from the [spec gate](#2-spec-gate), the **unresolved nits** carried from the fix loop, any **unmet acceptance criteria** surfaced by [the escalation contract](#the-escalation-contract), and the **QA-plan path** — which prkit commits before it pushes, since the doc must travel with the branch and prkit is already the step that touches git. prkit writes the title and body from the real commits and diff, pushes the branch, opens the PR, and — its existing behavior — advances the linked issue `in-progress → in-review`. afkkit relies on prkit for that label flip rather than duplicating it; only if prkit is absent does the conductor fall back to `gh issue edit <n> --remove-label in-progress --add-label in-review` after opening the PR by hand.
 
 This is the successful terminus: an open PR, a QA plan, and an `in-review` issue.
 
@@ -170,7 +212,16 @@ Crown **one** next move even after a batch — the oldest open PR usually, since
 
 ## The escalation contract
 
-The one policy afkkit owns. Whenever a step can't proceed, **escalate** rather than push forward — and escalation always means the same five things:
+The one policy afkkit owns. Whenever a step can't proceed, **escalate** rather than push forward.
+
+**First, verify a "pre-existing" claim before accepting it.** A step that reports a gate as red-but-already-broken is asking to be excused from the one check that stands between an unattended run and a shipped regression — and it is the single easiest thing for a subagent to get wrong, because a failure it caused and a failure it inherited look identical from inside the worktree. The conductor re-runs that command against the **base branch** and only then accepts the claim. This is a *read* of the workspace, which is inside the conductor's boundary; it does not fix anything, and it never turns into an edit.
+
+Two outcomes, both concrete:
+
+- **The base is green too** — the failure belongs to this branch. Treat it as an execution gap and escalate on it; do not let the step wave it through.
+- **The base is red as well** — the claim holds, and the run continues. But if the failure means an **acceptance criterion cannot be met from repo state**, that goes into the PR body as an explicit unmet criterion, handed to [Open the PR](#8-open-the-pr) alongside the assumptions list. A criterion that quietly didn't happen is the one thing a reviewer cannot catch by reading the diff.
+
+Then escalation always means the same five things:
 
 1. **No PR.** Never open a pull request from a run that hit a wall.
 2. **Keep the work.** Leave the worktree and every commit intact — the next human (or the re-run) picks up from real progress, not a clean slate.
@@ -193,6 +244,8 @@ The one policy afkkit owns. Whenever a step can't proceed, **escalate** rather t
 **`all` drains `ready` only.** An issue already `in-progress` may have a human sitting in its worktree, so the batch passes over it; name it explicitly (`afkkit 42`) to include it, and issuekit's adopt path picks up the existing worktree. List any such issues in the up-front preview so it's clear what was left out and why.
 
 Sequential, not parallel: v1 keeps merge-conflict and resource behavior predictable, and a returning human faces one PR at a time rather than a pile of concurrent branches off the base. Process oldest-first (or by the order the user names). Each issue is independent — an escalation is logged and the walk continues to the next.
+
+**Drop each issue's payloads once it terminates.** The moment a PR opens (or the issue escalates), everything the conductor was carrying for it — the assumptions list, the findings, the orientation contents if there was no filesystem — has done its job. Keep the one-line outcome for the batch summary and let the rest go. One conductor session walks the whole queue, and its context is re-read on every turn it takes; a batch that accumulates ten issues' worth of payloads pays for the first issue's findings while working the tenth. With [the orientation file](#the-orientation-file) in play most payloads are already just a path, which is most of this problem solved before it starts.
 
 At the end, print the **batch summary**: how many PRs opened (with links), how many escalated and to which state (`needs-planning` vs still `in-progress`, with links and one-line reasons), how many were skipped before starting and why, then the single crowned next move from [Hand off](#9-hand-off). That summary plus GitHub's own PR notifications is the whole signal surface — afkkit writes no run-report artifact and sends no push notifications. Success is the PR itself; a blocked issue is a comment and a label the human sees on return.
 
