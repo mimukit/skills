@@ -59,6 +59,16 @@ Working tree, Issues, Pull requests, Plans, Next move — that's the dashboard, 
 
 Both rules exist because the panel block's entire value is that four lines tell you where the project stands before you've started reading. A panel that grows a second sentence has become a report, and the sentence it grows is almost always an argument for a move — which belongs in the move, where you can act on it. A panel that has to be *run* to fill (a lint result, a test count) is out of bounds twice over: statuskit's survey is read-only, so it's a claim the survey can't back. Without the closed set, every run improvises a different one and no two days' files compare.
 
+### Plans is the one conditional panel
+
+It prints only when a plan doc never became an issue, and it names those plans. The other four report state that always exists — a tree is always in some condition, a repo always has some number of issues and PRs, and zero is a genuine reading of each. A plan count isn't like that: `21 filed · 0 unfiled` is a fact about a directory rather than a call to action, and it spends a line of the dashboard on every run to report that nothing is wrong. So Plans is a **finding**, and an empty finding doesn't print.
+
+**And the finding is only computed when the project actually tracks work in GitHub issues.** "Unfiled" is a claim about a tracker, so it needs one to check against: `gh` usable, issues enabled, at least one issue in any state. Any of those missing and statuskit skips the comparison rather than guessing — plenty of projects run on Linear, Jira, a `TODO.md`, or somebody's head, and a survey that announces "18 unfiled" on one of them is reporting its own blind spot as a finding, then routing you to `issuekit create` for a tracker you deliberately don't use. The same gap collapses ladder rung 11 to its second half: no plans at all → [`plankit`](./plankit.md).
+
+Two details make the check trustworthy rather than merely quiet. It matches over `--state all`, because a plan that shipped months ago has a *closed* issue and matching open ones alone would report every finished plan as neglected. And an uncertain match counts as **filed** — the panel only ever prints gaps, so a miss costs one silent line while a false positive sends you off to file a duplicate of work already tracked.
+
+Don't read this as "suppress the quiet panels." Plans is conditional because its empty state is *unactionable*, not because it's boring: a clean tree and an empty PR list are both things you want confirmed, and a dashboard whose panel set shifts with the mood of the repo stops being comparable day to day. Plans is the exception and stays the only one.
+
 ## The ranking principle: finish-first
 
 Everything it crowns derives from one rule — **stop starting, start finishing**. The crowned move is whatever retires the most in-flight work for the least effort, *before* anything new is started.
@@ -127,7 +137,8 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 |---|---|
 | Not a git repo | says so, skips everything git-derived. No repo at all → the move is to start with [`plankit`](./plankit.md) |
 | `gh` missing, unauthenticated, or no remote | drops to the **git-only ladder** — a first-class mode, not an error. Names the actual gap once and carries on |
-| No `docs/plans/` | skips the plans panel |
+| No `docs/plans/` | skips the plans read entirely |
+| A repo that doesn't use GitHub issues | skips the unfiled-plan check — no Plans panel, and rung 11 loses its first half |
 | No shell | prints the commands for you to run, reasons from what you paste back |
 
 ## The two ladders
@@ -140,7 +151,7 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 | 2 | unpushed commits | `git push` |
 | 3 | a stash | restore or drop it |
 | 4 | an unmerged local feature branch | finish or clean up — [`gitkit`](./gitkit.md) |
-| 5 | an unfiled plan doc | [`implementkit`](./implementkit.md) / [`plankit`](./plankit.md) |
+| 5 | a plan doc on disk — filed or not is unknowable with no tracker | implement the newest — [`implementkit`](./implementkit.md) |
 | 6 | clean on base, nothing pending | start something |
 
 **Full** (`gh` available) — every git-only state has an explicit home here:
@@ -158,7 +169,7 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 | 8 | a `ready` issue to start (highest priority, then `unblocks`) | [`issuekit`](./issuekit.md) `start`, then implement |
 | 9 | an unlabeled issue needing classification | [`issuekit`](./issuekit.md) `triage` |
 | 10 | an unassessed backlog — open issues with no priority | rank them — [`issuekit`](./issuekit.md) `triage` |
-| 11 | an unfiled plan, or none at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
+| 11 | an unfiled plan *(only when the tracker is in use)*, or no plans at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
 
 **Rung 0 is numbered zero because it isn't really a rung.** It's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it names what it displaced, and everything below it is the actual ladder. If it's firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
 
@@ -226,4 +237,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb5f11d` on 2026-08-07._
+_Verified against `main`@`5176e81` on 2026-08-07._

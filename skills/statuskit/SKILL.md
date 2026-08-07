@@ -99,7 +99,7 @@ statuskit is **git-first**: git signals always drive it, and GitHub signals enri
 
 - **Not a git repo** → say so; skip everything git-derived. If there's no repo yet, the move is "start with `plankit`."
 - **`gh` missing / unauthenticated / no remote** → drop to the **git-only ladder** below. This is a first-class mode, not an error — name the actual gap once (`gh` is not installed, run `gh auth login`, or add a GitHub remote) and carry on.
-- **No `docs/plans/`** → skip the plans panel.
+- **No plan docs** → skip the plans read entirely. The Plans panel is conditional even when plans do exist — see [the plans survey](#2-survey--collect-signals-read-only).
 - **No shell at all** (e.g. a browser-based agent) → you can't run the survey; print the commands below for the user to run and reason from what they paste back.
 
 ### 2. Survey — collect signals read-only
@@ -126,8 +126,11 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **is anyone else even able to review?** — asked only when that third case fires, and only once per run: `gh api repos/{owner}/{repo}/collaborators --jq 'length'`. Exactly one collaborator proves no other reviewer exists, so the move is self-review outright. More than one — or a 403, an error, any answer you didn't get — means you can't rule a reviewer out, so the move names both halves ("request a reviewer, or self-review it"). Never spend the call when no PR needs it, and never let its failure cost you the row: the whose-move column is already correct without it, and the probe only sharpens the wording of the recommendation.
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
-**plans (filesystem, available even without `gh`):**
-- list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence); when `gh` is present, cross-check titles against the issue list to flag plans never turned into issues.
+**plans (filesystem — the list always runs, the unfiled check needs a tracker):**
+- list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans — an `rfcs/`, `specs/`, or documented location takes precedence). The list is free and always runs; it's what the ladder's plan rungs read.
+- **the unfiled set — computed only when the repo actually tracks work in GitHub issues.** Cross-check each plan against the issue list and keep the ones that never became an issue. Match over **`--state all`**, not the open-issues read the rest of the survey uses — `gh issue list --state all --json number,title --limit 200`, one call, spent only when plan docs exist. A plan that shipped months ago has a *closed* issue, so matching against open issues alone would report every finished plan as neglected, which is the failure mode that makes this panel worth suppressing in the first place.
+- **That same call is the tracker-in-use check, so it costs nothing extra.** An error (issues disabled on the repo) or an empty array means there is nothing for a plan to be unfiled *against* — skip the comparison, print no Plans panel, and never report a plan as unfiled by default. Same when `gh` is unusable at all. Plenty of projects track work in Linear, Jira, a `TODO.md`, or somebody's head; a survey that announces "18 unfiled" on one of them is reporting its own blind spot as a finding, and pointing the user at `issuekit create` for a tracker they deliberately don't use.
+- **Match on the plan's slug and its title, and when the match is uncertain call it filed.** An issue whose title matches the plan's title, or whose body links the plan's path, or whose slug matches — any one is enough. The asymmetry is deliberate: this panel only ever prints gaps, so a false negative costs one silent line and a false positive sends the user off to file a duplicate of work already tracked.
 
 ### 3. Rank — crown one finish-first move
 
@@ -141,7 +144,7 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 2 | unpushed commits | `git push` |
 | 3 | a stash | restore or drop it |
 | 4 | an unmerged local feature branch | finish it, or clean it up — `gitkit` |
-| 5 | an unfiled plan doc | `implementkit` / `plankit` |
+| 5 | a plan doc on disk — filed or not is unknowable with no tracker to check | implement the newest — `implementkit` |
 | 6 | clean on the base branch, nothing pending | start something (newest plan) / `plankit` |
 
 **Full ladder** (`gh` available) — every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR someone else genuinely owes you.)*
@@ -159,11 +162,13 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 8 | a `ready` issue to start (highest priority, then `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
 | 9 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
 | 10 | an unassessed backlog — open issues with no priority label | rank them — `issuekit triage` |
-| 11 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+| 11 | an unfiled plan *(only when the tracker is in use)*, or no plans at all | `issuekit create` / `plankit` |
 
 **Rung 0 is numbered zero because it isn't really a rung** — it's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it must name what it displaced, and everything below it is the actual ladder. If rung 0 is firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
 
 **Rung 10 ranks below every actionable rung and above "go plan something."** An unranked backlog is a genuine gap — nothing above it can order itself properly — but it is still tracker hygiene rather than work, so it never outranks a thing the user could actually finish. It earns a rung at all because without one, a repo where nobody has set a single priority would silently rank on leverage forever and never be told why.
+
+**Rung 11's first half only exists when the unfiled set was computed.** A repo that doesn't track work in GitHub issues gives statuskit no way to tell a filed plan from an unfiled one, so it never asserts one is unfiled — the rung reduces to its second half, *no plans at all → `plankit`*. Ranking "file your plans" at a project that files its work somewhere else is worse than staying quiet: it's a confident recommendation built on a read that never happened.
 
 **Rungs 1 and 2 are the same thought twice: your own PR is stuck on you.** A red PR is stuck loudly and an unreviewed one silently, and the silent kind is the one that sits for weeks, which is why it outranks resuming a half-built issue rather than trailing it — the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into: reviewing a finished PR is the same work whichever one you pick, so the tiebreak may as well go to the one that frees the most.
 
@@ -171,7 +176,7 @@ When the owning kit isn't installed, name the **plain action** instead ("commit 
 
 ### 4. Output — dashboard, then one crowned move
 
-Print a compact panel (one line per signal source, **empty panels suppressed**), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Three of the panels carry a table under their count line — the unblocked issue IDs, the blocked issues with their blocker, and the PRs waiting for review — because those are the three places a bare number sends you straight back to `gh` to find out *which*. Keep it to one screen:
+Print a compact panel (one line per signal source, **empty panels suppressed** — and Plans suppressed unless it has a finding, below), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Three of the panels carry a table under their count line — the unblocked issue IDs, the blocked issues with their blocker, and the PRs waiting for review — because those are the three places a bare number sends you straight back to `gh` to find out *which*. Keep it to one screen:
 
 ```
 # Project status — <repo> · <branch> · YYYY-MM-DD
@@ -202,7 +207,7 @@ Waiting for review (X)  — highest priority first
 | #29 | #19, #23 | high | 0 | ✗ | @someone | yours | 6h | <title> |
 | #38 | — | — | 0 | ✓ | you | theirs — @reviewer | 2w | <title> |
 
-## Plans         <N filed · M unfiled>
+## Plans         <M unfiled — plan-debugkit, plan-testkit>   (omit entirely unless M ≥ 1)
 
 ## Next move
 **→ <the #1 action>** — run `<kit / command>`.
@@ -215,7 +220,11 @@ Then:
 
 **A signal panel is one line.** Working tree, Issues, Pull requests, Plans — heading and counts on the same line, nothing following but a table. No paragraph, no parenthetical tracing a plan to the commit that shipped it, no clause explaining why a count matters: that reasoning is an argument for a move, so it belongs in the move, where the user can act on it. The entire value of the block is that four lines tell you where the project stands before you've started reading, and a panel that grows a second sentence has quietly become a report. `Next move` is the exception and the only one — it's the block everything above exists to produce.
 
-**The panel set is closed.** Working tree, Issues, Pull requests, Plans, Next move — that is the dashboard, plus **at most one** repo-specific panel when the repo keeps a first-class queue the standard five genuinely can't see (an `IDEAS.md` backlog, an RFC index). It takes the same shape as the rest: a name, one line, sourced from a file the survey read. Anything you'd have to *run* to fill a panel is out of bounds — statuskit surveys read-only, so a build, test, or lint result is not a signal it has, and inventing a `Health` panel from one is both a mutation risk and a claim the survey can't back. Without this rule every run improvises a different set and no two days' files compare.
+**Plans is the one conditional panel — it prints only when a plan doc never became an issue.** The other four report state that always exists: a tree is always in some condition, a repo always has some number of issues and PRs, and zero is a real reading of each. A plan count isn't like that. `21 filed · 0 unfiled` is a fact about a directory rather than a call to action, and it spends a line of the dashboard every single run to say nothing is wrong. So Plans is a **finding**, and a finding with nothing in it doesn't print: no plan docs, no tracker to compare them against, or every plan already filed all resolve to the same output — no Plans line at all, and no mention of why. When it does print, every name on it is something to act on, which is what earns it the space.
+
+**Don't generalize that into "suppress the quiet panels."** Plans is conditional because its empty state is *unactionable*, not because it's boring — a clean working tree and an empty PR list are both things you actively want to see confirmed, and a dashboard whose panel set changes with the mood of the repo stops being comparable day to day. Plans is the exception, it stays the only one, and the same rule governs the snapshot file: no unfiled plan means no `## Plans` section in it either.
+
+**The panel set is closed.** Working tree, Issues, Pull requests, Plans *(when it fires)*, Next move — that is the dashboard, plus **at most one** repo-specific panel when the repo keeps a first-class queue the standard five genuinely can't see (an `IDEAS.md` backlog, an RFC index). It takes the same shape as the rest: a name, one line, sourced from a file the survey read. Anything you'd have to *run* to fill a panel is out of bounds — statuskit surveys read-only, so a build, test, or lint result is not a signal it has, and inventing a `Health` panel from one is both a mutation risk and a claim the survey can't back. Without this rule every run improvises a different set and no two days' files compare.
 
 **The `Closes` column carries two signals.** Filled, it tells you what merging that PR actually retires — read against the `Blocked (N)` table it says which review is holding up which issue, which is the difference between "3 PRs awaiting review" and "reviewing #34 frees #19." Empty (`—`) is the more valuable reading: that PR will merge and leave its issue open, which is precisely the condition the stale-tracker signal counts after the fact. Seeing it *before* the merge costs nothing and is far cheaper than reconciling afterwards. Print `—`, never omit the cell — a blank reads as "not checked."
 
