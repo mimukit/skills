@@ -57,6 +57,7 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 **GitHub (only when `gh` is usable):**
 - issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
 - **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a column of issue IDs so you can act on one without a second `gh` call. An issue is blocked when it carries the `blocked` label; in a repo with no such label, add `body` to the `--json` fields and treat a `Blocked by #N` / `Depends on #N` line naming a still-open issue as blocked too — never a per-issue fetch just to answer this. Everything else is unblocked, including `in-progress` work you can resume. Sort most-recently-updated first, matching the ladder's tie-break.
+- **the blocked set** — the other half of that same read, kept as number + what it's waiting on + title. The blocker is already in hand: a `Blocked by #N` / `Depends on #N` line names one, the bare `blocked` label doesn't. Keep both forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
 - open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,isDraft,updatedAt`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --help`.
 - **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + CI state + author + title. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer. Record for each whether the next move is **yours** (you're a requested reviewer) or **theirs** (you authored it and are waiting).
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
@@ -97,13 +98,12 @@ When the owning kit isn't installed, name the **plain action** instead ("commit 
 
 ### 4. Output — dashboard, then one crowned move
 
-Print a compact panel (one line per signal source, **empty panels suppressed**), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Two of the panels carry a list under their count line — the unblocked issue IDs and the PRs waiting for review — because those are the two places a bare number sends you straight back to `gh` to find out *which*. Keep it to one screen:
+Print a compact panel (one line per signal source, **empty panels suppressed**), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Three of the panels carry a table under their count line — the unblocked issue IDs, the blocked issues with their blocker, and the PRs waiting for review — because those are the three places a bare number sends you straight back to `gh` to find out *which*. Keep it to one screen:
 
 ```
-# Project status — <repo> (<branch>)
+# Project status — <repo> · <branch> · YYYY-MM-DD
 
-## Working tree
-<clean | N uncommitted, M unpushed, stash: K>
+## Working tree  <clean | N uncommitted · M unpushed · stash K>
 
 ## Issues        in-progress N · ready N · blocked N · in-review N     (omit without gh)
 
@@ -113,6 +113,12 @@ Unblocked (N)
 | #31 | in-progress | <title> |
 | #12 | ready | <title> |
 | #47 | unlabeled | <title> |
+
+Blocked (N)
+| Issue | Waiting on | Title |
+|---|---|---|
+| #19 | #12 | <title> |
+| #23 | `blocked` label, no blocker named | <title> |
 
 ## Pull requests <open N — X awaiting review, Y CI-red, Z ready to merge>   (omit without gh)
 
@@ -133,7 +139,11 @@ Then:
 - <runner-up> — `<kit / command>`
 ```
 
-Both tables list **every** row that qualifies, most-recently-updated first — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
+**A signal panel is one line.** Working tree, Issues, Pull requests, Plans — heading and counts on the same line, nothing following but a table. No paragraph, no parenthetical tracing a plan to the commit that shipped it, no clause explaining why a count matters: that reasoning is an argument for a move, so it belongs in the move, where the user can act on it. The entire value of the block is that four lines tell you where the project stands before you've started reading, and a panel that grows a second sentence has quietly become a report. `Next move` is the exception and the only one — it's the block everything above exists to produce.
+
+**The panel set is closed.** Working tree, Issues, Pull requests, Plans, Next move — that is the dashboard, plus **at most one** repo-specific panel when the repo keeps a first-class queue the standard five genuinely can't see (an `IDEAS.md` backlog, an RFC index). It takes the same shape as the rest: a name, one line, sourced from a file the survey read. Anything you'd have to *run* to fill a panel is out of bounds — statuskit surveys read-only, so a build, test, or lint result is not a signal it has, and inventing a `Health` panel from one is both a mutation risk and a claim the survey can't back. Without this rule every run improvises a different set and no two days' files compare.
+
+All three tables list **every** row that qualifies, most-recently-updated first — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
 
 Runner-ups get **one line each, naming exactly one issue or PR** — never "start #12, #19 and #23" on a single line. This is the same rule the snapshot's checkboxes follow (see [Write the status snapshot](#5-write-the-status-snapshot--the-default-not-an-offer)), and it holds here so the printed list and the file agree item for item.
 
@@ -151,29 +161,52 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 
 **One file per day — always update, never add.** Before writing, list `docs/status/` and look for a snapshot already carrying **today's date**. If one exists, that's the file: update it in place, keeping its existing name even if this run would have picked a different slug. Only when the directory has nothing dated today do you create a new file. A status file is a point-in-time read, and three of them from one afternoon is how a scratch directory becomes archaeology — worse, it splits the user's ticked boxes across files that all look current. If today's snapshot genuinely covers a different project in a monorepo, make the slug specific to that project and match on slug + date instead; there is no case where the same project gets two files on the same day, so never fall back to a sequence suffix.
 
-**Updating means merging, not overwriting.** Re-derive the whole survey from git and GitHub — never trust what the file says — then carry over the **checked state** of every move that's still open, matching on the move's identity (its issue/PR number, or its text when it has none) rather than its position in the list. A move the user ticked that no longer applies drops out with the rest of the stale ladder; a move they ticked that's still open stays ticked. Rewrite everything else from the fresh survey.
+**Updating means merging, not overwriting.** Re-derive the whole survey from git and GitHub — never trust what the file says — then carry over the **checked state** of every move that's still open, matching on its key (below) and nothing else. Rewrite every other word from the fresh survey: a move whose wording changed completely is the same move if its key matches, and a move that kept its wording by coincidence is a different one if its key doesn't. A ticked move that no longer applies goes to `Done today`; an unticked one that no longer applies just drops.
 
 **What it contains.** The dashboard as printed, with two additions the file earns:
 
-- a **provenance line** recording when the snapshot was taken and against which commit (`Snapshot: 2026-07-23 14:20 · <branch> @ <short-sha>`) — without it, a stale file reads as current;
+- a **provenance line** recording when the snapshot was taken, against which commit, and how many times it's been rewritten today (`Snapshot: 2026-07-23 14:20 · <branch> @ <short-sha> · run 3 today (first 09:05)`) — without it a stale file reads as current, and without the run count an afternoon rewrite is indistinguishable from the morning's original;
 - the ranked moves as a **checkbox list** so the file works as a to-do, crowned move first and each carrying its kit/command:
 
 ```markdown
 ## Next moves
 
-- [ ] **<the #1 move>** — `<kit / command>`
-- [ ] <runner-up> — `<kit / command>`
-- [ ] <runner-up> — `<kit / command>`
+- [ ] **<the #1 move>** — `<kit / command>` <!-- k: issue-12 -->
+- [ ] <runner-up> — `<kit / command>` <!-- k: pr-34 -->
+- [ ] <runner-up> — `<kit / command>` <!-- k: plan-debugkit -->
 
-Surfaced, not queued
+## Done today
+
+- [x] <move, as it read when it was ticked> <!-- k: issue-9 -->
+
+## Surfaced, not queued
 
 - #34 approved + CI-green — merge when you're ready (`mergekit`)
 - #29 awaiting @someone's review
 ```
 
+**Every move carries a key.** The trailing `<!-- k: … -->` comment is what the merge matches on, and it exists because the visible text can't be matched on: the wording is regenerated every run, so a move that survives the survey comes back phrased differently and its tick is silently lost. Moves with an issue or PR number are the easy half; the ones without — provision the labels, file the backlog — are exactly where text matching fails and where a user's tick most needs to survive. The key is invisible when rendered because the file is read by a human and the key means nothing outside it.
+
+Draw keys from a fixed vocabulary, never an improvised slug, or the key drifts run to run the same way the prose does:
+
+| Move's subject | Key |
+|---|---|
+| an issue | `issue-12` |
+| a PR | `pr-34` |
+| a plan doc | `plan-<slug>` — the plan's own slug |
+| a local branch | `branch-issue-12-retry-budget` |
+| a stash entry | `stash-0` |
+| a ladder rung with no subject | one fixed slug per rung — `push`, `reconcile`, `triage`, `repo-labels` |
+
+The key never leaves the file. Don't put it in a commit message, a branch name, an issue body, or anywhere else: it's a join key between two versions of one gitignored scratch file, and exporting it into permanent history would make durable artifacts reference a throwaway one. The linkage that *does* belong in git already exists — `Closes #12` on the PR, which the survey reads anyway.
+
+**Every move must have a signal that retires it.** A queued move is something the next survey can observe as finished — the PR merged, the issue closed, the labels now exist, the tree went clean. Completion is detected that way, not from the ticks; the tick is only a human's own mid-day annotation, which is why the merge has to preserve it and why it is never evidence. A move with no observable signal ("decide whether this repo dogfoods its own workflow") can never drop off on its own, so it re-ranks every run forever and the only thing that ever silences it is a tick that today's file takes to the grave. Those aren't next actions, they're decisions — route them to `plankit` or file them with `issuekit create`, and let the resulting issue be what appears here. If you can't name what would make a move disappear, it doesn't belong on the list.
+
+**Ticked moves go to `Done today`, not the bin.** When the fresh survey no longer supports a move the user had ticked, that's the move getting *finished* — record it under `## Done today` rather than deleting it with the rest of the stale ladder. One file per day only pays off if the day accumulates in it; a file that shows nothing but what's left reads identically at 6pm and 9am, which is the one impression a status file must never give. Drop the section entirely on a day with nothing done.
+
 **One task per checkbox — never bundle.** Every item is a single thing the user can finish and tick off on its own, so it names **exactly one** issue or PR. "Start #12, #19, and #23 — `issuekit start`" is three items, not one; so is "triage the 4 unlabeled issues." When a rung of the ladder applies to several issues at once, split it into one item per issue, each carrying that issue's own number, title, and command, and keep them in the rung's order. The whole reason the snapshot is a checkbox list is that a half-done item is invisible — a box covering three issues can't be ticked until all three are done, and until then it reads exactly like nothing has happened. The same rule governs the `Surfaced, not queued` list: one line per PR, never a summary line. If the split makes the list long, that's the true length of the work; cap it the way the tables do — most-recently-updated first, then a `+N more` line — rather than by merging items back together.
 
-The unblocked-issue and waiting-for-review tables go into the file as printed — they're the part of the snapshot that ages into a worklist, and a file that kept only the counts would be strictly worse than the terminal it replaced. Beyond those two additions, don't inflate the file into a report the dashboard didn't contain — same survey, durable form.
+All three tables — unblocked, blocked, waiting for review — go into the file as printed. They're the part of the snapshot that ages into a worklist, and a file that kept only the counts would be strictly worse than the terminal it replaced. Beyond the file's own additions, don't inflate it into a report the dashboard didn't contain — same survey, same closed panel set, durable form.
 
 **It's disposable.** This file is scratch, not a tracked artifact: add `docs/status/` to `.gitignore` before writing the first one (say so in the same line), and leave it uncommitted. Commit it only if the user explicitly asks — then it's their call, and honor it without arguing. Skip the `.gitignore` edit if the path is already ignored or the repo has no `.gitignore` you should be touching.
 
@@ -184,6 +217,6 @@ The unblocked-issue and waiting-for-review tables go into the file as printed �
 - **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it — that kit previews and gets approval on its own. The one thing it writes is the status snapshot — a gitignored scratch file that touches no git or tracker state, which is why writing it by default is still zero mutation.
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command — statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
-- **Hold the issuekit line.** Display issue counts, the unblocked set by ID, and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line — it's the same read, printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
+- **Hold the issuekit line.** Display issue counts, the unblocked set by ID, the blocked set with what each says it's waiting on, and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line — it's the same read, printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
 - **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit — statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
 - **On-demand, no state.** Every run is a fresh read — statuskit keeps no `STATUS.md` at the repo root and no last-run cache, and it never *reads* a snapshot back to shortcut the survey. The one thing it takes from an existing file is which boxes were already ticked; the survey itself is always re-derived from git and GitHub. A `docs/status/` file is output for a human (or the next agent), not memory statuskit trusts.
