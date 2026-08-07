@@ -13,9 +13,33 @@ Generate a step-by-step manual QA plan for a feature just implemented, grounded 
 
 ## What it does
 
-qakit turns a feature an agent just implemented into a **manual QA plan a human can actually run** — concrete steps, expected results, and pass/fail boxes, grounded in what the code changed rather than a generic checklist.
+qakit turns a feature an agent just implemented into a **manual QA plan a human can actually run** — concrete steps, verification checkpoints inline, and pass/fail/skip boxes, grounded in what the code changed rather than a generic checklist.
 
 The key word is manual. These are steps that genuinely need a human to perform and judge: click through a flow, read a screen, feel out the UX.
+
+## Organized around setup, not around dimensions
+
+Setup is what a manual QA pass actually costs — reseeding data, logging in, driving the app into a particular state. A plan that lists twenty tidy one-behavior cases, each restating the same six setup steps, has quietly charged the tester twenty setups for twenty observations. That's the plan getting the economics backwards.
+
+So the unit of the plan is the **scenario**: one setup, every case that can run on top of it, one reset at the end. Cases are grouped by the starting state they need, and cases that share both a setup *and* a flow are merged into a single case with several checkpoints along the way.
+
+Failure isolation doesn't suffer from the merge, which is the part worth internalizing: an unticked checkbox points at exactly one behavior just as precisely as a failed standalone case did — and it costs the tester nothing to reach, because they were already standing there.
+
+A scenario is named for the state it starts from ("Fresh tenant, no data", "Existing user with 200 orders"), never for its topic ("Validation"). The name is what tells a tester whether they're already in the right state or need to reset first. Cases number within their scenario — `TC-2.3` is the third case of Scenario 2.
+
+Ordering inside a scenario is deliberate too: read-only first, state-mutating next, destructive last. A case that deletes the record every other case depends on goes at the end, or earns a scenario of its own.
+
+## Where setup actually lives
+
+A single preconditions list at the top of a plan turns into a dumping ground — everything the plan might ever need, stacked up front and disconnected from the cases that need it. A tester reading case seven has no way to tell which of those preconditions still apply to them.
+
+So setup is split by lifetime:
+
+- **Environment** — true for the whole plan, done once: branch, build, base URL, credentials, how to get an auth token, feature flags, the launch command.
+- **Scenario Setup** — only what *this* scenario needs, sitting directly above the cases that consume it.
+- **Scenario Reset** — how to get back to clean, at the bottom of the scenario, run only when moving to the next one.
+
+The standalone *Regression checks* list is gone for the same reason. Regression is still a dimension that generates cases; those cases now live in the scenario whose state they need, instead of floating in a section with no setup attached.
 
 ## The split that makes it useful
 
@@ -37,42 +61,74 @@ Each case is tagged with a tier carrying an emoji, so urgency reads at a glance:
 - 🟡 **Normal** — a real bug, but not a blocker.
 - 🟢 **Low** — polish or minor-impact edges.
 
-It doesn't pad. One clear case per behavior beats ten redundant ones, and the count scales to the feature's surface area and risk.
+It doesn't pad. One clear check per behavior beats ten redundant ones, and the count scales to the feature's surface area and risk. What the dimensions produce is a flat pile of candidates; grouping them into scenarios is what decides which of them end up as separate cases.
 
 ## Two commands it will never run
 
 Both rules have the same shape: **inspect what exists, don't reproduce it.**
 
-- **Anything that destroys or rebuilds state** — a `*:reset`, a teardown-and-rescaffold, a database drop, a `clean` that wipes a build. It gets described for the human in Preconditions, never executed. qakit is writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
+- **Anything that destroys or rebuilds state** — a `*:reset`, a teardown-and-rescaffold, a database drop, a `clean` that wipes a build. That includes the Setup and Reset blocks of the scenarios it just wrote: those are written for the human to run, and qakit describes them without ever performing them. It's writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
 - **A gate a prior step this session already ran green** — the test, build, or lint chain that just passed. Re-running produces the same answer at full price, and it's the most common way this step becomes the most expensive one in a pipeline. It re-runs only if the change under test *is* that gate, or if something modified the tree since.
 
-## Rules for a good case
+## Every case has the same four parts
+
+**Goal · Steps · Result · Notes** — in that order, in every case, in every plan. No case drops one and none invents a fifth. The point of a fixed body is that a tester can jump into the middle of a plan they've never read and already know where to look.
+
+- **Goal** is one line saying what the case *proves*, not what it does — "an expired token can't reach another tenant's orders", not "test the orders endpoint".
+- **Steps** carry their own verification (below).
+- **Result** is Pass, Fail or Skipped, one checkbox per line.
+- **Notes** is where a failure's actual behavior or a skip's reason goes.
+
+Every checkbox in the plan owns its own line, which is a rendering constraint rather than a style preference: `- [ ]` only becomes a *clickable* box when it starts a line. Three outcomes written side by side to save space come out as dead literal text, and a tester who can't tick a box in the previewer ends up editing raw markdown instead.
+
+### Verification sits under the step that produces it
+
+The obvious shape for a test case is a **Steps** list with an **Expected** list underneath it. It's also the wrong one: it asks the tester to walk five actions while holding five expectations in their head, then reconcile the two lists at the end — by which point they've forgotten which screen showed what.
+
+Instead, each step is followed immediately by its own `- [ ]` checkpoints, so verification happens while the evidence is still on screen. A step with nothing to observe simply has no checkpoints. Each checkpoint is one observable, phrased so it's plainly true or false — never a paragraph, never two assertions joined by "and".
+
+### Skipped is a first-class outcome
+
+A Pass/Fail box loses information. A case the tester couldn't run — dependency down, environment missing, out of time — comes back as a blank, indistinguishable from a case nobody reached.
+
+So **Result** offers Pass, Fail *and* Skipped, and **Notes** carries the reason. A plan that returns with silent blanks tells the next reader nothing; one that says "skipped, staging Redis was down" tells them exactly what's still owed.
+
+## Other rules for a good case
 
 - **Concrete and reproducible** — real values and exact steps. Not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
-- **One behavior per case**, so a failure points at exactly one thing.
-- **Observable expected result** — what the tester sees or measures, not internal state they can't check.
-- **Expected results as bullets**, never a paragraph, so they get ticked off one at a time.
+- **Observable, not internal** — what the tester sees or measures, not state they have no way to inspect.
 - **Every command gets its own `sh` block** — never inlined in prose or a table cell, never stacked. The tester copies each one with a single click. Commands that must run together chain with `&&` inside one block.
 - **Every API endpoint gets a runnable `curl`** — method, full URL, every required header, and a concrete JSON body with real sample values. Copy-paste ready, no placeholders to guess at. This is the single biggest speedup in a QA pass: the tester runs the request instead of reconstructing it.
-- **Honest about gaps** — what the plan can't verify goes under *Not covered*, rather than pretending coverage.
+- **Honest about gaps** — what the plan can't verify goes under *Not covered*, including any dimension deliberately skipped, rather than pretending coverage.
 
 ## The plan shape
 
 ```markdown
 # QA Plan: <Feature name>
 
-## Summary            — what it does, what "working" means
-## Preconditions      — environment, seed data, credentials, flags, launch command
-## Test cases at a glance   — a table with priorities
-## Test cases         — TC-N, steps, expected bullets, Actual, Pass/Fail boxes
-## Regression checks
+## Summary                   — what it does, what "working" means
+## Run log                   — tester, date, build, overall verdict boxes
+## Environment               — once for the whole plan: build, base URL, creds, flags, launch
+## Test cases at a glance    — table of TC-N.M, scenario, title, priority
+
+## Scenario 1 — <starting state>
+   **Setup**                 — once, for every case below
+   ### TC-1.1 — <title>      — Goal · Steps (with inline checkpoints) · Result · Notes
+   ### TC-1.2 — <title>
+   **Reset**                 — before moving to Scenario 2
+
+## Scenario 2 — <starting state>
+   ...
+
 ## Automated verification (by AI agent)
 ## Not covered / needs human judgment
 ```
 
+The **Run log** at the top is what turns a completed plan into a record: who ran it, against which build, on what date, and the overall verdict. A signed-off QA plan that doesn't say which commit it was run against can't be trusted a week later.
+
 ## Hands off to
 
-The human, to run the plan in a fresh checkout. qakit reports how many manual cases (and how many 🔴 critical) plus the automated result.
+The human, to run the plan in a fresh checkout — scenario by scenario, resetting only between scenarios. qakit reports how many scenarios and manual cases (and how many 🔴 critical) plus the automated result.
 
 It never marks a *manual* case as passed — those are yours to execute. The agent only fills the Automated verification section.
 
@@ -86,4 +142,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`5176e81` on 2026-08-07._
