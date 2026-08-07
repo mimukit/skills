@@ -108,7 +108,11 @@ Then escalation always means the same five things:
 
 Takes its queue from `gh issue list --label ready` and walks it **sequentially**.
 
-**One confirmation, up front** — the queue is printed and waits for a single OK. The human is by definition still at the keyboard the moment they type `afkkit all`, so this costs nothing and is the last chance to pull an issue promoted too early. After that OK the run is unattended, whatever happens.
+**The queue is ordered by [`issuekit`](./issuekit.md) priority** — `critical` first, then `high`, `medium`, `low`, unassessed last, with oldest-updated breaking ties within a level. The labels come back in the same `labels` array the call already fetches, so the ordering costs nothing. It matters more here than anywhere else in the workflow because an unattended batch is the one place nobody is watching to reorder it: a run that stops early after four of nine issues has silently *chosen* which four shipped, and priority is what makes that choice yours rather than the tracker's arbitrary sort. With no priorities set anywhere it falls back to oldest-first and says so, rather than implying a ranking that isn't there.
+
+**Priority orders the queue and relaxes nothing.** A `critical` issue goes first and is otherwise an ordinary run — it still needs `ready`, still faces the spec gate, still escalates rather than guessing. An unattended agent is precisely where that has to hold, since the human who declared the emergency isn't there to catch what a relaxed gate would let through.
+
+**One confirmation, up front** — the queue is printed with each issue's priority, in walk order, and waits for a single OK. The human is by definition still at the keyboard the moment they type `afkkit all`, so this costs nothing and is the last chance to pull an issue promoted too early. After that OK the run is unattended, whatever happens.
 
 **The queue is fixed at that OK**, not re-read before each issue. The run mutates labels as it goes, so re-reading would drain issues nobody approved.
 
@@ -130,4 +134,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`fb5f11d` on 2026-08-07._
