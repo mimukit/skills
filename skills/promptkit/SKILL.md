@@ -34,9 +34,11 @@ Get the branch wrong and you ship a prompt that fails in exactly the way the oth
 
 "Optimize this prompt", "make this better before I send it", "what's wrong with this", "write the system prompt for my triage bot", "improve the prompt my app ships", `/promptkit`.
 
-**Infer the mode from the input and say which one you picked**, because a silent misread produces a prompt that's wrong in a structural way. A one-shot instruction aimed at an agent editing files → `task`. A durable prompt an application sends on every request → `system`. Genuinely ambiguous? Ask — that's one of the three questions, well spent.
+**`task` is the default**, and the mode you ran gets stated either way — a silent misread produces a prompt that's wrong in a structural way.
 
-A raw API call with no repo behind it is **not** a thin `task` prompt; it's `system`.
+Switch to `system` only on a positive signal that the prompt is **durable**: it ships inside an application, it runs on every request, it holds variables something else fills, or the user calls it a system prompt. A raw API call with no repo behind it is **not** a thin `task` prompt; it's `system`.
+
+Everything else — including genuine ambiguity — runs as `task`. A default beats a question here because `task` is what the overwhelming majority of asks are, and because the mode is named in the delivery: a wrong branch costs one word to correct, where asking first costs an answer before anything has happened.
 
 ## Before either mode
 
@@ -69,6 +71,8 @@ Look facts up yourself; reserve questions for genuine decisions.
 ### 2. Ask at most three, and never block
 
 Three scoping questions, maximum. The cap is affordable *because the repo answers most of them*. Where an answer doesn't arrive, **bake the assumption into the prompt visibly and name it in the ledger** — a stated wrong assumption is correctable, a silent one isn't. An unresolved reference is not a blocker; it stays in the prompt as a visible stated assumption.
+
+**Ask them answerable.** Every question is a short closed list of labeled options, so the reply is `1b, 2a` rather than a paragraph — and every list carries an option that hands the call back (*"you pick"*). `AskUserQuestion` renders this natively; without it, write the options out as a numbered list. An open question costs more to answer than the answer is usually worth, and a question with no escape hatch is a block wearing a different hat.
 
 A prompt that can't be sharpened because the *work* is unsettled routes upstream through [the routing note](#the-routing-note), not by blocking.
 
@@ -117,6 +121,45 @@ The diagnosis exists so you learn to write the prompt yourself rather than needi
 
 **Next** — send it. If [the routing note](#the-routing-note) fired, the crowned move is the upstream one it named instead. If the prompt is meant to drive a build, the receiver is an implementation pass — **implementkit** when installed, otherwise paste it into a fresh agent session. promptkit does not launch it.
 
+## A worked `task` run
+
+One example, because the five parts are faster to recognize than to describe. This is the default mode doing its ordinary job — no questions asked, because the tree answered them.
+
+**In.** What the user pasted:
+
+> fix the login bug, the session thing is broken. make sure tests pass and don't break anything else
+
+**Grounding.** Three reads, no questions. A search for the session helper lands on `src/lib/session.ts` and the function that actually holds the bug; `package.json` gives the real commands; the repo's agent instruction file already mandates the error-handling convention, so the prompt points at that file instead of restating it.
+
+**Out.** The prompt, ready to paste:
+
+```
+Fix the session expiry bug in `src/lib/session.ts`: `refreshSession()` returns the stale
+token when the refresh call fails, so an expired session reads as valid downstream.
+
+Scope: `src/lib/session.ts` and its test file. Do not touch `src/middleware/auth.ts` —
+the routing there is correct and deliberately out of scope for this fix.
+
+Constraints: follow the conventions in the repo's agent instruction file. Keep
+`refreshSession()`'s signature — three call sites depend on it.
+
+Done when `pnpm test src/lib/session.test.ts` passes with a new case covering the
+failed-refresh path, and `pnpm typecheck` is clean.
+
+Stop there. Do not refactor the surrounding token helpers, and do not commit.
+```
+
+**What changed.** The ledger:
+
+```
+resolved "the session thing" → src/lib/session.ts, refreshSession()
+resolved "make sure tests pass" → pnpm test <file> && pnpm typecheck
+resolved "don't break anything else" → named auth.ts as explicitly out of scope
+assumed the bug is the stale-token return path — stated in the prompt, correct it if wrong
+```
+
+Read the two together and the mechanism is visible. Every vague phrase in the input has a row; the one thing the tree couldn't settle is a row too, and it names the assumption rather than hiding it — so a wrong guess costs one correction instead of a wasted run. Note also what the prompt *doesn't* say: nothing about error handling, because the instruction file covers it, and one pointer line is cheaper than a restatement that can contradict it.
+
 ## Mode: `system`
 
 **"Codebase-blind" describes the prompt, not promptkit.** The prompt this mode produces is codebase-blind *at runtime*: it ships to production, it cannot reference a repo path, and everything it needs arrives through its variables. promptkit while authoring reads the calling code freely — grounding depends on it.
@@ -130,6 +173,8 @@ This is also where the **model shape** is inferred, from the model identifier al
 ### 2. One capture round
 
 `system` has no tree to mine: nothing on disk knows who talks to the app, what a response must look like, or what it must never do. So it gets **one bounded round** covering the six contract parts — what the app does, who talks to it, what a response has to look like, what it must never do. One round, not an interview.
+
+Same shape as `task`'s: **closed lists with labeled options**, answerable as `1b, 2a`. This round asks the most of the user of anything promptkit does, which is exactly why it must be the cheapest thing to answer. An unanswered part becomes a stated default in the prompt, not a second round.
 
 ### 3. Write to the six-part contract
 
@@ -276,6 +321,8 @@ Adopt the durable rule and never a version-pinned table:
 - **A non-reasoning model** benefits from explicit structure — steps, headings, an output skeleton.
 
 Written as a behavioral test rather than a name test, because that sentence survives a model generation and a list of names does not. Any model-recommendation table is stale within two quarters; this skill never ships one.
+
+**One prompt out, never one per model family.** Emitting a Gemini variant, an OpenAI variant, and a Claude variant looks generous and is a decision handed back to the user, three artifacts to keep in sync, and a per-vendor style table — the exact thing that goes stale — dressed as output. Write for the receiver you identified. Where a vendor's own convention genuinely applies, apply it silently in the one prompt you deliver.
 
 `system` infers the shape from the call site it already read. `task` assumes reasoning-native.
 

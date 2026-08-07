@@ -6,7 +6,7 @@ Sharpen the prompt before you send it — the one-shot instruction you're about 
 
 | | |
 |---|---|
-| Modes | [`task`](#task) · [`system`](#system) |
+| Modes | [`task`](#task) (default) · [`system`](#system) |
 | Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob`, `AskUserQuestion` |
 | Writes | nothing in `task`; `docs/prompts/…` in `system`, plus the prompt string on confirmation |
 | Visibility | public |
@@ -37,13 +37,15 @@ Calling them `quick` and `deep` would imply the same job at two efforts. That's 
 
 ### `task`
 
+**The default.** `system` needs a positive signal that the prompt is durable — it ships in an app, runs every request, holds variables something else fills. Everything else, ambiguity included, runs as `task`. That's a default rather than a question because `task` is what almost every ask is, and because the mode is named in the delivery: a wrong branch costs one word to correct, where asking costs an answer before anything has happened.
+
 The receiver is **an agent with filesystem access in this repo** — a fresh session, a subagent, an unattended run, an issue body. Every rule in this mode is only correct for that receiver.
 
 **Repo grounding is the differentiator**, and the one thing a browser-based prompt optimizer structurally cannot do. Before writing anything, vague references resolve against the real tree: *"the auth file"* becomes `src/lib/session.ts`, *"make sure tests pass"* becomes the repo's actual command discovered from `package.json`, a `Makefile`, `pyproject.toml`, or a `justfile`.
 
 Then the **five-part contract** — goal · file scope · constraints · done signal · stop condition. Five rather than seven, because a checklist nobody completes is worse than a short one they do. The done signal is a concrete check (a command, a test, an observable state), never "when it works".
 
-The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for.
+The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. The `SKILL.md` carries a worked run end to end — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row.
 
 ### `system`
 
@@ -118,6 +120,8 @@ A reasoning-native model wants the goal stated once, with no chain-of-thought sc
 
 That's written as a **behavioral** test rather than a name test, because the sentence survives a model generation and a list of names does not. Every prompt-optimizer worth reading ships a model-recommendation table, and every one of them is already stale. This skill never ships one.
 
+For the same reason it delivers **one prompt, never one per model family.** A Gemini variant plus an OpenAI variant plus a Claude variant reads as generous and is three artifacts to keep in sync, a decision handed back to you, and a per-vendor style table — the thing that goes stale — dressed as output. Where a vendor convention genuinely applies, it's applied silently inside the single prompt.
+
 `system` infers the shape from the call site it already read; `task` assumes reasoning-native, because every current coding agent is, and spending one of three questions on it buys nothing.
 
 ## What it is not
@@ -126,7 +130,7 @@ That's written as a **behavioral** test rather than a name test, because the sen
 - **Not the skill author.** A `SKILL.md` is a prompt, and it belongs to [`skillkit`](./skillkit.md) exclusively — including improving one that already exists. `skillkit` in turn never sharpens a prompt.
 - **Not prose editing.** [`humankit`](./humankit.md) has the same shape — a catalog of tells, a rewrite, a review-only path — and the **opposite goal**: it removes structure that reads as machine-made because a human is reading. promptkit *adds* structure because a machine is reading.
 - **Not a status pass.** [`statuskit`](./statuskit.md) reads project state and crowns one move from a nine-rung ladder. promptkit reads **one sentence**; its note is a footnote on a delivered artifact, never a dashboard.
-- **Not the interrogator.** `task` asks at most three questions and never blocks; `system` gets one capture round. Neither is an interview — that's [`grillkit`](./grillkit.md).
+- **Not the interrogator.** `task` asks at most three questions and never blocks; `system` gets one capture round. Both ask in closed lists with labeled options — answerable as `1b, 2a`, and every list carries an option that hands the call back, because a question with no escape hatch is a block wearing a different hat. Neither is an interview; that's [`grillkit`](./grillkit.md).
 - **Not an eval framework.** Must-pass cases are a table you read, not a harness that runs.
 - **Not a prompt library.** One prompt for one job, not a catalog of reusable templates.
 - **Never unattended.** The deliverable is a prompt a human reads and sends, so it sits outside [`afkkit`](./afkkit.md)'s span for the same reason [`prototypekit`](./prototypekit.md) does.
@@ -145,4 +149,4 @@ npx skills add mimukit/skills -s promptkit
 
 Source: [`skills/promptkit/SKILL.md`](../../../skills/promptkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`3e210b6` on 2026-08-07._
+_Verified against `main`@`388d605` on 2026-08-07._
