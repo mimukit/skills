@@ -4,9 +4,11 @@ pages:
   - path: index.md
     documents: [README.md, PUBLISHING.md, IDEAS.md, AGENTS.md, docs/wiki/workflow.md]
 
+  # Two audiences, split in half: installing from skills.sh (documented by the
+  # README's install surface) and working on the repo (documented by the scripts).
   - path: getting-started.md
     mode: tutorial
-    documents: [Makefile, scripts/lib.sh, scripts/link.sh, scripts/unlink.sh, scripts/list.sh]
+    documents: [README.md, Makefile, scripts/lib.sh, scripts/link.sh, scripts/unlink.sh, scripts/list.sh]
 
   - path: architecture.md
     mode: explanation

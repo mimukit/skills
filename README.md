@@ -9,7 +9,7 @@ Every skill here is **authored from scratch**, never forked. Some are *my versio
 
 Each skill works standalone, but they're designed as one loop — **decide → plan → file → build → ship → land**. [The workflow guide](./docs/wiki/workflow.md) covers the day-to-day: every skill's modes, the handoffs between them, and the order to run them in. If you're not sure what to run, `statuskit` will tell you.
 
-Working on the repo itself rather than installing from it? [`docs/wiki/`](./docs/wiki/) is the maintainer documentation — getting started, the architecture, and the full command reference.
+Full documentation lives in [`docs/wiki/`](./docs/wiki/). [Getting started](./docs/wiki/getting-started.md) splits by what you're here for — [installing the skills](./docs/wiki/getting-started.md#install-and-use-the-skills) and using them, or [working on the collection](./docs/wiki/getting-started.md#work-on-the-collection) — and the architecture and command reference sit alongside it.
 <!-- wikikit:front-door:end -->
 
 ## Naming philosophy

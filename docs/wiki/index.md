@@ -1,12 +1,12 @@
 # Documentation
 
-Maintainer documentation for `mimukit/skills` — the repo, its tooling, and how to work on it. If you're here to *use* a skill rather than change one, the [README](../../README.md) install command is all you need.
+Documentation for `mimukit/skills` — the skills themselves, and the repo that produces them. [Getting started](./getting-started.md) splits by what you're here for: [installing the skills](./getting-started.md#install-and-use-the-skills) and using them in your own projects, or [working on the collection](./getting-started.md#work-on-the-collection). Everything below Start here is maintainer-facing; the per-skill pages are for both.
 
 ## Start here
 
 | Page | What it covers |
 |------|----------------|
-| [Getting started](./getting-started.md) | Clone, link a skill into your agents, edit it live, and check it against the conventions |
+| [Getting started](./getting-started.md) | Two paths — install from skills.sh and invoke a skill, or clone, link a skill into your agents, edit it live, and lint it |
 | [Architecture](./architecture.md) | How the repo is put together — the two skill homes, the shell tooling, the gates, and how skills reach people |
 | [Reference](./reference.md) | Every `make` target, environment variable, link-status badge, lint check, and security finding class |
 
@@ -55,4 +55,4 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`c67a052` on 2026-08-07._
