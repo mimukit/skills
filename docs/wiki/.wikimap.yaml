@@ -1,0 +1,119 @@
+home: docs/wiki
+engine: none
+pages:
+  - path: index.md
+    documents: [README.md, PUBLISHING.md, IDEAS.md, AGENTS.md, docs/wiki/workflow.md]
+
+  - path: getting-started.md
+    mode: tutorial
+    documents: [Makefile, scripts/lib.sh, scripts/link.sh, scripts/unlink.sh, scripts/list.sh]
+
+  - path: architecture.md
+    mode: explanation
+    documents:
+      - Makefile
+      - scripts/**
+      - skills/*/SKILL.md
+      - .github/workflows/lint.yml
+      - .gitignore
+      - skills.sh.json
+      - AGENTS.md
+
+  - path: reference.md
+    mode: reference
+    documents:
+      - Makefile
+      - scripts/**
+      - .github/workflows/lint.yml
+      - .gitignore
+      - AGENTS.md
+
+  - path: how-to/add-a-new-skill.md
+    mode: how-to
+    documents: [AGENTS.md, scripts/lint.sh, scripts/security.sh, skills.sh.json, README.md, IDEAS.md]
+
+  - path: how-to/recover-a-wedged-dev-link.md
+    mode: how-to
+    documents: [scripts/lib.sh, scripts/link.sh, scripts/unlink.sh]
+
+  # Human-authored. Mapped so `update` and `audit` can see it; never rewritten,
+  # and unstamped because wikikit has not claim-checked it.
+  - path: workflow.md
+    mode: explanation
+    adopted: true
+    documents: [skills/*/SKILL.md]
+
+  # One page per skill, reader-facing. Each documents its own SKILL.md;
+  # `make lint` enforces page-per-skill in both directions and mode parity.
+  - path: skills/afkkit.md
+    mode: reference
+    documents: [skills/afkkit/SKILL.md]
+  - path: skills/commitkit.md
+    mode: reference
+    documents: [skills/commitkit/SKILL.md]
+  - path: skills/designkit.md
+    mode: reference
+    documents: [skills/designkit/SKILL.md]
+  - path: skills/domainkit.md
+    mode: reference
+    documents: [skills/domainkit/SKILL.md]
+  - path: skills/gitkit.md
+    mode: reference
+    documents: [skills/gitkit/SKILL.md]
+  - path: skills/grillkit.md
+    mode: reference
+    documents: [skills/grillkit/SKILL.md]
+  - path: skills/handoffkit.md
+    mode: reference
+    documents: [skills/handoffkit/SKILL.md]
+  - path: skills/humankit.md
+    mode: reference
+    documents: [skills/humankit/SKILL.md]
+  - path: skills/implementkit.md
+    mode: reference
+    documents: [skills/implementkit/SKILL.md]
+  - path: skills/issuekit.md
+    mode: reference
+    documents: [skills/issuekit/SKILL.md]
+  - path: skills/mergekit.md
+    mode: reference
+    documents: [skills/mergekit/SKILL.md]
+  - path: skills/orcakit.md
+    mode: reference
+    documents: [skills/orcakit/SKILL.md]
+  - path: skills/plankit.md
+    mode: reference
+    documents: [skills/plankit/SKILL.md]
+  - path: skills/prkit.md
+    mode: reference
+    documents: [skills/prkit/SKILL.md]
+  - path: skills/qakit.md
+    mode: reference
+    documents: [skills/qakit/SKILL.md]
+  - path: skills/repokit.md
+    mode: reference
+    documents: [skills/repokit/SKILL.md]
+  - path: skills/researchkit.md
+    mode: reference
+    documents: [skills/researchkit/SKILL.md]
+  - path: skills/reviewkit.md
+    mode: reference
+    documents: [skills/reviewkit/SKILL.md]
+  - path: skills/skillkit.md
+    mode: reference
+    documents: [skills/skillkit/SKILL.md]
+  - path: skills/statuskit.md
+    mode: reference
+    documents: [skills/statuskit/SKILL.md]
+  - path: skills/uikit.md
+    mode: reference
+    documents: [skills/uikit/SKILL.md]
+  - path: skills/validatekit.md
+    mode: reference
+    documents: [skills/validatekit/SKILL.md]
+  - path: skills/verifykit.md
+    mode: reference
+    documents: [skills/verifykit/SKILL.md]
+  - path: skills/wikikit.md
+    mode: reference
+    documents: [skills/wikikit/SKILL.md]

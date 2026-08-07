@@ -1,4 +1,4 @@
-# WORKFLOW.md
+# The workflow
 
 How these skills fit together day to day. Every skill in this collection is usable on its own, but they were designed as one loop: **decide → plan → file → build → ship → land**. This document is the map — what to reach for, in what order, what each mode does, and where one skill hands off to the next.
 

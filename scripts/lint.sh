@@ -10,11 +10,11 @@
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
 #   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
 #   - a closing hand-off section exists, so the skill recaps and routes (warn)
-# On a full run it also cross-checks the human-facing WORKFLOW.md map against the
-# skills it names — skill names, `<kit> <mode>` invocations, and lifecycle labels
-# must still exist in the source SKILL.md files (error), so the map breaks loudly
-# instead of rotting when a mode or label is renamed.
-# Usage: scripts/lint.sh [skill-name ...]   (default: all skills + WORKFLOW.md)
+# On a full run it also cross-checks the human-facing docs/wiki/workflow.md map
+# against the skills it names — skill names, `<kit> <mode>` invocations, and
+# lifecycle labels must still exist in the source SKILL.md files (error), so the
+# map breaks loudly instead of rotting when a mode or label is renamed.
+# Usage: scripts/lint.sh [skill-name ...]   (default: all skills + the workflow map)
 # Exit status is non-zero if any errors (not warnings) were found.
 set -euo pipefail
 
@@ -243,7 +243,7 @@ check_shared_tables() {
 
 # Does a whole `word` appear inside any backtick span of a skill's SKILL.md?
 # Modes in this collection are written backticked (`create`, `list`, `fix`), so a
-# mode WORKFLOW.md names should show up inside a code span in its own skill.
+# mode the workflow map names should show up inside a code span in its own skill.
 skill_backtick_has_word() {
   # Separate statements on purpose: bash 3.2 does not expose an earlier name to
   # a later initializer in the *same* `local`, so a one-line form dies under
@@ -254,7 +254,7 @@ skill_backtick_has_word() {
   grep -oE '`[^`]+`' "$f" | grep -qwF -- "$word"
 }
 
-# Cross-check the human-facing WORKFLOW.md map against the skills it describes.
+# Cross-check the human-facing workflow map against the skills it describes.
 # It duplicates skill facts on purpose — modes, labels, names — so a reader gets
 # one map; nothing else keeps it honest, so guard the three that rot on a rename:
 #   A. every `kit` skill it names still exists as a skill directory
@@ -262,7 +262,7 @@ skill_backtick_has_word() {
 #   C. every lifecycle label in the vocabulary section still lives in issuekit
 # Cheap greps over backtick spans — a loud tripwire, not a proof. Full runs only.
 check_workflow_doc() {
-  local doc="$REPO_ROOT/WORKFLOW.md"
+  local doc="$REPO_ROOT/docs/wiki/workflow.md"
   [[ -f "$doc" ]] || return 0
   local wissues=() kit mode pair lbl
 
@@ -303,10 +303,10 @@ check_workflow_doc() {
   )
 
   if [[ ${#wissues[@]} -eq 0 ]]; then
-    echo "  ${C_GREEN}✓${C_RESET} WORKFLOW.md"
+    echo "  ${C_GREEN}✓${C_RESET} docs/wiki/workflow.md"
     return
   fi
-  echo "  ${C_RED}✗${C_RESET} WORKFLOW.md"
+  echo "  ${C_RED}✗${C_RESET} docs/wiki/workflow.md"
   local i
   for i in "${wissues[@]}"; do
     echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))

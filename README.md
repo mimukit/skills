@@ -2,11 +2,15 @@
 
 [![lint](https://github.com/mimukit/skills/actions/workflows/lint.yml/badge.svg)](https://github.com/mimukit/skills/actions/workflows/lint.yml)
 
+<!-- wikikit:front-door:start -->
 My personal collection of AI agent skills for day-to-day development — installable and managed with [skills.sh](https://www.skills.sh).
 
 Every skill here is **authored from scratch**, never forked. Some are *my version of* a popular upstream skill, rewritten to fit this collection's conventions.
 
-Each skill works standalone, but they're designed as one loop — **decide → plan → file → build → ship → land**. [WORKFLOW.md](./WORKFLOW.md) is the day-to-day guide: every skill's modes, the handoffs between them, and the order to run them in. If you're not sure what to run, `statuskit` will tell you.
+Each skill works standalone, but they're designed as one loop — **decide → plan → file → build → ship → land**. [The workflow guide](./docs/wiki/workflow.md) covers the day-to-day: every skill's modes, the handoffs between them, and the order to run them in. If you're not sure what to run, `statuskit` will tell you.
+
+Working on the repo itself rather than installing from it? [`docs/wiki/`](./docs/wiki/) is the maintainer documentation — getting started, the architecture, and the full command reference.
+<!-- wikikit:front-door:end -->
 
 ## Naming philosophy
 
@@ -57,7 +61,7 @@ Makefile                        command surface (run `make help`)
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
 | `afkkit` | run a grilled `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
 
-How these fit together in practice — the modes each one exposes, what hands off to what, and a worked end-to-end day — is in [WORKFLOW.md](./WORKFLOW.md).
+How these fit together in practice — the modes each one exposes, what hands off to what, and a worked end-to-end day — is in [the workflow guide](./docs/wiki/workflow.md).
 
 Skills I want to build next live in the backlog at [IDEAS.md](./IDEAS.md) — a shipped skill graduates from there into the table above.
 
