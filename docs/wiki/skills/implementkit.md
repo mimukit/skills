@@ -18,7 +18,9 @@ implementkit is the build step between a settled plan and a clean commit. It rea
 Two hard boundaries define it:
 
 - **It never commits or stages.** Work is left as unstaged changes. Grouping and committing is [`commitkit`](./commitkit.md)'s job, and pre-staging actively fights its grouping.
-- **It never designs.** An input too thin to build without inventing the design gets bounced back to [`plankit`](./plankit.md) or [`grillkit`](./grillkit.md), naming the specific gaps. Bouncing is a success, not a failure — it's the boundary that keeps the skill honest.
+- **It never designs.** An input too thin to build without inventing the design gets bounced, naming the specific gaps. Bouncing is a success, not a failure — it's the boundary that keeps the skill honest.
+
+**Where a bounce goes depends on *why* the input is thin.** Unresolved decisions route back to [`plankit`](./plankit.md) or [`grillkit`](./grillkit.md). But a design that's unsettled because nobody has *seen it work* — a state model that reads fine on paper, a screen never laid out — won't yield to more interrogation, because the missing input is evidence rather than a decision. That routes to [`prototypekit`](./prototypekit.md), or a deliberate throwaway spike when it isn't installed, and comes back here once the question is answered.
 
 ## Mode resolution is the defining feature
 
@@ -80,4 +82,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`c9d55aa` on 2026-08-07._

@@ -27,7 +27,7 @@ researchkit **never writes, runs, or scaffolds code to test a hypothesis.** No s
 
 The failure mode is specific, and it feels helpful from the inside: research turns up a claim the docs don't settle, building a small test looks like the fastest way to settle it, and twenty minutes later you're reading about a prototype you never asked for. You asked which option to pick. An implementation answers a question you didn't ask, spends your time and tokens without consent, and buries the comparison you wanted.
 
-So an unsettleable claim gets surfaced in **Open questions** — "settling this needs a spike: *what it would measure*" — and researchkit stops. Building one is a separate, explicitly requested job, and it belongs to [`implementkit`](./implementkit.md).
+So an unsettleable claim gets surfaced in **Open questions** — "settling this needs a spike: *what it would measure*" — and researchkit stops. Building one is a separate, explicitly requested job: [`prototypekit`](./prototypekit.md)'s when it's installed, and otherwise a throwaway you ask for by name. It is never researchkit's — and it is not the build step's either. [`implementkit`](./implementkit.md) needs a settled intent and ships production code, which is the wrong shape entirely for answering a question you're still holding open.
 
 `allowed-tools` deliberately withholds shell and file-editing tools, so a host that honors the field *can't* run a spike even if the model talks itself into wanting one. The prose is the real rule; the tool list is the backstop.
 
@@ -60,7 +60,7 @@ So an unsettleable claim gets surfaced in **Open questions** — "settling this 
 - <claim> → <source URL> (<version/date>) — ⚠ note if stale
 
 ## Open questions
-Including any claim that would need a spike — named, not acted on.
+Including any claim that would need a spike — named, not acted on. Those hand off to prototypekit.
 ```
 
 Scaled to the decision: a two-way library pick is a short block, an architecture choice earns more.
@@ -75,6 +75,8 @@ It says so plainly, gives a best-effort comparison from knowledge with an explic
 
 [`plankit`](./plankit.md), to turn the chosen direction into a plan. Leftover uncertainties become the open questions plankit and [`grillkit`](./grillkit.md) pick up.
 
+An open question that needs *evidence* rather than more argument goes to [`prototypekit`](./prototypekit.md) instead. Grilling sharpens a decision someone has already made; it can't settle a claim nobody has watched run.
+
 It also offers to save the report, but inline is the default — a durable file only when you want one.
 
 ## Install
@@ -85,4 +87,4 @@ npx skills add mimukit/skills -s researchkit
 
 Source: [`skills/researchkit/SKILL.md`](../../../skills/researchkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`c9d55aa` on 2026-08-07._
