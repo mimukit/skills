@@ -1,6 +1,6 @@
 # issuekit
 
-Own the GitHub issue lifecycle in five modes — file the work, pick it up, land it, keep it in sync as PRs merge, and keep the tracker honest.
+Own the GitHub issue lifecycle in five modes — file the work, pick it up, land it, keep it in sync as PRs merge, and keep the tracker honest and ranked.
 
 **Reach for it when** a plan needs turning into issues, or an issue needs starting, closing, or reconciling.
 
@@ -48,6 +48,25 @@ Two pairs carry the design:
 **`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**. An issue earns it only once a grill settled its decisions.
 
 **Type lives in the title, not a label** — issues carry `feat(scope):` per the Conventional-Commits title convention shared with [`commitkit`](./commitkit.md), so the map holds only lifecycle status. A **closed** issue needs no `done` label; the closed state is the signal.
+
+## The priority labels
+
+The second label namespace, and the one that decides what gets picked up next. Like the lifecycle set, issuekit **uses** these and [`repokit`](./repokit.md) provisions them.
+
+| label | means |
+|-------|-------|
+| `critical` | drop everything — preempts work already in progress |
+| `high` | do this before other workable issues |
+| `medium` | normal priority — the default once assessed |
+| `low` | worth doing eventually — never preempts anything |
+
+**Lifecycle and priority are orthogonal — one label from each, and neither implies the other.** Lifecycle answers *can this be worked?*; priority answers *should this be worked next?* An issue is `ready` **and** `high`, or `blocked` **and** `critical`, and both are coherent. Never inferring one from the other is load-bearing rather than tidy: promoting an issue to `ready` because somebody marked it `critical` is exactly how ungrilled work reaches an unattended worker, and the `ready` guard exists to stop that. Urgency is a reason to work something sooner, never a reason to work it with fewer checks.
+
+**No priority label means *unassessed*, not `medium`.** The absence is a real state and it's what `triage` hunts for. An unranked issue everyone assumes is normal-priority is indistinguishable from one somebody actually thought about — and that distinction is the whole value of the scale. The side exits (`wontfix`, `duplicate`) are going nowhere and need no rank.
+
+**Exactly one priority at a time, enforced at write time because GitHub won't.** Labels are a flat namespace with no mutual exclusion, so nothing stops an issue carrying `critical` and `low` at once, and a double-ranked issue sorts unpredictably everywhere downstream. Every write is therefore a *replace*: issuekit reads the issue's current labels and removes whichever sibling is actually there in the same call that adds the new one. Computing the removal from what's really on the issue — rather than blind-removing all three siblings — is what keeps the preview honest, since `medium → high` reads differently from `set high`.
+
+**Why labels rather than a GitHub Projects priority field** is [explained on repokit's page](./repokit.md#labels), which owns the provisioning decision. The short version: Projects v2 needs an OAuth scope `gh auth login` doesn't grant, and priority would only exist for issues added to a board.
 
 ## Modes
 
@@ -112,13 +131,19 @@ It fetches `--state all`, because detecting a closed parent with open children n
 
 The drift it flags: stale · orphaned · broken hierarchy · **zombie label** (a closed issue still carrying a status) · **stale block** (a `blocked` whose target already closed) · dangling or circular dependencies · unmarked · **ungrilled `ready`** — an issue promoted too early, offered a move back to `needs-planning` so unattended workers skip it until a human grills it.
 
+Three more come from the priority namespace: **unassessed** (no priority label — counted separately from *unmarked*, since a tracker with tidy lifecycle labels and no priorities anywhere is both common and invisible if the report prints one number), **double-ranked** (more than one priority label, which the GitHub UI will happily produce since it applies labels additively — the repair keeps the highest, because over-ranking an issue you're about to look at beats burying one somebody explicitly escalated), and **stale `critical`** (untouched for weeks, which is self-refuting: nobody dropped anything for it, so the tracker is saying out loud that it isn't critical, and left alone it outranks everything downstream forever and trains you to ignore the one level that's supposed to be unignorable).
+
+**Ranking a backlog is proposed as one table, not one question per issue.** Priority is comparative by nature — you're deciding what beats what — and a table is the only shape that shows the comparison you're actually making. Asked one at a time, twenty issues become twenty context-free judgments and every one comes back `medium`, which is the same as not ranking at all. The proposal aims for a *distribution* (`critical` empty or nearly so, `high` a handful, a long `medium`/`low` tail), because a backlog where most things are `high` carries no priority information: the label stops discriminating and every consumer silently falls back to the tiebreak underneath.
+
+**And it never applies a priority you didn't approve.** Every other triage fix repairs a state that's provably wrong — a zombie label on a closed issue, a block whose blocker landed. Priority is a claim about what matters, and only you can make it.
+
 triage only classifies. The fixes it can't make itself route to a sibling mode.
 
 ## Where the boundaries sit
 
 **Worktrees and branches are gitkit's.** `start` and `close` bookend a worktree's life and both get it from [`gitkit`](./gitkit.md) — branch name, path convention, create-or-adopt, teardown. issuekit answers *"is this issue workable, and what does the tracker say now?"*; gitkit answers *"where does the code for this branch live?"*
 
-**Labels are repokit's to create.** The label map here is a shared contract with [`repokit`](./repokit.md), duplicated on purpose because each skill must stand alone once installed. This repo's `make lint` diffs the two tables on every full run and errors on drift.
+**Labels are repokit's to create.** The label maps here are a shared contract with [`repokit`](./repokit.md), duplicated on purpose because each skill must stand alone once installed. This repo's `make lint` diffs them on every full run and errors on drift — one check covers both namespaces, since the rows share a format.
 
 ## Hands off to
 
@@ -132,4 +157,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`fb5f11d` on 2026-08-07._

@@ -196,8 +196,10 @@ check_skill() {
 # --- Shared-contract tables -------------------------------------------------
 # Two tables are deliberately duplicated across public skills (each must stand
 # alone once installed, so neither pair can point at a single source file):
-#   - the lifecycle label map: issuekit ↔ repokit (names + colors must match;
-#     the meaning columns intentionally differ in wording)
+#   - the label maps, lifecycle and priority: issuekit ↔ repokit (names +
+#     colors must match; the meaning columns intentionally differ in wording).
+#     Both namespaces are covered by one diff — the rows share a format, so
+#     label_pairs picks up all of them without caring which table they sit in.
 #   - the commit-type table: commitkit ↔ issuekit (issuekit adds `epic`)
 # Nothing else keeps the copies aligned, so diff them here on full runs.
 
