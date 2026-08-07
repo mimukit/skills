@@ -56,7 +56,9 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 
 **GitHub (only when `gh` is usable):**
 - issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
-- open PRs — `gh pr list --json number,title,statusCheckRollup,reviewDecision,isDraft,updatedAt`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --help`.
+- **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a column of issue IDs so you can act on one without a second `gh` call. An issue is blocked when it carries the `blocked` label; in a repo with no such label, add `body` to the `--json` fields and treat a `Blocked by #N` / `Depends on #N` line naming a still-open issue as blocked too — never a per-issue fetch just to answer this. Everything else is unblocked, including `in-progress` work you can resume. Sort most-recently-updated first, matching the ladder's tie-break.
+- open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,isDraft,updatedAt`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --help`.
+- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + CI state + author + title. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer. Record for each whether the next move is **yours** (you're a requested reviewer) or **theirs** (you authored it and are waiting).
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
 **plans (filesystem, available even without `gh`):**
@@ -95,7 +97,7 @@ When the owning kit isn't installed, name the **plain action** instead ("commit 
 
 ### 4. Output — dashboard, then one crowned move
 
-Print a compact panel (one line per signal source, **empty panels suppressed**), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Keep it to one screen:
+Print a compact panel (one line per signal source, **empty panels suppressed**), then the ranked next-actions list with the **#1 move bolded** and its exact kit/command. Two of the panels carry a list under their count line — the unblocked issue IDs and the PRs waiting for review — because those are the two places a bare number sends you straight back to `gh` to find out *which*. Keep it to one screen:
 
 ```
 # Project status — <repo> (<branch>)
@@ -104,7 +106,22 @@ Print a compact panel (one line per signal source, **empty panels suppressed**),
 <clean | N uncommitted, M unpushed, stash: K>
 
 ## Issues        in-progress N · ready N · blocked N · in-review N     (omit without gh)
+
+Unblocked (N)
+| Issue | Status | Title |
+|---|---|---|
+| #31 | in-progress | <title> |
+| #12 | ready | <title> |
+| #47 | unlabeled | <title> |
+
 ## Pull requests <open N — X awaiting review, Y CI-red, Z ready to merge>   (omit without gh)
+
+Waiting for review (X)
+| PR | CI | Author | Next move | Title |
+|---|---|---|---|---|
+| #34 | ✓ | you | theirs | <title> |
+| #29 | ✗ | @someone | yours | <title> |
+
 ## Plans         <N filed · M unfiled>
 
 ## Next move
@@ -112,6 +129,8 @@ Print a compact panel (one line per signal source, **empty panels suppressed**),
 
 Then: <2–4 ranked runner-up actions, each with its kit>
 ```
+
+Both tables list **every** row that qualifies, most-recently-updated first — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
 
 Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Issues + PRs and say so once).
 
@@ -140,7 +159,7 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 Surfaced, not queued: <approved+green PR / PR awaiting others, when either applies>
 ```
 
-Beyond those two, don't inflate the file into a report the dashboard didn't contain — same survey, durable form.
+The unblocked-issue and waiting-for-review tables go into the file as printed — they're the part of the snapshot that ages into a worklist, and a file that kept only the counts would be strictly worse than the terminal it replaced. Beyond those two additions, don't inflate the file into a report the dashboard didn't contain — same survey, durable form.
 
 **It's disposable.** This file is scratch, not a tracked artifact: add `docs/status/` to `.gitignore` before writing the first one (say so in the same line), and leave it uncommitted. Commit it only if the user explicitly asks — then it's their call, and honor it without arguing. Skip the `.gitignore` edit if the path is already ignored or the repo has no `.gitignore` you should be touching.
 
@@ -151,6 +170,6 @@ Beyond those two, don't inflate the file into a report the dashboard didn't cont
 - **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it — that kit previews and gets approval on its own. The one thing it writes is the status snapshot — a gitignored scratch file that touches no git or tracker state, which is why writing it by default is still zero mutation.
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command — statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
-- **Hold the issuekit line.** Display issue counts and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Never render an itemized health verdict — the moment you're explaining *which* issues are stale and *why*, that's issuekit `triage`/`sync`, and statuskit should be pointing at it, not doing it.
+- **Hold the issuekit line.** Display issue counts, the unblocked set by ID, and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line — it's the same read, printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
 - **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit — statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
 - **On-demand, no state.** Every run is a fresh read — statuskit keeps no `STATUS.md` at the repo root and no last-run cache, and it never *reads* a snapshot back to shortcut the survey. The one thing it takes from an existing file is which boxes were already ticked; the survey itself is always re-derived from git and GitHub. A `docs/status/` file is output for a human (or the next agent), not memory statuskit trusts.

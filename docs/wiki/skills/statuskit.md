@@ -19,6 +19,17 @@ It's a **read-and-advise** tool. It never commits, pushes, closes an issue, edit
 
 That zero-mutation stance is the point: statuskit is safe to run anytime, as often as you like, to re-orient.
 
+## Two panels name names
+
+Most of the dashboard is counts, which is right for signals you only need a feel for. Two aren't:
+
+- **Unblocked issues** — a table of every open issue that isn't blocked, by ID, with its bucket and title. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label.
+- **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with its CI state, its author, and whether the next move is yours or theirs.
+
+The reason these two get rows instead of a number is that a count sends you straight back to `gh` to find out *which* — and that round trip is exactly the friction statuskit exists to remove. Both tables list everything that qualifies, most-recently-updated first; on a repo large enough to blow the one-screen budget they cap at 10 rows and say so with a `+N more` line rather than truncating silently.
+
+Note the asymmetry with the ladder: the waiting-for-review table is **surfaced, not crowned**. Seeing the PRs is useful; being told to go chase a reviewer is not a finish-first move.
+
 ## The ranking principle: finish-first
 
 Everything it crowns derives from one rule — **stop starting, start finishing**. The crowned move is whatever retires the most in-flight work for the least effort, *before* anything new is started.
@@ -76,7 +87,7 @@ When the owning kit isn't installed, it names the **plain action** instead — "
 
 **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from [`gitkit`](./gitkit.md). Keeping a second copy of any of them is how a dashboard starts confidently describing a repo that no longer matches it.
 
-**issuekit owns the tracker.** statuskit displays issue counts and computes *one* cheap staleness boolean — how many merged PRs have a linked issue still open — used only to decide whether "reconcile" ranks. It never itemizes which issues are stale or why. The moment you're explaining that, it's [`issuekit`](./issuekit.md)'s job, and statuskit should be pointing at it rather than doing it.
+**issuekit owns the tracker.** statuskit displays issue counts, the unblocked set by ID, and computes *one* cheap staleness boolean — how many merged PRs have a linked issue still open — used only to decide whether "reconcile" ranks. It never itemizes which issues are stale or why. The moment you're explaining that, it's [`issuekit`](./issuekit.md)'s job, and statuskit should be pointing at it rather than doing it.
 
 The split in one line: issuekit answers *"is my tracker honest?"*; statuskit answers *"where's this project and what do I do next?"*
 
@@ -109,4 +120,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`762f91a` on 2026-08-07._
