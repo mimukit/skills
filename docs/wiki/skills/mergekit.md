@@ -64,7 +64,9 @@ It **names what's missing**. "No QA plan in this repo's conventional location" i
 
 Merge or fix, depending on which verdict you reached.
 
-**Merge path** — confirm, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), merge with a fixed subject, then hand the landing to [`issuekit`](./issuekit.md) `close`. Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place.
+**Merge path** — confirm, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), merge with a fixed subject, then hand the landing to [`issuekit`](./issuekit.md) — `close` first, then `sync`.
+
+`close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview before mutating, so the pair costs a confirmation rather than a surprise, and a sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
 
 Cleanup covers **only what mergekit created** — the fork-PR case where it invented both the branch and its worktree. An *adopted* worktree is someone else's context, possibly with an editor and dev server pointed at it. It's left standing and named, so you know it's still yours.
 
@@ -92,7 +94,7 @@ What mergekit owns is the *policy about when*: that a PR is worth pulling down, 
 
 ## Hands off to
 
-After a merge: [`issuekit`](./issuekit.md) `start` on an issue this merge unblocked, otherwise the next PR waiting on you, otherwise [`statuskit`](./statuskit.md) to re-orient. When a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
+A merge hands straight off to [`issuekit`](./issuekit.md) `close` and then `sync`, which reconcile the tracker. From there: `start` on an issue the merge unblocked, otherwise the next PR waiting on you, otherwise [`statuskit`](./statuskit.md) to re-orient. When a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
 
 ## Install
 
@@ -102,4 +104,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`a323f3c` on 2026-08-07._
+_Verified against `main`@`1e73cea` on 2026-08-07._

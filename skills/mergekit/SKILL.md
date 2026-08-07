@@ -159,7 +159,12 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    ```
 
    No squash, no rebase-merge. If your repo's merge-commit convention differs, that subject is the one line to change.
-4. **Hand the landing off — the PR references an issue.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action owned by an issue-lifecycle skill (**issuekit `close <n>`**, which gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit). Invoke it rather than doing any of it here, so that logic lives in one place. Without it, fall back to plain `gh issue close` / `gh issue edit` calls, previewed and confirmed like any other mutation.
+4. **Hand the landing off to the tracker — `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
+
+   - **`close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action — and `close` gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue.
+   - **`sync`, immediately after — including when there was no issue to close.** `close` lands the one issue you named; `sync` sweeps for what the merge shook loose *around* it: a second issue the PR body closed, a link the PR never carried, a parent checklist still un-ticked, a dependent left `blocked` on a prerequisite that just landed. That drift is invisible from here — mergekit sees one PR, `sync` reads the whole tracker — and it is cheapest to repair now, while the merge that caused it is the thing everyone is looking at.
+
+   Both modes preview before they mutate, so the pair costs a confirmation, not a surprise. Without issuekit installed, fall back to plain `gh issue close` / `gh issue edit` calls, previewed and confirmed like any other mutation — and say that the tracker-wide sweep did not happen, rather than implying the tracker is now clean.
 5. **Clean up only what *you* created.** After the handoff, one thing may be left that no issue-lifecycle skill knows about: the **fork-PR case**, where mergekit invented both the `pr-<n>-<slug>` branch and its worktree. Remove that through gitkit.
 
    Everything else stays. [Get a worktree](#2-get-a-worktree--adopt-first-create-only-if-needed) may have *adopted* an existing worktree, and an adopted worktree is someone else's context — the workspace the feature was implemented in, possibly with an editor and a dev server pointed at it. **Never remove a worktree you adopted on your own initiative, and never delete a branch you did not create.** Say what you are leaving behind instead.
@@ -168,11 +173,11 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
 6. **Hand off.**
 
-   **What changed** — the PR merged (number, title, merge commit), whether the approval was skipped and why, and what the issue-lifecycle handoff did: issue closed, parent ticked, dependents unblocked.
+   **What changed** — the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: `close`'s issue closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line — it's the difference between a clean tracker and one nobody looked at.
 
    **Where it landed** — which worktrees were removed and which were deliberately left standing, with paths. An adopted worktree that survives is someone's live workspace; naming it is how they know it's still theirs.
 
-   **Next** — a merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
+   **Next** — a merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked — from either the `close` or the `sync` pass — is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
 
 ### Fix path
 
