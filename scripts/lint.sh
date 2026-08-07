@@ -245,7 +245,11 @@ check_shared_tables() {
 # Modes in this collection are written backticked (`create`, `list`, `fix`), so a
 # mode WORKFLOW.md names should show up inside a code span in its own skill.
 skill_backtick_has_word() {
-  local kit="$1" word="$2" f="$SKILLS_DIR/$kit/SKILL.md"
+  # Separate statements on purpose: bash 3.2 does not expose an earlier name to
+  # a later initializer in the *same* `local`, so a one-line form dies under
+  # `set -u` with "kit: unbound variable" on macOS's system bash.
+  local kit="$1" word="$2"
+  local f="$SKILLS_DIR/$kit/SKILL.md"
   [[ -f "$f" ]] || return 1
   grep -oE '`[^`]+`' "$f" | grep -qwF -- "$word"
 }
