@@ -127,10 +127,15 @@ Waiting for review (X)
 ## Next move
 **→ <the #1 action>** — run `<kit / command>`.
 
-Then: <2–4 ranked runner-up actions, each with its kit>
+Then:
+- <runner-up> — `<kit / command>`
+- <runner-up> — `<kit / command>`
+- <runner-up> — `<kit / command>`
 ```
 
 Both tables list **every** row that qualifies, most-recently-updated first — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
+
+Runner-ups get **one line each, naming exactly one issue or PR** — never "start #12, #19 and #23" on a single line. This is the same rule the snapshot's checkboxes follow (see [Write the status snapshot](#5-write-the-status-snapshot--the-default-not-an-offer)), and it holds here so the printed list and the file agree item for item.
 
 Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Issues + PRs and say so once).
 
@@ -142,7 +147,11 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 
 **Skip only when asked.** "Just print it", "no file", "don't write anything", "screen only", "/statuskit --no-file" — honor that for the run and print the dashboard alone. A skip applies to that run only; it isn't a standing preference unless the user says so or the repo's agent-guide file (`CLAUDE.md` or an equivalent) does. Skip silently too when there's no writable filesystem (below).
 
-**Where it goes.** `docs/status/status-<repo-slug>-YYYY-MM-DD.md` — a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project) and the ISO creation date. Create `docs/status/` if it doesn't exist. A second snapshot for the same slug and date **overwrites in place** — a status file is a point-in-time read, and keeping five from one afternoon is how a scratch directory becomes archaeology. Preserve any unchecked boxes the user has already ticked in the existing file rather than resetting them: re-derive the ladder, then carry over the checked state of moves that are still open. For genuinely distinct snapshots that would collide, make the slug more specific; only as a last resort insert a sequence immediately before the date (`status-api-02-2026-07-23.md`).
+**Where it goes.** `docs/status/status-<repo-slug>-YYYY-MM-DD.md` — a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project) and the ISO creation date. Create `docs/status/` if it doesn't exist.
+
+**One file per day — always update, never add.** Before writing, list `docs/status/` and look for a snapshot already carrying **today's date**. If one exists, that's the file: update it in place, keeping its existing name even if this run would have picked a different slug. Only when the directory has nothing dated today do you create a new file. A status file is a point-in-time read, and three of them from one afternoon is how a scratch directory becomes archaeology — worse, it splits the user's ticked boxes across files that all look current. If today's snapshot genuinely covers a different project in a monorepo, make the slug specific to that project and match on slug + date instead; there is no case where the same project gets two files on the same day, so never fall back to a sequence suffix.
+
+**Updating means merging, not overwriting.** Re-derive the whole survey from git and GitHub — never trust what the file says — then carry over the **checked state** of every move that's still open, matching on the move's identity (its issue/PR number, or its text when it has none) rather than its position in the list. A move the user ticked that no longer applies drops out with the rest of the stale ladder; a move they ticked that's still open stays ticked. Rewrite everything else from the fresh survey.
 
 **What it contains.** The dashboard as printed, with two additions the file earns:
 
@@ -156,8 +165,13 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 - [ ] <runner-up> — `<kit / command>`
 - [ ] <runner-up> — `<kit / command>`
 
-Surfaced, not queued: <approved+green PR / PR awaiting others, when either applies>
+Surfaced, not queued
+
+- #34 approved + CI-green — merge when you're ready (`mergekit`)
+- #29 awaiting @someone's review
 ```
+
+**One task per checkbox — never bundle.** Every item is a single thing the user can finish and tick off on its own, so it names **exactly one** issue or PR. "Start #12, #19, and #23 — `issuekit start`" is three items, not one; so is "triage the 4 unlabeled issues." When a rung of the ladder applies to several issues at once, split it into one item per issue, each carrying that issue's own number, title, and command, and keep them in the rung's order. The whole reason the snapshot is a checkbox list is that a half-done item is invisible — a box covering three issues can't be ticked until all three are done, and until then it reads exactly like nothing has happened. The same rule governs the `Surfaced, not queued` list: one line per PR, never a summary line. If the split makes the list long, that's the true length of the work; cap it the way the tables do — most-recently-updated first, then a `+N more` line — rather than by merging items back together.
 
 The unblocked-issue and waiting-for-review tables go into the file as printed — they're the part of the snapshot that ages into a worklist, and a file that kept only the counts would be strictly worse than the terminal it replaced. Beyond those two additions, don't inflate the file into a report the dashboard didn't contain — same survey, durable form.
 

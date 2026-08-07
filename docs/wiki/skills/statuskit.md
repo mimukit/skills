@@ -95,12 +95,16 @@ The split in one line: issuekit answers *"is my tracker honest?"*; statuskit ans
 
 A terminal dashboard scrolls away, and its ranked moves can't be ticked off. So the file gets written every run — no permission asked — with one line saying where it went.
 
-It's **disposable**: `docs/status/` goes in `.gitignore` before the first write, and the file stays uncommitted. A second snapshot for the same slug and date **overwrites in place**, because a status file is a point-in-time read and keeping five from one afternoon is how a scratch directory becomes archaeology.
+It's **disposable**: `docs/status/` goes in `.gitignore` before the first write, and the file stays uncommitted.
+
+**One file per day.** Before writing, statuskit looks for a snapshot already dated today and updates that one in place, keeping its existing name. It only creates a file when there isn't one. A status file is a point-in-time read, and keeping five from one afternoon is how a scratch directory becomes archaeology — worse, it splits your ticked boxes across files that all look current. Updating re-derives the whole survey from git and GitHub and carries over the checked state of moves that are still open, matched by issue or PR number rather than by position in the list.
 
 Two things the file adds over the printed dashboard:
 
 - a **provenance line** — when the snapshot was taken and against which commit. Without it, a stale file reads as current.
-- the ranked moves as a **checkbox list**, so the file doubles as a to-do. Already-ticked boxes are preserved across re-runs rather than reset.
+- the ranked moves as a **checkbox list**, so the file doubles as a to-do.
+
+**One task per checkbox.** Each item names exactly one issue or PR, so "start #12, #19 and #23" is three items rather than one. A box covering three issues can't be ticked until all three are done, and until then it reads exactly like nothing has happened — which defeats the only thing a checkbox is for. When that makes the list long, that's the real length of the work; it caps the same way the tables do instead of merging items back together.
 
 "Just print it" or "no file" skips it for that run only.
 
