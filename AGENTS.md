@@ -68,6 +68,32 @@ The repo-root `skills.sh.json` groups how public skills render on the skills.sh 
 - Never list `internal: true` skills — skills.sh hides them from discovery, and they are silently ignored here anyway.
 - Skills left out of every group fall into an "Other skills" section positioned by `notGrouped` — that's an acceptable landing spot until a skill earns a group.
 
+## Per-skill wiki pages: `docs/wiki/skills/`
+
+Every skill has a reader-facing page at `docs/wiki/skills/<name>.md`. **`SKILL.md` is written for the agent that runs the skill; the wiki page is written for the human deciding whether to reach for it** — what it does, when it fires, how its modes work, what it hands off to. The two have different audiences, which is why the page is not a copy and not a summary.
+
+**Whenever you change a skill, update its page in the same change.** This is the rule that keeps the set honest, and it is not optional bookkeeping — a page that describes a mode the skill no longer has is worse than no page, because a reader has no way to know it's lying.
+
+What actually obliges an edit:
+
+- **A new or renamed mode** — the page's mode section, and its heading. Lint errors on a mode heading naming a mode the `SKILL.md` doesn't define.
+- **A changed `description`, `allowed-tools`, or `metadata.internal`** — the page's summary table carries all three.
+- **A changed hand-off target** — the page's *Hands off to* section names the next kit; a rename or reroute leaves it pointing at nothing.
+- **A materially changed rule, guard, or default** — the page explains the *why* behind the load-bearing ones. Reword a guard and the explanation goes stale with it.
+- **Adding or removing a skill** — add or delete the page. Lint errors both ways: a skill with no page, and a page documenting no skill.
+
+Prose changes that don't move any of those don't need a page edit. Use judgment; the test is whether a reader who only read the page would now be wrong.
+
+**Page conventions**, so lint can check what it can and a reader gets a consistent shape:
+
+- **Open with the one-line description, then a bold "Reach for it when" trigger, then the summary table** (modes · tools · writes · visibility).
+- **Write a mode section as `` ### `mode` ``** — a backticked `h3` under a `## Modes` heading. That backticked form is what lint checks against the `SKILL.md`, so it is an opt-in: a skill whose modes genuinely aren't backticked in its own source (implementkit's straight-through and TDD) uses a plain heading and is simply not mode-checked.
+- **Link sibling skills as `` [`gitkit`](./gitkit.md) ``**, and link the source as `` [`skills/<name>/SKILL.md`](../../../skills/<name>/SKILL.md) `` at the foot.
+- **End with the install command and the provenance stamp** — `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` The stamp is what a later docs audit diffs from; a page without one has never been verified.
+- **Explain the why, don't restate the what.** The page earns its place on the reasoning behind a rule — why `gitkit` refuses to delete a branch it didn't create, why review runs on a different model family. Restating the procedure step by step is what `SKILL.md` already does better.
+
+`make lint` enforces the mechanical half on every full run — page-per-skill in both directions, and mode parity. It cannot tell whether the prose is still true; that's a review job.
+
 ## Layout
 
 - Flat: `skills/<name>/SKILL.md` — one skill per directory. This is home for **public** skills and any skill you dev-link for testing.

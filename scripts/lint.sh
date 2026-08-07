@@ -10,6 +10,8 @@
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
 #   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
 #   - a closing hand-off section exists, so the skill recaps and routes (warn)
+# On a full run it also checks that every skill has a reader-facing wiki page
+# under docs/wiki/skills/ and that the modes each page documents still exist.
 # On a full run it also cross-checks the human-facing docs/wiki/workflow.md map
 # against the skills it names — skill names, `<kit> <mode>` invocations, and
 # lifecycle labels must still exist in the source SKILL.md files (error), so the
@@ -313,6 +315,59 @@ check_workflow_doc() {
   done
 }
 
+# Cross-check the per-skill wiki pages against the skills they document. Each
+# skill has a reader-facing page under docs/wiki/skills/ that duplicates skill
+# facts on purpose — a reader gets one page per skill without reading SKILL.md —
+# so nothing else keeps it honest. Guard the two ways it rots:
+#   A. every skill has a page, and every page documents a real skill
+#   B. every `### `mode`` heading on a page names a mode that skill defines
+# (B) mirrors check_workflow_doc's mode check: modes in this collection are
+# written backticked, so a mode a page documents should appear inside a code
+# span in its own SKILL.md. A page whose mode headings aren't backticked (a
+# skill whose modes genuinely aren't, like implementkit's) is simply not checked
+# — the heading style is the opt-in. Full runs only.
+SKILL_PAGES_DIR="$REPO_ROOT/docs/wiki/skills"
+
+check_skill_pages() {
+  [[ -d "$SKILL_PAGES_DIR" ]] || return 0
+  local pissues=() name page mode
+
+  # A1. every skill has a page
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    [[ -f "$SKILL_PAGES_DIR/$name.md" ]] \
+      || pissues+=("skills/$name has no wiki page — add docs/wiki/skills/$name.md")
+  done < <(skill_names)
+
+  for page in "$SKILL_PAGES_DIR"/*.md; do
+    [[ -f "$page" ]] || continue
+    name="$(basename "$page" .md)"
+
+    # A2. every page documents a real skill
+    if ! skill_exists "$name"; then
+      pissues+=("docs/wiki/skills/$name.md documents no skill (skills/$name/SKILL.md is missing)")
+      continue
+    fi
+
+    # B. every backticked mode heading names a mode the skill actually defines
+    while IFS= read -r mode; do
+      [[ -z "$mode" ]] && continue
+      skill_backtick_has_word "$name" "$mode" \
+        || pissues+=("docs/wiki/skills/$name.md documents mode '$mode', but skills/$name/SKILL.md defines no such mode")
+    done < <(grep -oE '^### `[a-z][a-z0-9-]*`' "$page" | sed 's/^### `//; s/`$//' | sort -u)
+  done
+
+  if [[ ${#pissues[@]} -eq 0 ]]; then
+    echo "  ${C_GREEN}✓${C_RESET} docs/wiki/skills/"
+    return
+  fi
+  echo "  ${C_RED}✗${C_RESET} docs/wiki/skills/"
+  local i
+  for i in "${pissues[@]}"; do
+    echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
+  done
+}
+
 run_all=0
 targets=("$@")
 if [[ ${#targets[@]} -eq 0 ]]; then
@@ -327,6 +382,7 @@ done
 # Cross-file checks only on a full run — a single-skill lint stays scoped.
 [[ "$run_all" -eq 1 ]] && check_shared_tables
 [[ "$run_all" -eq 1 ]] && check_workflow_doc
+[[ "$run_all" -eq 1 ]] && check_skill_pages
 
 echo
 echo "${C_DIM}${errors} error(s), ${warns} warning(s)${C_RESET}"
