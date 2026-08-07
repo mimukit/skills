@@ -1,7 +1,7 @@
 ---
 name: statuskit
 description: >-
-  Survey a project read-only — git working tree, GitHub issues, open PRs, unfiled plans — into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next", "check project status", "what's next", "orient me", "write me a status file", or run "/statuskit" — add "just print it" or "no file" to skip the snapshot.
+  Survey a project read-only — git working tree, GitHub issues and their declared priority, open PRs, unfiled plans — into a one-screen dashboard that crowns one finish-first next move routed to the kit that does it, saved by default as a throwaway snapshot under docs/status/. Use when you sit down at a project and ask "what should I do next", "check project status", "what's next", "what's most important right now", "orient me", "write me a status file", or run "/statuskit" — add "just print it" or "no file" to skip the snapshot.
 license: MIT
 allowed-tools: Bash, Read, Write, Skill
 metadata:
@@ -26,12 +26,44 @@ One boundary matters:
 
 Everything statuskit crowns derives from one rule — **"stop starting, start finishing"** (minimize work-in-progress). The crowned move is always whatever retires the most in-flight work for the least effort, *before* anything new is started.
 
-Ties within a rung break on one of two signals, depending on what the rung asks you to do:
+Ties within a rung break on **declared priority first, then one of two signals**, depending on what the rung asks you to do:
 
 - **Resume or finish rungs** — crown the **most-recently-active** candidate (issue/PR `updatedAt`, or a branch's last-commit time). Recency is a proxy for context-switch cost, and switching cost is what you're minimizing when there's a half-built thing to switch back into. The one exception is a finished-but-unreviewed PR: there's nothing to switch back into, so it breaks on leverage like a start rung does.
 - **Start-something rungs** — crown the highest **unblock leverage** (below), falling back to recency. Starting fresh means there's no context to preserve, so the cost recency measures is zero and the thing worth maximizing instead is throughput: how much work the repo can run in parallel after this one lands.
 
-The rest become runners-up. Leverage never promotes a candidate *across* rungs — finish-first is the spine, and leverage only orders within it.
+The rest become runners-up. Neither priority nor leverage promotes a candidate *across* rungs — finish-first is the spine, and both only order within it. **One exception, and only one: a `critical` issue.** See below.
+
+## Priority
+
+**Priority is a human's declared answer to "what matters," read off the [issuekit label set](#the-priority-scale) — `critical`, `high`, `medium`, `low`.** Everything else statuskit ranks on is inferred from the repo's mechanics; this is the only signal where somebody actually said it, and that makes it the first tiebreak everywhere rather than a competitor to the ones already here.
+
+### The priority scale
+
+| label | means | how it ranks |
+|-------|-------|--------------|
+| `critical` | drop everything — preempts work already in progress | promotes across rungs |
+| `high` | do this before other workable issues | orders within a rung |
+| `medium` | normal priority — the default once assessed | orders within a rung |
+| `low` | worth doing eventually — never preempts anything | orders within a rung |
+| *(none)* | unassessed — nobody has ranked it | sorts below `low` |
+
+**Priority is one of two independent label namespaces, and statuskit reads both.** Lifecycle (`ready`, `blocked`, `in-progress`, …) says whether an issue *can* be worked; priority says whether it *should* be worked next. Never derive one from the other — a `critical` issue that's `blocked` is still blocked, and crowning it would send the user at something they cannot start.
+
+**Unassessed sorts below `low`, and that isn't a judgment about the work.** It's a judgment about the *tracker*: an issue nobody ranked carries no claim, and statuskit's whole job is to crown a move it can defend. Ranking an unlabeled issue above a labelled one would mean inventing the claim on the user's behalf. When the unassessed pile is large, that's the finding — surface it and point at `issuekit triage`, rather than quietly sorting a backlog nobody has ordered.
+
+### `critical` is the one thing that outranks finish-first
+
+Every other signal here orders *within* a rung, and that restraint is deliberate — it's what stops a clever number from talking the user out of finishing what they started. `critical` is the exception, and the argument for it is narrow enough to state in one line: **finish-first is a heuristic for what to do when nobody has said what matters, and `critical` is somebody saying it.**
+
+Minimizing work-in-progress is the right default precisely because it needs no information — it works on any repo, on any day, without asking anyone. A `critical` label is strictly better information than that default, and it is the only signal in the whole survey that a human deliberately put there. Refusing to act on it would leave statuskit ranking a half-built refactor above the thing its own user flagged as on fire, which is the one outcome that would make the dashboard untrustworthy rather than merely wrong.
+
+Three guards keep the exception from swallowing the rule:
+
+- **Only a *workable* `critical` promotes.** It must be unblocked and open — a `critical` that's `blocked` has nothing to act on, so it stays in the blocked table where it belongs, and the crowned move is its blocker if that blocker is itself workable.
+- **`critical` promotes; nothing else does.** `high` is not a small `critical`. It orders within a rung like leverage does, and a repo that wants preemption has to say `critical`, which is exactly the friction that keeps the level meaningful.
+- **Say what's being set down.** When a `critical` preempts a rung that would otherwise have won, name the displaced move in the same breath — *"#12 is critical, so it goes first; your red PR #34 drops to the runner-up"*. A preemption the user can't see is indistinguishable from a ranking bug, and this one is rare enough that it should read as an event.
+
+**When more than one `critical` is workable, that's the finding.** Two is a tiebreak (fall through to leverage, then recency), but a tracker where several issues all preempt everything has lost the level: nothing is being dropped for any of them, so `critical` has quietly become the new normal. Say so on the crowned move and point at `issuekit triage`, which flags stale `critical` labels as drift.
 
 ## Unblock leverage
 
@@ -82,12 +114,14 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 
 **GitHub (only when `gh` is usable):**
 - issues — `gh issue list --state open --json number,title,labels,updatedAt,blockedBy,blocking`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
+- **[priority](#priority)** — read from that same `labels` array, so it costs **no extra call**: the survey is already fetching every label on every open issue, and priority is four of the names in it. Take the highest when an issue carries more than one (a tracker slip, not a state — `issuekit triage` repairs it), and `none` when it carries none. **When no open issue carries any priority label, drop the column** rather than printing a wall of `—`, and say it once — *no priorities set; ranking on leverage and recency* — pointing at **issuekit triage**. This is the same rule the all-zero leverage column follows and for the same reason: a column whose values never vary reads as a fact that was checked and came back empty, when the truth is that nobody has filled it in yet.
 - **the dependency graph** — `blockedBy` and `blocking` from that same call are GitHub's **native** issue dependencies, so the graph arrives already resolved: no body scraping, no per-issue fetch, no second round trip. Read them defensively (`(.blockedBy // []) | length`) rather than assuming a field layout, and when a repo doesn't use the feature fall back to the text convention — a `Blocked by #N` / `Depends on #N` / `Blocks #N` line in the body, extracted in the shell with `--jq` so bodies never enter context. Both directions describe the same edge; normalize to one.
-- **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + `updatedAt` + **`unblocks` count** + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a table so you can act on one without a second `gh` call. An issue is blocked when it has a still-open `blockedBy` entry, or carries the `blocked` label. Everything else is unblocked, including `in-progress` work you can resume. **Sort by `unblocks` descending, then most-recently-updated** — the highest-leverage thing to start belongs at the top, and recency survives as its own column rather than as the sort order.
-- **the blocked set** — the other half of that same read, kept as number + what it's waiting on + title. The blocker comes from `blockedBy` when it's there, a `Blocked by #N` / `Depends on #N` line when it isn't, and is unnamed when all you have is the bare `blocked` label. Keep all three forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
+- **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + **priority** + `updatedAt` + **`unblocks` count** + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a table so you can act on one without a second `gh` call. An issue is blocked when it has a still-open `blockedBy` entry, or carries the `blocked` label. Everything else is unblocked, including `in-progress` work you can resume. **Sort by priority descending, then `unblocks` descending, then most-recently-updated** — a declared priority outranks an inferred one, leverage orders what nobody ranked differently, and recency survives as its own column rather than as the sort order.
+- **the blocked set** — the other half of that same read, kept as number + **priority** + what it's waiting on + title. Priority earns its place here even though nothing in this table can be picked up, because it's what tells you whether the *blocker* is worth chasing: a `critical` sitting behind an unstarted prerequisite is the strongest argument in the whole dashboard for starting that prerequisite, and without the column it looks like any other waiting row. The blocker comes from `blockedBy` when it's there, a `Blocked by #N` / `Depends on #N` line when it isn't, and is unnamed when all you have is the bare `blocked` label. Keep all three forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
 - open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,reviewRequests,latestReviews,isDraft,updatedAt,closingIssuesReferences`, classified into: *your red / change-requested PR* (actionable), *nobody is reviewing it* (actionable), *approved + green* (surface-only), *genuinely awaiting someone else* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --json` with no value, which prints the field list your `gh` accepts.
 - **what each PR closes** — `closingIssuesReferences` from that same call, not a `Closes #N` scrape of the body. It's GitHub's own resolved linkage, so it covers `Closes` / `Fixes` / `Resolves` in any casing and issues linked by hand in the UI, and it can't be fooled by the phrase appearing in a code block or a quoted review comment.
-- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + **`unblocks` count** + CI state + author + **whose move it is** + `updatedAt` + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. Sort by `unblocks` descending, then most-recently-updated, the same way the unblocked set does. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer.
+- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + **priority** + **`unblocks` count** + CI state + author + **whose move it is** + `updatedAt` + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. Sort by priority descending, then `unblocks` descending, then most-recently-updated, the same way the unblocked set does.
+- **a PR's priority is the highest priority among the issues it closes** — the same way leverage flows to PRs through `closingIssuesReferences`, and for the same reason: a PR has no importance of its own, only the importance of the work it retires. Take the highest rather than an average, because merging the PR delivers *all* of those issues and the most urgent one is what's actually waiting. A PR that closes nothing has no priority — print `—`, and let leverage and recency order it. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer.
 - **whose move it is — read it off the reviewers, never the author.** Three outcomes, checked in this order: you appear in `reviewRequests` → **yours**, go review it; somebody else appears in `reviewRequests`, or a non-author appears in `latestReviews` → **theirs**, name them, you're genuinely waiting; neither → **nobody is reviewing it**, which is a stuck PR wearing a waiting PR's clothes. That third case is every PR on a solo repo and a routine slip on a team one (you opened it and never requested anyone), and both have the same shape — no review is coming unless you do something — so it's the only one of the three that ranks.
 - **is anyone else even able to review?** — asked only when that third case fires, and only once per run: `gh api repos/{owner}/{repo}/collaborators --jq 'length'`. Exactly one collaborator proves no other reviewer exists, so the move is self-review outright. More than one — or a 403, an error, any answer you didn't get — means you can't rule a reviewer out, so the move names both halves ("request a reviewer, or self-review it"). Never spend the call when no PR needs it, and never let its failure cost you the row: the whose-move column is already correct without it, and the probe only sharpens the wording of the recommendation.
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
@@ -114,16 +148,22 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 
 | # | State | Move → |
 |---|-------|--------|
+| 0 | a **workable `critical`** issue — open, unblocked, and not already the crowned move | drop what you're on: `issuekit start` if it's `ready`, resume it if it's `in-progress` |
 | 1 | your PR is red or change-requested | fix CI / address review — `mergekit fix` |
-| 2 | your PR that nobody is reviewing (highest `unblocks`, then most-recently-updated) | self-review it — `mergekit <N>`, or request a reviewer |
+| 2 | your PR that nobody is reviewing (highest priority, then `unblocks`, then most-recently-updated) | self-review it — `mergekit <N>`, or request a reviewer |
 | 3 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
 | 4 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
 | 5 | a stash | restore it to finish the work, or drop it if obsolete |
 | 6 | an unmerged local feature branch | finish it, or clean it and its worktree up — `gitkit` |
 | 7 | stale-tracker signal fired | reconcile — `issuekit sync` |
-| 8 | a `ready` issue to start (highest `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
+| 8 | a `ready` issue to start (highest priority, then `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
 | 9 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
-| 10 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+| 10 | an unassessed backlog — open issues with no priority label | rank them — `issuekit triage` |
+| 11 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+
+**Rung 0 is numbered zero because it isn't really a rung** — it's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it must name what it displaced, and everything below it is the actual ladder. If rung 0 is firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
+
+**Rung 10 ranks below every actionable rung and above "go plan something."** An unranked backlog is a genuine gap — nothing above it can order itself properly — but it is still tracker hygiene rather than work, so it never outranks a thing the user could actually finish. It earns a rung at all because without one, a repo where nobody has set a single priority would silently rank on leverage forever and never be told why.
 
 **Rungs 1 and 2 are the same thought twice: your own PR is stuck on you.** A red PR is stuck loudly and an unreviewed one silently, and the silent kind is the one that sits for weeks, which is why it outranks resuming a half-built issue rather than trailing it — the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into: reviewing a finished PR is the same work whichever one you pick, so the tiebreak may as well go to the one that frees the most.
 
@@ -140,27 +180,27 @@ Print a compact panel (one line per signal source, **empty panels suppressed**),
 
 ## Issues        in-progress N · ready N · blocked N · in-review N     (omit without gh)
 
-Unblocked (N)  — highest leverage first
-| Issue | Unblocks | Status | Last active | Title |
-|---|---|---|---|---|
-| #12 | 3 | ready | 2d | <title> |
-| #31 | 1 | in-progress | 4h | <title> |
-| #47 | 0 | unlabeled | 3w | <title> |
+Unblocked (N)  — highest priority first
+| Issue | Priority | Unblocks | Status | Last active | Title |
+|---|---|---|---|---|---|
+| #12 | critical | 3 | ready | 2d | <title> |
+| #31 | high | 1 | in-progress | 4h | <title> |
+| #47 | — | 0 | unlabeled | 3w | <title> |
 
 Blocked (N)
-| Issue | Waiting on | Title |
-|---|---|---|
-| #19 | #12 | <title> |
-| #23 | `blocked` label, no blocker named | <title> |
+| Issue | Priority | Waiting on | Title |
+|---|---|---|---|
+| #19 | high | #12 | <title> |
+| #23 | low | `blocked` label, no blocker named | <title> |
 
 ## Pull requests <open N — X awaiting review, Y CI-red, Z ready to merge>   (omit without gh)
 
-Waiting for review (X)  — highest leverage first
-| PR | Closes | Unblocks | CI | Author | Next move | Last active | Title |
-|---|---|---|---|---|---|---|---|
-| #34 | #12 | 3 | ✓ | you | nobody reviewing → yours | 1d | <title> |
-| #29 | #19, #23 | 0 | ✗ | @someone | yours | 6h | <title> |
-| #38 | — | 0 | ✓ | you | theirs — @reviewer | 2w | <title> |
+Waiting for review (X)  — highest priority first
+| PR | Closes | Priority | Unblocks | CI | Author | Next move | Last active | Title |
+|---|---|---|---|---|---|---|---|---|
+| #34 | #12 | critical | 3 | ✓ | you | nobody reviewing → yours | 1d | <title> |
+| #29 | #19, #23 | high | 0 | ✗ | @someone | yours | 6h | <title> |
+| #38 | — | — | 0 | ✓ | you | theirs — @reviewer | 2w | <title> |
 
 ## Plans         <N filed · M unfiled>
 
@@ -181,7 +221,11 @@ Then:
 
 **`Next move` names a person, or admits there isn't one.** Three values, and the third is the one that earns the column: `yours` when you're the requested reviewer, `theirs — @name` when somebody specific owes you the review, and `nobody reviewing → yours` when no one was ever asked. Naming the reviewer in the middle case is what makes the claim checkable — an unattributed *theirs* is indistinguishable from the bug it replaces, where every PR you opened asserted a reviewer who didn't exist. **Drop the `Author` column entirely when every row shares one author**, and say it once on the count line instead (`Waiting for review (3) — all yours, highest leverage first`). It's the same rule the all-zero `Unblocks` column follows: a column whose values never vary spends width to report nothing, and on a solo repo a wall of `you` is worse than nothing because it looks like a fact that was checked.
 
-**`Unblocks` sorts, `Last active` informs.** The two actionable tables lead with leverage because a column you have to scan is not a priority list — the row you should pick up next belongs on the first line, not somewhere in the middle where a big number happens to sit. Recency doesn't disappear, it moves into its own `Last active` column as a compact relative stamp (`4h`, `2d`, `3w`), so "what did I touch last" is still answerable at a glance without being the thing that decides the order. Say `— highest leverage first` on the count line so the ordering is declared rather than inferred; a table that silently changed its sort is a table you'll misread once and distrust after. The `Blocked (N)` table keeps its recency sort and gains no leverage column: nothing in it can be picked up, so ranking it by what it would free is a number with nowhere to go.
+**`Priority` and `Unblocks` sort, `Last active` informs.** The two actionable tables lead with priority, then leverage, because a column you have to scan is not a priority list — the row you should pick up next belongs on the first line, not somewhere in the middle where a big number happens to sit. Recency doesn't disappear, it moves into its own `Last active` column as a compact relative stamp (`4h`, `2d`, `3w`), so "what did I touch last" is still answerable at a glance without being the thing that decides the order. Say `— highest priority first` on the count line so the ordering is declared rather than inferred; a table that silently changed its sort is a table you'll misread once and distrust after. When no row carries a priority the column drops and the declaration reverts to `— highest leverage first`, which keeps the two honest together: the sort you announce is always the sort a reader can verify from the columns in front of them. The `Blocked (N)` table keeps its recency sort and gains no leverage column — nothing in it can be picked up, so ranking it by what it would free is a number with nowhere to go — but it *does* carry priority, because that's the column that says whether the blocker is worth chasing.
+
+**The sort keys sit adjacent, and `Closes` never leaves the PR's side.** On the issue table that puts `Priority` and `Unblocks` immediately after the ID; on the PR table they go *after* `Closes`, because `PR | Closes` is the pairing that makes the row legible at all and inserting a sort key between them would cost more than the tidier grouping is worth. Everything after the sort keys is context, in decreasing order of how often you act on it.
+
+**These tables are at their column budget, so lean on the drop rules.** Three columns disappear on their own — `Author` when every row shares one, `Unblocks` when every value is zero, `Priority` when nothing is ranked — and on a solo repo that's exactly how the nine-column PR table stays inside one screen. The rules aren't cleanup, they're what makes the full set affordable; skip them and the table wraps, at which point it communicates less than the bare count it replaced. If a table still doesn't fit after every drop rule has fired, cut `Title` to its first few words rather than dropping a sort key — a truncated title is still a hint, where a hidden sort key is a lie.
 
 All three tables list **every** row that qualifies — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
 
@@ -211,8 +255,8 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 ```markdown
 ## Next moves
 
-- [ ] **<the #1 move> — unblocks 3** — `<kit / command>` <!-- k: issue-12 -->
-- [ ] <runner-up> — unblocks 1 — `<kit / command>` <!-- k: pr-34 -->
+- [ ] **<the #1 move> — critical, unblocks 3** — `<kit / command>` <!-- k: issue-12 -->
+- [ ] <runner-up> — high, unblocks 1 — `<kit / command>` <!-- k: pr-34 -->
 - [ ] <runner-up> — `<kit / command>` <!-- k: plan-debugkit -->
 
 ## Done today
@@ -236,9 +280,9 @@ Draw keys from a fixed vocabulary, never an improvised slug, or the key drifts r
 | a plan doc | `plan-<slug>` — the plan's own slug |
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-0` |
-| a ladder rung with no subject | one fixed slug per rung — `push`, `reconcile`, `triage`, `repo-labels` |
+| a ladder rung with no subject | one fixed slug per rung — `push`, `reconcile`, `triage`, `prioritize`, `repo-labels` |
 
-**A move that frees work says so.** When a queued move has `unblocks` above zero, carry the count into its line — `**Start #12 — unblocks 3** — \`issuekit start 12\``. The checkbox list is where the user actually chooses, often hours after the tables scrolled past, and "unblocks 3" is the whole argument for why this item outranks the one below it. Omit the clause at zero rather than writing `unblocks 0`; the absence says it.
+**A move that frees work says so, and a move somebody ranked says that first.** When a queued move carries a priority above `medium` or an `unblocks` count above zero, put both into its line — `**Start #12 — critical, unblocks 3** — \`issuekit start 12\``. The checkbox list is where the user actually chooses, often hours after the tables scrolled past, and those two clauses are the whole argument for why this item outranks the one below it. Omit each clause when it says nothing: no `unblocks 0`, and no `medium` or `—`, since the default and the absence are both what the reader already assumes. Priority leads the pair when both are present, matching the sort.
 
 The key never leaves the file. Don't put it in a commit message, a branch name, an issue body, or anywhere else: it's a join key between two versions of one gitignored scratch file, and exporting it into permanent history would make durable artifacts reference a throwaway one. The linkage that *does* belong in git already exists — `Closes #12` on the PR, which the survey reads anyway.
 
@@ -259,6 +303,7 @@ All three tables — unblocked, blocked, waiting for review — go into the file
 - **Zero mutation, always.** statuskit surveys and advises; it never changes git or GitHub state. If a recommendation needs a mutation, it routes to the kit that owns it — that kit previews and gets approval on its own. The one thing it writes is the status snapshot — a gitignored scratch file that touches no git or tracker state, which is why writing it by default is still zero mutation.
 - **Route, don't launch.** Routing means *naming* the kit and its one-line command — statuskit never invokes the kit for you; the user launches it. Naming "run `issuekit sync`" and then calling the kit yourself would restart mutation in the same breath as "orient me," breaking the read-only stance.
 - **Route, don't require.** Every recommendation degrades to a plain command when its kit isn't installed. statuskit is useful in a bare repo with only git.
-- **Hold the issuekit line.** Display issue counts, the unblocked set by ID, the blocked set with what each says it's waiting on, and the ready/in-progress set; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line — it's the same read, printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
+- **Hold the issuekit line.** Display issue counts, the unblocked set by ID, the blocked set with what each says it's waiting on, the ready/in-progress set, and each issue's declared priority; compute the one staleness boolean to rank "reconcile." Listing IDs is not crossing the line — it's the same read, printed usefully, and it saves a round trip to `gh` before acting on the crowned move. What stays on issuekit's side is *judgment* about the tracker: never render an itemized health verdict, and the moment you're explaining which issues are stale and why, that's issuekit `triage`/`sync` and statuskit should be pointing at it, not doing it.
+- **statuskit reads priority; it never assigns one.** Printing the label an issue carries is a fact read like any other, and sorting on it is what the label is *for*. Inferring a priority for an unranked issue is not — it's the tracker judgment that belongs to issuekit `triage`, and it's the one place this survey could quietly manufacture the very signal it claims to be reporting. An unassessed issue stays unassessed in the dashboard, sorts below `low`, and gets routed rather than guessed at.
 - **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from gitkit — statuskit reads them and reports. Keeping a second copy of any of them here is how a dashboard starts confidently describing a repo that no longer matches it.
 - **On-demand, no state.** Every run is a fresh read — statuskit keeps no `STATUS.md` at the repo root and no last-run cache, and it never *reads* a snapshot back to shortcut the survey. The one thing it takes from an existing file is which boxes were already ticked; the survey itself is always re-derived from git and GitHub. A `docs/status/` file is output for a human (or the next agent), not memory statuskit trusts.
