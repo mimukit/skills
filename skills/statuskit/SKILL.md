@@ -24,7 +24,29 @@ One boundary matters:
 
 ## The ranking principle: finish-first
 
-Everything statuskit crowns derives from one rule — **"stop starting, start finishing"** (minimize work-in-progress). The crowned move is always whatever retires the most in-flight work for the least effort, *before* anything new is started. When several candidates tie within a rung, crown the **most-recently-active** one (issue/PR `updatedAt`, or a branch's last-commit time) — lowest context-switch cost — and list the rest as runners-up.
+Everything statuskit crowns derives from one rule — **"stop starting, start finishing"** (minimize work-in-progress). The crowned move is always whatever retires the most in-flight work for the least effort, *before* anything new is started.
+
+Ties within a rung break on one of two signals, depending on what the rung asks you to do:
+
+- **Resume or finish rungs** — crown the **most-recently-active** candidate (issue/PR `updatedAt`, or a branch's last-commit time). Recency is a proxy for context-switch cost, and switching cost is what you're minimizing when there's a half-built thing to switch back into.
+- **Start-something rungs** — crown the highest **unblock leverage** (below), falling back to recency. Starting fresh means there's no context to preserve, so the cost recency measures is zero and the thing worth maximizing instead is throughput: how much work the repo can run in parallel after this one lands.
+
+The rest become runners-up. Leverage never promotes a candidate *across* rungs — finish-first is the spine, and leverage only orders within it.
+
+## Unblock leverage
+
+**`unblocks(X)` is the number of open issues that become *fully workable* the moment X lands.** It's the answer to "which of these frees the most independent work next," and the file surfaces it as a sortable column on the two tables that already name names.
+
+The word *fully* carries the rule. If #19 is blocked by both #12 and #23, closing #12 alone doesn't make #19 workable — it makes it less blocked, which is worth nothing to somebody looking for something to pick up. An issue counts toward `unblocks(#12)` only when removing #12 leaves its open-blocker set **empty**. Any looser definition inflates the number and points you at the wrong issue, which is worse than not ranking at all.
+
+Leverage flows to PRs through what they close: `unblocks(PR #34)` is the leverage of the issues in its `closingIssuesReferences`. That's what turns the `Closes` column from a fact into a priority — a review that frees three issues outranks one that frees none, whatever their CI says.
+
+Four rules keep the number honest:
+
+- **Depth 1 only.** Don't count cascades. A transitive number assumes the intermediate issue gets *finished* rather than merely unblocked, which is a schedule prediction statuskit has no business making — and depth-1 is naturally cycle-safe, where a transitive walk needs a guard against `A blocked by B blocked by A`.
+- **Only still-open blockers count**, the same rule the blocked set already follows.
+- **A blocker may be a PR.** Issue and PR numbers share one namespace on GitHub, so `blockedBy: #34` can mean "waiting on a merge," and it resolves against the open-PR read.
+- **No declared dependencies means no column.** When the repo's graph has no edges at all, every value is 0 and the column actively lies: it reads as "nothing unblocks anything" when the truth is "nobody wrote it down." Drop the column, say it once — *no dependencies declared; leverage unavailable* — and point at **issuekit**, because declaring them is tracker hygiene, not a survey's job.
 
 Two states are **surfaced but never crowned**, because acting on them is a human gate, not a finish-first win statuskit should push:
 
@@ -55,12 +77,13 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **worktrees** — when the survey needs to know where a branch's code lives, ask gitkit rather than reading paths. statuskit never creates or removes one; it only reports.
 
 **GitHub (only when `gh` is usable):**
-- issues — `gh issue list --state open --json number,title,labels,updatedAt`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
-- **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a column of issue IDs so you can act on one without a second `gh` call. An issue is blocked when it carries the `blocked` label; in a repo with no such label, add `body` to the `--json` fields and treat a `Blocked by #N` / `Depends on #N` line naming a still-open issue as blocked too — never a per-issue fetch just to answer this. Everything else is unblocked, including `in-progress` work you can resume. Sort most-recently-updated first, matching the ladder's tie-break.
-- **the blocked set** — the other half of that same read, kept as number + what it's waiting on + title. The blocker is already in hand: a `Blocked by #N` / `Depends on #N` line names one, the bare `blocked` label doesn't. Keep both forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
+- issues — `gh issue list --state open --json number,title,labels,updatedAt,blockedBy,blocking`, bucketed by lifecycle label (`in-progress` / `ready` / `blocked` / `in-review`) plus an **unlabeled/other-status** bucket for repos without that vocabulary. Counts and the actionable set only — no drift detection. Treat recent unlabeled issues as candidates for classification or planning, not as invisible work.
+- **the dependency graph** — `blockedBy` and `blocking` from that same call are GitHub's **native** issue dependencies, so the graph arrives already resolved: no body scraping, no per-issue fetch, no second round trip. Read them defensively (`(.blockedBy // []) | length`) rather than assuming a field layout, and when a repo doesn't use the feature fall back to the text convention — a `Blocked by #N` / `Depends on #N` / `Blocks #N` line in the body, extracted in the shell with `--jq` so bodies never enter context. Both directions describe the same edge; normalize to one.
+- **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + `updatedAt` + **`unblocks` count** + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a table so you can act on one without a second `gh` call. An issue is blocked when it has a still-open `blockedBy` entry, or carries the `blocked` label. Everything else is unblocked, including `in-progress` work you can resume. **Sort by `unblocks` descending, then most-recently-updated** — the highest-leverage thing to start belongs at the top, and recency survives as its own column rather than as the sort order.
+- **the blocked set** — the other half of that same read, kept as number + what it's waiting on + title. The blocker comes from `blockedBy` when it's there, a `Blocked by #N` / `Depends on #N` line when it isn't, and is unnamed when all you have is the bare `blocked` label. Keep all three forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
 - open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,isDraft,updatedAt,closingIssuesReferences`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --json` with no value, which prints the field list your `gh` accepts.
 - **what each PR closes** — `closingIssuesReferences` from that same call, not a `Closes #N` scrape of the body. It's GitHub's own resolved linkage, so it covers `Closes` / `Fixes` / `Resolves` in any casing and issues linked by hand in the UI, and it can't be fooled by the phrase appearing in a code block or a quoted review comment.
-- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + CI state + author + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer. Record for each whether the next move is **yours** (you're a requested reviewer) or **theirs** (you authored it and are waiting).
+- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + **`unblocks` count** + CI state + author + `updatedAt` + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. Sort by `unblocks` descending, then most-recently-updated, the same way the unblocked set does. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer. Record for each whether the next move is **yours** (you're a requested reviewer) or **theirs** (you authored it and are waiting).
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
 **plans (filesystem, available even without `gh`):**
@@ -91,7 +114,7 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 4 | a stash | restore it to finish the work, or drop it if obsolete |
 | 5 | an unmerged local feature branch | finish it, or clean it and its worktree up — `gitkit` |
 | 6 | stale-tracker signal fired | reconcile — `issuekit sync` |
-| 7 | a `ready` issue to start (most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
+| 7 | a `ready` issue to start (highest `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
 | 8 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
 | 9 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
 
@@ -108,12 +131,12 @@ Print a compact panel (one line per signal source, **empty panels suppressed**),
 
 ## Issues        in-progress N · ready N · blocked N · in-review N     (omit without gh)
 
-Unblocked (N)
-| Issue | Status | Title |
-|---|---|---|
-| #31 | in-progress | <title> |
-| #12 | ready | <title> |
-| #47 | unlabeled | <title> |
+Unblocked (N)  — highest leverage first
+| Issue | Unblocks | Status | Last active | Title |
+|---|---|---|---|---|
+| #12 | 3 | ready | 2d | <title> |
+| #31 | 1 | in-progress | 4h | <title> |
+| #47 | 0 | unlabeled | 3w | <title> |
 
 Blocked (N)
 | Issue | Waiting on | Title |
@@ -123,12 +146,12 @@ Blocked (N)
 
 ## Pull requests <open N — X awaiting review, Y CI-red, Z ready to merge>   (omit without gh)
 
-Waiting for review (X)
-| PR | Closes | CI | Author | Next move | Title |
-|---|---|---|---|---|---|
-| #34 | #12 | ✓ | you | theirs | <title> |
-| #29 | #19, #23 | ✗ | @someone | yours | <title> |
-| #38 | — | ✓ | you | theirs | <title> |
+Waiting for review (X)  — highest leverage first
+| PR | Closes | Unblocks | CI | Author | Next move | Last active | Title |
+|---|---|---|---|---|---|---|---|
+| #34 | #12 | 3 | ✓ | you | theirs | 1d | <title> |
+| #29 | #19, #23 | 0 | ✗ | @someone | yours | 6h | <title> |
+| #38 | — | 0 | ✓ | you | theirs | 2w | <title> |
 
 ## Plans         <N filed · M unfiled>
 
@@ -147,7 +170,9 @@ Then:
 
 **The `Closes` column carries two signals.** Filled, it tells you what merging that PR actually retires — read against the `Blocked (N)` table it says which review is holding up which issue, which is the difference between "3 PRs awaiting review" and "reviewing #34 frees #19." Empty (`—`) is the more valuable reading: that PR will merge and leave its issue open, which is precisely the condition the stale-tracker signal counts after the fact. Seeing it *before* the merge costs nothing and is far cheaper than reconciling afterwards. Print `—`, never omit the cell — a blank reads as "not checked."
 
-All three tables list **every** row that qualifies, most-recently-updated first — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
+**`Unblocks` sorts, `Last active` informs.** The two actionable tables lead with leverage because a column you have to scan is not a priority list — the row you should pick up next belongs on the first line, not somewhere in the middle where a big number happens to sit. Recency doesn't disappear, it moves into its own `Last active` column as a compact relative stamp (`4h`, `2d`, `3w`), so "what did I touch last" is still answerable at a glance without being the thing that decides the order. Say `— highest leverage first` on the count line so the ordering is declared rather than inferred; a table that silently changed its sort is a table you'll misread once and distrust after. The `Blocked (N)` table keeps its recency sort and gains no leverage column: nothing in it can be picked up, so ranking it by what it would free is a number with nowhere to go.
+
+All three tables list **every** row that qualifies — the whole point is completeness, so don't trim to the interesting ones. On a repo big enough to blow the one-screen budget, cap at 10 rows and close with a `+N more` line naming the `gh` command that shows the rest; never truncate silently. An empty set drops the table but keeps its count line, so "0 waiting for review" still reads as a surveyed fact rather than a missing panel.
 
 Runner-ups get **one line each, naming exactly one issue or PR** — never "start #12, #19 and #23" on a single line. This is the same rule the snapshot's checkboxes follow (see [Write the status snapshot](#5-write-the-status-snapshot--the-default-not-an-offer)), and it holds here so the printed list and the file agree item for item.
 
@@ -175,8 +200,8 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 ```markdown
 ## Next moves
 
-- [ ] **<the #1 move>** — `<kit / command>` <!-- k: issue-12 -->
-- [ ] <runner-up> — `<kit / command>` <!-- k: pr-34 -->
+- [ ] **<the #1 move> — unblocks 3** — `<kit / command>` <!-- k: issue-12 -->
+- [ ] <runner-up> — unblocks 1 — `<kit / command>` <!-- k: pr-34 -->
 - [ ] <runner-up> — `<kit / command>` <!-- k: plan-debugkit -->
 
 ## Done today
@@ -201,6 +226,8 @@ Draw keys from a fixed vocabulary, never an improvised slug, or the key drifts r
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-0` |
 | a ladder rung with no subject | one fixed slug per rung — `push`, `reconcile`, `triage`, `repo-labels` |
+
+**A move that frees work says so.** When a queued move has `unblocks` above zero, carry the count into its line — `**Start #12 — unblocks 3** — \`issuekit start 12\``. The checkbox list is where the user actually chooses, often hours after the tables scrolled past, and "unblocks 3" is the whole argument for why this item outranks the one below it. Omit the clause at zero rather than writing `unblocks 0`; the absence says it.
 
 The key never leaves the file. Don't put it in a commit message, a branch name, an issue body, or anywhere else: it's a join key between two versions of one gitignored scratch file, and exporting it into permanent history would make durable artifacts reference a throwaway one. The linkage that *does* belong in git already exists — `Closes #12` on the PR, which the survey reads anyway.
 

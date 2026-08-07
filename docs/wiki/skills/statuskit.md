@@ -27,7 +27,9 @@ Most of the dashboard is counts, which is right for signals you only need a feel
 - **Blocked issues** — the other half of that same read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning.
 - **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with **what it closes** right beside its number, then its CI state, its author, and whether the next move is yours or theirs.
 
-The reason these three get rows instead of a number is that a count sends you straight back to `gh` to find out *which* — and that round trip is exactly the friction statuskit exists to remove. All three list everything that qualifies, most-recently-updated first; on a repo large enough to blow the one-screen budget they cap at 10 rows and say so with a `+N more` line rather than truncating silently.
+The reason these three get rows instead of a number is that a count sends you straight back to `gh` to find out *which* — and that round trip is exactly the friction statuskit exists to remove. All three list everything that qualifies; on a repo large enough to blow the one-screen budget they cap at 10 rows and say so with a `+N more` line rather than truncating silently.
+
+**The two actionable tables sort by `Unblocks`, not recency.** A column you have to scan isn't a priority list — the row to pick up next belongs on the first line, not wherever a big number happens to land. Recency doesn't vanish; it becomes its own `Last active` column (`4h`, `2d`, `3w`), so "what did I touch last" stays answerable without deciding the order. The count line declares the sort (`— highest leverage first`), because a table that silently changed its ordering is one you misread once and distrust after. The blocked table keeps its recency sort and gets no leverage column: nothing in it can be picked up, so ranking it by what it would free is a number with nowhere to go.
 
 The `Closes` column comes from GitHub's own `closingIssuesReferences`, not a `Closes #N` scrape of the PR body, so it catches every keyword spelling and issues linked by hand in the UI. Filled, it tells you what merging that PR retires — read against the blocked table, it turns "3 PRs awaiting review" into "reviewing #34 frees #19." Empty is the more useful reading: that PR will merge and leave its issue open, which is exactly what the stale-tracker signal counts *after* the fact. Seeing it beforehand costs nothing and beats reconciling later.
 
@@ -43,7 +45,26 @@ Both rules exist because the panel block's entire value is that four lines tell 
 
 Everything it crowns derives from one rule — **stop starting, start finishing**. The crowned move is whatever retires the most in-flight work for the least effort, *before* anything new is started.
 
-Ties within a rung break toward the **most-recently-active** candidate, since that's the lowest context-switch cost.
+Ties within a rung break on one of two signals, depending on what the rung asks of you. **Resume and finish rungs** go to the most-recently-active candidate, because recency proxies context-switch cost and that cost is what you're minimizing when there's a half-built thing to switch back into. **Start-something rungs** go to the highest unblock leverage, because starting fresh means there's no context to preserve — the cost recency measures is zero, and what's worth maximizing instead is how much work the repo can run in parallel once this lands.
+
+## Unblock leverage
+
+**`unblocks(X)` is the number of open issues that become *fully workable* the moment X lands** — the answer to "which of these frees the most independent work next." It rides as a sortable column on the two tables that already name names.
+
+The word *fully* is doing the work. If #19 is blocked by both #12 and #23, closing #12 makes #19 *less blocked*, which is worth nothing to somebody looking for something to pick up. So an issue counts toward `unblocks(#12)` only when removing #12 empties its open-blocker set. A looser count inflates the number and points you at the wrong issue, which is worse than not ranking at all.
+
+Leverage reaches PRs through what they close, which is what turns the `Closes` column from a fact into a priority: a review that frees three issues outranks one that frees none, whatever their CI says.
+
+Four things keep the number honest:
+
+- **Depth 1 only** — no cascades. A transitive count assumes the intermediate issue gets *finished* rather than merely unblocked, which is a schedule prediction a survey has no business making. Depth-1 is also cycle-safe for free, where a transitive walk needs a guard against `A blocked by B blocked by A`.
+- **Only still-open blockers count.**
+- **A blocker may be a PR** — issue and PR numbers share one namespace on GitHub, so `blockedBy: #34` can mean "waiting on a merge."
+- **No declared dependencies means no column at all.** A column of zeros lies: it reads as "nothing unblocks anything" when the truth is "nobody wrote it down." statuskit drops it, says so once, and points at [`issuekit`](./issuekit.md) — declaring dependencies is tracker hygiene, not a survey's job.
+
+The graph itself is free: `gh issue list --json blockedBy,blocking` returns GitHub's **native** issue dependencies on a call statuskit already makes, so there's no body scraping and no second round trip. Repos not using the feature fall back to a `Blocked by #N` line in the body, extracted in the shell so bodies never enter context.
+
+Leverage never promotes a candidate *across* ladder rungs. Finish-first stays the spine; leverage only orders within it.
 
 Two states are **surfaced but never crowned**, because acting on them is a human gate rather than a finish-first win:
 
@@ -86,7 +107,7 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 | 4 | a stash | restore or drop |
 | 5 | an unmerged local feature branch | [`gitkit`](./gitkit.md) |
 | 6 | stale-tracker signal fired | [`issuekit`](./issuekit.md) `sync` |
-| 7 | a `ready` issue to start | [`issuekit`](./issuekit.md) `start`, then implement |
+| 7 | a `ready` issue to start (highest `unblocks` first) | [`issuekit`](./issuekit.md) `start`, then implement |
 | 8 | an unlabeled issue needing classification | [`issuekit`](./issuekit.md) `triage` |
 | 9 | an unfiled plan, or none at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
 
@@ -150,4 +171,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`88c3c60` on 2026-08-07._
+_Verified against `main`@`fcdb628` on 2026-08-07._
