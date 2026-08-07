@@ -28,9 +28,9 @@
       "skills": ["implementkit", "uikit"]
     },
     {
-      "title": "Skill Authoring",
-      "description": "Author new kit-convention skills from scratch — intent interview, naming, drafting, and live testing.",
-      "skills": ["skillkit"]
+      "title": "Skill & Prompt Authoring",
+      "description": "Author the instructions an agent reads — new kit-convention skills from scratch, and the prompts you hand an agent or ship inside an application.",
+      "skills": ["skillkit", "promptkit"]
     },
     {
       "title": "Context & Handoffs",

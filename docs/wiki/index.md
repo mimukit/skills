@@ -40,7 +40,7 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 [`handoffkit`](./skills/handoffkit.md) · [`domainkit`](./skills/domainkit.md) · [`statuskit`](./skills/statuskit.md)
 
 **Authoring & Automation**
-[`skillkit`](./skills/skillkit.md) · [`afkkit`](./skills/afkkit.md)
+[`skillkit`](./skills/skillkit.md) · [`promptkit`](./skills/promptkit.md) · [`afkkit`](./skills/afkkit.md)
 
 ## Written by hand, not by this doc set
 

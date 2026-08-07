@@ -36,6 +36,7 @@ Makefile                        command surface (run `make help`)
 | Skill | What it does | Visibility |
 |-------|--------------|------------|
 | `skillkit` | author a new skill from scratch — conventions, testing, and publishing included | public |
+| `promptkit` | sharpen the prompt before you send it — a one-shot agent instruction grounded in the real repo, or the system prompt your app ships | public |
 | `gitkit` | the shared git layer — worktree convention and lifecycle, base-ref resolution, rebase-vs-merge policy | public |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
