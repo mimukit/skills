@@ -42,7 +42,7 @@ Each skill gets a badge showing whether the repo copy is what's currently live i
   humankit         ■ real
   ...
 
-24 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
+25 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
 ```
 
 `■ real` means a non-symlink install is sitting there — typically one you installed from skills.sh. `○ unlinked` means the skill exists only in this repo and isn't active anywhere. Either way, the repo copy is *not* what your agent is reading yet. [Reference](./reference.md#link-status-badges) has the full badge table.

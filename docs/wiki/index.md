@@ -25,7 +25,7 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 [`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md)
 
 **Planning & Design**
-[`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
+[`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`prototypekit`](./skills/prototypekit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
 
 **Building**
 [`implementkit`](./skills/implementkit.md) · [`uikit`](./skills/uikit.md)

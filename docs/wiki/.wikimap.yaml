@@ -87,6 +87,9 @@ pages:
   - path: skills/prkit.md
     mode: reference
     documents: [skills/prkit/SKILL.md]
+  - path: skills/prototypekit.md
+    mode: reference
+    documents: [skills/prototypekit/SKILL.md]
   - path: skills/qakit.md
     mode: reference
     documents: [skills/qakit/SKILL.md]

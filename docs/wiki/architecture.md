@@ -15,7 +15,7 @@ The frontmatter carries the contract:
 - **`name`** must match the directory exactly, and be one lowercase word ending in `kit`. The suffix is a personal brand that reads as "a kit for X"; the functional word leads so a search for `commit` still finds `commitkit`.
 - **`description`** front-loads an English "Use when …" trigger. This is a routing rule, not a title — agents and skills.sh decide whether to activate a skill primarily from this field, so the branded name never has to be the thing that matches.
 - **`metadata.internal`** declares visibility, and is the one field with consequences outside this repo.
-- **`allowed-tools`** scopes what the skill may do. 23 of the 24 skills declare it; the one that doesn't inherits every tool, which the security scan flags.
+- **`allowed-tools`** scopes what the skill may do. 24 of the 25 skills declare it; the one that doesn't inherits every tool, which the security scan flags.
 
 ## Two homes, one boundary
 
@@ -26,7 +26,7 @@ The frontmatter carries the contract:
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` is currently empty. Every one of the 24 skills is `metadata.internal: false`.
+`.agents/skills/` is currently empty. Every one of the 25 skills is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
