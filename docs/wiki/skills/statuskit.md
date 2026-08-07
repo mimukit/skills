@@ -25,7 +25,7 @@ Most of the dashboard is counts, which is right for signals you only need a feel
 
 - **Unblocked issues** — a table of every open issue that isn't blocked, by ID, with its bucket and title. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label.
 - **Blocked issues** — the other half of that same read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning.
-- **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with **what it closes** right beside its number, then its CI state, its author, and whether the next move is yours or theirs.
+- **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with **what it closes** right beside its number, then its CI state, its author, and whose move it is.
 
 The reason these three get rows instead of a number is that a count sends you straight back to `gh` to find out *which* — and that round trip is exactly the friction statuskit exists to remove. All three list everything that qualifies; on a repo large enough to blow the one-screen budget they cap at 10 rows and say so with a `+N more` line rather than truncating silently.
 
@@ -33,7 +33,23 @@ The reason these three get rows instead of a number is that a count sends you st
 
 The `Closes` column comes from GitHub's own `closingIssuesReferences`, not a `Closes #N` scrape of the PR body, so it catches every keyword spelling and issues linked by hand in the UI. Filled, it tells you what merging that PR retires — read against the blocked table, it turns "3 PRs awaiting review" into "reviewing #34 frees #19." Empty is the more useful reading: that PR will merge and leave its issue open, which is exactly what the stale-tracker signal counts *after* the fact. Seeing it beforehand costs nothing and beats reconciling later.
 
-Note the asymmetry with the ladder: the waiting-for-review table is **surfaced, not crowned**. Seeing the PRs is useful; being told to go chase a reviewer is not a finish-first move.
+## Whose move it is, read off the reviewers
+
+The `Next move` column used to be inferred from authorship — *you opened it, so you must be waiting on someone.* That inference is only sound when someone was actually asked, and on a solo repo nobody ever is: every PR you open would report *waiting on them* forever, naming a reviewer who doesn't exist, while the ladder crowned something else entirely. Three green PRs could sit unmerged for a month and the dashboard would keep insisting they were out of your hands.
+
+So it comes off `reviewRequests` and `latestReviews` instead, with three outcomes:
+
+| Signal | Column reads | Ranks? |
+|---|---|---|
+| you're a requested reviewer | `yours` | surfaced |
+| someone else is requested, or a non-author already reviewed | `theirs — @name` | surfaced — genuinely out of your hands |
+| neither | `nobody reviewing → yours` | **crowned** — rung 2 |
+
+Naming the reviewer in the middle case is what makes it checkable; an unattributed *theirs* is indistinguishable from the bug it replaces. And there's no "solo mode" anywhere — the third row fires just as usefully on a team repo where you opened a PR and forgot to request anyone.
+
+When it does fire, statuskit spends **one** extra call to sharpen the advice: `gh api …/collaborators --jq length`. Exactly one collaborator proves no other reviewer exists, so the move is self-review outright; more than one, or a 403, and it names both halves — request a reviewer, or self-review it. The column is already correct without that call, so a failure costs nothing.
+
+**The `Author` column disappears when every row shares one author**, replaced by `— all yours` on the count line. Same rule as the all-zero `Unblocks` column: a column whose values never vary spends width to report nothing, and a wall of `you` is worse than nothing because it reads like a fact that got checked.
 
 ## The panel set is closed
 
@@ -69,9 +85,11 @@ Leverage never promotes a candidate *across* ladder rungs. Finish-first stays th
 Two states are **surfaced but never crowned**, because acting on them is a human gate rather than a finish-first win:
 
 - an approved and CI-green PR — merging is your call;
-- a PR awaiting *someone else's* review — out of your hands.
+- a PR whose review someone else actually owes you — out of your hands.
 
-Both appear as facts. Neither becomes the #1 move.
+Both appear as facts. Neither becomes the #1 move. Note how narrowly the second one is drawn: it needs a named person on the hook, which is exactly what the reviewer read above establishes. A PR nobody is reviewing fails that test and ranks instead.
+
+That's also the line that keeps rung 2 from contradicting this section — **statuskit crowns the review, never the merge.** Reviewing an unreviewed PR is real work with an observable finish. Pressing merge is the judgment call it stays out of, so the crowned move stops at *reviewed* and hands the decision back to you.
 
 ## It degrades per source, never wholesale
 
@@ -102,14 +120,17 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 | # | State | Move |
 |---|-------|------|
 | 1 | your PR is red or change-requested | [`mergekit`](./mergekit.md) `fix` |
-| 2 | in-progress issue whose branch you're on | resume / [`implementkit`](./implementkit.md) |
-| 3 | orphaned work — uncommitted on base, untracked branch, unpushed commits | [`commitkit`](./commitkit.md) / push |
-| 4 | a stash | restore or drop |
-| 5 | an unmerged local feature branch | [`gitkit`](./gitkit.md) |
-| 6 | stale-tracker signal fired | [`issuekit`](./issuekit.md) `sync` |
-| 7 | a `ready` issue to start (highest `unblocks` first) | [`issuekit`](./issuekit.md) `start`, then implement |
-| 8 | an unlabeled issue needing classification | [`issuekit`](./issuekit.md) `triage` |
-| 9 | an unfiled plan, or none at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
+| 2 | your PR that nobody is reviewing | self-review — [`mergekit`](./mergekit.md) `<N>`, or request a reviewer |
+| 3 | in-progress issue whose branch you're on | resume / [`implementkit`](./implementkit.md) |
+| 4 | orphaned work — uncommitted on base, untracked branch, unpushed commits | [`commitkit`](./commitkit.md) / push |
+| 5 | a stash | restore or drop |
+| 6 | an unmerged local feature branch | [`gitkit`](./gitkit.md) |
+| 7 | stale-tracker signal fired | [`issuekit`](./issuekit.md) `sync` |
+| 8 | a `ready` issue to start (highest `unblocks` first) | [`issuekit`](./issuekit.md) `start`, then implement |
+| 9 | an unlabeled issue needing classification | [`issuekit`](./issuekit.md) `triage` |
+| 10 | an unfiled plan, or none at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
+
+**Rungs 1 and 2 are one thought twice: your own PR is stuck on you.** A red PR is stuck loudly, an unreviewed one silently — and the silent kind is what sits for weeks. That's why it outranks resuming a half-built issue rather than trailing it: the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's also the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into. Reviewing a finished PR costs the same whichever you pick, so the tiebreak may as well go to the one that frees the most.
 
 When the owning kit isn't installed, it names the **plain action** instead — "commit your changes" rather than "run commitkit". statuskit routes; it doesn't require the ecosystem.
 
@@ -171,4 +192,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fcdb628` on 2026-08-07._
+_Verified against `main`@`6bb81d2` on 2026-08-07._

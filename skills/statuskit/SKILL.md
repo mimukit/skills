@@ -28,7 +28,7 @@ Everything statuskit crowns derives from one rule — **"stop starting, start fi
 
 Ties within a rung break on one of two signals, depending on what the rung asks you to do:
 
-- **Resume or finish rungs** — crown the **most-recently-active** candidate (issue/PR `updatedAt`, or a branch's last-commit time). Recency is a proxy for context-switch cost, and switching cost is what you're minimizing when there's a half-built thing to switch back into.
+- **Resume or finish rungs** — crown the **most-recently-active** candidate (issue/PR `updatedAt`, or a branch's last-commit time). Recency is a proxy for context-switch cost, and switching cost is what you're minimizing when there's a half-built thing to switch back into. The one exception is a finished-but-unreviewed PR: there's nothing to switch back into, so it breaks on leverage like a start rung does.
 - **Start-something rungs** — crown the highest **unblock leverage** (below), falling back to recency. Starting fresh means there's no context to preserve, so the cost recency measures is zero and the thing worth maximizing instead is throughput: how much work the repo can run in parallel after this one lands.
 
 The rest become runners-up. Leverage never promotes a candidate *across* rungs — finish-first is the spine, and leverage only orders within it.
@@ -51,9 +51,13 @@ Four rules keep the number honest:
 Two states are **surfaced but never crowned**, because acting on them is a human gate, not a finish-first win statuskit should push:
 
 - an approved + CI-green PR ("ready to merge") — merging is your call;
-- a PR awaiting *someone else's* review — out of your hands.
+- a PR whose review someone else actually owes you — out of your hands.
 
 Both appear in the dashboard as facts; neither becomes the #1 move.
+
+**"Out of your hands" is a claim about a person who exists.** That second state holds only when somebody has genuinely been asked — a requested reviewer, or a non-author who already reviewed. Inferring it from authorship instead ("you opened it, so you must be waiting on someone") is the assumption that breaks the whole dashboard on a solo repo: every PR is yours, nobody was ever asked, and every row reads *waiting on them* in perpetuity while the ladder crowns something else. So read the wait off `reviewRequests` and `latestReviews`, never off `author` — and when the answer is *nobody*, the PR isn't out of your hands at all. It's stuck on you, and it ranks on the [full ladder](#3-rank--crown-one-finish-first-move).
+
+**statuskit crowns the review, never the merge.** That's what keeps the new rung from contradicting the rule above it: reviewing an unreviewed PR is real work with an observable finish, while pressing merge is the judgment call statuskit stays out of. The crowned move ends at *reviewed* and hands the merge decision back to you.
 
 ## Procedure
 
@@ -81,9 +85,11 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **the dependency graph** — `blockedBy` and `blocking` from that same call are GitHub's **native** issue dependencies, so the graph arrives already resolved: no body scraping, no per-issue fetch, no second round trip. Read them defensively (`(.blockedBy // []) | length`) rather than assuming a field layout, and when a repo doesn't use the feature fall back to the text convention — a `Blocked by #N` / `Depends on #N` / `Blocks #N` line in the body, extracted in the shell with `--jq` so bodies never enter context. Both directions describe the same edge; normalize to one.
 - **the unblocked set** — every open issue that *isn't* blocked, kept as number + bucket + `updatedAt` + **`unblocks` count** + title rather than folded into a count. This is the pick-up-now list, and the dashboard prints it as a table so you can act on one without a second `gh` call. An issue is blocked when it has a still-open `blockedBy` entry, or carries the `blocked` label. Everything else is unblocked, including `in-progress` work you can resume. **Sort by `unblocks` descending, then most-recently-updated** — the highest-leverage thing to start belongs at the top, and recency survives as its own column rather than as the sort order.
 - **the blocked set** — the other half of that same read, kept as number + what it's waiting on + title. The blocker comes from `blockedBy` when it's there, a `Blocked by #N` / `Depends on #N` line when it isn't, and is unnamed when all you have is the bare `blocked` label. Keep all three forms; an unnamed blocker is still a fact worth printing. Reporting what an issue *says* it's waiting on is a fact read, not a tracker verdict — the moment you're judging whether that blocker is still real, you've crossed into issuekit and should be pointing at it.
-- open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,isDraft,updatedAt,closingIssuesReferences`, classified into: *your red / change-requested PR* (actionable), *approved + green* (surface-only), *awaiting others* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --json` with no value, which prints the field list your `gh` accepts.
+- open PRs — `gh pr list --json number,title,author,statusCheckRollup,reviewDecision,reviewRequests,latestReviews,isDraft,updatedAt,closingIssuesReferences`, classified into: *your red / change-requested PR* (actionable), *nobody is reviewing it* (actionable), *approved + green* (surface-only), *genuinely awaiting someone else* (surface-only). Cap the list on large repos to stay fast; if a JSON field is rejected, check `gh pr list --json` with no value, which prints the field list your `gh` accepts.
 - **what each PR closes** — `closingIssuesReferences` from that same call, not a `Closes #N` scrape of the body. It's GitHub's own resolved linkage, so it covers `Closes` / `Fixes` / `Resolves` in any casing and issues linked by hand in the UI, and it can't be fooled by the phrase appearing in a code block or a quoted review comment.
-- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + **`unblocks` count** + CI state + author + `updatedAt` + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. Sort by `unblocks` descending, then most-recently-updated, the same way the unblocked set does. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer. Record for each whether the next move is **yours** (you're a requested reviewer) or **theirs** (you authored it and are waiting).
+- **the waiting-for-review set** — every open non-draft PR whose review is still outstanding (`reviewDecision` empty or `REVIEW_REQUIRED`), kept as number + **what it closes** + **`unblocks` count** + CI state + author + **whose move it is** + `updatedAt` + title, in that order — the ID and the work it retires belong side by side, since together they're the whole reason to care about the row. Sort by `unblocks` descending, then most-recently-updated, the same way the unblocked set does. The dashboard prints these as a table, because "3 awaiting review" tells you nothing about which one is yours to nudge and which is somebody else's to answer.
+- **whose move it is — read it off the reviewers, never the author.** Three outcomes, checked in this order: you appear in `reviewRequests` → **yours**, go review it; somebody else appears in `reviewRequests`, or a non-author appears in `latestReviews` → **theirs**, name them, you're genuinely waiting; neither → **nobody is reviewing it**, which is a stuck PR wearing a waiting PR's clothes. That third case is every PR on a solo repo and a routine slip on a team one (you opened it and never requested anyone), and both have the same shape — no review is coming unless you do something — so it's the only one of the three that ranks.
+- **is anyone else even able to review?** — asked only when that third case fires, and only once per run: `gh api repos/{owner}/{repo}/collaborators --jq 'length'`. Exactly one collaborator proves no other reviewer exists, so the move is self-review outright. More than one — or a 403, an error, any answer you didn't get — means you can't rule a reviewer out, so the move names both halves ("request a reviewer, or self-review it"). Never spend the call when no PR needs it, and never let its failure cost you the row: the whose-move column is already correct without it, and the probe only sharpens the wording of the recommendation.
 - **stale-tracker signal** — one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why** — that's issuekit's job.
 
 **plans (filesystem, available even without `gh`):**
@@ -91,7 +97,7 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 
 ### 3. Rank — crown one finish-first move
 
-Map the signals onto candidate actions, each tagged with its owning kit/command, then crown the highest applicable rung (most-recently-active breaks ties; the rest become runners-up). Pick the ladder by whether GitHub signals are available.
+Map the signals onto candidate actions, each tagged with its owning kit/command, then crown the highest applicable rung — ties inside it break as the rung's own row says, defaulting to most-recently-active, and everything else becomes a runner-up. Pick the ladder by whether GitHub signals are available.
 
 **Git-only ladder** (no `gh`):
 
@@ -104,19 +110,22 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 5 | an unfiled plan doc | `implementkit` / `plankit` |
 | 6 | clean on the base branch, nothing pending | start something (newest plan) / `plankit` |
 
-**Full ladder** (`gh` available) — every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR awaiting others.)*
+**Full ladder** (`gh` available) — every git-only state has an explicit home below. *(Surfaced, never crowned: an approved+green PR; a PR someone else genuinely owes you.)*
 
 | # | State | Move → |
 |---|-------|--------|
 | 1 | your PR is red or change-requested | fix CI / address review — `mergekit fix` |
-| 2 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
-| 3 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
-| 4 | a stash | restore it to finish the work, or drop it if obsolete |
-| 5 | an unmerged local feature branch | finish it, or clean it and its worktree up — `gitkit` |
-| 6 | stale-tracker signal fired | reconcile — `issuekit sync` |
-| 7 | a `ready` issue to start (highest `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
-| 8 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
-| 9 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+| 2 | your PR that nobody is reviewing (highest `unblocks`, then most-recently-updated) | self-review it — `mergekit <N>`, or request a reviewer |
+| 3 | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume / `implementkit` |
+| 4 | orphaned work — uncommitted on the base branch or an untracked branch, or unpushed commits | `commitkit` / push |
+| 5 | a stash | restore it to finish the work, or drop it if obsolete |
+| 6 | an unmerged local feature branch | finish it, or clean it and its worktree up — `gitkit` |
+| 7 | stale-tracker signal fired | reconcile — `issuekit sync` |
+| 8 | a `ready` issue to start (highest `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
+| 9 | an unlabeled/other-status issue needing classification | classify it — `issuekit triage` |
+| 10 | an unfiled plan, or none at all | `issuekit create` / `plankit` |
+
+**Rungs 1 and 2 are the same thought twice: your own PR is stuck on you.** A red PR is stuck loudly and an unreviewed one silently, and the silent kind is the one that sits for weeks, which is why it outranks resuming a half-built issue rather than trailing it — the code is already written and green, so it retires the most work for the least effort, which is the whole of finish-first. It's the one rung that breaks ties on leverage while asking you to *finish* rather than start, because there's no context to switch back into: reviewing a finished PR is the same work whichever one you pick, so the tiebreak may as well go to the one that frees the most.
 
 When the owning kit isn't installed, name the **plain action** instead ("commit your changes" rather than "run commitkit") — statuskit routes, it doesn't require the ecosystem.
 
@@ -149,9 +158,9 @@ Blocked (N)
 Waiting for review (X)  — highest leverage first
 | PR | Closes | Unblocks | CI | Author | Next move | Last active | Title |
 |---|---|---|---|---|---|---|---|
-| #34 | #12 | 3 | ✓ | you | theirs | 1d | <title> |
+| #34 | #12 | 3 | ✓ | you | nobody reviewing → yours | 1d | <title> |
 | #29 | #19, #23 | 0 | ✗ | @someone | yours | 6h | <title> |
-| #38 | — | 0 | ✓ | you | theirs | 2w | <title> |
+| #38 | — | 0 | ✓ | you | theirs — @reviewer | 2w | <title> |
 
 ## Plans         <N filed · M unfiled>
 
@@ -169,6 +178,8 @@ Then:
 **The panel set is closed.** Working tree, Issues, Pull requests, Plans, Next move — that is the dashboard, plus **at most one** repo-specific panel when the repo keeps a first-class queue the standard five genuinely can't see (an `IDEAS.md` backlog, an RFC index). It takes the same shape as the rest: a name, one line, sourced from a file the survey read. Anything you'd have to *run* to fill a panel is out of bounds — statuskit surveys read-only, so a build, test, or lint result is not a signal it has, and inventing a `Health` panel from one is both a mutation risk and a claim the survey can't back. Without this rule every run improvises a different set and no two days' files compare.
 
 **The `Closes` column carries two signals.** Filled, it tells you what merging that PR actually retires — read against the `Blocked (N)` table it says which review is holding up which issue, which is the difference between "3 PRs awaiting review" and "reviewing #34 frees #19." Empty (`—`) is the more valuable reading: that PR will merge and leave its issue open, which is precisely the condition the stale-tracker signal counts after the fact. Seeing it *before* the merge costs nothing and is far cheaper than reconciling afterwards. Print `—`, never omit the cell — a blank reads as "not checked."
+
+**`Next move` names a person, or admits there isn't one.** Three values, and the third is the one that earns the column: `yours` when you're the requested reviewer, `theirs — @name` when somebody specific owes you the review, and `nobody reviewing → yours` when no one was ever asked. Naming the reviewer in the middle case is what makes the claim checkable — an unattributed *theirs* is indistinguishable from the bug it replaces, where every PR you opened asserted a reviewer who didn't exist. **Drop the `Author` column entirely when every row shares one author**, and say it once on the count line instead (`Waiting for review (3) — all yours, highest leverage first`). It's the same rule the all-zero `Unblocks` column follows: a column whose values never vary spends width to report nothing, and on a solo repo a wall of `you` is worse than nothing because it looks like a fact that was checked.
 
 **`Unblocks` sorts, `Last active` informs.** The two actionable tables lead with leverage because a column you have to scan is not a priority list — the row you should pick up next belongs on the first line, not somewhere in the middle where a big number happens to sit. Recency doesn't disappear, it moves into its own `Last active` column as a compact relative stamp (`4h`, `2d`, `3w`), so "what did I touch last" is still answerable at a glance without being the thing that decides the order. Say `— highest leverage first` on the count line so the ordering is declared rather than inferred; a table that silently changed its sort is a table you'll misread once and distrust after. The `Blocked (N)` table keeps its recency sort and gains no leverage column: nothing in it can be picked up, so ranking it by what it would free is a number with nowhere to go.
 
