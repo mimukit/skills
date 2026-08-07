@@ -78,9 +78,11 @@ It overlaps `finish`'s fix path in mechanics but differs at both ends: that path
 
 Nothing to service (no unresolved threads, green CI) means it says so and stops.
 
-The thread count matters more here than anywhere: you're about to *answer* those threads, and a rebase outdates the ones you haven't replied to yet. So the punch list is gathered first and the number goes in the sync preview.
+**It triages the punch list before touching code, and does not apply every comment on sight.** A review comment — bot or human — is a claim from outside the change, and a fair share of it is wrong for *this* project: a rule the repo deliberately opted out of, a suggestion that contradicts the plan the PR implements, a real point that belongs in its own issue. Applying all of it because it was written down is how a PR grows a second unreviewed change and how a project's conventions get quietly overwritten by a linter's defaults. So each item is judged against the repo's documented conventions, the surrounding code, and the PR's stated scope, and lands on one of three verdicts — **fix**, **decline** (with the reason named, because it goes in the reply), or **ask**.
 
-When answering: it replies and resolves each thread it actually fixed, pointing at the commit. **It never resolves a thread it didn't fix** — those stay open with a note on why. And it never merges; servicing feedback earns a fresh review, not a landing.
+The `ask` verdict is the pressure valve, and it has two rules worth knowing. Uncertain items are batched into **one round** — a compact table with a recommended verdict per item — rather than a thread-by-thread interrogation. And **when in doubt it asks rather than declines**, because a silent decline is the expensive failure: the reviewer believes the point was considered and never finds out otherwise. Red CI is exempt from all of this — a failing check is a fact about the branch, not an opinion about the code.
+
+When answering: it replies and resolves each thread it actually fixed, pointing at the commit. **It never resolves a thread it didn't fix.** A declined thread gets a reply naming what it conflicts with and **stays open**, so the reviewer can overrule — declining is a position you state, not a thread you drop. And it never merges; servicing feedback earns a fresh review, not a landing.
 
 ## What gitkit owns
 
@@ -100,4 +102,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`a323f3c` on 2026-08-07._
