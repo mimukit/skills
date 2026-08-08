@@ -55,6 +55,7 @@ Makefile                        command surface (run `make help`)
 | `prototypekit` | answer a question by building a throwaway — a drivable state model, a measurement script, or competing UI mocks — then delete the code and keep the answer | public |
 | `implementkit` | implement a plan, spec, or issue into code (straight-through or TDD), gated on tests + build | public |
 | `uikit` | build production UI that reads as a deliberate choice for the project, and audit shipped UI for the tells that give it away | public |
+| `refactorkit` | survey an existing codebase for the structural change worth making, rank the candidates, and crown one — proposes, never edits | public |
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |
 | `verifykit` | drive a built frontend feature in a browser and capture screenshots + a GIF as PR-ready proof, published to a hidden git ref | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
