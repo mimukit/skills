@@ -107,7 +107,7 @@ So **Result** offers Pass, Fail *and* Skipped, and **Notes** carries the reason.
 # QA Plan: <Feature name>
 
 ## Summary                   — what it does, what "working" means
-## Run log                   — tester, date, build, overall verdict boxes
+## Overall result            — pass / fail / partial verdict boxes
 ## Environment               — once for the whole plan: build, base URL, creds, flags, launch
 ## Test cases at a glance    — table of TC-N.M, scenario, title, priority
 
@@ -124,7 +124,13 @@ So **Result** offers Pass, Fail *and* Skipped, and **Notes** carries the reason.
 ## Not covered / needs human judgment
 ```
 
-The **Run log** at the top is what turns a completed plan into a record: who ran it, against which build, on what date, and the overall verdict. A signed-off QA plan that doesn't say which commit it was run against can't be trusted a week later.
+### Nothing to transcribe
+
+A signed-off QA plan that doesn't say which commit it covers can't be trusted a week later — but that's an argument for *recording* the build, not for handing the tester an empty table to copy a sha into.
+
+qakit already runs `git log` to scope the plan, so it stamps the date and the exact commit into the header line itself. Tester and date-run are dropped outright: in a solo or agent-assisted workflow the git author and timestamp of the commit that lands the filled-in plan already answer both, and a field that's redundant with git is a field that comes back blank.
+
+What's left at the top is the one thing a machine genuinely can't supply — the human's overall verdict, as three boxes. A run against a different build than the stamp says so in a case's **Notes**.
 
 ## Hands off to
 
@@ -142,4 +148,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`5176e81` on 2026-08-07._
+_Verified against `main`@`a3d88d9` on 2026-08-09._
