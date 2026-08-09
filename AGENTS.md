@@ -22,6 +22,20 @@ Rules:
 - **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing here — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keeping prose on one line per paragraph makes editing and reflowing painless.
 - This applies to prose and bullets only. Leave line structure intact where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
+## Prose register
+
+**This register governs what a skill writes back to its own operator.** It does not govern content a skill produces for a third-party audience — project documentation, published prose, UI copy, PR and issue bodies. That is production writing for readers who are not in the session, and it needs the freedom to explain a concept and to use the sentence length the idea requires. A content-generating skill such as `humankit` or `wikikit` keeps its own standards, and this section does not reach them.
+
+Within agent-to-operator text, every artifact has one of three registers. Classify it before writing it.
+
+- **Procedural** — text a person reads *while doing something*: QA steps, handoff documents, status snapshots, `Hand off` sections, next-move lines, acceptance criteria, preview-and-confirm lines. Write it in ASD-STE100 Simplified Technical English. One instruction per sentence. Procedural sentences 20 words or fewer, descriptive sentences 25 or fewer. Active voice, present tense, name the actor. Keep the articles, and use a plain verb in place of a gerund. No metaphor, idiom, or second meaning. Six sentences per paragraph at most. Within a single document, pick one term per concept and keep it — this rule is scoped to the document, never to the repository, so `crown` and `rank` may still mean different things in two different skills.
+- **Explanatory** — text a person reads *to form an opinion*: plan context, research recommendations, ADR rationale, review verdicts. The AI-tells rules govern this, and `humankit` owns the catalog. Do not apply STE here; it strips the register that makes a position readable.
+- **Exempt** — machine-read or format-bound text: Conventional Commits subjects, issue titles, prompts, design tokens, code, paths, commands, and anything quoted from another source.
+
+Precedence: an explicit user instruction, then the target repository's own documented convention, then the register.
+
+A skill's closing hand-off is procedural, whatever that skill produces for its reader. See [Closing a skill: the hand-off](#closing-a-skill-the-hand-off) for its structure.
+
 ## Documentation artifact naming
 
 When a skill creates a durable Markdown artifact under `docs/`, use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end. Examples: `docs/plans/plan-sso-login-2026-07-23.md`, `docs/research/research-auth-providers-2026-07-23.md`, `docs/qa/qa-login-throttling-2026-07-23.md`, `docs/reviews/review-auth-refactor-2026-07-23.md`, and `docs/handoffs/handoff-auth-migration-2026-07-23.md`.
@@ -49,6 +63,7 @@ When a skill creates a durable Markdown artifact under `docs/`, use `<type>-<slu
 - **Route, don't launch.** Name the kit and its one-line invocation; don't invoke it. The user decides whether to take the suggestion, and a skill that chains itself into the next one takes that call away.
 - **Name a sibling kit only when it's installed, and always give the plain fallback** ("open a PR with **prkit**, otherwise `gh pr create`"). Public skills get installed alone into repos that have none of the others — a next step that assumes the ecosystem is a dead end there.
 - **Say when there is no next step.** A terminal skill that invents a follow-up to look useful is worse than one that stops.
+- **Write it in the procedural register.** A hand-off is read at the moment attention is lowest, so it follows the rules in [Prose register](#prose-register): one instruction per sentence, active voice, present tense, no metaphor. This holds even for a skill whose own output is public-facing prose, because a hand-off is the skill talking to its operator, not the artifact it just produced.
 - `make lint` warns when a skill has no recognized closing section at all. It can't judge whether the three beats are any good — that's a review job, not a grep.
 
 ## Visibility: internal vs public

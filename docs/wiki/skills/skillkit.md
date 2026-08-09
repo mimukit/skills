@@ -60,11 +60,22 @@ The difference between a skill that triggers and reads well and one that doesn't
 - **Intent over incantation** — the most nuanced rule here. A skill says *what to accomplish and why* and lets the agent work out the invocation. An exact command gets pinned **only** when it's a stable public contract (`git commit`, `gh pr create`, `jq`), and even then made self-correcting. Never hardcode volatile syntax, and never encode a tool's *internal* behavior — output-format parsing, help-text scraping — as if it were contract. The failure mode runs both ways: brittle syntax that breaks loudly, or over-abstraction that taxes every run quietly.
 - **One meaning, one place.** Internal skills point at the repo's conventions doc; public skills inline what they need.
 - **Prune no-ops.** Delete weak sentences rather than trimming them.
-- **Close with a hand-off** — what changed, where it landed, one crowned next move.
+- **Classify the output's register** — see below. Getting it wrong flattens a verdict or bloats a runbook.
+- **Close with a hand-off** — what changed, where it landed, one crowned next move, written in the procedural register.
+
+## The register rule, and why it has an audience gate
+
+A skill writes for two readers who need opposite prose, so skillkit makes a new skill classify its own output before drafting it.
+
+Text a skill writes back to **its own operator** — QA steps, handoff documents, status snapshots, the closing hand-off — is *procedural*, and follows ASD-STE100 Simplified Technical English: one instruction per sentence, active voice, present tense, a named actor, no metaphor. Text a person reads **to form an opinion** — plan context, research recommendations, ADR rationale, review verdicts — is *explanatory*, keeps uneven rhythm, and must not be flattened, because clipped uniform sentences strip the register that makes a position readable. Commit subjects, issue titles, prompts, design tokens, and quoted source are *exempt*, since nothing about them is prose.
+
+The gate that matters most is the one above all three: **the register only reaches what a skill writes back into the session.** Content a skill produces for a third-party audience — project documentation, published prose, UI copy — is out of scope entirely and keeps its own standards. That reader is not in the room, cannot ask a follow-up question, and needs the writing to have room to explain a concept and to use whatever sentence length the idea requires. This is why [`humankit`](./humankit.md) and [`wikikit`](./wikikit.md) carry no register rule at all, while every skill's closing hand-off carries one, including theirs.
+
+The clause about holding one term per concept is scoped to a **single document**, never to the repo. Two skills may reasonably use different words for a similar idea, and forcing a global vocabulary erases distinctions that are doing real work.
 
 ## Conventions it carries
 
-Because a public skill can't link back to a conventions file, skillkit inlines the rules it needs: the frontmatter template, **no hard wrapping** (one continuous line per paragraph; only code fences, tables, and frontmatter keep their line structure), documentation artifact naming (`<type>-<slug>-YYYY-MM-DD.md`, creation date, stable on edit), **never cross-referencing a step by number** (a bare number binds to position, so reordering silently misdirects it — link the heading anchor instead), and the closing hand-off shape.
+Because a public skill can't link back to a conventions file, skillkit inlines the rules it needs: the frontmatter template, **no hard wrapping** (one continuous line per paragraph; only code fences, tables, and frontmatter keep their line structure), the prose register described above, documentation artifact naming (`<type>-<slug>-YYYY-MM-DD.md`, creation date, stable on edit), **never cross-referencing a step by number** (a bare number binds to position, so reordering silently misdirects it — link the heading anchor instead), and the closing hand-off shape.
 
 ## Live testing
 
@@ -88,4 +99,4 @@ npx skills add mimukit/skills -s skillkit
 
 Source: [`skills/skillkit/SKILL.md`](../../../skills/skillkit/SKILL.md) · [Add a new skill by hand](../how-to/add-a-new-skill.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`c11dbaf` on 2026-08-09._
