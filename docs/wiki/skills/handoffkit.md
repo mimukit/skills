@@ -44,6 +44,14 @@ Eight sections, each dropped rather than padded when genuinely empty:
 
 The last one names capabilities **by function**, not by tool — "a commit skill to land the work" rather than `commitkit`. The next session may be a different agent in a different environment with none of this collection installed.
 
+## Two registers, split down the middle of the document
+
+A handoff is read twice by the same person, in two different states of mind, and the sections are written differently on purpose.
+
+**Current state**, **Next steps** and **How to run / verify** are read while acting. They use ASD-STE100 Simplified Technical English: one instruction per sentence, active voice, present tense, a named actor, no metaphor, and one term per thing for the whole document. Call it the *worker* at the top and the *job runner* at the bottom and the next agent has to work out whether those are one thing or two, which is exactly the reconstruction cost a handoff exists to remove.
+
+**Goal** and **Decisions & constraints** are read before anything is touched, by someone deciding whether the plan is sound. They keep ordinary prose. Flattening a rejected approach into clipped procedural steps strips the *why*, and the why is the entire reason that section exists: without it the next agent walks straight back into the dead end you already paid for.
+
 ## How it works
 
 1. **Reread the session** for the goal, current state, decisions, and loose ends.
@@ -68,4 +76,4 @@ npx skills add mimukit/skills -s handoffkit
 
 Source: [`skills/handoffkit/SKILL.md`](../../../skills/handoffkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`c11dbaf` on 2026-08-09._
