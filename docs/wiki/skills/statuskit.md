@@ -179,6 +179,14 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 
 When the owning kit isn't installed, it names the **plain action** instead — "commit your changes" rather than "run commitkit". statuskit routes; it doesn't require the ecosystem.
 
+## Every move line is written to be scanned, not read
+
+The crowned move, the runner-ups and the snapshot's checkboxes all use ASD-STE100 Simplified Technical English: one instruction per line, active voice, present tense, a named actor, and no word carrying a second meaning. "Merge #34" and "file the backlog", never "get #34 over the line".
+
+The reason is the same one behind the one-line panel rule. A dashboard earns its place by telling you where the project stands before you have started reading. A move phrased as a small argument stops being scannable, and once one line reads as prose the whole block gets read instead of scanned — at which point it is a report, and you may as well have opened the tracker.
+
+One term per thing matters more here than almost anywhere, because the panels and the moves sit inches apart. A panel that says *unfiled plan* above a move that says *plan doc* reads as two different objects to a person glancing at the block, and the glance is all this format gets.
+
 ## Two lines it holds
 
 **gitkit owns the git facts.** The base branch, the branch-name convention, and where a worktree lives all come from [`gitkit`](./gitkit.md). Keeping a second copy of any of them is how a dashboard starts confidently describing a repo that no longer matches it.
@@ -237,4 +245,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`5176e81` on 2026-08-07._
+_Verified against `main`@`c11dbaf` on 2026-08-09._
