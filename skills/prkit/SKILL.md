@@ -116,6 +116,9 @@ gh issue edit <n> --remove-label in-progress --add-label in-review
 - If the issue doesn't currently carry `in-progress` (e.g. it was `ready` or already `in-review`), just add `in-review` and say what you found rather than forcing the removal. If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"` — don't mutate around the gap.
 
 ### 9. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded, and whether the linked issue was flipped to `in-review`.
 
 **Where it landed** — the PR URL and the branch it points at. Mention that CI will run if configured.

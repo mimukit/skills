@@ -90,6 +90,8 @@ Then write the ready-to-embed proof into the bundle's fixed **`proof.md`** (`doc
 
 ### 8. Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Report the bundle path, the flows verified (with pass/fail), the capture backend used, and — when published — the commit SHA and the ready-to-embed raw URLs. Offer the PR step next: the artifacts are ready for a pull request's **Proof** section. Don't open the PR from here.
 
 ## Notes

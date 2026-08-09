@@ -144,6 +144,8 @@ This file is **durable and committable** — it's a proposal meant to be reviewe
 
 ### 6. Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — the report written, and explicitly: no source file touched. **Where it landed** — the path. **Next** — take the crowned candidate to a grilling: the write-up is already plan-shaped, and what it lacks is interrogation rather than drafting. Name **grillkit** when it's installed; otherwise say plainly that the move is to interrogate the proposal yourself — the assumptions, the failure paths, the blast radius — before anybody builds it.
 
 Runners-up: route to a decision-record skill (**domainkit** when installed) when the proposal supersedes an existing record, and to a build skill (**implementkit** when installed, otherwise just building it) once the shape is settled.

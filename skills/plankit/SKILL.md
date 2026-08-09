@@ -47,6 +47,9 @@ Resolve the structural decisions a coherent draft needs — the architecture, th
 Write `docs/plans/plan-<slug>-YYYY-MM-DD.md`, where `<slug>` is a short lowercase kebab-case name for the feature and the suffix is the plan's ISO creation date (`plan-sso-login-2026-07-23.md`). Keep that date stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below — it is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file. For a genuine same-day collision between distinct plans, make the slug more specific; only as a last resort insert a sequence immediately before the date (`plan-sso-login-02-2026-07-23.md`).
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Report where the plan landed and offer the next step, in order, naming a sibling kit only when it is installed and otherwise describing the action in plain language:
 
 - **grillkit** — pressure-test and harden the draft (it can update this same file in place).

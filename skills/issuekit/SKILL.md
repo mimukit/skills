@@ -273,6 +273,9 @@ Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays t
 Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
 ### 7. Hand off
+
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 **What changed** — a table of what you created: number, title, parent, URL, lifecycle label, and priority. Note whether links used native sub-issues or the task-list fallback, and that the plan was annotated.
 
 **Where it landed** — call out the **`ready` set** (issues the user can start in parallel worktrees right now) versus the **`blocked` set**, naming what each blocked issue waits on. Order the `ready` set by priority, since that set exists to be picked from.

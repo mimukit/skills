@@ -196,6 +196,8 @@ This is the successful terminus: an open PR, a QA plan, and an `in-review` issue
 
 ### 9. Hand off
 
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Nobody watched this run, so the report *is* the handover — a human is reading it cold, after the fact, to work out what they now have to do.
 
 **What changed** — one outcome line for the issue: **opened** (PR link), **escalated** (which label, one-line reason, issue link), or **skipped** (issuekit refused it at [Start the issue](#1-start-the-issue) — the reason, and the fact that nothing was mutated). In a batch, accumulate these; the batch summary is emitted at the end (see [Batch mode](#batch-mode-all)).

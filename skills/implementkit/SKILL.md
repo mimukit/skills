@@ -70,6 +70,9 @@ All must pass before you declare done. If a command genuinely doesn't exist (no 
 If the gate fails, try to fix your own output and re-run — but **bounded** to roughly three attempts. If it's still red after that, **stop**: never declare done on a failing gate, and never loop indefinitely. Report the failure, what you tried, and where you think it's stuck, and hand it back.
 
 ### 7. Hand off to commitkit
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Leave every change **unstaged** — do not `git add`, do not commit, do not draft a commit message (that's commitkit's job, and pre-staging fights its grouping). Report a short summary:
 
 - the **mode** used and which precedence tier decided it,

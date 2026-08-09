@@ -44,6 +44,9 @@ Show the proposed glossary entry or ADR and ask before writing. Keep the proposa
 If the term or decision isn't actually resolved, don't manufacture certainty — use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
 
 ### 6. Hand off
+
+_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
 
 **What changed** — one line: the term added or adjusted, or the ADR written with its number and title.
