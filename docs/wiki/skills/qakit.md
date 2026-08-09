@@ -85,7 +85,22 @@ Every checkbox in the plan owns its own line, which is a rendering constraint ra
 
 The obvious shape for a test case is a **Steps** list with an **Expected** list underneath it. It's also the wrong one: it asks the tester to walk five actions while holding five expectations in their head, then reconcile the two lists at the end — by which point they've forgotten which screen showed what.
 
-Instead, each step is followed immediately by its own `- [ ]` checkpoints, so verification happens while the evidence is still on screen. A step with nothing to observe simply has no checkpoints. Each checkpoint is one observable, phrased so it's plainly true or false — never a paragraph, never two assertions joined by "and".
+Instead, each step is followed immediately by its own `- [ ]` checkpoints, so verification happens while the evidence is still on screen. A step with nothing to observe simply has no checkpoints.
+
+### A checkbox is a decision, not a line of spec
+
+Merging cases into checkpoints has an obvious failure mode: the assertions squeezed out of the case dimension pile up in the checkbox dimension instead, and a case comes out carrying twenty boxes. That's the merge relocating the cost rather than removing it.
+
+So a checkpoint is defined as **one judgment the tester stops to make** — not one fact the feature asserts. The test is whether they'd plausibly tick one box and leave the next unticked. If both get settled in the same glance, it's one box.
+
+The reason this matters isn't vertical space, it's honesty. Nobody makes seven independent judgments while scrolling a page once; they scroll, form one impression, then tick seven boxes. Granularity beyond the tester's attention doesn't buy precision, it fabricates it — and a rubber-stamped tick is worse than no tick, because it's read afterwards as evidence.
+
+Two rules fall out of that:
+
+- **Detail lives under a checkpoint as a plain unticked sub-list.** Knowing that the pricing table's featured plan is the thing most likely to disappear is worth writing down; it just isn't worth a tick of its own. The guidance survives at one-seventh the ticking cost.
+- **A repeated pass gets one checkpoint plus whatever is new.** When the same sweep runs again in the other palette, the second browser or the next breakpoint, it never re-enumerates. `as above, in dark` is banned outright — a line with no observation of its own is a loop counter the human ticks by hand.
+
+Failure isolation survives the collapse because **Notes** already exists, and a failing checkpoint needs a note regardless. That asymmetry is the point: cheap to run when it passes, expensive only where it fails.
 
 ### Skipped is a first-class outcome
 
@@ -148,4 +163,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`a3d88d9` on 2026-08-09._
+_Verified against `main`@`5dac7d0` on 2026-08-09._

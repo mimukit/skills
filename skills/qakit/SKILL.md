@@ -62,7 +62,7 @@ Don't pad — one clear check per behavior beats ten redundant ones. Scale the c
 A **scenario** is one setup, every case that can run on top of it, and one reset at the end. Sort the candidate cases by the starting state each one needs, then:
 
 - **One scenario per distinct starting state.** Two cases that need the same state belong in the same scenario, always. The tester sets up once, runs the whole scenario, resets once.
-- **Merge cases that share a setup *and* a flow.** If confirming three behaviors just means walking one flow and looking at three things along the way, that's *one* case with three checkpoints — not three cases that each restate the same six steps. Failure isolation comes from the checkpoint, not from the case: an unticked box points at exactly one behavior just as precisely as a failed case did, and costs the tester nothing to reach.
+- **Merge cases that share a setup *and* a flow.** If confirming three behaviors just means walking one flow and looking at three things along the way, that's *one* case with three checkpoints — not three cases that each restate the same six steps. Failure isolation comes from the checkpoint, not from the case: an unticked box points at exactly one behavior just as precisely as a failed case did, and costs the tester nothing to reach. **This is a merge, not a relocation** — the merged case ends up with three checkpoints, not with every assertion the three cases spelled out between them, stacked into a column of boxes. The checkpoint rules in [Write the plan file](#4-write-the-plan-file) are what stop the squeeze from simply reappearing one level down.
 - **Split only when the flows genuinely diverge** — a different entry point, or a case that leaves state the following case can't tolerate.
 - **Order within a scenario: read-only first, state-mutating next, destructive last.** A case that deletes the record every other case needs goes at the end, or earns its own scenario.
 - **Fewest scenarios that still cover the dimensions.** A new scenario has to justify itself with a genuinely different starting state — "it feels like a different topic" doesn't.
@@ -138,8 +138,10 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
 **Steps**
 
 1. <concrete action a human takes>
-   - [ ] <what must be true right here>
-   - [ ] <another observable at this same step>
+   - [ ] <one judgment the tester stops to make right here>
+     - <what to look at, when the judgment needs a guide — a plain bullet, not a checkbox>
+     - <another thing taken in at the same glance>
+   - [ ] <a second judgment, only when it's a genuinely separate look>
 2. <next action — a command goes in its own block>
 
    ```sh
@@ -195,7 +197,27 @@ Rules for good cases:
 - **Fixed case body, always these four parts in this order** — **Goal**, **Steps**, **Result**, **Notes**. No case drops one, no case invents a fifth. A tester should be able to jump to any case in any plan and find the same shape.
 - **Goal is one line and says what the case *proves***, not what it does — "an expired token can't reach another tenant's orders", not "test the orders endpoint".
 - **Verification lives under the step that produces it.** Never a separate expected-results list at the bottom of the case: a step is followed immediately by its own `- [ ]` checkpoints, so the tester ticks as they go instead of holding five expectations in their head and reconciling them at the end. A step with nothing to observe simply has no checkpoints.
-- **One checkpoint per observable** — a single thing the tester can see or measure, phrased so it's plainly true or false. Never a paragraph, never two assertions joined by "and".
+- **One checkpoint per *judgment*, not per assertion.** A checkpoint is one thing the tester stops to decide — not one fact the feature asserts. The test to apply: *would they plausibly tick one box and leave the next one unticked?* If they'd settle both in the same glance, it is one checkpoint. Granularity past the tester's attention doesn't buy precision, it fabricates it — nobody makes seven independent judgments while scrolling a page once, so seven boxes come back rubber-stamped and are then read as seven confirmations they never were.
+- **Split different judgments; join one judgment applied across a set.** "The footer's headings, links, separator rule and copyright are all legible" is a single look at a single region — one box. "The icon changed to the moon" and "storage now holds `dark`" are two places to look — two boxes. The word "and" is not the test; whether the tester's eye has to move is.
+- **Detail belongs *under* a checkpoint, as a plain unticked sub-list.** What to look at is worth spelling out — it's the difference between "check the page" and knowing the pricing table's featured plan is the thing most likely to vanish. It just isn't worth a tick each:
+
+  ```markdown
+  1. Set the state to `light`. Scroll the whole page top to bottom at ≥1280px.
+     - [ ] Every block reads correctly — nothing illegible, nothing invisible on its own background
+       - navbar — sticky background opaque; logo, links and control legible
+       - hero — heading, sub-copy, both buttons; primary label against the primary fill
+       - pricing-table — the toggle in both positions; the featured plan distinguishable; check marks
+       - footer — headings, links, separator rule, copyright
+  ```
+
+  Failure isolation survives the collapse, because **Notes** already exists and a failing checkpoint needs a note regardless. That asymmetry is the goal: a plan that is cheap to run when it passes and only gets expensive where it fails.
+- **A repeated pass gets one checkpoint plus whatever is new.** When a second variant re-runs a sweep the tester already performed — the other palette, the second browser, the next breakpoint, the swapped preset — never enumerate the same items again. **Never write "as above, in `<variant>`".** A line that carries no observation of its own is a loop counter the human ticks by hand:
+
+  ```markdown
+  2. Set the state to `dark`. Scroll the page again.
+     - [ ] The same sweep is clean in dark
+     - [ ] Nothing is pure-black-on-dark where a muted token was intended
+  ```
 - **Every checkbox owns its own line.** A `- [ ]` renders as a *clickable* checkbox only when it starts a line — write `[ ] Pass  [ ] Fail` inline and every previewer shows dead literal text the tester has to edit by hand. This applies to Result's three outcomes, each step checkpoint, and the Environment and Setup boxes alike: one per line, no exceptions, never side by side to save vertical space.
 - **Observable, not internal** — what the tester sees or measures, not state they have no way to inspect.
 - **Concrete and reproducible** — real values and exact steps, not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
