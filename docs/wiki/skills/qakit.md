@@ -108,6 +108,14 @@ A Pass/Fail box loses information. A case the tester couldn't run — dependency
 
 So **Result** offers Pass, Fail *and* Skipped, and **Notes** carries the reason. A plan that returns with silent blanks tells the next reader nothing; one that says "skipped, staging Redis was down" tells them exactly what's still owed.
 
+## The plan is written in one register
+
+A tester reads a QA plan while doing something, usually against a clock, which is the exact case ASD-STE100 Simplified Technical English was designed for. So the whole plan is written in that register: one instruction per sentence, active voice, present tense, a named actor, and no word carrying a second meaning. "The app redirects to `/login`" beats "a redirect occurs" because the second one makes the tester work out who did it.
+
+The clause that costs the most attention is **one term per thing, held for the whole plan**. If step 2 calls it the *cart*, step 9 does not call it the *basket* and a checkpoint does not call it the *order*. A tester who has to work out that three words mean one object stops trusting all three, and a plan they half-trust comes back rubber-stamped. The rule is deliberately scoped to a single plan rather than to the repo, because two different documents may reasonably name the same idea differently, and forcing a global vocabulary would erase distinctions that carry meaning elsewhere.
+
+This is also why prose paragraphs lose to bullet sublists here. A wall of prose is fine when a reader is forming an opinion; it is friction when they are holding a browser in one hand.
+
 ## Other rules for a good case
 
 - **Concrete and reproducible** — real values and exact steps. Not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
@@ -163,4 +171,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`5dac7d0` on 2026-08-09._
+_Verified against `main`@`c11dbaf` on 2026-08-09._
