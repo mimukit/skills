@@ -118,7 +118,7 @@ Dispatch a subagent to invoke **issuekit** `start <n>` and return the worktree. 
 
 Dispatching rather than running inline is deliberate: issuekit and gitkit are large documents, and running `start` in the conductor pins both into the conductor's context for the rest of the run — re-billed on every turn, for every issue in a batch. The conductor needs the returned *path*, not the machinery that produced it.
 
-**Say the run is unattended when you invoke it.** issuekit previews every mutation and waits for an OK, and it carves out exactly one exemption for an unattended caller: `start`'s `ready → in-progress` flip. That exemption is safe precisely because the guard has already refused everything unworkable — the flip only ever happens to an issue a human grilled into `ready`. Nothing else afkkit touches is exempt, and afkkit never asks for a broader one.
+**Say the run is unattended when you invoke it.** issuekit previews every mutation and waits for an OK. It carves out exactly one exemption, and that exemption is the mode's rather than the caller's: `start`'s `ready → in-progress` flip runs unprompted for anyone, so afkkit inherits it without asking. Saying the run is unattended still matters — it tells every later step there's nobody to answer a prompt. Nothing else afkkit touches is exempt, and afkkit never asks for a broader one.
 
 Then verify what came back rather than taking it on faith — the conductor runs these itself, since reading the workspace is squarely inside its boundary:
 

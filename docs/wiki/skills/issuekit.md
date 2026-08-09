@@ -23,9 +23,9 @@ Five jobs in one skill, because they're the same job at five points in a dev wor
 
 Creating, closing, and relabeling issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
 
-**One exemption exists, for an unattended caller.** An orchestrator running with nobody at the keyboard ([`afkkit`](./afkkit.md)) may pre-authorize exactly one mutation: `start`'s `ready → in-progress` flip. It has to be *told* the run is unattended; it's never assumed.
+**One exemption exists, and it belongs to the mode rather than the caller.** `start`'s `ready → in-progress` flip runs unprompted, whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did.
 
-The exemption is narrow because it's the only mutation whose approval is already implied by an earlier human act — the `ready` guard has refused everything a human hasn't grilled, so the only issues reaching the flip are ones a human already cleared for exactly this. Nothing else widens, and **no caller of any kind gets to skip the guard itself.**
+It's the only mutation whose approval is already implied twice: the `ready` guard has refused everything a human hasn't grilled, and asking for the issue to be started is asking for it to be marked started. The cost of prompting is real, too — an issue that sits in a worktree while the tracker still shows it `ready` is an issue another worker can pick up. Nothing else widens, and **no caller of any kind gets to skip the guard itself.**
 
 ## The lifecycle labels
 
