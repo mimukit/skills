@@ -23,9 +23,13 @@ That zero-mutation stance is the point: statuskit is safe to run anytime, as oft
 
 Most of the dashboard is counts, which is right for signals you only need a feel for. Three aren't:
 
-- **Unblocked issues** — a table of every open issue that isn't blocked, by ID, with its bucket and title. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label.
-- **Blocked issues** — the other half of that same read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning.
+- **Unblocked issues** — the pick-up-now list: every open issue you could actually start, by ID, with its bucket and title. That means `ready`, unlabeled, and `in-progress` work you can resume. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label.
 - **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with **what it closes** right beside its number, then its CI state, its author, and whose move it is.
+- **Blocked issues** — the other half of the issue read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning.
+
+**An `in-review` issue never appears in the unblocked table.** Its next move is a review of a PR, and the waiting-for-review row already names the person and the CI state — strictly more than a second row in a list of work you can start would say. The count stays on the Issues line, because it's still a fact about the tracker. An `in-review` issue with no open PR at all is the one case with nothing to point at; that's tracker drift, so it gets a note on the count line and a route to [`issuekit`](./issuekit.md) `triage` rather than a silent restoration to the pick-up-now list.
+
+**The order is the order you can act in, and blocked work goes last.** Unblocked leads, waiting-for-review follows, and `Blocked issues` closes the block — sitting under the Pull requests panel rather than under the Issues line that counts it. A reader scans from the top and stops at their next move, so every row they can act on has to precede the first row they cannot. The table carries its full name for the same reason: away from the Issues panel, a bare `Blocked (N)` reads as blocked *PRs*.
 
 The reason these three get rows instead of a number is that a count sends you straight back to `gh` to find out *which* — and that round trip is exactly the friction statuskit exists to remove. All three list everything that qualifies; on a repo large enough to blow the one-screen budget they cap at 10 rows and say so with a `+N more` line rather than truncating silently.
 
@@ -245,4 +249,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c11dbaf` on 2026-08-09._
+_Verified against `main`@`44c225d` on 2026-08-11._
