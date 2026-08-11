@@ -82,6 +82,16 @@ check_anchors() {
 # that preparing a worktree implies nothing about what to do in it.
 HANDOFF_EXEMPT=" gitkit "
 
+# Skills allowed to declare no `allowed-tools`. Empty on purpose: every skill
+# here now declares its built-in surface, including verifykit, which depends on a
+# host-supplied browser MCP and declares the four built-ins it drives itself while
+# naming the MCP requirement in its Notes. The list stays as a mechanism, not a
+# habit — adding a name to it means writing the reason in that skill's Notes too.
+# Only *presence* is checked. Whether a declared list matches what the skill
+# actually does is a read, not a grep — a heuristic for "does this invoke a
+# sibling" would misfire on every skill that routes without invoking.
+TOOLS_EXEMPT=" "
+
 # Does the skill close with a hand-off — a recap of what it did plus the next move?
 # (AGENTS.md § "Closing a skill: the hand-off".) `Hand off` is canonical; the rest
 # are grandfathered headings from skills written before the convention. This can
@@ -139,6 +149,14 @@ check_skill() {
 
   # license present
   grep -qi '^license:' <<<"$fm" || issues+=("W:no license: field")
+
+  # allowed-tools declared — several skills lean on the field as a real backstop
+  # (researchkit withholds the shell so a host that honors it can't run a spike),
+  # so an undeclared surface is worth flagging rather than assuming permissive.
+  if [[ "$TOOLS_EXEMPT" != *" $name "* ]]; then
+    grep -qi '^allowed-tools:' <<<"$fm" \
+      || issues+=("W:no allowed-tools: field — declare the tool surface, or add the skill to TOOLS_EXEMPT with the reason in its Notes")
+  fi
 
   # visibility marker: metadata.internal must be declared true|false
   local internal_val
@@ -338,9 +356,38 @@ check_workflow_doc() {
 # — the heading style is the opt-in. Full runs only.
 SKILL_PAGES_DIR="$REPO_ROOT/docs/wiki/skills"
 
+# Did a *single-skill* change land without its wiki page? (warning)
+#
+# The habit here is to commit a skill and its page together, and it holds: 16 of
+# the last 18 skill-touching commits did exactly that. The two that didn't are
+# the two shapes worth telling apart — a repo-wide prose sweep that moved 21
+# skills at once, where AGENTS.md says a page edit genuinely isn't owed, and a
+# single-skill change that simply forgot its page, which is the real miss.
+#
+# So the check is scoped to commits touching exactly one skill. A prose sweep is
+# then exempt *by construction* rather than by a suppression list somebody has to
+# maintain — which is what keeps this from opening at 22 warnings with 21 of them
+# correct to ignore, the state in which a warning gets muted and stops working.
+#
+# Compares commit dates, not the page's stamped SHA: the scoping already removes
+# the noise that would have justified parsing stamps, and a date needs no parsing.
+page_left_behind() {
+  local name="$1" sdate pdate sha touched
+  sdate="$(git -C "$REPO_ROOT" log -1 --format=%cd --date=short -- "skills/$name/" 2>/dev/null || true)"
+  pdate="$(git -C "$REPO_ROOT" log -1 --format=%cd --date=short -- "docs/wiki/skills/$name.md" 2>/dev/null || true)"
+  # Either side never committed (a brand-new skill or page) → nothing to compare.
+  [[ -n "$sdate" && -n "$pdate" ]] || return 1
+  [[ "$sdate" > "$pdate" ]] || return 1
+  sha="$(git -C "$REPO_ROOT" log -1 --format=%H -- "skills/$name/" 2>/dev/null || true)"
+  [[ -n "$sha" ]] || return 1
+  touched="$(git -C "$REPO_ROOT" show --format= --name-only "$sha" 2>/dev/null \
+    | sed -n 's#^skills/\([^/]*\)/.*#\1#p' | sort -u | wc -l | tr -d '[:space:]')"
+  [[ "$touched" == "1" ]]
+}
+
 check_skill_pages() {
   [[ -d "$SKILL_PAGES_DIR" ]] || return 0
-  local pissues=() name page mode
+  local pissues=() pwarns=() name page mode
 
   # A1. every skill has a page
   while IFS= read -r name; do
@@ -365,16 +412,26 @@ check_skill_pages() {
       skill_backtick_has_word "$name" "$mode" \
         || pissues+=("docs/wiki/skills/$name.md documents mode '$mode', but skills/$name/SKILL.md defines no such mode")
     done < <(grep -oE '^### `[a-z][a-z0-9-]*`' "$page" | sed 's/^### `//; s/`$//' | sort -u)
+
+    # C. a single-skill change that left its page behind
+    if page_left_behind "$name"; then
+      pwarns+=("skills/$name changed after docs/wiki/skills/$name.md — re-read the page, then re-stamp it")
+    fi
   done
 
-  if [[ ${#pissues[@]} -eq 0 ]]; then
+  if [[ ${#pissues[@]} -eq 0 && ${#pwarns[@]} -eq 0 ]]; then
     echo "  ${C_GREEN}✓${C_RESET} docs/wiki/skills/"
     return
   fi
-  echo "  ${C_RED}✗${C_RESET} docs/wiki/skills/"
+  local mark="${C_YELLOW}!${C_RESET}"
+  [[ ${#pissues[@]} -gt 0 ]] && mark="${C_RED}✗${C_RESET}"
+  echo "  $mark docs/wiki/skills/"
   local i
-  for i in "${pissues[@]}"; do
+  for i in "${pissues[@]+"${pissues[@]}"}"; do
     echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
+  done
+  for i in "${pwarns[@]+"${pwarns[@]}"}"; do
+    echo "      ${C_YELLOW}warn:${C_RESET}  ${i}"; warns=$((warns + 1))
   done
 }
 
