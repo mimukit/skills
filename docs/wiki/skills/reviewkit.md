@@ -112,4 +112,4 @@ npx skills add mimukit/skills -s reviewkit
 
 Source: [`skills/reviewkit/SKILL.md`](../../../skills/reviewkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._

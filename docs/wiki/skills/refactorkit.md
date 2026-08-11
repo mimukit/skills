@@ -7,7 +7,7 @@ Survey an existing codebase for the structural change worth making — shallow i
 | | |
 |---|---|
 | Modes | single procedure, optionally scoped (`/refactorkit src/payments`) |
-| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Write`, `Task`, `Agent`, `Skill` |
+| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Write`, `Task`, `Agent` |
 | Writes | `docs/refactor/refactor-<slug>-YYYY-MM-DD.md` — durable, committable, never committed by the skill |
 | Visibility | public |
 
@@ -89,4 +89,4 @@ npx skills add mimukit/skills -s refactorkit
 
 Source: [`skills/refactorkit/SKILL.md`](../../../skills/refactorkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`2b95e95` on 2026-08-08._
+_Verified against `main`@`44c225d` on 2026-08-11._

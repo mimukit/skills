@@ -7,7 +7,7 @@ Implement a plan, spec, or issue into working code — then stop, gated on the r
 | | |
 |---|---|
 | Modes | straight-through or TDD, resolved by precedence |
-| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write` |
+| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `Skill` |
 | Writes | application code — unstaged, never committed |
 | Visibility | public |
 
@@ -82,4 +82,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c9d55aa` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._

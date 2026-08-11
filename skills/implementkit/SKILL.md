@@ -3,7 +3,7 @@ name: implementkit
 description: >-
   Implement a plan, spec, or issue into working code — no commit, that's commitkit's job — picking straight-through vs TDD mode by precedence (prompt → CLAUDE.md → repo habit → ask), then running the repo's test + build/typecheck gate before declaring done. Use when the user says "implement this plan", "build this issue", "write the code for plan-<slug>-YYYY-MM-DD.md", "implement #42", "do this TDD", "apply these review findings", or hands off a hardened spec to be turned into code — even if they don't name a mode.
 license: MIT
-allowed-tools: Bash, Read, Grep, Glob, Edit, Write
+allowed-tools: Bash, Read, Grep, Glob, Edit, Write, Skill
 metadata:
   internal: false
 ---
@@ -84,6 +84,7 @@ Then point the user to commitkit when installed, or say plainly that the next st
 ## Notes
 
 - **Build only.** No commit, no staging, no PR — those are commitkit and prkit. implementkit's job ends at green, unstaged code.
+- **`Skill` is here for the uikit delegation, and it is not free.** Invoking uikit on visual work pulls a large document into an already-large build context, and every later tool use in the run re-bills it. That is the trade: a UI surface built against the project's actual design constraint, with its own pre-flight, versus a cheaper run that writes the screen blind. Take it on UI work and nowhere else — implementkit invokes no other skill, and routing to commitkit at the end is naming a next move, not calling one.
 - **Never guess the design.** Bouncing a thin input back to grillkit/plankit is a success, not a failure — it's the boundary that keeps this skill honest.
 - **Never green-wash.** A declared "done" always means the gate actually passed. Red after the bounded fixes is reported as red.
 - **Follow the repo over these defaults.** If the codebase has its own test/build commands, layout, or a stated workflow, follow that and say you did.

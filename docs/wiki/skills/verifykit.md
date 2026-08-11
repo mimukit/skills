@@ -7,7 +7,7 @@ Prove a frontend feature actually works by driving it in a real browser and capt
 | | |
 |---|---|
 | Modes | single procedure |
-| Tools | none declared — inherits the host's full set |
+| Tools | `Bash`, `Read`, `Write`, `AskUserQuestion` — plus a browser MCP the host supplies |
 | Writes | `docs/verify/verify-<slug>-YYYY-MM-DD/` (gitignored), published to `refs/verify-assets/<slug>` |
 | Visibility | public |
 
@@ -82,4 +82,4 @@ npx skills add mimukit/skills -s verifykit
 
 Source: [`skills/verifykit/SKILL.md`](../../../skills/verifykit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._

@@ -7,7 +7,7 @@ Turn a rough feature or change into a structured plan document, before any code.
 | | |
 |---|---|
 | Modes | single procedure |
-| Tools | `Read`, `Grep`, `Glob`, `Write`, `Edit`, `AskUserQuestion`, `Skill` |
+| Tools | `Read`, `Grep`, `Glob`, `Write`, `Edit`, `AskUserQuestion` |
 | Writes | `docs/plans/plan-<slug>-YYYY-MM-DD.md` |
 | Visibility | public |
 
@@ -86,4 +86,4 @@ npx skills add mimukit/skills -s plankit
 
 Source: [`skills/plankit/SKILL.md`](../../../skills/plankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._
