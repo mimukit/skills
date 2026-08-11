@@ -122,6 +122,8 @@ The one policy afkkit owns. Whenever a step can't proceed, it escalates rather t
 
 **First, it verifies a "pre-existing" claim before accepting it.** A step reporting a gate as red-but-already-broken is asking to be excused from the one check standing between an unattended run and a shipped regression — and it's the easiest thing for a subagent to get wrong, because a failure it caused and one it inherited look identical from inside the worktree. The conductor re-runs that command against the **base branch** first.
 
+**A step that needs consent, with nobody to ask, escalates.** No prompt can be answered in an unattended run, so a step reaching a preview-and-confirm gate stops rather than waiting or assuming a yes — an execution gap, commented and left `in-progress`. Two mutations in this pipeline are exempt at the *mode*, not by afkkit's asking: [`issuekit`](./issuekit.md) `start`'s `ready → in-progress` flip and [`prkit`](./prkit.md)'s advance to `in-review`. Both run unprompted for every caller, which is why the pipeline reaches an open PR without a human. afkkit relies on exemptions the owning skill already wrote and never widens one.
+
 Then escalation always means the same five things:
 
 1. **No PR.**
