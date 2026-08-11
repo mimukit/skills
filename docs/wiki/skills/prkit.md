@@ -57,7 +57,11 @@ Before creating anything, prkit checks for an existing open PR on the branch and
 
 Opening the PR is the moment a linked issue moves from being worked to awaiting review, so its lifecycle label flips `in-progress` → `in-review` — the same transition [`issuekit`](./issuekit.md)'s sync mode performs.
 
-This only happens when the PR actually references an issue, prefers issuekit when installed, falls back to a plain `gh issue edit`, and **never runs without an OK** — relabeling is outward-facing, so the flip gets previewed first.
+This only happens when the PR actually references an issue, and prefers issuekit when installed, falling back to a plain `gh issue edit`.
+
+**It runs without asking** — prkit's one exemption from its own preview rule. Opening the pull request *is* the instruction to move the issue to review, so a confirmation asks a question the invocation already answered, and the cost of asking is an issue that keeps advertising itself as being worked while its PR sits open. The exemption belongs to the step rather than to whoever called it, so a human at the keyboard and an unattended [`afkkit`](./afkkit.md) run get identical behavior. That symmetry is the point: a caller-granted bypass can drift open, and the copy inside an unattended orchestrator is the one nobody would notice drifting.
+
+The exemption is narrow in two directions. It covers exactly two starting states — `in-progress` gets the flip, `ready` gets `in-review` added with no removal — because those are the only two a PR legitimately arrives from. Every other lifecycle state is drift rather than a transition, so prkit changes nothing, reports what it found, and either asks or escalates. And it covers this one label move: creating the PR, committing a handed-in path, and force-pushing a sync all still preview.
 
 ## Hands off to
 
@@ -73,4 +77,4 @@ npx skills add mimukit/skills -s prkit
 
 Source: [`skills/prkit/SKILL.md`](../../../skills/prkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._
