@@ -73,7 +73,9 @@ Skills here fall into two classes, declared explicitly in frontmatter as `metada
 - **`internal: true`** — a repo-only maintenance/meta skill. It may lean on this repo's machinery: `AGENTS.md`, the `Makefile`, repo-relative links. skills.sh honors this native field by **hiding the skill from discovery** — it only installs when someone sets `INSTALL_INTERNAL_SKILLS=1`, so internal skills are effectively unpublished.
 - **`internal: false`** — a publishable skill (e.g. `commitkit`, `humankit`). It must be **portable**: self-contained (conventions inlined, no repo-relative links, no hard dependency on `make`/`AGENTS.md`/`scripts/`), machine/OS-agnostic, and environment-degrading — it writes files when a filesystem is available and otherwise prints its output as a codeblock. Once pushed to the public repo, skills.sh discovers `skills/<name>/SKILL.md` automatically and lists it via install telemetry; there is no separate publish step.
 
-`make lint` enforces the marker on every skill and flags likely portability breaks in public skills.
+**Portability outranks the no-duplication rule, and the seam is conclusion vs derivation.** A public skill installs alone, so one that needs a fact another skill owns must carry enough of it to keep working. It may state the other skill's **answer** together with a degradation fallback ("gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base"). It may not reproduce the **reasoning that produces** that answer — a full resolution ladder, a path formula, a policy argument. An answer is one line that breaks loudly on a rename; a derivation is a second implementation that drifts silently.
+
+`make lint` enforces the marker on every skill, flags likely portability breaks in public skills, and warns when a skill declares no `allowed-tools` — the field is a real backstop here (researchkit withholds the shell precisely so a host that honors it cannot run a spike), so an undeclared surface should be a deliberate, documented choice rather than an omission.
 
 ## Directory page: `skills.sh.json`
 
@@ -104,10 +106,10 @@ Prose changes that don't move any of those don't need a page edit. Use judgment;
 - **Open with the one-line description, then a bold "Reach for it when" trigger, then the summary table** (modes · tools · writes · visibility).
 - **Write a mode section as `` ### `mode` ``** — a backticked `h3` under a `## Modes` heading. That backticked form is what lint checks against the `SKILL.md`, so it is an opt-in: a skill whose modes genuinely aren't backticked in its own source (implementkit's straight-through and TDD) uses a plain heading and is simply not mode-checked.
 - **Link sibling skills as `` [`gitkit`](./gitkit.md) ``**, and link the source as `` [`skills/<name>/SKILL.md`](../../../skills/<name>/SKILL.md) `` at the foot.
-- **End with the install command and the provenance stamp** — `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` The stamp is what a later docs audit diffs from; a page without one has never been verified.
+- **End with the install command and the provenance stamp** — `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` The stamp is what a later docs audit diffs from; a page without one has never been verified. **Re-stamping asserts a re-read.** Moving the stamp forward is a claim that somebody looked at the skill and confirmed the page still describes it — so re-stamp when that happened, and leave the stamp alone when it didn't. A stamp bumped as a formality is worse than a stale one, because it launders an unverified page as a checked one.
 - **Explain the why, don't restate the what.** The page earns its place on the reasoning behind a rule — why `gitkit` refuses to delete a branch it didn't create, why review runs on a different model family. Restating the procedure step by step is what `SKILL.md` already does better.
 
-`make lint` enforces the mechanical half on every full run — page-per-skill in both directions, and mode parity. It cannot tell whether the prose is still true; that's a review job.
+`make lint` enforces the mechanical half on every full run — page-per-skill in both directions, and mode parity. It also **warns when a commit touching exactly one skill lands without that skill's page**, which is the shape of a forgotten page edit. A repo-wide prose sweep touching many skills at once is exempt by construction, because that is the shape where a page edit genuinely isn't owed. Lint still cannot tell whether the prose is true; that's a review job.
 
 ## Layout
 

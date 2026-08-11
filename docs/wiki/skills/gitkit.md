@@ -110,7 +110,15 @@ Worktrees store **absolute** paths, so a repo bind-mounted at a different path b
 
 Nothing, deliberately. gitkit prepares the ground and tears it down — **creating a worktree implies nothing about what to do in it.** It's the one skill in the collection exempt from the closing hand-off requirement, by design rather than oversight.
 
-If a worktree path, base-ref ladder, or rebase rule turns up restated inside another skill, that's the bug.
+## Restating a conclusion vs restating the derivation
+
+Every public skill installs on its own, into repos where gitkit may not exist, so a caller that needs a git fact has to carry enough of one to keep working. That requirement outranks tidiness, and the line runs between two things that look similar on the page.
+
+A caller may state gitkit's **answer** alongside its degradation fallback — *"gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base."* A caller may not reproduce the **reasoning that produces** the answer: the five-rung base-ref ladder, the worktree path formula, the rebase-versus-merge argument in full.
+
+The asymmetry is about what rots. An answer is one line, and a rename here breaks it loudly wherever it's repeated. A derivation is a second implementation, and it drifts silently until two skills disagree about where a worktree lives.
+
+Compliant by this rule today: [`prkit`](./prkit.md) and [`mergekit`](./mergekit.md) each name the rebase conclusion and its single-confirmation rule without re-deriving them, and [`wikikit`](./wikikit.md) and [`designkit`](./designkit.md) each name `gh repo view --json defaultBranchRef` as a base-ref fallback without carrying the ladder. A worktree path, a base-ref ladder, or the rebase argument turning up restated in full inside another skill is still the bug.
 
 ## Install
 
@@ -120,4 +128,4 @@ npx skills add mimukit/skills -s gitkit
 
 Source: [`skills/gitkit/SKILL.md`](../../../skills/gitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`44c225d` on 2026-08-11._
