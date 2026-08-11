@@ -18,6 +18,7 @@ Ordered by priority (top = build next).
 |-------|--------------|
 | `debugkit` | My root-cause ritual — reproduce, isolate, find the true cause, propose a fix; covers infra (docker/dokploy failures) and WordPress local→prod migration cases |
 | `testkit` | Write automated tests — unit, integration, and e2e — for an existing brownfield project that has none |
+| `releasekit` | Cash in the Conventional Commits the collection already enforces — derive a changelog and a semver tag from the commit range, and cut the release |
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
