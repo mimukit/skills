@@ -124,13 +124,13 @@ check_skill() {
 
   # kit suffix, one lowercase word
   if [[ -n "$fname" ]]; then
-    if ! printf '%s' "$fname" | grep -qE '^[a-z][a-z0-9]*kit$'; then
+    if ! grep -qE '^[a-z][a-z0-9]*kit$' <<<"$fname"; then
       issues+=("W:name not a lowercase word ending in 'kit'")
     fi
   fi
 
   # description front-loads a "Use when" trigger
-  if ! printf '%s\n' "$fm" | grep -qi '^description:'; then
+  if ! grep -qi '^description:' <<<"$fm"; then
     issues+=("E:no description: field")
   else
     desc_has="$(printf '%s\n' "$fm" | grep -ci 'use when' || true)"
@@ -138,7 +138,7 @@ check_skill() {
   fi
 
   # license present
-  printf '%s\n' "$fm" | grep -qi '^license:' || issues+=("W:no license: field")
+  grep -qi '^license:' <<<"$fm" || issues+=("W:no license: field")
 
   # visibility marker: metadata.internal must be declared true|false
   local internal_val
@@ -255,7 +255,15 @@ skill_backtick_has_word() {
   local kit="$1" word="$2"
   local f="$SKILLS_DIR/$kit/SKILL.md"
   [[ -f "$f" ]] || return 1
-  grep -oE '`[^`]+`' "$f" | grep -qwF -- "$word"
+  # Buffer the spans instead of piping straight into `grep -q`. Under
+  # `set -o pipefail`, a `grep -q` that matches early exits before the upstream
+  # `grep -oE` finishes writing, the upstream dies of SIGPIPE (141), and pipefail
+  # reports that as the pipeline's status — so a *successful* match intermittently
+  # read as a failure. It surfaced as phantom "defines no such mode" errors on
+  # whichever skill happened to lose the race, most often the longest ones.
+  local spans
+  spans="$(grep -oE '`[^`]+`' "$f" || true)"
+  grep -qwF -- "$word" <<<"$spans"
 }
 
 # Cross-check the human-facing workflow map against the skills it describes.
