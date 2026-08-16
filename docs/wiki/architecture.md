@@ -15,7 +15,7 @@ The frontmatter carries the contract:
 - **`name`** must match the directory exactly, and be one lowercase word ending in `kit`. The suffix is a personal brand that reads as "a kit for X"; the functional word leads so a search for `commit` still finds `commitkit`.
 - **`description`** front-loads an English "Use when …" trigger. This is a routing rule, not a title — agents and skills.sh decide whether to activate a skill primarily from this field, so the branded name never has to be the thing that matches.
 - **`metadata.internal`** declares visibility, and is the one field with consequences outside this repo.
-- **`allowed-tools`** scopes what the skill may do. 24 of the 25 skills declare it; the one that doesn't inherits every tool, which the security scan flags.
+- **`allowed-tools`** scopes what the skill may do. Every skill here declares it. A skill that leaves it out inherits every tool the host offers, Bash included — lint warns and the security scan flags it.
 
 ## Two homes, one boundary
 
@@ -26,7 +26,7 @@ The frontmatter carries the contract:
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` is currently empty. Every one of the 25 skills is `metadata.internal: false`.
+`.agents/skills/` doesn't exist yet — no skill has needed it. Every skill in `skills/` is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
@@ -65,17 +65,19 @@ Two scripts, both surfaced through the `Makefile` and both run in CI by `.github
 
 ### `make lint`
 
-Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger, `license` is present, `metadata.internal` is declared as a boolean — and then two things about the prose:
+Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger, `license` is present, `metadata.internal` is declared as a boolean — and then three more things:
+
+**A declared tool surface.** `allowed-tools` is a warning rather than an error, because a skill can have a defensible reason to inherit everything. The escape hatch is `TOOLS_EXEMPT` in the script, currently empty, and joining it means writing the reason into the skill's own Notes. The field is load-bearing here rather than decorative: `researchkit` withholds Bash precisely so a host that honors the declaration cannot run a spike instead of reading sources. An undeclared surface should be a decision somebody made, not one nobody noticed.
 
 **Reference integrity.** It builds the set of GitHub heading anchors for the document (mirroring github-slugger's rules) and checks every intra-doc `](#anchor)` link against it. A broken anchor is an error. It also flags `step N`-style cross-references as warnings, because a bare number binds to a step's *position* — reorder the steps and the reference silently points at the wrong one, with no tool able to detect it. A named anchor binds to identity instead and breaks loudly right here.
 
 **A closing hand-off section.** Every skill is required to end by recapping what it did and naming the next move. Lint can only verify such a section exists; whether its content is any good is a review judgment. `gitkit` is the sole exemption, as the primitives layer other skills call into.
 
-Full runs add two cross-file checks that a per-skill run (`make lint name=<skill>`) deliberately skips:
+Full runs add three cross-file checks that a per-skill run (`make lint name=<skill>`) deliberately skips:
 
 - **Shared-contract tables.** Two tables are duplicated across skills on purpose, because each skill must stand alone once installed and so neither pair can point at a shared source: the lifecycle label map between `issuekit` and `repokit`, and the commit-type table between `commitkit` and `issuekit`. Nothing else keeps the copies aligned, so lint diffs them.
 - **The workflow map.** [`docs/wiki/workflow.md`](./workflow.md) duplicates skill facts deliberately so a reader gets one map. Lint guards the three that rot on a rename: every skill it names must exist, every `<kit> <mode>` invocation must name a mode that skill actually defines, and every lifecycle label in its vocabulary section must still live in `issuekit`. These are greps over backtick spans — a loud tripwire, not a proof.
-- **The per-skill wiki pages.** [`docs/wiki/skills/`](./skills/) carries one reader-facing page per skill, which likewise duplicates skill facts on purpose. Lint checks page-per-skill in **both** directions — a skill with no page, and a page documenting no skill — plus mode parity, so a renamed mode breaks loudly instead of leaving a page that lies.
+- **The per-skill wiki pages.** [`docs/wiki/skills/`](./skills/) carries one reader-facing page per skill, which likewise duplicates skill facts on purpose. Lint checks page-per-skill in **both** directions — a skill with no page, and a page documenting no skill — plus mode parity, so a renamed mode breaks loudly instead of leaving a page that lies. It also warns when a commit touching exactly one skill lands without that skill's page — the shape of a forgotten page edit. That scoping is the whole design: a repo-wide prose sweep touches twenty skills at once and genuinely owes no page edit, so an unscoped version of this check would open at twenty-odd warnings with nearly all of them correct to ignore, which is how a warning gets muted and stops working.
 
 Errors fail the run; warnings are reported and don't.
 
@@ -98,11 +100,11 @@ That inverts the usual dependency. Because the directory reads the repo directly
 | Path | Kind | Tracked |
 |------|------|---------|
 | `docs/wiki/` | reader documentation — this set | yes |
-| `docs/plans/`, `docs/reviews/`, `docs/handoffs/`, `docs/qa/` | process artifacts written for a maintainer mid-flow; they expire | yes |
+| `docs/plans/` today, joined by `docs/reviews/`, `docs/handoffs/`, `docs/qa/` as skills write them | process artifacts written for a maintainer mid-flow; they expire | yes |
 | `docs/status/`, `docs/tests/`, `docs/verify/` | disposable scratch output | no — gitignored |
 
 Process artifacts record what was decided at a moment in time and are never read as sources of truth for reader documentation. A plan that describes a skill's intended design may have been superseded by the skill itself.
 
 Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._

@@ -25,7 +25,7 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 [`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md)
 
 **Planning & Design**
-[`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`prototypekit`](./skills/prototypekit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
+[`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`prototypekit`](./skills/prototypekit.md) · [`refactorkit`](./skills/refactorkit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
 
 **Building**
 [`implementkit`](./skills/implementkit.md) · [`uikit`](./skills/uikit.md)
@@ -55,4 +55,4 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`c67a052` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._

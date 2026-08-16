@@ -83,6 +83,7 @@ Per skill:
 | `license:` present | warning |
 | `metadata.internal` declared | error |
 | `metadata.internal` is exactly `true` or `false` | error |
+| `allowed-tools:` declared | warning |
 | Public skill has no repo-relative link (`](../…`) | warning |
 | Public skill doesn't reference repo machinery (`make lint`, `AGENTS.md`, `scripts/`) | warning |
 | Closing hand-off section exists | warning |
@@ -101,8 +102,11 @@ Full runs only (skipped when skill names are passed):
 | Every skill has a page at `docs/wiki/skills/<name>.md` | error |
 | Every page in `docs/wiki/skills/` documents a real skill | error |
 | Every `` ### `mode` `` heading on a skill page names a mode that `SKILL.md` defines | error |
+| A commit touching exactly one skill also touched that skill's page | warning |
 
-The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`.
+The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
+
+The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at twenty-odd warnings that are nearly all correct to ignore.
 
 ## Security finding classes
 
@@ -148,4 +152,4 @@ Same subject means update in place, never a second file. On a genuine collision 
 
 `.github/workflows/lint.yml` runs on pushes to `main` and on every pull request. One job on `ubuntu-latest`: `actions/checkout@v4`, then `make lint`, then `make security`.
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._

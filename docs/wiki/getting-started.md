@@ -25,12 +25,12 @@ Node (for `npx`) and an agent that reads skills — Claude Code, Codex, Cursor, 
 npx skills add mimukit/skills -l
 ```
 
-`-l` lists every skill in the repo with its full description and installs nothing. There are 25. Each description front-loads an English **"Use when …"** trigger, which is the same text your agent routes on, so reading the list tells you both what a skill does and what makes it fire.
+`-l` lists every skill in the repo with its full description and installs nothing. Each description front-loads an English **"Use when …"** trigger, which is the same text your agent routes on, so reading the list tells you both what a skill does and what makes it fire.
 
 ### Install
 
 ```sh
-npx skills add mimukit/skills               # all 25
+npx skills add mimukit/skills               # the whole collection
 npx skills add mimukit/skills -s commitkit  # just one
 ```
 
@@ -71,7 +71,7 @@ This prints the skill as a ready-to-paste prompt and writes nothing to disk. Use
 
 Install `statuskit` and ask it. It surveys the project read-only — working tree, issues, open PRs, unfiled plans — and crowns a single next move, routed to the kit that does it. It's the intended entry point when you sit down and aren't sure.
 
-Otherwise: [the workflow guide](./workflow.md) maps how all 25 compose into one loop (**decide → plan → file → build → ship → land**), and [the skill pages](./index.md#the-skills) cover each one on its own — what it does, when it fires, how its modes work, what it hands off to.
+Otherwise: [the workflow guide](./workflow.md) maps how the skills compose into one loop (**decide → plan → file → build → ship → land**), and [the skill pages](./index.md#the-skills) cover each one on its own — what it does, when it fires, how its modes work, what it hands off to.
 
 ### Update, list, remove
 
@@ -85,7 +85,7 @@ npx skills remove -s commitkit
 
 ### Where to go next
 
-Read [the workflow guide](./workflow.md) — the skills are individually useful, but the loop is the point, and the guide is what turns 25 separate tools into one routine.
+Read [the workflow guide](./workflow.md) — the skills are individually useful, but the loop is the point, and the guide is what turns a shelf of separate tools into one routine.
 
 ---
 
@@ -133,7 +133,7 @@ Each skill gets a badge showing whether the repo copy is what's currently live i
   humankit         ■ real
   ...
 
-25 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
+27 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
 ```
 
 `■ real` means a non-symlink install is sitting there — typically one you installed from skills.sh. `○ unlinked` means the skill exists only in this repo and isn't active anywhere. Either way, the repo copy is *not* what your agent is reading yet. [Reference](./reference.md#link-status-badges) has the full badge table.
@@ -175,11 +175,12 @@ A clean run looks like this:
   ...
   ✓ shared tables (label map · type table)
   ✓ docs/wiki/workflow.md
+  ✓ docs/wiki/skills/
 
 0 error(s), 0 warning(s)
 ```
 
-Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, and that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
+Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
 
 Then the security scan:
 
@@ -201,8 +202,8 @@ This removes the symlink and restores anything that was backed up, so your publi
 
 ### Next
 
-Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there are three files to update beyond the skill itself, and lint only catches one of them.
+Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there's a reader-facing page to write and five more files to update beyond the skill itself, and lint only catches two of them.
 
 To understand why the repo is laid out this way, read [Architecture](./architecture.md).
 
-_Verified against `main`@`c67a052` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._

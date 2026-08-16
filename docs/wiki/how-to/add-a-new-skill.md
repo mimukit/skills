@@ -1,6 +1,6 @@
 # Add a new skill
 
-Adding a skill means creating one directory — but shipping one means updating three other files that lint mostly can't check for you.
+Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating five other files, most of which lint can't check for you.
 
 Prefer to have this driven for you? `skillkit` runs the whole path, from naming through testing. This page is what it does by hand.
 
@@ -20,7 +20,7 @@ Lint warns if the name isn't a single lowercase word ending in `kit`, and errors
 mkdir -p skills/<name>
 ```
 
-Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory is currently empty — every skill here is public.
+Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory doesn't exist yet — every skill here is public.
 
 ## 3. Write the frontmatter
 
@@ -74,7 +74,25 @@ make link name=<name>
 
 The skill is now readable by every AI tool on the machine. Invoke it, edit, save, invoke again — no build, no reload. `make unlink name=<name>` puts things back.
 
-## 7. Update the three files lint won't fully catch
+## 7. Write its reader-facing page
+
+```
+docs/wiki/skills/<name>.md
+```
+
+This one is a lint **error** if you skip it, so the gate will stop you — but it's worth understanding why it exists rather than treating it as a box to tick. `SKILL.md` is written for the agent that runs the skill. The page is written for the person deciding whether to reach for it. Different audience, different document: the page is not a summary of `SKILL.md` and shouldn't read like one.
+
+Copy the shape from any existing page — [`commitkit`](../skills/commitkit.md) is a short one:
+
+- Open with the one-line description, then a bold **"Reach for it when"** trigger, then a summary table of modes, tools, what it writes, and visibility.
+- Write each mode as `` ### `mode` `` — a backticked `h3` under `## Modes`. Lint diffs those headings against the modes `SKILL.md` actually defines, so a renamed mode breaks here instead of leaving a page that lies. A skill whose modes genuinely aren't backticked opts out by using a plain heading.
+- Name the next kit under **Hands off to**, linking siblings in the form `` [`prkit`](./prkit.md) `` — page-relative, since every skill page sits in the same directory.
+- **Explain the why, not the what.** The page earns its place on the reasoning behind a load-bearing rule. Restating the procedure step by step is what `SKILL.md` already does better.
+- End with the install command, a link to the skill's own `skills/<name>/SKILL.md`, and the provenance stamp: `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` Only stamp what you actually read — moving a stamp forward asserts somebody verified the page, and a stamp bumped as a formality is worse than a stale one.
+
+Every later change to the skill obliges a page edit in the same commit. Lint warns when a commit touching exactly one skill lands without its page.
+
+## 8. Update the five files lint won't fully catch
 
 This is the step that gets missed.
 
@@ -83,13 +101,18 @@ This is the step that gets missed.
 | `README.md` | Add a row to the skills table with a one-line description and its visibility. |
 | `skills.sh.json` | Add the skill to the best-fitting group's `skills` array. Never list `internal: true` skills. Create a new group only if none fits — a skill left out of every group falls into "Other skills". |
 | [`docs/wiki/workflow.md`](../workflow.md) | Add it to the loop phase it belongs to, or to the side kits if it isn't part of the loop. |
+| [`docs/wiki/index.md`](../index.md) | Add it to the right group under *The skills*, so the page you just wrote is reachable. |
 | [`IDEAS.md`](../../../IDEAS.md) | If the skill was on the backlog, **delete its row.** Nothing lives in both `IDEAS.md` and the README table. |
 
 Lint catches only the workflow map, and only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. `README.md`, `skills.sh.json`, and `IDEAS.md` are on the [pre-push checklist](../../../PUBLISHING.md#pre-push-checklist) instead.
 
+**The `index.md` row is a known gap, and it's the one to be careful about.** Lint enforces that a page *exists* for every skill, in both directions, as an error. Nothing enforces that the page is *reachable*. So a full green lint run is entirely compatible with a page no reader can navigate to — the file is there, the mode headings parse, and the only route to it is a URL nobody will guess. That is not hypothetical: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, through a clean gate every time.
+
+The check is easy to imagine and hasn't been written, mostly because `index.md` groups skills by theme and a linter can enforce presence but not placement — dropping a new skill into the wrong group passes just as green as putting it in the right one. Until it exists, treat this row as the one item on the list that the gate will never save you from.
+
 `skills.sh.json` affects only how the directory page groups things. It changes nothing about how the CLI installs skills.
 
-## 8. Run the full gate and push
+## 9. Run the full gate and push
 
 ```sh
 make lint
@@ -103,4 +126,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._
