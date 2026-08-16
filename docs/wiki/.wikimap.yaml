@@ -1,14 +1,17 @@
 home: docs/wiki
 engine: none
 pages:
+  # skills/*/SKILL.md is load-bearing here: index.md links one entry per skill,
+  # so adding a skill without touching this page leaves the new page unreachable.
   - path: index.md
-    documents: [README.md, PUBLISHING.md, IDEAS.md, AGENTS.md, docs/wiki/workflow.md]
+    documents: [README.md, PUBLISHING.md, IDEAS.md, AGENTS.md, docs/wiki/workflow.md, skills/*/SKILL.md]
 
   # Two audiences, split in half: installing from skills.sh (documented by the
   # README's install surface) and working on the repo (documented by the scripts).
+  # It quotes the skill count in five places, so it depends on the skill set too.
   - path: getting-started.md
     mode: tutorial
-    documents: [README.md, Makefile, scripts/lib.sh, scripts/link.sh, scripts/unlink.sh, scripts/list.sh]
+    documents: [README.md, Makefile, scripts/lib.sh, scripts/link.sh, scripts/unlink.sh, scripts/list.sh, skills/*/SKILL.md]
 
   - path: architecture.md
     mode: explanation
@@ -89,12 +92,18 @@ pages:
   - path: skills/prkit.md
     mode: reference
     documents: [skills/prkit/SKILL.md]
+  - path: skills/promptkit.md
+    mode: reference
+    documents: [skills/promptkit/SKILL.md]
   - path: skills/prototypekit.md
     mode: reference
     documents: [skills/prototypekit/SKILL.md]
   - path: skills/qakit.md
     mode: reference
     documents: [skills/qakit/SKILL.md]
+  - path: skills/refactorkit.md
+    mode: reference
+    documents: [skills/refactorkit/SKILL.md]
   - path: skills/repokit.md
     mode: reference
     documents: [skills/repokit/SKILL.md]

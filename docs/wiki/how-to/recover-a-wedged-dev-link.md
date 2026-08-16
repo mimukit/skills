@@ -106,4 +106,4 @@ make list
 
 To understand why the tooling backs up instead of overwriting, and how the aggregate badge is computed from the per-directory states, see [the status model](../architecture.md#the-status-model).
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._

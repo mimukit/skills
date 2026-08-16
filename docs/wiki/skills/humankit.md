@@ -19,7 +19,7 @@ Every claim in the original survives. Its *shape* doesn't — dull stretches get
 
 ## The rule that governs the rest
 
-**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source.
+**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user.
 
 This is the failure mode the rest of the skill invites. Told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all — where the source offers nothing specific, cut to the plain version and leave it plain.
 
@@ -102,4 +102,4 @@ npx skills add mimukit/skills -s humankit
 
 Source: [`skills/humankit/SKILL.md`](../../../skills/humankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fd96414` on 2026-08-07._
+_Verified against `main`@`1f85177` on 2026-08-16._
