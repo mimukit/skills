@@ -7,6 +7,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 | Page | What it covers |
 |------|----------------|
 | [Getting started](./getting-started.md) | Two paths — install from skills.sh and invoke a skill, or clone, link a skill into your agents, edit it live, and lint it |
+| [The workflow](./workflow.md) | How the skills compose into one loop — every phase, every handoff, and a worked end-to-end day |
 | [Architecture](./architecture.md) | How the repo is put together — the two skill homes, the shell tooling, the gates, and how skills reach people |
 | [Reference](./reference.md) | Every `make` target, environment variable, link-status badge, lint check, and security finding class |
 
@@ -51,11 +52,10 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 | Document | What it covers |
 |----------|----------------|
-| [The workflow](./workflow.md) | How the skills compose into one loop — every mode, every handoff, and a worked end-to-end day |
 | [Publishing](../../PUBLISHING.md) | How skills.sh listing works, the pre-push checklist, and first-time repo setup |
 | [Skill ideas](../../IDEAS.md) | The backlog of skills not yet built |
 | [AGENTS.md](../../AGENTS.md) | Conventions for AI agents authoring skills here — the `kit` naming rule, prose formatting, hand-off requirements, visibility |
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`c772308` on 2026-08-18._
+_Verified against `main`@`3f691ee` on 2026-08-18._

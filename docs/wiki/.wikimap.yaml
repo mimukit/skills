@@ -41,11 +41,11 @@ pages:
     mode: how-to
     documents: [scripts/lib.sh, scripts/link.sh, scripts/unlink.sh]
 
-  # Human-authored. Mapped so `update` and `audit` can see it; never rewritten,
-  # and unstamped because wikikit has not claim-checked it.
+  # The composition map: how the skills sequence into one loop. It restates skill
+  # facts on purpose so a reader gets one map, which is why `make lint` cross-checks
+  # the names, the `<kit> <mode>` invocations, and the label vocabulary it quotes.
   - path: workflow.md
     mode: explanation
-    adopted: true
     documents: [skills/*/SKILL.md]
 
   # One page per skill, reader-facing. Each documents its own SKILL.md;
