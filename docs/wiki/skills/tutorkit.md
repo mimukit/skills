@@ -6,9 +6,9 @@ Teach a topic across many sessions — one learning repo with a folder per topic
 
 | | |
 |---|---|
-| Modes | [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`assess`](#assess) |
+| Modes | [`status`](#status) · [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`assess`](#assess) |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `AskUserQuestion`, `Task`, `Agent` |
-| Writes | a learning repo at `~/learning` (`$TUTORKIT_HOME` overrides) — HTML lessons, Markdown state; nothing in `explain` |
+| Writes | a learning repo at `~/learning` (`$TUTORKIT_HOME` overrides) — HTML lessons, Markdown state; nothing in `explain` or `status` |
 | Visibility | public |
 
 ## What it does
@@ -41,6 +41,8 @@ So the load-bearing rule is: read `INDEX.md`, resolve **exactly one** slug, open
 
 `drill` gets a bounded exception to the one-folder rule: it resolves its slugs from `REVIEW.md` rather than from the ask, then opens the `CUES.md` of due topics only. Never their lessons, never a glob. Interleaving needs more than one topic in view; it doesn't need more than one file per topic.
 
+[`status`](#status) is the stricter case, and the one that proves the design. It reports on every topic you have and opens none of them, because the routers already hold what a dashboard needs.
+
 ## Why state is Markdown and lessons are HTML
 
 The split is revisit-versus-rewrite.
@@ -48,6 +50,22 @@ The split is revisit-versus-rewrite.
 You print a lesson, annotate it, and re-read it months later. That earns HTML — real typography, sidenotes, a printable page. The agent rewrites state every single session, so state stays Markdown and diffable. State in HTML would make `git log` useless for tracking progress, which is the main reason the repo is a git repo at all.
 
 ## Modes
+
+### `status`
+
+The front door. It answers "where am I with all of this," which is the question you actually have when you sit down after two weeks away and can't remember what you'd started.
+
+It teaches nothing, asks nothing, grades nothing, and writes nothing. What it prints is one screen: every active track with its due count and last-touched date, how many cues are waiting across all of them, and a single crowned next move.
+
+**The interesting constraint is that it opens no topic folder at all.** A cross-topic dashboard is exactly the read the one-folder rule exists to prevent, so `status` gets its answer entirely from `INDEX.md` and `REVIEW.md`. That's only possible because those two files already carry every column the table prints. It's the cleanest evidence the cache design was right: the mode that reports on thirty topics costs the same as the mode that reports on one.
+
+That constraint did cost one field. Crowning `assess` means knowing a track's cues have all reached `60d`, which used to require reading its `CUES.md`. So `REVIEW.md` rows now carry `min step`, the lowest interval any cue in that topic has reached, and the row reads `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. It's the minimum rather than an average because the closing gate is *every* cue at `60d`, and one cue at `1d` fails it.
+
+**Its ranking rule is retrieve-before-you-add.** Due cues outrank a new lesson, because a cue decays while it waits and a lesson doesn't. Ties go to the most recently touched track, since that's where your model is warmest and re-entry is cheapest.
+
+Two things get surfaced and never crowned, because both are your call rather than a move the skill can defend: a track gone stale at 30 days untouched, and more than five active tracks at once. The second is the real failure mode. Starting a sixth track feels like progress, and attention doesn't scale with the number of things you've decided to learn.
+
+**It writes no snapshot file, which is where it parts company with [`statuskit`](./statuskit.md).** statuskit saves one because a repo dashboard is a ranked to-do list that exists nowhere else, and its ticked boxes are the user's own annotation. Here every fact on the screen is already durable in the learning repo, and a saved copy would go stale the moment the next `drill` run moved a due date. A third cache with no reader is just a thing to keep honest.
 
 ### `explain`
 
@@ -128,7 +146,9 @@ Re-pitching would rewrite files you may have printed and annotated. Archiving wo
 
 ## Hands off to
 
-tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `drill` when cues are due, the next `lesson` when the track is mid-flight, `assess` when every cue has reached `60d`. When a track closes as `learned`, there is no next step.
+tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `drill` when cues are due, the next `lesson` when the track is mid-flight, `assess` when every cue has reached `60d`. When a track closes as `learned`, there is no next step. [`status`](#status) is that same routing rule made available on demand, so you can ask for the next move without starting a session first.
+
+It doesn't route to [`statuskit`](./statuskit.md) and statuskit doesn't route here. They survey different repos, rank on different rules, and neither can read the other's state. A learning ladder and a finish-first ladder share a shape and nothing else.
 
 Two sibling routes exist and both are narrow. [`researchkit`](./researchkit.md) when the question turned out to be a tool decision rather than a knowledge gap. [`prototypekit`](./prototypekit.md) when the only honest answer is to go build the thing and find out.
 
