@@ -61,6 +61,7 @@ Makefile                        command surface (run `make help`)
 | `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
 | `afkkit` | run a grilled `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
+| `tutorkit` | teach a topic across sessions from one learning repo, with lessons pitched at what you know and spaced review that makes it stick | public |
 
 [The workflow guide](./docs/wiki/workflow.md) covers how these fit together in practice: the modes each one exposes, what hands off to what, and a worked end-to-end day.
 

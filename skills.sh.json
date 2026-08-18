@@ -41,6 +41,11 @@
       "title": "Automation & Orchestration",
       "description": "Run the whole build span unattended — take a grilled, ready issue from worktree to open PR while you're away from the keyboard.",
       "skills": ["afkkit"]
+    },
+    {
+      "title": "Learning",
+      "description": "Build durable knowledge instead of getting past the problem — one learning repo, lessons pitched at what you already know, and spaced retrieval that comes back to check it stuck.",
+      "skills": ["tutorkit"]
     }
   ]
 }
