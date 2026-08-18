@@ -56,6 +56,7 @@ Makefile                        command surface (run `make help`)
 | `refactorkit` | survey an existing codebase for the structural change worth making, rank the candidates, and crown one — proposes, never edits | public |
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |
 | `verifykit` | drive a built frontend feature in a browser and capture screenshots + a GIF as PR-ready proof, published to a hidden git ref | public |
+| `testkit` | retrofit an automated suite onto a codebase that has none — rank the untested surface, crown a slice, and keep only tests that were watched to fail | public |
 | `debugkit` | chase a symptom to its root cause — reproduce, shrink, test falsifiable hypotheses, prove it with an on/off toggle — and hand over a failing reproduction instead of a fix | public |
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 | `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |

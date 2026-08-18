@@ -14,8 +14,8 @@
     },
     {
       "title": "Testing & QA",
-      "description": "Review AI-written changes, prove a feature works, plan how to verify what you built, and chase a symptom to its root cause when something breaks.",
-      "skills": ["reviewkit", "qakit", "verifykit", "debugkit"]
+      "description": "Review AI-written changes, prove a feature works, plan how to verify what you built, retrofit a real suite onto code that has none, and chase a symptom to its root cause when something breaks.",
+      "skills": ["reviewkit", "qakit", "verifykit", "testkit", "debugkit"]
     },
     {
       "title": "Planning & Design",
