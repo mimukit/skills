@@ -39,6 +39,7 @@ Makefile                        command surface (run `make help`)
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
 | `mergekit` | pull an open PR into a worktree, sync it, set it up for manual review, then merge it on your say-so | public |
+| `releasekit` | cut a release from the Conventional Commits already in the log — derive the semver bump and changelog, bump the manifest, tag it, publish the GitHub release | public |
 | `issuekit` | create, start, close, sync, and triage GitHub issues across the workflow | public |
 | `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
 | `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |

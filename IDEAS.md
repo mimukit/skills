@@ -16,7 +16,6 @@ Ordered by priority (top = build next).
 
 | Skill | What it does |
 |-------|--------------|
-| `releasekit` | Cash in the Conventional Commits the collection already enforces — derive a changelog and a semver tag from the commit range, and cut the release |
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
 | `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
