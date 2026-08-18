@@ -20,7 +20,7 @@ Lint warns if the name isn't a single lowercase word ending in `kit`, and errors
 mkdir -p skills/<name>
 ```
 
-Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory doesn't exist yet — every skill here is public.
+Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory is still empty — every skill here is public.
 
 ## 3. Write the frontmatter
 
@@ -106,7 +106,7 @@ This is the step that gets missed.
 
 Lint catches only the workflow map, and only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. `README.md`, `skills.sh.json`, and `IDEAS.md` are on the [pre-push checklist](../../../PUBLISHING.md#pre-push-checklist) instead.
 
-**The `index.md` row is a known gap, and it's the one to be careful about.** Lint enforces that a page *exists* for every skill, in both directions, as an error. Nothing enforces that the page is *reachable*. So a full green lint run is entirely compatible with a page no reader can navigate to — the file is there, the mode headings parse, and the only route to it is a URL nobody will guess. That is not hypothetical: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, through a clean gate every time.
+**The `index.md` row is a known gap, and it's the one to be careful about.** Lint enforces that a page *exists* for every skill, in both directions, as an error. Nothing enforces that the page is *reachable*. So a full green lint run is entirely compatible with a page no reader can navigate to — the file is there, the mode headings parse, and the only route to it is a URL nobody will guess. That is not hypothetical, and it has now happened three times: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` both did the same thing again afterwards. Every one of those runs passed a clean gate.
 
 The check is easy to imagine and hasn't been written, mostly because `index.md` groups skills by theme and a linter can enforce presence but not placement — dropping a new skill into the wrong group passes just as green as putting it in the right one. Until it exists, treat this row as the one item on the list that the gate will never save you from.
 
@@ -126,4 +126,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`c772308` on 2026-08-18._

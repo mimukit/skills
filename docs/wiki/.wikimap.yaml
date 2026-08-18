@@ -56,6 +56,9 @@ pages:
   - path: skills/commitkit.md
     mode: reference
     documents: [skills/commitkit/SKILL.md]
+  - path: skills/debugkit.md
+    mode: reference
+    documents: [skills/debugkit/SKILL.md]
   - path: skills/designkit.md
     mode: reference
     documents: [skills/designkit/SKILL.md]
@@ -119,6 +122,9 @@ pages:
   - path: skills/statuskit.md
     mode: reference
     documents: [skills/statuskit/SKILL.md]
+  - path: skills/tutorkit.md
+    mode: reference
+    documents: [skills/tutorkit/SKILL.md]
   - path: skills/uikit.md
     mode: reference
     documents: [skills/uikit/SKILL.md]

@@ -31,7 +31,7 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 [`implementkit`](./skills/implementkit.md) · [`uikit`](./skills/uikit.md)
 
 **Testing & QA**
-[`reviewkit`](./skills/reviewkit.md) · [`qakit`](./skills/qakit.md) · [`verifykit`](./skills/verifykit.md)
+[`reviewkit`](./skills/reviewkit.md) · [`qakit`](./skills/qakit.md) · [`verifykit`](./skills/verifykit.md) · [`debugkit`](./skills/debugkit.md)
 
 **Writing & Docs**
 [`humankit`](./skills/humankit.md) · [`wikikit`](./skills/wikikit.md) · [`designkit`](./skills/designkit.md)
@@ -41,6 +41,9 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 
 **Authoring & Automation**
 [`skillkit`](./skills/skillkit.md) · [`promptkit`](./skills/promptkit.md) · [`afkkit`](./skills/afkkit.md)
+
+**Learning**
+[`tutorkit`](./skills/tutorkit.md)
 
 ## Written by hand, not by this doc set
 
@@ -55,4 +58,4 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`c772308` on 2026-08-18._

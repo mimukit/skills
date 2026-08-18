@@ -26,7 +26,7 @@ The frontmatter carries the contract:
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` doesn't exist yet — no skill has needed it. Every skill in `skills/` is `metadata.internal: false`.
+`.agents/skills/` is empty — no skill has needed it yet. All 29 skills live in `skills/`, and every one is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
@@ -77,7 +77,7 @@ Full runs add three cross-file checks that a per-skill run (`make lint name=<ski
 
 - **Shared-contract tables.** Two tables are duplicated across skills on purpose, because each skill must stand alone once installed and so neither pair can point at a shared source: the lifecycle label map between `issuekit` and `repokit`, and the commit-type table between `commitkit` and `issuekit`. Nothing else keeps the copies aligned, so lint diffs them.
 - **The workflow map.** [`docs/wiki/workflow.md`](./workflow.md) duplicates skill facts deliberately so a reader gets one map. Lint guards the three that rot on a rename: every skill it names must exist, every `<kit> <mode>` invocation must name a mode that skill actually defines, and every lifecycle label in its vocabulary section must still live in `issuekit`. These are greps over backtick spans — a loud tripwire, not a proof.
-- **The per-skill wiki pages.** [`docs/wiki/skills/`](./skills/) carries one reader-facing page per skill, which likewise duplicates skill facts on purpose. Lint checks page-per-skill in **both** directions — a skill with no page, and a page documenting no skill — plus mode parity, so a renamed mode breaks loudly instead of leaving a page that lies. It also warns when a commit touching exactly one skill lands without that skill's page — the shape of a forgotten page edit. That scoping is the whole design: a repo-wide prose sweep touches twenty skills at once and genuinely owes no page edit, so an unscoped version of this check would open at twenty-odd warnings with nearly all of them correct to ignore, which is how a warning gets muted and stops working.
+- **The per-skill wiki pages.** [`docs/wiki/skills/`](./skills/) carries one reader-facing page per skill, which likewise duplicates skill facts on purpose. Lint checks page-per-skill in **both** directions — a skill with no page, and a page documenting no skill — plus mode parity, so a renamed mode breaks loudly instead of leaving a page that lies. It also warns when a commit touching exactly one skill lands without that skill's page — the shape of a forgotten page edit. That scoping is the whole design: a repo-wide prose sweep touches most of the collection at once and genuinely owes no page edit, so an unscoped version of this check would open at a warning per skill touched, with nearly all of them correct to ignore, which is how a warning gets muted and stops working.
 
 Errors fail the run; warnings are reported and don't.
 
@@ -100,11 +100,11 @@ That inverts the usual dependency. Because the directory reads the repo directly
 | Path | Kind | Tracked |
 |------|------|---------|
 | `docs/wiki/` | reader documentation — this set | yes |
-| `docs/plans/` today, joined by `docs/reviews/`, `docs/handoffs/`, `docs/qa/` as skills write them | process artifacts written for a maintainer mid-flow; they expire | yes |
+| `docs/plans/` today, joined by `docs/research/`, `docs/reviews/`, `docs/qa/`, `docs/handoffs/`, `docs/debug/`, `docs/refactor/`, `docs/prompts/`, `docs/validation/`, `docs/adr/` as skills write them | process artifacts written for a maintainer mid-flow; they expire | yes |
 | `docs/status/`, `docs/tests/`, `docs/verify/` | disposable scratch output | no — gitignored |
 
 Process artifacts record what was decided at a moment in time and are never read as sources of truth for reader documentation. A plan that describes a skill's intended design may have been superseded by the skill itself.
 
 Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`c772308` on 2026-08-18._

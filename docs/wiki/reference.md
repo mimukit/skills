@@ -106,7 +106,7 @@ Full runs only (skipped when skill names are passed):
 
 The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
 
-The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at twenty-odd warnings that are nearly all correct to ignore.
+The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at one warning per skill touched, nearly all of them correct to ignore.
 
 ## Security finding classes
 
@@ -127,15 +127,19 @@ Severity ranks `safe` < `low` < `med` < `high`. A skill's tier is the maximum ac
 
 `<type>-<slug>-YYYY-MM-DD.md`, using the artifact's **creation** date — the filename stays stable when the file is edited.
 
-| Type | Path |
-|------|------|
-| Plan | `docs/plans/plan-<slug>-YYYY-MM-DD.md` |
-| Research | `docs/research/research-<slug>-YYYY-MM-DD.md` |
-| QA | `docs/qa/qa-<slug>-YYYY-MM-DD.md` |
-| Review | `docs/reviews/review-<slug>-YYYY-MM-DD.md` |
-| Handoff | `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` |
-| ADR | `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` — zero-padded, monotonic |
-| Verification bundle | `docs/verify/verify-<slug>-YYYY-MM-DD/` — a directory |
+| Type | Path | Written by |
+|------|------|------------|
+| Plan | `docs/plans/plan-<slug>-YYYY-MM-DD.md` | `plankit` |
+| Research | `docs/research/research-<slug>-YYYY-MM-DD.md` | `researchkit` |
+| Validation | `docs/validation/validation-<slug>-YYYY-MM-DD.md` | `validatekit` |
+| Refactor proposal | `docs/refactor/refactor-<slug>-YYYY-MM-DD.md` | `refactorkit` |
+| Debug postmortem | `docs/debug/debug-<slug>-YYYY-MM-DD.md` | `debugkit` |
+| QA | `docs/qa/qa-<slug>-YYYY-MM-DD.md` | `qakit` |
+| Review | `docs/reviews/review-<slug>-YYYY-MM-DD.md` | `reviewkit` |
+| Handoff | `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` | `handoffkit` |
+| Prompt | `docs/prompts/prompt-<slug>-YYYY-MM-DD.md` | `promptkit` `system` |
+| ADR | `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` — zero-padded, monotonic | `domainkit` |
+| Verification bundle | `docs/verify/verify-<slug>-YYYY-MM-DD/` — a directory | `verifykit` |
 
 Same subject means update in place, never a second file. On a genuine collision of type, slug, and date, make the slug more specific; only as a last resort insert a sequence immediately before the date.
 
@@ -152,4 +156,4 @@ Same subject means update in place, never a second file. On a genuine collision 
 
 `.github/workflows/lint.yml` runs on pushes to `main` and on every pull request. One job on `ubuntu-latest`: `actions/checkout@v4`, then `make lint`, then `make security`.
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`c772308` on 2026-08-18._

@@ -123,4 +123,4 @@ npx skills add mimukit/skills -s debugkit
 
 Source: [`skills/debugkit/SKILL.md`](../../../skills/debugkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`b233285` on 2026-08-16._
+_Verified against `main`@`c772308` on 2026-08-18._
