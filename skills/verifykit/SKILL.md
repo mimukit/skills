@@ -12,7 +12,7 @@ metadata:
 
 Drive a just-built frontend feature the way a user would, capture what happens — screenshots at each meaningful state plus one short animated GIF of the flow — and publish that proof so a pull request can embed it inline. verifykit is the step between reviewing the code and opening the PR: reviewing reads the source, this **exercises the running feature** and produces visual evidence it works.
 
-It is a **driver and recorder, nothing more**. It does not write tests (that's a test-suite skill), does not produce a human checklist (that's a manual-QA skill), and does not provision environments — it drives the UI it's given and records what it sees.
+It is a **driver and recorder, nothing more**. It does not write tests (that's a test-suite skill — **testkit** when it's installed), does not produce a human checklist (that's a manual-QA skill), and does not provision environments — it drives the UI it's given and records what it sees.
 
 ## When this fires
 
