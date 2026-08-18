@@ -13,7 +13,7 @@ Teach a topic across many sessions — one learning repo with a folder per topic
 
 ## What it does
 
-Every other skill in this collection assumes you already know the thing and helps you do it faster. [`researchkit`](./researchkit.md) hands you a decision, [`wikikit`](./wikikit.md) describes a project, [`refactorkit`](./refactorkit.md) names the change worth making. None of them build durable knowledge in the person operating them, and none of them remember what you knew last week.
+Every other skill in this collection assumes you already know the thing and helps you do it faster. [`researchkit`](./researchkit.md) hands you a decision, [`wikikit`](./wikikit.md) describes a project, [`debugkit`](./debugkit.md) finds a cause. None of them build durable knowledge in the person operating them, and none of them remember what you knew last week.
 
 tutorkit is the one that does. It keeps a picture of what you know, pitches the next thing at the edge of it, and comes back later to check whether it stuck.
 
