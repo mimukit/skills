@@ -89,6 +89,9 @@ pages:
   - path: skills/orcakit.md
     mode: reference
     documents: [skills/orcakit/SKILL.md]
+  - path: skills/paseokit.md
+    mode: reference
+    documents: [skills/paseokit/SKILL.md]
   - path: skills/plankit.md
     mode: reference
     documents: [skills/plankit/SKILL.md]

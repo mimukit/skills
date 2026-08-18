@@ -23,7 +23,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 One page per skill — what it does, when to reach for it, how its modes work, and what it hands off to. For how they compose into one loop, read [the workflow](./workflow.md) instead.
 
 **Git & GitHub**
-[`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`releasekit`](./skills/releasekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md)
+[`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`releasekit`](./skills/releasekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md) · [`paseokit`](./skills/paseokit.md)
 
 **Planning & Design**
 [`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`prototypekit`](./skills/prototypekit.md) · [`refactorkit`](./skills/refactorkit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
