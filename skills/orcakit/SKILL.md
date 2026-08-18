@@ -253,6 +253,7 @@ This is the one `orca worktree create` in the skill, and it exists only to read 
 ## Notes
 
 - **orcakit is machine-local and always optional.** No Orca on the box means no-op, and nothing else in the workflow may depend on it. gitkit, issuekit, and the rest never call it — they'd break on every machine without the app. It's a janitor you run, not a link in a chain.
+- **`paseokit` is the sibling, not the successor.** It reconciles the same worktrees into [Paseo](https://paseo.sh), whose model is the exact inverse: Paseo discovers nothing and prunes nothing, so paseokit registers and reaps, while orcakit enriches and cleans up. Both are machine-local and optional, and **neither ever calls the other**.
 - **Worktree facts belong to gitkit.** The default path convention appears here only as a declared portability fallback for machines without gitkit; everything else — branch naming, base-ref resolution, teardown rules — lives there, and any *other* copy of a gitkit fact here is the bug.
 - **Tracker facts belong to issuekit.** orcakit reads issue and PR state to judge a workspace; it writes none of it.
 - **Destructive steps preview and confirm; read-only ones run straight through.** `list` never asks. `link` previews a batch. `clean` previews a batch and takes one OK. `align` confirms before it creates its throwaway.

@@ -113,6 +113,8 @@ Whatever the sweep surfaced: anything skipped as **dirty** outranks everything, 
 
 orcakit is **machine-local and always optional**. No Orca means no-op, and nothing else in the workflow may depend on it — gitkit, issuekit, and the rest never call it, because they'd break on every machine without the app. It's a janitor you run, not a link in a chain.
 
+[`paseokit`](./paseokit.md) is the sibling that does the same job for [Paseo](https://paseo.sh), against the opposite problem: Paseo discovers nothing and prunes nothing, so it pushes rows in rather than tidying rows it found. Both are optional, and **neither ever calls the other**.
+
 ## Install
 
 ```sh
@@ -121,4 +123,4 @@ npx skills add mimukit/skills -s orcakit
 
 Source: [`skills/orcakit/SKILL.md`](../../../skills/orcakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`27667cb` on 2026-08-18._
