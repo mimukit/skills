@@ -1,7 +1,7 @@
 ---
 name: tutorkit
 description: >-
-  Teach a topic across many sessions — one learning repo with a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. Use when the user says "teach me X", "tutor me on X", "I want to learn X", "explain how X works", "quiz me on what I learned", "what's due for review", "test me", "am I ready", "where am I with my learning", "what am I studying", "learning status", "show my progress", or runs "/tutorkit". Tuned for software engineering topics and works for any other.
+  Teach a topic across many sessions — one learning repo with a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. Use when the user says "teach me X", "tutor me on X", "I want to learn X", "explain how X works", "quiz me on what I learned", "what's due for review", "test me", "am I ready", "exam me on X", "place me on X", "where am I with my learning", "what am I studying", "learning status", "show my progress", or runs "/tutorkit". Tuned for software engineering topics and works for any other.
 license: MIT
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, AskUserQuestion, Task, Agent
 metadata:
@@ -12,7 +12,7 @@ metadata:
 
 Teach a topic over many sessions and remember what stuck. tutorkit keeps one learning repo with a folder per topic, pitches each lesson at the edge of what the user already knows, writes the lesson as a printable HTML artifact, and schedules retrieval cues that come due later. A tutor is someone who remembers you and adapts; that persistence is the whole design.
 
-Four postures, not four presentations: [`explain`](#mode-explain) answers and writes nothing, [`lesson`](#mode-lesson) teaches and is the only mode that opens a track, [`drill`](#mode-drill) tests recall across topics, [`assess`](#mode-assess) measures and refuses to teach.
+Four postures, not four presentations: [`explain`](#mode-explain) answers and writes nothing, [`lesson`](#mode-lesson) teaches and is the only mode that opens a track, [`drill`](#mode-drill) tests recall across topics, [`exam`](#mode-exam) measures and refuses to teach.
 
 [`status`](#mode-status) is a fifth mode and not a fifth posture. It teaches nothing, asks nothing, and grades nothing — it reads the two router files, prints where every track stands, and crowns the next move. Run it to decide which of the four postures to run.
 
@@ -27,9 +27,9 @@ Four postures, not four presentations: [`explain`](#mode-explain) answers and wr
 
 ## Mode selection
 
-**This is the skill's first decision, and the triggers overlap on purpose.** "Explain how X works" is `explain` and "teach me X" is `lesson`, but the wording is a weak signal. Resolve on intent rather than phrasing: a question that wants an answer gets `explain`, a request that wants to end up knowing the thing gets `lesson`. "What's due", "quiz me", "test me" get `drill`. "Am I ready", "how much do I actually know" get `assess`. "Where am I", "what am I learning", "learning status", "show my progress" get `status`.
+**This is the skill's first decision, and the triggers overlap on purpose.** "Explain how X works" is `explain` and "teach me X" is `lesson`, but the wording is a weak signal. Resolve on intent rather than phrasing: a question that wants an answer gets `explain`, a request that wants to end up knowing the thing gets `lesson`. "What's due", "quiz me", "test me" get `drill`. "Am I ready", "how much do I actually know", "exam me" get `exam`. "Where am I", "what am I learning", "learning status", "show my progress" get `status`.
 
-**An ask that names no topic is almost always `status`.** That is the sharpest divider in the whole set: the other four modes need a slug and `status` refuses one. "Am I ready" names a topic and measures it, so it is `assess`; "where am I" names none and reports every track, so it is `status`.
+**An ask that names no topic is almost always `status`.** That is the sharpest divider in the whole set: the other four modes need a slug and `status` refuses one. "Am I ready" names a topic and measures it, so it is `exam`; "where am I" names none and reports every track, so it is `status`.
 
 When the ask is genuinely ambiguous, **take the cheap branch** — run `explain` and offer the track at the end. Guessing `lesson` costs a mission interview the user did not want; guessing `explain` costs one extra sentence.
 
@@ -81,7 +81,7 @@ Status is `active` or `learned`. Three routing outcomes, all cheap:
 
 `REVIEW.md` holds one row per topic, never per cue — `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. `drill` reads it, sees which topics are due, and opens only those `CUES.md` files. Storing cue text here instead would duplicate the answers and let them drift from the lessons that own them.
 
-**`min step` is the lowest interval step any cue in that topic has reached**, and it earns its place by making one question answerable from the router alone: has this track finished? A topic whose lowest cue sits at `60d` has passed the schedule half of the `learned` gate, so `status` can crown [`assess`](#mode-assess) without reading a single `CUES.md`. Store the minimum rather than an average, because the gate is *every* cue at `60d` and one cue at `1d` fails it.
+**`min step` is the lowest interval step any cue in that topic has reached**, and it earns its place by making one question answerable from the router alone: has this track finished? A topic whose lowest cue sits at `60d` has passed the schedule half of the `learned` gate, so `status` can crown [`exam`](#mode-exam) without reading a single `CUES.md`. Store the minimum rather than an average, because the gate is *every* cue at `60d` and one cue at `1d` fails it.
 
 **Both files are caches, and a cache needs a repair path.** Rewrite the affected row whenever you touch a topic. Rebuild both by scanning `topics/` whenever you find a folder they do not list. Without the self-heal, one hand edit misroutes silently forever.
 
@@ -111,14 +111,14 @@ One rule produces the crowned move: **finish the retrieval you owe before you ta
 |---|-------|--------|
 | 1 | any cue is due today or earlier | `drill` |
 | 2 | an `active` track has nothing due and `min step` below `60d` | the next `lesson` on that track |
-| 3 | an `active` track has nothing due and `min step` at `60d` | `assess` — the transfer test |
+| 3 | an `active` track has nothing due and `min step` at `60d` | `exam` — the transfer test |
 | 4 | every track is `learned`, or no track exists | say there is no next step, and offer a new track |
 
 **Ties break on the most recently touched track.** The user's mental model is warmest where they worked last, so that track costs the least to re-enter. This is the same reason a track untouched for months is *not* promoted: crowning the coldest track asks for the most expensive re-entry at the moment the user is only orienting.
 
 Two findings are printed and never crowned, because acting on either is the user's judgement rather than a move the skill can defend:
 
-- **A stale track** — `active`, and untouched for more than 30 days. Name it and say what closes it: one `lesson` to restart it, or `assess` to close it out.
+- **A stale track** — `active`, and untouched for more than 30 days. Name it and say what closes it: one `lesson` to restart it, or `exam` to close it out.
 - **More than five `active` tracks.** Attention is the scarce resource here, and a sixth track does not add capacity — it divides the same capacity further. Say the count and say that finishing one beats starting one.
 
 ### 3. Print the dashboard
@@ -184,7 +184,7 @@ Run a **short** mission interview — three or four questions, not an interrogat
 - **Ask once for grounding consent.** When cwd is a real project and is not the learning repo, ask whether tutorkit may read it to build examples from their own code. Record the answer in `MISSION.md` as `grounding: <repo path>` or `grounding: declined`, and **never ask again for that topic**. A prompt that fires every lesson gets switched off; one prompt buys the whole track. Consent covers one repo, so a different cwd on a later session asks again.
 - Write `MISSION.md` under a `## YYYY-MM-DD` heading.
 - Create the topic folder, the `INDEX.md` row, and the first `SOURCES.md` rows from whatever you searched to scope the topic.
-- Offer placement — [`assess`](#mode-assess) at track start — so lesson 1 is not pitched blind. On a decline, pitch from the mission interview and say the pitch is a guess.
+- Offer placement — [`exam`](#mode-exam) at track start — so lesson 1 is not pitched blind. On a decline, pitch from the mission interview and say the pitch is a guess.
 
 **`MISSION.md` is append-only.** A mission that drifts gets a new dated entry; existing lessons are never rewritten and never archived. Re-pitching would rewrite files the user may have printed and annotated, and archiving would hide work they did and break the anchors between lessons.
 
@@ -243,9 +243,11 @@ Grade the free-text answer against the cue's stored key points per [Grading a fr
 
 Update `REVIEW.md` and `PROGRESS.md` when the run ends. Then go to [Hand off](#hand-off).
 
-## Mode: `assess`
+## Mode: `exam`
 
 Measures and never teaches. Ask, grade, record, refuse to explain. Two entry points, one posture — splitting them would name a presentation difference as a behavioural one.
+
+**`drill` and `exam` both ask questions, and the difference is what the answer is for.** `drill` is practice: it asks to strengthen the memory, it repeats a cue for months, and a miss costs one reset. `exam` is measurement: it asks to produce a verdict, it runs twice per track, and the verdict decides where lesson 1 starts or whether the track closes. Never grade a cue in `exam`, and never write a status in `drill`.
 
 ### At track start — placement
 
@@ -259,11 +261,11 @@ Write `placed: <rung>` and **every wrong belief, in the user's own words** into 
 
 Pose a problem the user has not seen, which needs the concept without naming it. Solving only the taught shape means the surface was learned, not the concept.
 
-**A topic goes `learned` in `INDEX.md` only when both gates pass:** the transfer test is solved, **and** every cue has reached step `60d`. `assess` is the only mode that writes that status. The transfer test alone would close a topic whose cues still sit at `1d`; cues at `60d` alone measure recall of taught shapes. When one gate passes and the other does not, say which one held it and leave the status `active`.
+**A topic goes `learned` in `INDEX.md` only when both gates pass:** the transfer test is solved, **and** every cue has reached step `60d`. `exam` is the only mode that writes that status. The transfer test alone would close a topic whose cues still sit at `1d`; cues at `60d` alone measure recall of taught shapes. When one gate passes and the other does not, say which one held it and leave the status `active`.
 
 **A `learned` topic keeps its cues.** Retiring them at close is exactly when forgetting starts. They keep coming due, and the fill order in `drill` stops them displacing a live track.
 
-`assess` writes `PROGRESS.md` at both ends and touches `INDEX.md` only to close a track. It never writes `MISSION.md` — the mission belongs to `lesson`, which is the mode that opens one. Then go to [Hand off](#hand-off).
+`exam` writes `PROGRESS.md` at both ends and touches `INDEX.md` only to close a track. It never writes `MISSION.md` — the mission belongs to `lesson`, which is the mode that opens one. Then go to [Hand off](#hand-off).
 
 ## The spacing schedule
 
@@ -337,7 +339,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 - Cues are due now → run `drill`.
 - The track is mid-flight and nothing is due → run the next `lesson`.
-- Every cue sits at step `60d` and the track looks finished → run `assess`.
+- Every cue sits at step `60d` and the track looks finished → run `exam`.
 - The track just closed as `learned` → say there is no next step. tutorkit is largely terminal. Do not invent a follow-up.
 
 Then offer a commit of the learning repo. Never run it without a yes.
@@ -349,7 +351,7 @@ Two sibling routes exist, and both are narrow. Name a sibling skill only when it
 ## Notes
 
 - **The context guard beats every other rule here.** A skill that opens thirty topic folders to teach one gets slower as the user learns more. Resolve one slug, open one folder. `status` reports on all thirty and opens none of them, which is the guard working rather than an exception to it.
-- **`status` reports; it never grades.** Printing a due count is a fact read. Judging whether the user knows a topic is [`assess`](#mode-assess), and it needs an answer from the user before it can say anything. A dashboard that inferred mastery from a `min step` column would manufacture the exact signal it claims to report.
+- **`status` reports; it never grades.** Printing a due count is a fact read. Judging whether the user knows a topic is [`exam`](#mode-exam), and it needs an answer from the user before it can say anything. A dashboard that inferred mastery from a `min step` column would manufacture the exact signal it claims to report.
 - **Predict before you explain, every time.** The temptation is to skip it on an easy topic. The prediction is the diagnosis, and teaching without it is teaching blind.
 - **Never assert an unsourced claim as fact.** A confident wrong explanation is worse than no lesson, because the user will build on it.
 - **No writable filesystem** — a browser-based agent — then say so plainly, print the lesson as a code block for the user to save, and note that spacing cannot persist without state. Do not pretend to schedule a cue you cannot write. `status` still runs when the filesystem is readable, because it writes nothing but a repair; say that the repair was skipped.

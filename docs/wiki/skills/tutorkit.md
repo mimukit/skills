@@ -6,7 +6,7 @@ Teach a topic across many sessions — one learning repo with a folder per topic
 
 | | |
 |---|---|
-| Modes | [`status`](#status) · [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`assess`](#assess) |
+| Modes | [`status`](#status) · [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`exam`](#exam) |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `AskUserQuestion`, `Task`, `Agent` |
 | Writes | a learning repo at `~/learning` (`$TUTORKIT_HOME` overrides) — HTML lessons, Markdown state; nothing in `explain` or `status` |
 | Visibility | public |
@@ -59,7 +59,7 @@ It teaches nothing, asks nothing, grades nothing, and writes nothing. What it pr
 
 **The interesting constraint is that it opens no topic folder at all.** A cross-topic dashboard is exactly the read the one-folder rule exists to prevent, so `status` gets its answer entirely from `INDEX.md` and `REVIEW.md`. That's only possible because those two files already carry every column the table prints. It's the cleanest evidence the cache design was right: the mode that reports on thirty topics costs the same as the mode that reports on one.
 
-That constraint did cost one field. Crowning `assess` means knowing a track's cues have all reached `60d`, which used to require reading its `CUES.md`. So `REVIEW.md` rows now carry `min step`, the lowest interval any cue in that topic has reached, and the row reads `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. It's the minimum rather than an average because the closing gate is *every* cue at `60d`, and one cue at `1d` fails it.
+That constraint did cost one field. Crowning `exam` means knowing a track's cues have all reached `60d`, which used to require reading its `CUES.md`. So `REVIEW.md` rows now carry `min step`, the lowest interval any cue in that topic has reached, and the row reads `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. It's the minimum rather than an average because the closing gate is *every* cue at `60d`, and one cue at `1d` fails it.
 
 **Its ranking rule is retrieve-before-you-add.** Due cues outrank a new lesson, because a cue decays while it waits and a lesson doesn't. Ties go to the most recently touched track, since that's where your model is warmest and re-entry is cheapest.
 
@@ -99,9 +99,11 @@ Answers are graded on three levels against 2–3 stored key points, never two. B
 
 **The override is offered on every grade, not just misses.** The entire interval ladder runs on that one judgement, so you have to be able to correct it — most often when you gave a correct answer in words the key points didn't anticipate.
 
-### `assess`
+### `exam`
 
 Measures and refuses to teach. Two entry points, one posture — ask, grade, record, explain nothing. Splitting them into two modes would name a presentation difference as a behavioural one.
+
+**The name is doing work against `drill`.** Both modes ask you questions, and that's the one place the mode set could genuinely confuse you at the moment you're picking one. You drill to practice and you sit an exam to be measured, so the pair carries its own distinction: `drill` repeats a cue for months and a miss costs you one reset, while `exam` runs twice per track and its verdict decides where lesson 1 starts or whether the track closes. It was called `assess` first, which is accurate and describes a thing nobody says out loud.
 
 **At track start it places you**: 3–5 scenario predictions, broad to narrow, stopping early on two consecutive misses. This reuses the prediction device the skill already owns rather than inventing a second assessment mechanism. Self-report is the weakest signal available, and a single transfer problem fails a genuine beginner flat on first contact. The wrong predictions it surfaces become lesson 1's target.
 
@@ -146,7 +148,7 @@ Re-pitching would rewrite files you may have printed and annotated. Archiving wo
 
 ## Hands off to
 
-tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `drill` when cues are due, the next `lesson` when the track is mid-flight, `assess` when every cue has reached `60d`. When a track closes as `learned`, there is no next step. [`status`](#status) is that same routing rule made available on demand, so you can ask for the next move without starting a session first.
+tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `drill` when cues are due, the next `lesson` when the track is mid-flight, `exam` when every cue has reached `60d`. When a track closes as `learned`, there is no next step. [`status`](#status) is that same routing rule made available on demand, so you can ask for the next move without starting a session first.
 
 It doesn't route to [`statuskit`](./statuskit.md) and statuskit doesn't route here. They survey different repos, rank on different rules, and neither can read the other's state. A learning ladder and a finish-first ladder share a shape and nothing else.
 
