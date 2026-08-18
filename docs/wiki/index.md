@@ -23,7 +23,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 One page per skill — what it does, when to reach for it, how its modes work, and what it hands off to. For how they compose into one loop, read [the workflow](./workflow.md) instead.
 
 **Git & GitHub**
-[`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md)
+[`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`releasekit`](./skills/releasekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md)
 
 **Planning & Design**
 [`validatekit`](./skills/validatekit.md) · [`researchkit`](./skills/researchkit.md) · [`prototypekit`](./skills/prototypekit.md) · [`refactorkit`](./skills/refactorkit.md) · [`plankit`](./skills/plankit.md) · [`grillkit`](./skills/grillkit.md)
@@ -32,7 +32,7 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 [`implementkit`](./skills/implementkit.md) · [`uikit`](./skills/uikit.md)
 
 **Testing & QA**
-[`reviewkit`](./skills/reviewkit.md) · [`qakit`](./skills/qakit.md) · [`verifykit`](./skills/verifykit.md) · [`debugkit`](./skills/debugkit.md)
+[`reviewkit`](./skills/reviewkit.md) · [`qakit`](./skills/qakit.md) · [`verifykit`](./skills/verifykit.md) · [`testkit`](./skills/testkit.md) · [`debugkit`](./skills/debugkit.md)
 
 **Writing & Docs**
 [`humankit`](./skills/humankit.md) · [`wikikit`](./skills/wikikit.md) · [`designkit`](./skills/designkit.md)
@@ -58,4 +58,4 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`3f691ee` on 2026-08-18._
+_Verified against `main`@`572d6cc` on 2026-08-18._

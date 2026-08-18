@@ -107,6 +107,9 @@ pages:
   - path: skills/refactorkit.md
     mode: reference
     documents: [skills/refactorkit/SKILL.md]
+  - path: skills/releasekit.md
+    mode: reference
+    documents: [skills/releasekit/SKILL.md]
   - path: skills/repokit.md
     mode: reference
     documents: [skills/repokit/SKILL.md]
@@ -122,6 +125,9 @@ pages:
   - path: skills/statuskit.md
     mode: reference
     documents: [skills/statuskit/SKILL.md]
+  - path: skills/testkit.md
+    mode: reference
+    documents: [skills/testkit/SKILL.md]
   - path: skills/tutorkit.md
     mode: reference
     documents: [skills/tutorkit/SKILL.md]

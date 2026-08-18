@@ -27,6 +27,8 @@ If you only remember one thing: **[`statuskit`](./skills/statuskit.md) tells you
    SHIP     prkit ──▶ PR open, issue ──▶ in-review
             ▼
    LAND     mergekit start ──▶ mergekit finish ──▶ issuekit close
+            ▼
+   RELEASE  releasekit ──▶ changelog · tag · GitHub release   (when you're cutting one)
 
             gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge
                           borrowed by issuekit start, prkit, mergekit, issuekit close
@@ -66,6 +68,8 @@ flowchart TD
         M1["mergekit start"] --> M2["mergekit finish"] --> M3["issuekit close"]
     end
 
+    RL["releasekit<br>changelog · tag · GitHub release<br>per release, not per issue"]
+
     GK["gitkit<br>worktree · branch name · base ref · rebase vs merge"]
     DK["domainkit<br>CONTEXT.md glossary + ADRs"]
 
@@ -74,6 +78,7 @@ flowchart TD
     PR --> P
     PD --> F --> S --> I
     W --> SH --> M1
+    M3 --> RL
 
     ST -.-> F
     ST -.-> S
@@ -293,6 +298,18 @@ After the merge, `issuekit close` is one action that closes the issue, ticks the
 
 If the tracker has drifted more broadly — several merged PRs whose issues are still open — use `issuekit sync` instead, which sweeps everything and touches no worktree.
 
+### releasekit — turn merged work into a version
+
+[`releasekit`](./skills/releasekit.md) is the end of the line, and the only step here that runs **per release rather than per issue** — several trips around the loop usually land before you cut one. It reads back the tax `commitkit` collects on every commit: the type, the scope, and the `!` marker are exactly the inputs a semver bump and a changelog are computed from. It resolves the range since the last release tag, derives the version, renders one Keep a Changelog section, bumps the manifest, tags it, and publishes the GitHub release.
+
+It has no modes — one procedure with two exits. `releasekit preview` stops after the preview having mutated nothing; a bare `releasekit` waits at that same preview for your confirmation. That gate has no exemption, which is why it sits outside `afkkit`'s span: a version number is spent permanently, so a run with nobody to answer stops rather than assuming a yes.
+
+The branch protection on your base picks the shape of the run. Unprotected gets the direct path — commit, tag, push, release. Protected gets a **release PR**: the bump and changelog land on a `release-v<version>` branch and releasekit stops, so on that path it is *not* terminal and takes two invocations. You merge the PR (`mergekit`, or by hand), then run it again to tag the merged commit. It works out which half it's in by reading the repo — a merged, untagged `chore(release):` commit means finish — rather than keeping state that could drift.
+
+Two rules surprise people, so the preview states both in words. On `0.x`, a breaking change bumps the **minor** and a `feat` bumps the patch, because taking `0.3.0` to `1.0.0` declares an API stable off one commit footer. And the last release is the nearest semver *ancestor* of HEAD, not the highest tag in the repo — which is what lets a project running `v1.x` alongside `v2.x` read its own lineage.
+
+**It stops at the tag.** No `npm publish`, no `cargo publish`. The tag it pushes is already the trigger a publish workflow listens for, and it never moves or deletes a published tag — a bad release is fixed by cutting the next one.
+
 ## The layers underneath
 
 Three kits the phases call into rather than sit beside. You rarely invoke them by name, and if you find any of their rules restated inside another skill, that's a bug.
@@ -343,6 +360,7 @@ The span **starts** at a `ready` issue and **ends** at an open PR. It does not p
 Invoked on demand, from wherever you already are. None of them is a step in the loop, and none is reached by finishing the row above.
 
 - **[`debugkit`](./skills/debugkit.md)** — the one kit whose input is a *symptom* rather than intent. Reproduce, isolate, hypothesize, prove, report, behind two gates that do the real work: **no reproduction, no diagnosis**, and the **on/off test** — you have the cause only when you can make the symptom appear and disappear by toggling it. It **diagnoses and never fixes**, reverting every probe it made, and hands a proven cause to `implementkit` as a failing reproduction.
+- **[`testkit`](./skills/testkit.md)** — the one kit whose input is *working code nobody can safely change*. Every other test-adjacent kit assumes a suite already exists: `implementkit` covers only new work, `qakit` writes plans a human runs, `debugkit` produces exactly one failing test as a reproduction. `testkit audit` ranks the untested surface and crowns one slice into a ledger at `docs/tests/testplan-<repo>-YYYY-MM-DD.md`; `testkit cover` stands up a runner if there is none and writes the tests. Its real rule is the **failure gate** — a test is kept only after it was watched to fail, so the suite is one that would catch a regression rather than a directory of green checkmarks. It never fixes the code and never restructures it; a contradiction routes to `debugkit`, a testability blocker to `refactorkit`.
 - **[`refactorkit`](./skills/refactorkit.md)** — surveys a codebase you already have for the structural change worth making, and crowns one. It looks for a closed set of four frictions and gates every candidate on two questions: does removing it *concentrate* complexity rather than relocate it, and can the behavior be tested through the new interface alone. It **proposes and never edits** — `Edit` isn't in its tool set — and the crowned candidate is already plan-shaped, so it goes straight to a grilling.
 - **[`designkit`](./skills/designkit.md)** — the design-system counterpart to `wikikit`, keeping a second in-repo contract true to the code. It writes `DESIGN.md` at the repo root, in the open Google Labs format that pairs machine-readable tokens with the rationale in prose, because that's where DESIGN.md-aware tools look. **Every token must be a value that already appears in your codebase**: clustering forty near-identical greys into a scale is derivation, picking a nicer neighboring hex is invention. It **generates no UI** — that's `uikit`, which reads `DESIGN.md` and never writes it.
 - **[`promptkit`](./skills/promptkit.md)** — sharpens the prompt before you send it. `promptkit task` grounds a one-shot agent instruction against the real tree — *"the auth file"* becomes a path, *"make sure tests pass"* becomes the repo's actual command — and prints a resolution ledger naming what didn't resolve. `promptkit system` authors the durable prompt an application ships, landing at `docs/prompts/prompt-<slug>-YYYY-MM-DD.md`. **Advisory only**: handed "add auth" it writes a prompt about auth, never the auth.
@@ -389,4 +407,4 @@ mergekit finish 34                  # → merge commit, on your say-so
 issuekit close 42                   # → close, unblock dependents, tear down
 ```
 
-_Verified against `main`@`3f691ee` on 2026-08-18._
+_Verified against `main`@`572d6cc` on 2026-08-18._
