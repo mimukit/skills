@@ -349,12 +349,49 @@ check_workflow_doc() {
 # so nothing else keeps it honest. Guard the two ways it rots:
 #   A. every skill has a page, and every page documents a real skill
 #   B. every `### `mode`` heading on a page names a mode that skill defines
+#   D. every skill is registered in docs/wiki/.wikimap.yaml, and every skill the
+#      map names is real
+#   E. every skill is linked from docs/wiki/index.md, and every skill the index
+#      links is real
 # (B) mirrors check_workflow_doc's mode check: modes in this collection are
 # written backticked, so a mode a page documents should appear inside a code
 # span in its own SKILL.md. A page whose mode headings aren't backticked (a
 # skill whose modes genuinely aren't, like implementkit's) is simply not checked
 # — the heading style is the opt-in. Full runs only.
+#
+# (D) is the one a human can't catch by reading. A page missing from the doc map
+# looks complete from every angle — it renders, it's linked, `make lint` was
+# green — and the only symptom is that later docs audits never sweep it, which
+# surfaces months later as a page nobody noticed had gone stale. It was missed on
+# three consecutive skills before this check existed.
+#
+# (E) guards the same shape one layer out: a page that exists but that no reader
+# can navigate to. refactorkit shipped unreachable for eight days, and debugkit
+# and tutorkit each repeated it — every one of those runs passed a clean gate,
+# because (A) only proves the file is on disk. Presence in the index is all this
+# checks; **placement is not enforceable** — index.md groups skills by theme, and
+# a skill dropped into the wrong group links just as correctly as a right one.
+# So a green run still means "reachable", never "filed correctly".
 SKILL_PAGES_DIR="$REPO_ROOT/docs/wiki/skills"
+WIKIMAP="$REPO_ROOT/docs/wiki/.wikimap.yaml"
+WIKI_INDEX="$REPO_ROOT/docs/wiki/index.md"
+
+# The skill names the doc map registers a page for, one per line.
+# Matches `  - path: skills/<name>.md`; the map's non-skill pages don't match.
+wikimap_skill_names() {
+  [[ -f "$WIKIMAP" ]] || return 0
+  sed -n 's|^[[:space:]]*-[[:space:]]*path:[[:space:]]*skills/\([a-z0-9-]\{1,\}\)\.md[[:space:]]*$|\1|p' \
+    "$WIKIMAP" | sort -u
+}
+
+# The skill names index.md links a page for, one per line. Matches the whole
+# file rather than the "The skills" section: a link anywhere on the page makes
+# the skill reachable, which is the property being checked.
+index_skill_names() {
+  [[ -f "$WIKI_INDEX" ]] || return 0
+  grep -oE '\]\(\./skills/[a-z0-9-]+\.md\)' "$WIKI_INDEX" \
+    | sed 's|^](\./skills/||; s|\.md)$||' | sort -u
+}
 
 # Did a *single-skill* change land without its wiki page? (warning)
 #
@@ -387,14 +424,40 @@ page_left_behind() {
 
 check_skill_pages() {
   [[ -d "$SKILL_PAGES_DIR" ]] || return 0
-  local pissues=() pwarns=() name page mode
+  local pissues=() pwarns=() name page mode mapped indexed
 
-  # A1. every skill has a page
+  # Space-padded so a `*" $name "*` match can't hit a substring of another name.
+  mapped=" $(wikimap_skill_names | tr '\n' ' ')"
+  indexed=" $(index_skill_names | tr '\n' ' ')"
+
+  # A1. every skill has a page — plus D1 (registered in the map) and E1 (linked
+  # from the index). All three are the same question asked of three files: can
+  # this page be found — on disk, by an audit, and by a reader.
   while IFS= read -r name; do
     [[ -z "$name" ]] && continue
     [[ -f "$SKILL_PAGES_DIR/$name.md" ]] \
       || pissues+=("skills/$name has no wiki page — add docs/wiki/skills/$name.md")
+    if [[ -f "$WIKIMAP" && "$mapped" != *" $name "* ]]; then
+      pissues+=("skills/$name is missing from docs/wiki/.wikimap.yaml — add a 'skills/$name.md' page entry so docs audits sweep it")
+    fi
+    if [[ -f "$WIKI_INDEX" && "$indexed" != *" $name "* ]]; then
+      pissues+=("skills/$name is unreachable from docs/wiki/index.md — link it under 'The skills' as [\`$name\`](./skills/$name.md)")
+    fi
   done < <(skill_names)
+
+  # D2. every skill page the doc map names is real
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    skill_exists "$name" \
+      || pissues+=("docs/wiki/.wikimap.yaml maps skills/$name.md, but skills/$name/SKILL.md is missing")
+  done < <(wikimap_skill_names)
+
+  # E2. every skill page the index links is real
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    skill_exists "$name" \
+      || pissues+=("docs/wiki/index.md links skills/$name.md, but skills/$name/SKILL.md is missing")
+  done < <(index_skill_names)
 
   for page in "$SKILL_PAGES_DIR"/*.md; do
     [[ -f "$page" ]] || continue

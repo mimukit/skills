@@ -102,9 +102,15 @@ Full runs only (skipped when skill names are passed):
 | Every skill has a page at `docs/wiki/skills/<name>.md` | error |
 | Every page in `docs/wiki/skills/` documents a real skill | error |
 | Every `` ### `mode` `` heading on a skill page names a mode that `SKILL.md` defines | error |
+| Every skill has a page entry in `docs/wiki/.wikimap.yaml` | error |
+| Every skill page `.wikimap.yaml` registers exists | error |
+| Every skill is linked from `docs/wiki/index.md` | error |
+| Every skill page `index.md` links exists | error |
 | A commit touching exactly one skill also touched that skill's page | warning |
 
 The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
+
+The four page-registration checks ask one question of three files — can this page be found on disk, by a docs audit, and by a reader. They enforce **presence only**. Nothing checks *placement*: `index.md` groups skills by theme, and a skill filed under the wrong heading links just as correctly as one filed right.
 
 The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at one warning per skill touched, nearly all of them correct to ignore.
 

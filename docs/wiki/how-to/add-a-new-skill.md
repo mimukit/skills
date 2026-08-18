@@ -92,6 +92,16 @@ Copy the shape from any existing page — [`commitkit`](../skills/commitkit.md) 
 
 Every later change to the skill obliges a page edit in the same commit. Lint warns when a commit touching exactly one skill lands without its page.
 
+Then register the page in the doc map, [`docs/wiki/.wikimap.yaml`](../.wikimap.yaml), beside the other skill entries:
+
+```yaml
+  - path: skills/<name>.md
+    mode: reference
+    documents: [skills/<name>/SKILL.md]
+```
+
+The map is what tells a later docs audit the page exists and which source it tracks. An unregistered page is the quietest failure in this repo — it renders, it's linked, the gate is green, and the only symptom is that no audit ever sweeps it. It was missed on three skills in a row before lint started checking it, which it now does as an **error** in both directions.
+
 ## 8. Update the five files lint won't fully catch
 
 This is the step that gets missed.
@@ -101,14 +111,14 @@ This is the step that gets missed.
 | `README.md` | Add a row to the skills table with a one-line description and its visibility. |
 | `skills.sh.json` | Add the skill to the best-fitting group's `skills` array. Never list `internal: true` skills. Create a new group only if none fits — a skill left out of every group falls into "Other skills". |
 | [`docs/wiki/workflow.md`](../workflow.md) | Add it to the loop phase it belongs to, or to the side kits if it isn't part of the loop. |
-| [`docs/wiki/index.md`](../index.md) | Add it to the right group under *The skills*, so the page you just wrote is reachable. |
+| [`docs/wiki/index.md`](../index.md) | Add it to the right group under *The skills*. Lint errors if the link is missing entirely, but **cannot check the group** — see below. |
 | [`IDEAS.md`](../../../IDEAS.md) | If the skill was on the backlog, **delete its row.** Nothing lives in both `IDEAS.md` and the README table. |
 
-Lint catches only the workflow map, and only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. `README.md`, `skills.sh.json`, and `IDEAS.md` are on the [pre-push checklist](../../../PUBLISHING.md#pre-push-checklist) instead.
+Lint catches the workflow map only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. `README.md`, `skills.sh.json`, and `IDEAS.md` are on the [pre-push checklist](../../../PUBLISHING.md#pre-push-checklist) instead.
 
-**The `index.md` row is a known gap, and it's the one to be careful about.** Lint enforces that a page *exists* for every skill, in both directions, as an error. Nothing enforces that the page is *reachable*. So a full green lint run is entirely compatible with a page no reader can navigate to — the file is there, the mode headings parse, and the only route to it is a URL nobody will guess. That is not hypothetical, and it has now happened three times: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` both did the same thing again afterwards. Every one of those runs passed a clean gate.
+**The `index.md` row used to be the dangerous one, and half of it still is.** Lint now errors when a skill has no link on the index at all, which closes the failure that bit three times running: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` each repeated it. Every one of those runs passed a clean gate, because a page that exists but that nothing links to looks identical to a finished one.
 
-The check is easy to imagine and hasn't been written, mostly because `index.md` groups skills by theme and a linter can enforce presence but not placement — dropping a new skill into the wrong group passes just as green as putting it in the right one. Until it exists, treat this row as the one item on the list that the gate will never save you from.
+What lint still cannot judge is **placement**. The index groups skills by theme, and a skill dropped under the wrong heading links exactly as correctly as one filed right. So a green run means the page is reachable, never that it's filed sensibly — that half remains yours.
 
 `skills.sh.json` affects only how the directory page groups things. It changes nothing about how the CLI installs skills.
 

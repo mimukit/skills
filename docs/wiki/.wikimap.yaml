@@ -49,7 +49,9 @@ pages:
     documents: [skills/*/SKILL.md]
 
   # One page per skill, reader-facing. Each documents its own SKILL.md;
-  # `make lint` enforces page-per-skill in both directions and mode parity.
+  # `make lint` enforces page-per-skill in both directions and mode parity, and
+  # errors on a skill missing from this list — an unregistered page is invisible
+  # to every audit, so nothing else would ever notice it.
   - path: skills/afkkit.md
     mode: reference
     documents: [skills/afkkit/SKILL.md]

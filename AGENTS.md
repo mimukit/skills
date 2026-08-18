@@ -97,7 +97,7 @@ What actually obliges an edit:
 - **A changed `description`, `allowed-tools`, or `metadata.internal`** — the page's summary table carries all three.
 - **A changed hand-off target** — the page's *Hands off to* section names the next kit; a rename or reroute leaves it pointing at nothing.
 - **A materially changed rule, guard, or default** — the page explains the *why* behind the load-bearing ones. Reword a guard and the explanation goes stale with it.
-- **Adding or removing a skill** — add or delete the page. Lint errors both ways: a skill with no page, and a page documenting no skill.
+- **Adding or removing a skill** — add or delete the page, **register or unregister it in `docs/wiki/.wikimap.yaml`, and link or unlink it in `docs/wiki/index.md`**. A page is only really there when all three agree: the map is what a docs audit sweeps, and the index is what a reader navigates. Lint errors both ways on all three, so a missing page, an unregistered one, and an unreachable one each break the gate. It cannot check *placement* — a skill linked under the wrong theme in the index passes — so filing it sensibly stays a judgment call.
 
 Prose changes that don't move any of those don't need a page edit. Use judgment; the test is whether a reader who only read the page would now be wrong.
 
@@ -109,7 +109,7 @@ Prose changes that don't move any of those don't need a page edit. Use judgment;
 - **End with the install command and the provenance stamp** — `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` The stamp is what a later docs audit diffs from; a page without one has never been verified. **Re-stamping asserts a re-read.** Moving the stamp forward is a claim that somebody looked at the skill and confirmed the page still describes it — so re-stamp when that happened, and leave the stamp alone when it didn't. A stamp bumped as a formality is worse than a stale one, because it launders an unverified page as a checked one.
 - **Explain the why, don't restate the what.** The page earns its place on the reasoning behind a rule — why `gitkit` refuses to delete a branch it didn't create, why review runs on a different model family. Restating the procedure step by step is what `SKILL.md` already does better.
 
-`make lint` enforces the mechanical half on every full run — page-per-skill in both directions, and mode parity. It also **warns when a commit touching exactly one skill lands without that skill's page**, which is the shape of a forgotten page edit. A repo-wide prose sweep touching many skills at once is exempt by construction, because that is the shape where a page edit genuinely isn't owed. Lint still cannot tell whether the prose is true; that's a review job.
+`make lint` enforces the mechanical half on every full run — page-per-skill, map-entry-per-skill, and index-link-per-skill, each in both directions, plus mode parity. It also **warns when a commit touching exactly one skill lands without that skill's page**, which is the shape of a forgotten page edit. A repo-wide prose sweep touching many skills at once is exempt by construction, because that is the shape where a page edit genuinely isn't owed. Lint still cannot tell whether the prose is true; that's a review job.
 
 ## Layout
 
