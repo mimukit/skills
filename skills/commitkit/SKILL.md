@@ -21,17 +21,18 @@ This skill is built for AI coding sessions where the user hands off with a bare 
 ## Procedure
 
 ### 1. Read the state
-Start from the file-level shape of the change — never the full diff:
+Start from the file-level shape of the change — never the full diff — in a single call:
 
 ```sh
-git status --short
-git diff --stat HEAD   # staged and unstaged together, one line per file
+git status --short && git diff --stat HEAD   # tree state + one line per file, one call
 ```
+
+**Batch every git call in this skill the same way.** This skill fires at the end of a session, when the context window is at its largest, and each extra Bash call re-pays that whole window as input. Chain commands with `&&` whenever no decision sits between them; spend a separate call only where you must stop and think between two commands.
 
 **Then decide how much diff you actually need, by asking who wrote these changes.**
 
 - **You did, in this same context** (the typical coding-session hand-off) — you already know what the change does and, more importantly, *why*, and the why is the part a diff can't tell you: the approach you rejected, the test that caught a bug mid-way, the file you deliberately left alone. Group from the stat and write the body from what you know. Read a diff only for files you didn't touch yourself, or where you genuinely can't recall what landed.
-- **You didn't** — you were dispatched as a subagent, the session is fresh, the changes are the user's own edits, or the work happened far enough back that it's no longer in context. Then the diff is your only source: read it (`git diff HEAD`) before writing anything.
+- **You didn't** — you were dispatched as a subagent, the session is fresh, the changes are the user's own edits, or the work happened far enough back that it's no longer in context. Then the diff is your only source, but take it group by group, never wholesale. Sketch the groups from the stat first, then read each group's diff with `git diff HEAD -- <paths>` and stop once that group's type, scope, and effect are clear. A pathless `git diff HEAD` pulls the whole session's changes into context at once; the per-group read caps each read at the group you're actually writing about.
 
 When in doubt, read. A vague commit message costs more than the tokens it saved. But re-reading code you wrote minutes ago buys nothing — the stat already tells you which files moved, and you already know what you did to them.
 
@@ -89,17 +90,22 @@ Group by *what the change accomplishes*, not by file type or directory. Keep a f
 Order the groups so dependencies land first (e.g. a shared helper before the feature that uses it). When a file contains hunks from multiple groups, plan to stage it interactively rather than assigning the whole path to one group.
 
 ### 5. Commit each group
-For each group, stage its paths and commit:
+With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the `git status -sb` the hand-off needs:
 
 ```sh
-git add <paths for this group>
-git commit -m "type(scope): summary" -m "why in one line
+git add <group 1 paths> && git commit -m "type(scope): summary" -m "why in one line
 
 - reason/change bullet
-- reason/change bullet"
+- reason/change bullet" && \
+git add <group 2 paths> && git commit -m "type(scope): summary" -m "why in one line
+
+- reason/change bullet" && \
+git status -sb
 ```
 
-When the user delegated the commit ("commit", "commit my changes"), just do this for every group — no per-commit confirmation. Only show messages for approval first if the user asked you to draft rather than commit. If a commit fails (e.g. a pre-commit hook rejects it), surface the hook output and fix or ask — don't retry blindly or bypass hooks with `--no-verify` unless told to.
+Interactive staging of a mixed file (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)) is the one step that can't join the chain — commit up to that group in one call, handle the split, then chain the rest.
+
+When the user delegated the commit ("commit", "commit my changes"), just do this for every group — no per-commit confirmation. Only show messages for approval first if the user asked you to draft rather than commit. If a commit fails (e.g. a pre-commit hook rejects it), the `&&` chain stops at the failing group and later groups stay uncommitted — surface the hook output, fix or ask, then resume the chain from that group. Don't retry blindly or bypass hooks with `--no-verify` unless told to.
 
 ### 6. Hand off
 
@@ -116,7 +122,7 @@ Close with what changed, where it landed, and the next move.
 
 List each commit's changed/created files in the last column. You already know them — they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped or left for the user), note it under the table.
 
-**Where it landed** — the branch the commits sit on, and whether it has an upstream (`git status -sb` shows both in one line). Commits on a local-only branch exist nowhere but this machine, and saying so is the most useful line in the report.
+**Where it landed** — the branch the commits sit on, and whether it has an upstream. The `git status -sb` at the end of the commit chain already printed both in one line; report from that output rather than running it again. Commits on a local-only branch exist nowhere but this machine, and saying so is the most useful line in the report.
 
 **Next** — name one move and stop. The work is committed but unpublished, so the default is to publish it: **prkit** when it's installed, to open a pull request from exactly these commits; otherwise `git push -u origin HEAD` and open the PR by hand. If the feature clearly isn't finished, say that instead and name the plain action — keep building, then re-run commitkit for the next group. Don't push or open anything yourself; commitkit's job ends at the commit.
 

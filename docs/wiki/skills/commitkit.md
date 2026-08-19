@@ -26,9 +26,11 @@ The most interesting decision in the skill is how much diff to read, and it turn
 | Who wrote it | What it reads |
 |---|---|
 | **You did, in this same context** | The file-level stat. You already know what the change does and *why* — the approach rejected, the test that caught a bug, the file deliberately left alone. A diff can't tell you any of that, and re-reading code written minutes ago buys nothing. |
-| **You didn't** — a subagent, a fresh session, the user's own edits, or work far enough back to be out of context | The full `git diff HEAD`. It's the only source. |
+| **You didn't** — a subagent, a fresh session, the user's own edits, or work far enough back to be out of context | The diff, group by group — never wholesale. It sketches groups from the stat, then reads `git diff HEAD -- <paths>` per group and stops once that group's type, scope, and effect are clear. A pathless `git diff HEAD` would pull the whole session's changes into context at once. |
 
 When in doubt, it reads. A vague commit message costs more than the tokens it saved.
+
+The same economics drive the git calls themselves. commitkit fires at the end of a session, when the context window is at its largest, and every extra Bash call re-pays that whole window as input. So the state read is one chained call, and the entire commit sequence — every `git add`/`git commit` pair plus the closing `git status -sb` — is another.
 
 **Generated files are never read** in either mode — lockfiles, build output, vendored directories, snapshots, compiled assets. Their stat line carries every bit of signal a commit message can use, and their diffs are the largest in most repos.
 
@@ -80,7 +82,7 @@ Delegated committing means it stages files itself without asking. It only stops 
 
 It never runs `git add -A` blindly across unrelated concerns. If nothing has changed at all, it stops and says so.
 
-If a commit fails — a pre-commit hook rejects it — the hook output gets surfaced. It never retries blindly or reaches for `--no-verify` unless told to.
+If a commit fails — a pre-commit hook rejects it — the `&&` chain stops at that group, later groups stay uncommitted, and the hook output gets surfaced. It never retries blindly or reaches for `--no-verify` unless told to.
 
 ## Hands off to
 
@@ -96,4 +98,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`f490fd8` on 2026-08-19._
