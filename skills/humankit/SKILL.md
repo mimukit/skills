@@ -1,7 +1,7 @@
 ---
 name: humankit
 description: >-
-  Strip the tells of AI-generated writing from prose so it reads like a person wrote it. Use when asked to humanize text, remove AI-isms, make writing sound less like ChatGPT, edit out "AI slop," or review a draft for robotic phrasing — covers em-dash overuse, rule-of-three cadence, promotional puffery, filler, hedging, and the AI vocabulary words.
+  Strip the tells of AI-generated writing from prose so it reads like a person wrote it. Use when asked to humanize text, remove AI-isms, make writing sound less like ChatGPT, edit out "AI slop," or review a draft for robotic phrasing — covers em-dash overuse, rule-of-three cadence, promotional puffery, abstract metaphor nouns, filler, hedging, and the AI vocabulary words.
 license: MIT
 allowed-tools: Read, Edit, Write
 metadata:
@@ -42,9 +42,19 @@ Scan for these. They matter in **clusters**, not in isolation — one em dash or
 
 **AI vocabulary.** Words that spiked after 2023 and tend to co-occur: *delve, crucial, pivotal, underscore, showcase, tapestry, testament, intricate, enduring, foster, garner, interplay, landscape (abstract), leverage, seamless, robust, realm.* Swap for ordinary words.
 
+**Abstract metaphor nouns.** Words that sound technical and carry less than a plain one would: *substrate, wedge, vector, locus, nexus, vantage, primitive (as a noun), harness, surface (as in "API surface"), bedrock, scaffolding, modality, paradigm, flywheel, north star, endgame, ratchet, gold-plating, evacuate (for moving code).* Reach for the concrete word: *substrate* → *base*, *vector* → *way*, *gold-plating* → *more than the job needs*, *evacuate* → *move out*. The test is use, not the word. A term the text defines and then reuses for the same thing is doing work and stays; a term dropped in once for texture is decoration and goes.
+
+**Elevated synonyms.** *Utilize* → *use*, *facilitate* → *help*, *numerous* → *many*, *prior to* → *before*, *in the event that* → *if*. The fancier synonym is rarely the clearer one.
+
 **Copula avoidance.** Dodging *is/are*: *serves as, functions as, represents, boasts, features.* Prefer "X is Y."
 
+**Passive voice and propped-up verbs.** *Queries are validated* hides who does it; write *the compiler validates queries.* Passive is right only when the actor is unknown or genuinely doesn't matter. An adverb holding up a weak verb means the verb is wrong: *runs quickly* → *is fast*, or the measured number; *significantly improves* → the delta itself.
+
 **Rule of three.** Forcing ideas into triads to sound complete: *innovation, inspiration, and industry insights.* Break the rhythm; keep only the items that carry weight.
+
+**Synonym cycling.** Rotating through *protagonist, main character, central figure, hero* in one passage to avoid repeating a word. Pick one term and repeat it.
+
+**False ranges.** *From X to Y* where X and Y sit on no shared scale: *from onboarding to enterprise security.* List the items instead.
 
 **Negative parallelism.** *Not only… but also…,* *It's not just X, it's Y,* and clipped tailing negations tacked on as fragments: *…, no guessing,* *…, no wasted motion.* Write the real clause instead.
 
@@ -56,11 +66,21 @@ Scan for these. They matter in **clusters**, not in isolation — one em dash or
 
 **Vague attribution.** *Experts argue, observers have noted, industry reports suggest* with no source named. Name the source or cut the claim. Watch too for knowledge-cutoff disclaimers (*as of my last update, while specific details are limited*) and speculative gap-fill (*likely grew up, it is believed that, maintains a low profile*) — say what isn't known, don't invent plausible filler.
 
+**Colon as a connector.** A colon earns its place before a list or an example. Welded into the middle of a sentence it implies a relationship the clause never establishes: *If you're coming from traditional automation: instead of registering handlers, you describe conditions.* Rewrite so the point stands without the framing.
+
 **Formatting tells.** Mechanical **boldface** on key phrases; inline-header bullet lists (`- **Performance:** …`); Title Case In Every Heading; decorative emojis; curly quotes where straight ones belong; generic upbeat conclusions (*the future looks bright, exciting times lie ahead*).
+
+## Two cut tests
+
+The catalog above names patterns. These two judge a sentence that trips none of them and still reads as machine-written. Both are falsifiable, and both end in a deletion.
+
+**Does it name a mechanism, or a feeling?** *The database stays close at hand,* *SQL you can read,* *types that follow your schema* all describe a sensation the reader is supposed to have. The fix names what actually happens: *`.toSQL()` returns the exact string sent to the database,* *a column rename fails the build.* Ask what the sentence tells the reader to do or know, then write that. If it can't be restated as a concrete instruction, fact, or number, cut it. Where the source supplies no mechanism, cutting is the only move available: never invent one to pass this test.
+
+**Could it appear unchanged in another project's documentation?** Then it says nothing about this project, and it goes.
 
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, colon, parentheses, or a restructured sentence. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done. One exception: a user-supplied writing sample that uses em dashes overrides this rule, and then the mark is matched to the sample's frequency rather than banned.
+The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, parentheses, or a restructured sentence. A colon works too, but only where it introduces a list or an example, per the colon tell above; swapping an em dash for a mid-sentence colon trades one tell for another. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done. One exception: a user-supplied writing sample that uses em dashes overrides this rule, and then the mark is matched to the sample's frequency rather than banned.
 
 ## What not to flag
 
@@ -73,12 +93,25 @@ Clean human writing trips several of these on its own. Do not gut legitimate pro
 
 Lean toward leaving prose alone when you see hard-to-fake specifics (a real address, an odd quote), mixed or unresolved feelings, era-bound slang, genuine asides or self-corrections, and real variety in sentence length. Those are the fingerprints of a person.
 
+## Removing tells is half the job
+
+Prose with every tell stripped out and nothing put back reads as sterile, and sterile is its own signature. The catalog is the subtraction. This is what fills the space:
+
+- **Take a position.** React to a fact rather than weighing its pros and cons at equal length.
+- **Vary the rhythm.** A short sentence. Then a longer one that takes its time and earns the room. Uniform sentence length is a tell by itself.
+- **Let it be uneven.** Sections of matching length and paragraphs of matching shape look manufactured, because they are.
+- **Use *I* where the register allows.** First person is not unprofessional.
+- **Say the specific thing.** Not *this is concerning* but the concrete version the source already supports.
+- **Allow mixed feelings.** *Impressive, and a little unsettling* beats *impressive.*
+
+None of this loosens the never-invent-facts rule at the top. Opinion, reaction, and unresolved feeling are voice, and you may add them. A name, number, date, or claim is fact, and you may not. In encyclopedic, technical, legal, or reference text, plain and neutral *is* the human voice, and this section barely applies.
+
 ## Process
 
-1. Read the input and mark every instance of the tells above.
-2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage.
-3. Ask two questions: *what still makes this read as AI-generated?* and *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?* Answer both in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
-4. Revise into a **final rewrite** that fixes both, carrying no em or en dashes.
+1. Read the input and mark every instance of the tells above, then run [the two cut tests](#two-cut-tests) over what survives.
+2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage, and give it the voice described in [Removing tells is half the job](#removing-tells-is-half-the-job).
+3. Ask three questions: *what still makes this read as AI-generated?*, *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?*, and *has the de-slopping left it sterile?* Answer all three in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
+4. Revise into a **final rewrite** that fixes all three, carrying no em or en dashes.
 
 ## Hand off
 
@@ -94,4 +127,4 @@ This is the hand-off for text pasted into the conversation. Called by another sk
 
 ## Reference
 
-The pattern catalog derives from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup.
+The pattern catalog derives from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup. The abstract-metaphor-noun list, the colon-as-connector tell, the two cut tests, and the voice section come from [pstack's `unslop` skill](https://github.com/cursor/plugins/blob/main/pstack/skills/unslop/SKILL.md).

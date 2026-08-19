@@ -41,18 +41,35 @@ They matter in **clusters**, not isolation. One em dash or one "however" proves 
 | **Promotional tone** | *nestled, in the heart of, vibrant, breathtaking, boasts a, must-visit, renowned* |
 | **Superficial -ing tails** | *…, highlighting its importance,* *…, ensuring seamless integration* |
 | **AI vocabulary** | *delve, crucial, pivotal, underscore, showcase, tapestry, intricate, foster, leverage, seamless, robust, realm* |
+| **Abstract metaphor nouns** | *substrate, wedge, vector, nexus, scaffolding, flywheel, north star, ratchet, gold-plating* |
+| **Elevated synonyms** | *utilize* → *use*; *facilitate* → *help*; *prior to* → *before* |
 | **Copula avoidance** | *serves as, functions as, represents, features* — prefer "X is Y" |
+| **Passive voice and propped-up verbs** | *queries are validated* → *the compiler validates queries*; *runs quickly* → *is fast* |
 | **Rule of three** | *innovation, inspiration, and industry insights* |
+| **Synonym cycling** | *protagonist, main character, central figure, hero* in one passage |
+| **False ranges** | *from onboarding to enterprise security* — no shared scale |
 | **Negative parallelism** | *Not only… but also…*, *It's not just X, it's Y*, clipped tails like *…, no guessing* |
 | **Filler and hedging** | *in order to* → *to*; *due to the fact that* → *because*; *could potentially possibly* → *may* |
 | **Signposting and chatbot residue** | *Let's dive in*, *I hope this helps*, *Certainly!*, *You're absolutely right!* |
 | **Persuasive-authority formulas** | *the real question is, at its core, what really matters*; *X is the language of Y* |
 | **Vague attribution** | *experts argue, observers have noted* with no source named |
+| **Colon as a connector** | a colon welded mid-sentence to imply a relationship the clause never earns |
 | **Formatting tells** | mechanical boldface, inline-header bullets, Title Case Headings, decorative emojis |
+
+The metaphor-noun entry is scoped deliberately: the test is *use*, not the word. A term the text defines and then reuses for one thing is doing work and stays. The same word dropped in once for texture is decoration. A flat ban would condemn vocabulary that plenty of good technical writing depends on, which is why the rule reads as a use test rather than a blocklist.
+
+## Two cut tests
+
+The catalog names patterns. These judge the sentence that trips none of them and still reads as machine-written, and both end in a deletion:
+
+- **Does it name a mechanism, or a feeling?** *SQL you can read* describes a sensation the reader is supposed to have. *A column rename fails the build* names what happens. If a sentence can't be restated as a concrete instruction, fact, or number, it goes.
+- **Could it appear unchanged in another project's docs?** Then it says nothing about this one.
+
+The first test is where the never-invent-facts rule bites hardest. Asked to replace a feeling with a mechanism, inventing the mechanism is the obvious move and the wrong one. When the source supplies none, cutting is the only option on the table.
 
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes** and uses **no en dashes as sentence punctuation**. Replacements, in rough order of preference: a period, comma, colon, parentheses, or a restructured sentence.
+The finished rewrite contains **no em dashes** and uses **no en dashes as sentence punctuation**. Replacements, in rough order of preference: a period, comma, parentheses, or a restructured sentence. A colon qualifies only where it introduces a list or an example — swapping an em dash for a mid-sentence colon trades one tell for another.
 
 Legitimate numeric and date ranges survive as hyphens or "to" (`1914-1918`, `pp. 10 to 12`). Spaced em dashes and double hyphens used the same way get caught too. Before delivering, the draft is searched for both marks — any remaining em dash means the rewrite isn't done.
 
@@ -69,6 +86,12 @@ Clean human writing trips several of these on its own, and gutting legitimate pr
 
 Hard-to-fake specifics, mixed or unresolved feelings, era-bound slang, genuine asides and self-corrections, real variety in sentence length — those are a person's fingerprints. Lean toward leaving them alone.
 
+## Removing tells is half the job
+
+Strip every tell and put nothing back and the result is sterile, which is its own signature. That failure mode is why the skill carries a positive half: take a position instead of weighing pros and cons at equal length, vary the rhythm, let structure be uneven, use *I* where the register allows, and permit mixed feelings.
+
+This is the part that looks like it contradicts the never-invent-facts rule, and doesn't. Opinion, reaction, and unresolved feeling are voice, so they can be added. A name, number, date, or claim is fact, so it can't. Encyclopedic, technical, legal, and reference writing are the exception in the other direction: there, plain and neutral already *is* the human voice, and adding personality would be the error.
+
 ## How you reach it changes what you get
 
 | Called with | Delivers |
@@ -81,10 +104,10 @@ Asked only for a review, it reports the located tells with line references and s
 
 ## How it works
 
-1. Mark every instance of the tells.
-2. Write a **draft rewrite** — vary sentence length, prefer concrete detail and plain constructions, hold the register and coverage.
-3. Ask two blunt questions: *what still reads as AI-generated?* and *does this state any fact not in the source?*
-4. Revise into a **final rewrite** fixing both, carrying no em or en dashes.
+1. Mark every instance of the tells, then run the two cut tests over what survives.
+2. Write a **draft rewrite** — vary sentence length, prefer concrete detail and plain constructions, hold the register and coverage, give it voice.
+3. Ask three blunt questions: *what still reads as AI-generated?*, *does this state any fact not in the source?*, and *has the de-slopping left it sterile?*
+4. Revise into a **final rewrite** fixing all three, carrying no em or en dashes.
 
 ## Hands off to
 
@@ -92,7 +115,7 @@ Nothing, usually. A rewritten file in a repo is uncommitted prose, so [`commitki
 
 ## Reference
 
-The pattern catalog derives from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup.
+The pattern catalog derives from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing), maintained by WikiProject AI Cleanup. The metaphor nouns, the colon tell, the two cut tests, and the voice section come from [pstack's `unslop` skill](https://github.com/cursor/plugins/blob/main/pstack/skills/unslop/SKILL.md).
 
 ## Install
 
@@ -102,4 +125,4 @@ npx skills add mimukit/skills -s humankit
 
 Source: [`skills/humankit/SKILL.md`](../../../skills/humankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`f5467c7` on 2026-08-19._
