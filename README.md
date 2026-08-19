@@ -65,6 +65,7 @@ Makefile                        command surface (run `make help`)
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
 | `afkkit` | run a grilled `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
 | `tutorkit` | teach a topic across sessions from one learning repo, with lessons pitched at what you know and spaced review that makes it stick | public |
+| `ideakit` | think an idea through across sessions from one ideas repo — a folder per idea, one open at a time, research and validation folded back into its own log | public |
 
 [The workflow guide](./docs/wiki/workflow.md) covers how these fit together in practice: the modes each one exposes, what hands off to what, and a worked end-to-end day.
 

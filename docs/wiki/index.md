@@ -43,8 +43,8 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 **Authoring & Automation**
 [`skillkit`](./skills/skillkit.md) · [`promptkit`](./skills/promptkit.md) · [`afkkit`](./skills/afkkit.md)
 
-**Learning**
-[`tutorkit`](./skills/tutorkit.md)
+**Thinking & Learning**
+[`ideakit`](./skills/ideakit.md) · [`tutorkit`](./skills/tutorkit.md)
 
 ## Written by hand, not by this doc set
 

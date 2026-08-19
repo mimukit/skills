@@ -43,9 +43,9 @@
       "skills": ["afkkit"]
     },
     {
-      "title": "Learning",
-      "description": "Build durable knowledge instead of getting past the problem — one learning repo, lessons pitched at what you already know, and spaced retrieval that comes back to check it stuck.",
-      "skills": ["tutorkit"]
+      "title": "Thinking & Learning",
+      "description": "Two personal repos that sit outside your work repos and get read one folder at a time — a folder per idea you're still thinking through, and a folder per subject you're learning, with spaced retrieval that comes back to check it stuck.",
+      "skills": ["ideakit", "tutorkit"]
     }
   ]
 }

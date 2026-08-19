@@ -79,6 +79,9 @@ pages:
   - path: skills/humankit.md
     mode: reference
     documents: [skills/humankit/SKILL.md]
+  - path: skills/ideakit.md
+    mode: reference
+    documents: [skills/ideakit/SKILL.md]
   - path: skills/implementkit.md
     mode: reference
     documents: [skills/implementkit/SKILL.md]
