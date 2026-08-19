@@ -15,7 +15,55 @@ Rules:
 
 ## Descriptions
 
-- Every `SKILL.md` `description` must front-load an English **"Use when …"** trigger, so agent triggering and text search work regardless of the branded name.
+A `description` is a **context pointer** — it names material the agent isn't holding and encodes the condition for reaching it. Every description in the collection loads on every turn whether or not its skill fires, so the wording does the triggering work and the whole set shares one budget.
+
+- **Front-load an English "Use when …" trigger**, so agent triggering and text search work regardless of the branded name.
+- **One trigger per branch, not per synonym.** A branch is a distinct case the skill handles, usually a mode. Cover every branch; collapse the phrasings that rename a single one. "teach me X" and "I want to learn X" are one branch written twice, where "teach me X" and "quiz me" are two branches.
+- **Cut identity the body already carries.** A pointer states what the material is and when to reach it. It doesn't restate the skill's rules, its guarantees, or its scope disclaimers.
+- **Undertriggering is still the expensive failure.** Prune synonyms, never coverage — a branch with no trigger silently never fires, and no lint rule can see that.
+
+## The two loads
+
+Every document, pointer, and skill you add spends one of two budgets. Name the one it spends before you add it.
+
+- **Context load** — the cost of always-loaded material on the agent's window: a description, a line in this file, anything sitting in context every turn whether or not it fires.
+- **Cognitive load** — the cost on the human: knowing which skills exist and when to reach for each. The human is the index. This one is not a cost to minimize; it is the price of human agency. Spend it where human judgement matters and remove it where it doesn't.
+
+Material behind a pointer escapes context load for the price of the pointer's own line. Material with no pointer at all rides entirely on cognitive load.
+
+**This is the gate on a new skill.** A skill earns its own directory when a human genuinely wants to choose it — a distinct moment, a distinct decision they'd make deliberately. When the choice is one the agent should make from context instead, it's a mode inside an existing skill: a mode costs one branch in a description, where a skill costs a permanent entry in the index a person has to hold.
+
+## Information hierarchy
+
+A skill is built from **steps** (the ordered actions the agent performs) and **reference** (definitions, rules, and facts consulted on demand). The two mix freely — all steps, all reference, or both. The decision is where each piece sits on a ladder ranked by how immediately the agent needs it:
+
+1. **In-file step** — the primary tier: what the agent does, in order.
+2. **In-file reference** — consulted on demand. A flat peer-set is fine here (every rule of a review sitting on one rung); flatness is not a smell.
+3. **Disclosed reference** — pushed into a satellite file inside the skill's own directory, reached by a pointer, loaded only when that pointer fires.
+
+- **Disclose by branch, not by size.** Inline what every branch needs; push behind a pointer what only some branches reach. "Large and needed only sometimes" is the blurrier older version of this test — the branch test is checkable.
+- **Push too much down and you hide material the agent needs.** Push too little and the top bloats. That tension is the whole decision, and neither direction is the safe default.
+- **Co-locate a concept.** Keep a definition, its rules, and its caveats under one heading rather than scattered through the file. Scattering is not duplication — duplication repeats one meaning in two places, scattering fragments one meaning across many — and it fails differently: the agent reads one part and never meets the rest.
+- **Sprawl is the failure mode here** — a skill simply too long, even when every line is live and unique. Attention thins across the excess. The cure is the ladder, not a trim pass.
+
+## Steps and completion criteria
+
+**Every step ends on a completion criterion — the condition that tells the agent the work is done.** A step without one ends when the agent feels finished, which is the largest single source of run-to-run variance. Two properties make the criterion a lever:
+
+- **Clarity** — can the agent tell done from not-done? A vague bound ("understanding reached", "keep it lean") invites **premature completion**: the step ends early because attention has already slipped to the steps still visible ahead of it.
+- **Demand** — how much the wording requires. "Every modified model accounted for" forces real digging where "produce a change list" does not. Prefer the exhaustive form to the productive one. Demand is not step-bound: "every rule applied" binds a body of flat reference the same way, which is how an all-reference skill still carries a bar.
+
+The strongest criteria are both checkable and exhaustive.
+
+**Sharpen a rushed step's bound first** — that edit is local and cheap. Split the sequence only when the bound is irreducibly fuzzy *and* you have watched the rush happen. Splitting works only across a real context boundary, meaning a hand-off document or a subagent dispatch; an inline call leaves the later steps in context and hides nothing.
+
+## Pruning
+
+- **Keep each meaning in a single source of truth**, so changing the behavior is a one-place edit. Duplication costs maintenance and tokens, and it inflates a meaning's rank on the hierarchy past its real one. [Portability](#visibility-internal-vs-public) is the one licensed exception, bounded by the conclusion-vs-derivation seam stated there.
+- **The environment is a source of truth too** — `package.json` scripts, a `Makefile`, a config file, `--help` output. A skill that restates one is a **cache**, and a cache earns its load only when the lookup is expensive. Cache what the agent cannot find by looking: the unwritten convention, the reason behind a choice, the gotcha no config confesses. Leave the one-command lookups to the environment, where they cannot go stale.
+- **A repeated term is a lever, not a metaphor slip.** A compact word the model already knows (`crown`, `slop`, `ledger`, `cache`) anchors a whole region of behavior in one token — but only when it is repeated as a *token* and never restated as a sentence. Reach for a pretrained word before coining one: a made-up term recruits no priors, so you pay in definition tokens what an existing word gives free. This is what "one term per concept, kept" in [Prose register](#prose-register) is buying.
+- **Prompt the positive.** Steering by prohibition drags the forbidden behavior into context and makes it *more* available, not less; the negation is a weak modifier over a strongly activated concept. State the target behavior instead ("write one-line comments" beats "don't write long comments"). A prohibition earns its place only as a hard guardrail you cannot phrase positively — "never commit automatically" is one — and even then it gets a positive target beside it.
+- **Hunt no-ops sentence by sentence.** An instruction the model already obeys by default pays load to say nothing. The test is model-relative rather than reader-relative: two people disagreeing about a no-op disagree about the *default*, and they settle it by running the skill, not by arguing. When a sentence fails, delete the whole sentence rather than trimming its words.
 
 ## Prose formatting
 

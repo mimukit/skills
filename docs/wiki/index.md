@@ -54,7 +54,7 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 |----------|----------------|
 | [Publishing](../../PUBLISHING.md) | How skills.sh listing works, the pre-push checklist, and first-time repo setup |
 | [Skill ideas](../../IDEAS.md) | The backlog of skills not yet built |
-| [AGENTS.md](../../AGENTS.md) | Conventions for AI agents authoring skills here — the `kit` naming rule, prose formatting, hand-off requirements, visibility |
+| [AGENTS.md](../../AGENTS.md) | Conventions for AI agents authoring skills here — the `kit` naming rule, description pointers, the two loads, information hierarchy, completion criteria, pruning, prose formatting and register, hand-off requirements, visibility |
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 

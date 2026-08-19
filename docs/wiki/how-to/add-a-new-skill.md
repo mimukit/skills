@@ -4,6 +4,12 @@ Adding a skill means creating one directory — but shipping one means writing a
 
 Prefer to have this driven for you? `skillkit` runs the whole path, from naming through testing. This page is what it does by hand.
 
+## 0. Check it earns a skill
+
+A new skill spends two budgets. Its `description` sits in the agent's context on every turn whether or not it fires, and its existence sits in *your* head forever — you're the index of which skill owns which moment, and nothing pages you out.
+
+The second cost is the one worth thinking about, and it isn't a reason to keep the collection small. It's the price of choosing yourself. So the test is whether a person genuinely wants to make this call — a distinct moment, a decision you'd reach for deliberately. If the agent should be picking it from context anyway, it's a **mode inside an existing skill**, which costs one branch in that skill's description rather than a permanent new entry to remember.
+
 ## 1. Name it
 
 One lowercase word, functional term first, `kit` appended: `commitkit`, `humankit`, `prkit`.
@@ -40,6 +46,8 @@ Two fields do more work than they look like they do.
 
 **`description` is a routing rule, not a title.** Agents and skills.sh decide whether to activate a skill primarily from this field, so it must front-load an explicit English "Use when …" trigger. That's what makes a branded name like `humankit` findable by someone who only knows they want to remove AI-isms.
 
+Spend it on **one trigger per branch, not per synonym**. Every description in the collection loads on every turn, and what that budget buys is coverage of the distinct cases the skill handles, usually one per mode. Rephrasing the same case three ways buys nothing. Dropping a case buys silence, and lint can't see a skill that never fires — so cut synonyms, never coverage.
+
 **`metadata.internal` is a lint error if absent**, because an undeclared skill has undefined publication behavior. `false` publishes it; `true` hides it from skills.sh discovery entirely.
 
 ## 4. Write the body
@@ -49,6 +57,12 @@ Full conventions are in [AGENTS.md](../../../AGENTS.md). The three that lint enf
 - **No hard wrapping.** One continuous line per paragraph and per list item. Code fences, tables, and YAML frontmatter keep their line structure.
 - **Never cross-reference a step by number.** `see step 4` binds to a step's *position*, so inserting a step silently makes it point at the wrong one — and nothing can detect a stale-but-valid number. Link to the heading instead: `see [Group the work](#4-group-the-work)`. For a step with no heading, name the action in prose.
 - **Close with `## Hand off`** — what changed, where it landed, and the single best next move. Crown one next move rather than listing five; route to the next kit by name without invoking it, and always give the plain fallback ("open a PR with **prkit**, otherwise `gh pr create`") since a public skill often lands in a repo that has none of the others.
+
+The three above are the ones a grep can check. Two more decide whether the skill runs the same way twice, and nothing but review will catch them.
+
+**Every step ends on a completion criterion** — the condition that says the work is done. A step without one ends when the agent feels finished, which is where run-to-run variance actually comes from. Write a bound the agent can check, and prefer the exhaustive form ("every modified model accounted for") to the productive one ("produce a change list").
+
+**Decide what each piece needs to be, by branch.** Inline what every run reads; push into a satellite file inside the skill's own directory what only some runs reach. Keep a concept's definition, rules, and caveats under one heading rather than scattered, since the agent that reads one part may never meet the rest. A skill can be too long even when every line is live and unique, and no trim pass fixes that — only moving material down a rung does.
 
 If you marked it `internal: false`, it must also be **portable**: conventions inlined rather than linked, no repo-relative links, no dependency on `make` or `AGENTS.md` or `scripts/`, and it should print its output as a code block when there's no filesystem to write to. It will be installed alone into repos that have none of the machinery here.
 
@@ -136,4 +150,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`c772308` on 2026-08-18._
+_Verified against `main`@`f5467c7` on 2026-08-19._

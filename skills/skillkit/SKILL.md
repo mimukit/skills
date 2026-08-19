@@ -21,6 +21,8 @@ Authoring skill for a personal skill collection. It turns a rough idea ("I want 
 ### 1. Gather intent
 Ask what the skill should do and *when it should trigger* (the real user phrasings). Optionally ask for example skill links; if given, skim them for structure ideas — non-blocking, and only if fetching is available. Capture: the job, the trigger conditions, and any hard constraints (tools it needs, things it must not do).
 
+Then check that a **new skill** is the right shape, because the collection's index is a human's to hold. A skill earns its own directory when a person genuinely wants to choose it — a distinct moment, a distinct decision they'd make deliberately. When the choice is one the agent should make from context instead, it belongs as a **mode inside an existing skill**: a mode costs one branch in that skill's description, where a new skill costs a permanent entry the user has to remember. Name the existing skill and let the user decide; don't refuse the request.
+
 ### 2. Visibility (internal or public?)
 Ask whether this is an **internal** repo-only skill or a **public** publishable one — it changes the rules for everything downstream.
 - **internal**: a maintenance/meta skill for the host repo. Repo coupling is fine — it may reference the repo's conventions doc, build tooling, and use repo-relative links. Stamp `metadata.internal: true`. skills.sh hides it from discovery.
@@ -42,7 +44,8 @@ Show the draft. Take edits and iterate until the user explicitly approves. Don't
 ### 7. Live test
 Don't install the skill yourself — hand the user the commands to drive the live trial. If the collection provides dev-link tooling (check its README or Makefile for a link/unlink target), tell them to inject the skill with that; otherwise have them symlink or copy `skills/<name>` into their agent's skills directory (e.g. `~/.claude/skills/<name>`). Then test in a **fresh session** — the skill list loads at startup, so a running session won't see the new skill. No scratch test-plan file; testing here is done live and directly. Suggest they exercise it against reality:
 - fire it with a few varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* (guards against overtriggering);
-- confirm the real run follows the drafted procedure end to end and produces the artifact or outcome the skill promises.
+- confirm the real run follows the drafted procedure end to end and produces the artifact or outcome the skill promises;
+- settle any line you suspect is a **no-op** by running it, not by arguing. A no-op is an instruction the model already obeys by default, so the test is model-relative: delete the suspect line, run the same phrasing again, and keep the line only when the behavior changes.
 
 When done testing, they remove the dev link the same way it was added (the collection's unlink command, or deleting the symlink/copy).
 
@@ -74,6 +77,20 @@ metadata:
 ---
 ```
 
+### Information hierarchy
+A skill is built from **steps** (the ordered actions the agent performs) and **reference** (definitions, rules, and facts consulted on demand). The two mix freely — all steps, all reference, or both. What you decide for each piece is where it sits on a ladder ranked by how immediately the agent needs it: an **in-file step** is the primary tier; **in-file reference** is consulted on demand, and a flat peer-set of rules on one rung is a fine arrangement rather than a smell; **disclosed reference** is pushed into a satellite file inside the skill's own directory and loaded only when its pointer fires.
+
+**Disclose by branch, not by size.** Inline what every branch needs, and push behind a pointer what only some branches reach — a mode-filtered catalog that each run reads a third of is the clean case. Push too much down and you hide material the agent needs; push too little and the top bloats. Neither direction is the safe default.
+
+**Co-locate a concept**: keep a definition, its rules, and its caveats under one heading rather than scattered through the file. Scattering is not duplication — duplication repeats one meaning in two places, scattering fragments one meaning across many — and it fails differently, because the agent reads one part and never meets the rest.
+
+**Sprawl** is the failure mode: a skill simply too long, even when every line is live and unique. Attention thins across the excess. The cure is the ladder, not a trim pass.
+
+### Completion criteria
+**Every step ends on a completion criterion — the condition that tells the agent the work is done.** A step without one ends when the agent feels finished, which is the largest single source of run-to-run variance. Two properties make it a lever. **Clarity**: can the agent tell done from not-done? A vague bound ("understanding reached", "keep it lean") invites **premature completion**, where the step ends early because attention has already slipped to the steps still visible ahead of it. **Demand**: how much the wording requires — "every modified model accounted for" forces real digging where "produce a change list" does not, so prefer the exhaustive form to the productive one. Demand is not step-bound; "every rule applied" binds a body of flat reference the same way, which is how an all-reference skill still carries a bar. The strongest criteria are both checkable and exhaustive.
+
+**Sharpen a rushed step's bound first**, because that edit is local and cheap. Split the sequence only when the bound is irreducibly fuzzy *and* you have watched the rush happen — and note that splitting works only across a real context boundary, meaning a hand-off document or a subagent dispatch. An inline call leaves the later steps in context and hides nothing.
+
 ### Prose formatting
 **No hard wrapping.** Write each paragraph and list item as one continuous line; let the editor and renderer soft-wrap. Fixed-width line breaks mid-sentence buy nothing — the agent reads the text regardless of newlines, and every Markdown renderer soft-wraps anyway. Keep line structure only where it is meaningful: code fences, tables, and YAML frontmatter (a folded `description: >-` scalar is fine).
 
@@ -93,13 +110,15 @@ When a skill creates a durable Markdown artifact under `docs/`, follow the host 
 
 Apply these while drafting; they are the difference between a skill that triggers and reads well and one that doesn't:
 
-- **Front-load the leading word** — the first words of `name` and `description` do the invocation work; put the functional term there.
-- **"Use when" trigger** — `description` starts with what it does, then a plain-English "Use when …" clause, phrased slightly pushy to fight undertriggering (name the phrasings/commands that should fire it).
+- **Front-load the leading word** — a leading word is the compact term that names what the skill does, and the first words of `name` and `description` do the invocation work, so put it there. It works twice over when it's a word the model already knows (`commit`, `review`, `slop`, `ledger`): a pretrained word anchors a region of behavior for free, where a coined one charges you definition tokens for the same anchor. Repeat it as a *token* through the body; never restate it as a sentence.
+- **"Use when" trigger** — `description` starts with what it does, then a plain-English "Use when …" clause, phrased slightly pushy to fight undertriggering (name the phrasings/commands that should fire it). A description is a **context pointer**, and it loads on every turn whether or not the skill fires, so spend it on **one trigger per branch, not per synonym**: cover every mode, and collapse the phrasings that rename a single one. Cut identity the body already carries — a pointer says what the material is and when to reach it, never the skill's rules or scope disclaimers. Prune synonyms, never coverage; a branch with no trigger silently never fires.
 - **Skills are for what the model can't already do** — a skill only fires for tasks the base model can't handle directly. If the guidance is obvious, it won't trigger no matter how you word it.
-- **Stay lean; progressive disclosure** — prefer one `SKILL.md`. Add a satellite file (`references/…`) only when content is *large* **and** needed *only sometimes*; guidance needed on every run belongs inline.
+- **Stay lean; disclose by branch** — prefer one `SKILL.md`, and apply [Information hierarchy](#information-hierarchy): inline what every branch needs, push into a satellite file inside the skill's own directory what only some branches reach, and co-locate each concept under one heading. Watch for sprawl, which a trim pass can't fix.
+- **Every step ends on a completion criterion** — per [Completion criteria](#completion-criteria). Write the bound so the agent can tell done from not-done, and prefer the exhaustive form ("every X accounted for") to the productive one ("produce a list of X"). A step that ends on a feeling is where run-to-run variance comes from.
 - **Intent over incantation** — a skill says *what to accomplish and why*, and lets the agent work out the exact invocation. Pin an exact command **only** when it's a stable public contract (`git commit`, `gh pr create`, `grep`, `jq`) where re-deriving it every run just burns tokens and invites variance — and even then, make it self-correcting ("run `gh pr create …`; if a flag is rejected, check `gh pr create --help`"). Never hardcode a volatile or vendor tool's syntax, and never encode a tool's *internal* behavior as if it were contract (output-format parsing, help-text scraping, default-shape assumptions) — that's the brittle stuff that breaks on a tool update; describe the goal and let the agent read the docs. The failure mode to avoid on both ends: pinning brittle syntax that breaks loudly, or over-abstracting a frozen command into "figure it out" that taxes every run quietly.
-- **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability).
-- **Prune no-ops** — test every line for relevance; delete weak sentences rather than trimming them. Explain the *why* behind a rule when it isn't obvious.
+- **One meaning, one place** — no duplication. For internal skills, point to the host repo's conventions doc instead of restating it; for public skills, inline what they need (see Portability). The **environment** is a source of truth too — `package.json` scripts, a `Makefile`, a config file, `--help` output — so a skill that restates one is a cache, and a cache earns its load only when the lookup is expensive. Cache the unwritten convention and the reason behind a choice; leave the one-command lookups where they cannot go stale.
+- **Prompt the positive** — steering by prohibition drags the forbidden behavior into context and makes it *more* available, not less. State the target behavior instead ("write one-line comments" beats "don't write long comments"). A prohibition earns its place only as a hard guardrail you cannot phrase positively, and even then it gets a positive target beside it.
+- **Prune no-ops** — a no-op is an instruction the model already obeys by default, paying load to say nothing. The test is model-relative rather than reader-relative: two people disagreeing about a no-op disagree about the *default*, so settle it by running the skill during [Live test](#7-live-test), not by arguing. Delete the whole sentence rather than trimming its words. Explain the *why* behind a rule when it isn't obvious.
 - **No hard-wrapping** — per [Prose formatting](#prose-formatting).
 - **Classify the output's register** — per [Prose register](#prose-register). Text the skill writes back to its operator is procedural and follows STE; text a reader weighs an opinion against is explanatory; content produced for a third-party audience is out of scope and keeps its own standards. Getting this wrong flattens a verdict or bloats a runbook.
 - **Close with a hand-off** — end on a `Hand off` section per [Closing hand-off](#closing-hand-off): what changed, where it landed, one crowned next move, written in the procedural register.
