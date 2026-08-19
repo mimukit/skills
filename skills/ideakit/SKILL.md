@@ -14,7 +14,7 @@ Keep one ideas repo, one folder per idea, and think about exactly one of them at
 
 An idea is a subject someone wants to think about, not a project they have committed to building. Some ideas become products. Most stay notes, and that is the design.
 
-Six modes. [`capture`](#mode-capture) writes an idea down and stops. [`session`](#mode-session) is the mode that thinks. [`recap`](#mode-recap) reports and writes nothing. [`research`](#mode-research) and [`validate`](#mode-validate) send a question out and bring the answer back. [`close`](#mode-close) records a verdict.
+Six modes. [`capture`](#mode-capture) writes an idea down and stops. [`session`](#mode-session) is the mode that thinks. [`status`](#mode-status) reports and writes nothing. [`research`](#mode-research) and [`validate`](#mode-validate) send a question out and bring the answer back. [`close`](#mode-close) records a verdict.
 
 ## Mode selection
 
@@ -22,12 +22,12 @@ Resolve on intent, not on phrasing.
 
 - "I have an idea", "capture this", "write this down" get `capture`. It records and stops.
 - "Let's think about X", "brainstorm X", "pick up the X idea" get `session`.
-- "Where do my ideas stand", "what should I think about next", "where was I on X" get `recap`.
+- "Where do my ideas stand", "what should I think about next", "where was I on X" get `status`.
 - "Who else builds this", "which library would this need", "what does this category cost" get `research`.
 - "Is this a business", "would anyone pay for this", "should I build this" get `validate`.
 - "I'm dropping this", "I'm building this", "park this one" get `close`.
 
-**An ask that names no idea is `recap` or `session`, never a guess between them.** `recap` reports every idea; `session` asks which one to open. When the ask wants a picture, run `recap`. When the ask wants to think, run `session` and ask for the idea.
+**An ask that names no idea is `status` or `session`, never a guess between them.** `status` reports every idea; `session` asks which one to open. When the ask wants a picture, run `status`. When the ask wants to think, run `session` and ask for the idea.
 
 When the ask is genuinely ambiguous between `capture` and `session`, run `capture` first. A captured idea can always get a session next; a session on an unrecorded idea leaves nothing behind.
 
@@ -91,7 +91,7 @@ Rewrite the head when a session changed what the idea *is*. Refresh the `## Open
 Repair runs at two levels, and each mode repairs only what it can see.
 
 - **Rewrite a topic's router row whenever a mode has that folder open and touches it.** All five writing modes do this.
-- **Report an unregistered folder rather than opening it.** A folder missing from the router needs five fields that live inside it, and reading it would break the guard for a bookkeeping errand. So `recap` names the folder and says to run `session` on it to register it.
+- **Report an unregistered folder rather than opening it.** A folder missing from the router needs five fields that live inside it, and reading it would break the guard for a bookkeeping errand. So `status` names the folder and says to run `session` on it to register it.
 
 ### The slug is permanent
 
@@ -137,15 +137,15 @@ The mode that thinks.
 
 Read `INDEX.md` and resolve one slug. On an unknown slug, run [`capture`](#mode-capture) first, then continue here.
 
-**With no idea named, ask.** Offer the ideas by last touched, plus "a new idea". Use `AskUserQuestion` when four or fewer candidates fit, and a numbered list otherwise. Never guess the idea, and never fall through to `recap`.
+**With no idea named, ask.** Offer the ideas by last touched, plus "a new idea". Use `AskUserQuestion` when four or fewer candidates fit, and a numbered list otherwise. Never guess the idea, and never fall through to `status`.
 
 ### 2. Read only that folder
 
 Read `IDEA.md`, then `NOTES.md`, then only the artifacts those two name. Open nothing else.
 
-### 3. Open with the recap
+### 3. Open with the status report
 
-Print the single-idea recap from [`recap`](#mode-recap) as the first thing the user sees. The session then starts from where the last one stopped rather than from a cold restatement.
+Print the single-idea report from [`status`](#mode-status) as the first thing the user sees. The session then starts from where the last one stopped rather than from a cold restatement.
 
 ### 4. Discuss
 
@@ -166,7 +166,7 @@ A `parked` or `closed` idea that gets a session returns to `active` under a new 
 
 **Done when** the log entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. Then go to [Hand off](#hand-off).
 
-## Mode: `recap`
+## Mode: `status`
 
 Reports, and writes nothing but a router repair.
 
@@ -271,13 +271,13 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Then offer a commit of the ideas repo. Never run it without a yes.
 
-**A `recap` run closes differently.** Its whole output is a hand-off, and the dashboard already crowns the move. State that nothing changed, or name the one router row you repaired. Do not print the move twice, and do not offer a commit on a run that wrote nothing.
+**A `status` run closes differently.** Its whole output is a hand-off, and the dashboard already crowns the move. State that nothing changed, or name the one router row you repaired. Do not print the move twice, and do not offer a commit on a run that wrote nothing.
 
 ## Notes
 
-- **The isolation guard beats every other rule here.** Resolve one slug, open one folder. `recap` reports on every idea and opens none of them, which is the guard working rather than an exception to it.
+- **The isolation guard beats every other rule here.** Resolve one slug, open one folder. `status` reports on every idea and opens none of them, which is the guard working rather than an exception to it.
 - **`capture` stops.** Its job is to lose nothing when an idea arrives at a bad moment. Turning it into a session is how the idea gets dropped instead.
 - **Never rename a slug.** Confirm it at creation and leave it alone. The router's `Idea` column is where a changed name goes.
 - **This repo ships no code.** ideakit never writes application code and never opens issues. An idea that becomes real work moves to a project repo and gets issues there.
 - **Never commit the ideas repo on its own.**
-- No writable filesystem (a browser-based agent)? Say so plainly, print the `NOTES.md` entry and any artifact as code blocks for the user to save, and give the paths they belong at. Do not report a write that did not happen. `recap` still runs when the filesystem is readable.
+- No writable filesystem (a browser-based agent)? Say so plainly, print the `NOTES.md` entry and any artifact as code blocks for the user to save, and give the paths they belong at. Do not report a write that did not happen. `status` still runs when the filesystem is readable.

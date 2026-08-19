@@ -6,9 +6,9 @@ Think an idea through across many sessions — one ideas repo with a folder per 
 
 | | |
 |---|---|
-| Modes | [`capture`](#capture) · [`session`](#session) · [`recap`](#recap) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
+| Modes | [`capture`](#capture) · [`session`](#session) · [`status`](#status) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
 | Tools | `Read`, `Write`, `Edit`, `Glob`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
-| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides) — Markdown only; nothing in `recap` |
+| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides) — Markdown only; nothing in `status` |
 | Visibility | public |
 
 ## What it does
@@ -33,7 +33,7 @@ The `AGENTS.md` still exists, cut to about ten lines. It carries the isolation g
 
 `INDEX.md` is the router — one row per idea, with slug, aliases, a one-line summary, the open question, status, and last-touched date.
 
-The summary and open-question columns are what make [`recap`](#recap) possible without opening a single folder. They're also the obvious place for the guard to leak, and the tempting fix — "read the row selectively" — is a fiction. A Markdown table gets read whole. You can't put a paragraph of reasoning about idea B in a file that every session on idea A reads top to bottom, then claim the reasoning didn't land in context.
+The summary and open-question columns are what make [`status`](#status) possible without opening a single folder. They're also the obvious place for the guard to leak, and the tempting fix — "read the row selectively" — is a fiction. A Markdown table gets read whole. You can't put a paragraph of reasoning about idea B in a file that every session on idea A reads top to bottom, then claim the reasoning didn't land in context.
 
 So the guard is kept by bounding what the router is *allowed* to hold. Both cells are capped at one line, and each states what the idea is and what is open — never why, never a position, never a half-formed argument. Ten ideas cost ten lines to route and nothing to contaminate.
 
@@ -75,9 +75,9 @@ There's an escape: say you're thinking out loud and the stress pass is skipped. 
 
 **Every session appends to `NOTES.md`**, three to six lines at minimum. Making that optional is what empties an ideas repo — and it costs the isolation guard its payload, since the whole point of reading one folder is that the folder holds the thread.
 
-With no idea named it **asks** rather than guessing, offering recent ideas plus "a new idea". It never falls through to `recap`; a session is a different transaction from a report, and silently swapping one for the other is worse than one question.
+With no idea named it **asks** rather than guessing, offering recent ideas plus "a new idea". It never falls through to `status`; a session is a different transaction from a report, and silently swapping one for the other is worse than one question.
 
-### `recap`
+### `status`
 
 Reports and writes nothing but a router repair. It has two scopes, which is why there's no separate `list` mode — the difference between "where do all my ideas stand" and "where does this one stand" is an argument, not a posture.
 
@@ -87,7 +87,7 @@ Ranking on recency was the first draft, and it produced a crown that just restat
 
 There's no stale marker. A tag most rows would wear within a year is a verdict on a repo whose entire premise is that ideas sit. It prints the age instead — `untouched 94 days` — and lets you judge.
 
-**Its cache repair is detect-only**, which is the one place the guard and the self-heal genuinely conflict. Writing a router row needs five fields that all live inside the folder, so repairing an unregistered folder means opening it — for bookkeeping. So `recap` names the folder, says to run `session` on it, and stops. The modes that already have a folder open repair their own row.
+**Its cache repair is detect-only**, which is the one place the guard and the self-heal genuinely conflict. Writing a router row needs five fields that all live inside the folder, so repairing an unregistered folder means opening it — for bookkeeping. So `status` names the folder, says to run `session` on it, and stops. The modes that already have a folder open repair their own row.
 
 ### `research`
 
@@ -132,7 +132,7 @@ Then the answer goes into the idea's own `NOTES.md` as a dated entry naming the 
 
 ## Hands off to
 
-Mostly to itself, chosen by state: another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`recap`](#recap) is that routing rule made available on demand.
+Mostly to itself, chosen by state: another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`status`](#status) is that routing rule made available on demand.
 
 It leaves the repo when an idea is settled enough to shape work. Then the next move is [`plankit`](./plankit.md) in the project repo, not here — and the idea's folder stays put either way.
 
