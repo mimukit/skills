@@ -31,6 +31,18 @@ Fiction is the exception, where inventing detail is the job.
 
 Copy-editing to make writing read well — not a way to disguise machine-written work as human where honesty is required. Academic submissions, disclosure-bound writing, attributed work: edit for the reader, not to game an automated check.
 
+## Who reads it, and what that rules out
+
+humankit fires on prose a person reads. An agent instruction file is not that, and running the catalog over one does real damage, because there the tells *are* the machinery.
+
+Take a `SKILL.md`, an agent instruction file such as `CLAUDE.md` or an `AGENTS`-style guide, a system prompt, a rules file. A metaphor noun the document defines and reuses anchors a region of behavior in one token. Mechanical boldface is what marks the load-bearing rule among twenty that aren't. A formula repeated verbatim is the thing that makes the behavior repeat. All three are humankit tells, and the last one is the exact opposite of what "vary the rhythm" asks for. Strip them and the file reads better to a person while steering the model worse.
+
+So those files get named as out of scope and routed instead — a prompt to [`promptkit`](./promptkit.md), a skill to [`skillkit`](./skillkit.md). promptkit has carried the mirror of this rule since it shipped: never run an em-dash rule or an AI-vocabulary list against a prompt, where scaffolding and repetition are features. The guard now sits on both sides, which matters because only one of the two skills can actually cause the damage.
+
+Procedural text gets the softer version. A runbook, a QA checklist, a handoff: those take the subtraction and skip the voice half. Uniform short sentences are the correct register there, so [Removing tells is half the job](#removing-tells-is-half-the-job) would rewrite them into something worse than it found.
+
+Documentation, a README, release notes, PR bodies, UI copy: all in scope as normal. The gate is who reads it, not where it lives.
+
 ## The tells
 
 They matter in **clusters**, not isolation. One em dash or one "however" proves nothing. Em dashes plus rule-of-three plus "vibrant tapestry" plus a "Conclusion" section is a confession.
@@ -125,4 +137,4 @@ npx skills add mimukit/skills -s humankit
 
 Source: [`skills/humankit/SKILL.md`](../../../skills/humankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`f5467c7` on 2026-08-19._
+_Verified against `main`@`a3f3769` on 2026-08-19._

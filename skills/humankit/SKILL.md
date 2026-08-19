@@ -1,7 +1,7 @@
 ---
 name: humankit
 description: >-
-  Strip the tells of AI-generated writing from prose so it reads like a person wrote it. Use when asked to humanize text, remove AI-isms, make writing sound less like ChatGPT, edit out "AI slop," or review a draft for robotic phrasing — covers em-dash overuse, rule-of-three cadence, promotional puffery, abstract metaphor nouns, filler, hedging, and the AI vocabulary words.
+  Strip the tells of AI-generated writing from prose so it reads like a person wrote it. Use when asked to humanize text, remove AI-isms, make writing sound less like ChatGPT, edit out "AI slop," or review a draft for robotic phrasing without rewriting it — covers em-dash overuse, puffery, filler, and the AI vocabulary words.
 license: MIT
 allowed-tools: Read, Edit, Write
 metadata:
@@ -19,6 +19,10 @@ The aim is ordinary readability: the prose a careful human editor would produce.
 ## When this fires
 
 The user hands you text and asks to "humanize" it, "remove the AI tells," "make it sound human," "de-slop this," or "edit out the ChatGPT voice" — or asks you to *review* a draft for those tells without rewriting. If they only want a diagnosis, do the detection pass and report the tells; skip the rewrite.
+
+**Prose for a person, not instructions for a model.** A `SKILL.md`, an agent instruction file (`CLAUDE.md`, an `AGENTS`-style guide, `.cursorrules`), a system prompt, a rules file: every tell below is a lever in that text. A metaphor noun the document defines and reuses anchors a region of behavior in one token, boldface marks the load-bearing rule among the ones that aren't, and a formula repeated verbatim is what makes the behavior repeat. Say the file is out of scope and name the pass that owns it — **promptkit** for a prompt, **skillkit** for a skill, when either is installed — rather than rewriting it. Documentation, a README, release notes, a PR body, and UI copy stay in scope, because a person reads those.
+
+**Procedural text takes the subtraction only.** A runbook, QA steps, a handoff, install instructions: run the tells and [the two cut tests](#two-cut-tests), then skip [Removing tells is half the job](#removing-tells-is-half-the-job). Uniform short sentences and a repeated sentence shape are the correct register there, not a tell to remove.
 
 How you were reached decides what you deliver:
 
