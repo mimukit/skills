@@ -1,7 +1,7 @@
 ---
 name: promptkit
 description: >-
-  Sharpen the prompt before you send it — the one-shot instruction you're about to hand a coding agent, or the system prompt your application ships. Use when the user says "optimize this prompt", "improve this prompt", "make this prompt better", "sharpen this instruction", "what's wrong with this prompt", "write a system prompt for my app", "rewrite my system prompt", or "/promptkit".
+  Sharpen the prompt before you send it — the one-shot instruction you're about to hand a coding agent, or the system prompt your application ships. Use when the user says "optimize this prompt", "what's wrong with this prompt", "write or rewrite the system prompt my app ships", or "/promptkit".
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, AskUserQuestion
 metadata:
@@ -174,7 +174,7 @@ This is also where the **model shape** is inferred, from the model identifier al
 
 ### 2. One capture round
 
-`system` has no tree to mine: nothing on disk knows who talks to the app, what a response must look like, or what it must never do. So it gets **one bounded round** covering the six contract parts — what the app does, who talks to it, what a response has to look like, what it must never do. One round, not an interview.
+`system` has no tree to mine: nothing on disk knows who talks to the app, what a response must look like, or what it must never do. So it gets **one bounded round** covering the six contract parts below — all six, including the missing-input behavior and the variable contract that a round shaped around "what does the app do" quietly skips. One round, not an interview.
 
 Same shape as `task`'s: **closed lists with labeled options**, answerable as `1b, 2a`. This round asks the most of the user of anything promptkit does, which is exactly why it must be the cheapest thing to answer. An unanswered part becomes a stated default in the prompt, not a second round.
 
@@ -272,7 +272,7 @@ Folklore that survives in prompts because it once helped on a 2023-era model. Ea
 |---|---|---|---|
 | B | Emoji section headers | tokens spent on decoration, and some tokenizers split them badly | plain headings |
 | B | Politeness padding — "please", "if you would", "thanks in advance" | costs tokens, changes nothing | delete |
-| B | Negative-only instruction — "don't be verbose" | says what to stop, never what to do | "answer in at most three sentences" |
+| B | Negative-only instruction — "don't be verbose" | naming the behavior activates it, and the negation is a weak modifier over it — the ban makes it *more* available | "answer in at most three sentences" |
 | B | Restating what the repo's instruction file already says | duplication invites contradiction with the file itself | one pointer line, and an explicit override where you mean to override |
 | T | Placeholders — `[FILE]`, `<your goal here>`, `TODO` | a prompt you have to edit before sending isn't finished | bake the real value in |
 | S | "Be concise but thorough", "friendly yet professional" | contradictory adjectives resolve to nothing | pick one and give it a measurable form |
