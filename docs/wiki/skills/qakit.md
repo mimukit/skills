@@ -161,7 +161,7 @@ The human, to run the plan in a fresh checkout — scenario by scenario, resetti
 
 It never marks a *manual* case as passed — those are yours to execute. The agent only fills the Automated verification section.
 
-If what you actually want is automated tests, qakit says so and stops rather than producing a manual plan for it.
+If what you actually want is automated tests, qakit says so and stops rather than producing a manual plan for it — that's [`testkit`](./testkit.md)'s job when it's installed.
 
 ## Install
 
@@ -171,4 +171,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c11dbaf` on 2026-08-09._
+_Verified against `main`@`e14d201` on 2026-08-19._

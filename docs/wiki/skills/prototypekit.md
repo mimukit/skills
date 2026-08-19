@@ -91,4 +91,4 @@ npx skills add mimukit/skills -s prototypekit
 
 Source: [`skills/prototypekit/SKILL.md`](../../../skills/prototypekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`73826b0` on 2026-08-07._
+_Verified against `main`@`e14d201` on 2026-08-19._

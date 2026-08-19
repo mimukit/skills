@@ -17,7 +17,7 @@ verifykit drives a just-built feature the way a user would, captures what happen
 
 It sits between reviewing the code and opening the PR. A review reads the source; this **exercises the running feature**.
 
-It is a **driver and recorder, nothing more**. It doesn't write tests, doesn't produce a human checklist (that's [`qakit`](./qakit.md)), and doesn't provision environments. If the change is backend or CLI-only with nothing to drive, it says so and stops rather than inventing a flow.
+It is a **driver and recorder, nothing more**. It doesn't write tests (that's [`testkit`](./testkit.md)), doesn't produce a human checklist (that's [`qakit`](./qakit.md)), and doesn't provision environments. If the change is backend or CLI-only with nothing to drive, it says so and stops rather than inventing a flow.
 
 ## How it works
 
@@ -82,4 +82,4 @@ npx skills add mimukit/skills -s verifykit
 
 Source: [`skills/verifykit/SKILL.md`](../../../skills/verifykit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`44c225d` on 2026-08-11._
+_Verified against `main`@`e14d201` on 2026-08-19._

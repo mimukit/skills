@@ -26,7 +26,7 @@ It's the autonomous sibling of [`statuskit`](./statuskit.md): statuskit tells a 
 | | |
 |---|---|
 | **Input** | an issue number, or `all` |
-| **Success** | an open PR carrying documented assumptions, unresolved nits, and a pointer to a committed QA plan — issue at `in-review` |
+| **Success** | an open PR carrying documented assumptions, what the acceptance checks confirmed, unresolved nits, and a pointer to a committed QA plan — issue at `in-review` |
 | **Blocked** | **no PR.** Worktree and commits intact, a comment naming the precise stuck-state, the issue labeled for whoever picks it up, and in a batch the next issue starts |
 
 **afkkit never publishes half-broken work.**
@@ -116,6 +116,8 @@ Splitting the step by job fixes that without losing either half. Running the che
 
 A ❌ from Verify is **evidence, not an escalation** — review ranks it through reviewkit's own requirement-completeness pass, so afkkit adds no second severity classifier. The one exception is total: code that doesn't run at all is an execution gap, and there's no point paying for a review of it.
 
+Verify is also the one step that invokes no companion kit — it runs the check list the spec gate wrote, nothing more. That's a degradation guard: a missing qakit blocks the QA *plan*, never the *checks*, so an unattended run still gets its defect discovery even on a host where only afkkit's hard requirements are installed.
+
 ## The escalation contract
 
 The one policy afkkit owns. Whenever a step can't proceed, it escalates rather than pushing forward.
@@ -166,4 +168,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`a429bba` on 2026-08-11._
+_Verified against `main`@`e14d201` on 2026-08-19._

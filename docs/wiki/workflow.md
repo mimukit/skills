@@ -408,4 +408,4 @@ mergekit finish 34                  # → merge commit, on your say-so
 issuekit close 42                   # → close, unblock dependents, tear down
 ```
 
-_Verified against `main`@`572d6cc` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

@@ -26,7 +26,7 @@ The frontmatter carries the contract:
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` is empty — no skill has needed it yet. All 31 skills live in `skills/`, and every one is `metadata.internal: false`.
+`.agents/skills/` is empty — no skill has needed it yet. All 32 skills live in `skills/`, and every one is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
@@ -107,4 +107,4 @@ Process artifacts record what was decided at a moment in time and are never read
 
 Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
 
-_Verified against `main`@`c772308` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

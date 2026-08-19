@@ -85,6 +85,8 @@ A wide mechanical refactor that genuinely can't be one slice gets sequenced **ex
 
 The proposal comes as a **preview table** and stops for approval. The **Depends on** column is where independence is decided out loud, and keeping it as empty as honesty allows is the goal — a mostly-blank column is a tracker you can fan out. **This guard is the point: never spray a repo with auto-generated issues.**
 
+The table also carries a **Priority** column. issuekit proposes a priority per row read off the plan — what it calls core versus polish, what it defers, what it flags as a risk — and expects to be overruled, because a plan can say what's central without saying why the work is being done at all, which is the thing priority actually encodes. It never proposes `critical` from a plan: that label means *preempt work already in progress*, a claim about right now that a document written last week can't make, so the most important row gets `high` and you escalate it if you mean it. Approved priorities land in the same `gh issue edit` call as the lifecycle label, so a fresh issue never sits half-labeled where a concurrent survey could read it. And they land **regardless of the grill gate**, which governs only the lifecycle namespace — an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment you just made in the preview. Dropping it would leave the ungrilled backlog, the exact pile that most needs ordering, as the one part of the tracker nothing can rank.
+
 It also **guards against duplicates** before creating, because `create` is the workflow's entry point and gets re-invoked. And **milestones are opt-in** — never introduced by default, because you'd then have to maintain them.
 
 The **grill gate** decides which label vocabulary applies. A plan carrying grillkit's `Grilled: YYYY-MM-DD` stamp gets the normal `ready`/`blocked` pair. An ungrilled source gets **`needs-planning` on everything** — which is what keeps afkkit from picking up work a human hasn't grilled.
@@ -121,7 +123,7 @@ It **deliberately does not write the forward `Closes #N` link onto a fresh PR** 
 
 **If which issue a PR should have closed is ambiguous, it asks rather than guesses.** Closing the wrong issue is worse than leaving one open.
 
-Its hand-off prints the **actionable set** — every open issue that's `in-progress` or `ready` after the sync — so you see at a glance what's being worked and what you can pick up.
+Its hand-off prints the **actionable set** — every open issue that's `in-progress` or `ready` after the sync — so you see at a glance what's being worked and what you can pick up. `in-progress` rows come first, each group is ordered by priority, and the Priority column is dropped when no row carries one: an all-blank column reads as "nothing matters" when the truth is "nobody has ranked these", and the fix for that is `triage`, not a wider table. The crowned row follows one rule — priority orders *within* each group and never jumps a `ready` issue over an `in-progress` one, because a half-built `medium` still costs less to land than a fresh `high`. The exception is a `critical`, which means preempt by definition: it gets crowned over in-progress work, with a plain note about what's being set down.
 
 ### `triage`
 
@@ -147,7 +149,7 @@ triage only classifies. The fixes it can't make itself route to a sibling mode.
 
 ## Hands off to
 
-By mode and by what came back. `create` with `ready` issues → `start` on the most valuable one. `create` with everything `needs-planning` → [`grillkit`](./grillkit.md), because nothing is workable unattended yet. `start` → the worktree and [`implementkit`](./implementkit.md), or [`afkkit`](./afkkit.md) for an unattended run. `close` → whatever this close unblocked, unless **the worktree survived dirty**, which outranks everything, because unlanded work in a stale worktree is what gets lost.
+By mode and by what came back. `create` with `ready` issues → `start` on the highest-priority one, breaking a tie on whichever frees the most other work. `create` with everything `needs-planning` → [`grillkit`](./grillkit.md), because nothing is workable unattended yet. `start` → the worktree and [`implementkit`](./implementkit.md), or [`afkkit`](./afkkit.md) for an unattended run. `close` → whatever this close unblocked, unless **the worktree survived dirty**, which outranks everything, because unlanded work in a stale worktree is what gets lost.
 
 ## Install
 
@@ -157,4 +159,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb5f11d` on 2026-08-07._
+_Verified against `main`@`e14d201` on 2026-08-19._

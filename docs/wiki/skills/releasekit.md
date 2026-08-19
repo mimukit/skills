@@ -43,7 +43,7 @@ A state file would answer it and was rejected: it drifts, it needs gitignoring, 
 
 Instead it reads the repo. **A merged `chore(release): vX.Y.Z` commit on the base with no tag pointing at it means finish; anything else means prepare.** The repo is the state, so there is nothing to keep in sync.
 
-The known weakness is stated rather than hidden: a repo that squash-merges the release PR under a rewritten title produces no `chore(release):` commit, so *finish* never fires. The mitigation is that the preview names the detected phase on its first line, before anything mutates.
+The detection has a known weakness: a repo that squash-merges the release PR under a rewritten title produces no `chore(release):` commit, so *finish* never fires. The mitigation is that the preview names the detected phase on its first line, before anything mutates.
 
 ## Why the last tag is the nearest ancestor
 
@@ -108,4 +108,4 @@ npx skills add mimukit/skills -s releasekit
 
 Source: [`skills/releasekit/SKILL.md`](../../../skills/releasekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c0f465c` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

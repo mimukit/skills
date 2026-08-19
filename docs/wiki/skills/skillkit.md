@@ -129,4 +129,4 @@ npx skills add mimukit/skills -s skillkit
 
 Source: [`skills/skillkit/SKILL.md`](../../../skills/skillkit/SKILL.md) · [Add a new skill by hand](../how-to/add-a-new-skill.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`f5467c7` on 2026-08-19._
+_Verified against `main`@`e14d201` on 2026-08-19._

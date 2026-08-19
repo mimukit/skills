@@ -138,4 +138,4 @@ npx skills add mimukit/skills -s paseokit
 
 Source: [`skills/paseokit/SKILL.md`](../../../skills/paseokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`27667cb` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

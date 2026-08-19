@@ -162,4 +162,4 @@ Same subject means update in place, never a second file. On a genuine collision 
 
 `.github/workflows/lint.yml` runs on pushes to `main` and on every pull request. One job on `ubuntu-latest`: `actions/checkout@v4`, then `make lint`, then `make security`.
 
-_Verified against `main`@`c772308` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

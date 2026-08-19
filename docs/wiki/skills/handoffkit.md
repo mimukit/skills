@@ -76,4 +76,4 @@ npx skills add mimukit/skills -s handoffkit
 
 Source: [`skills/handoffkit/SKILL.md`](../../../skills/handoffkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c11dbaf` on 2026-08-09._
+_Verified against `main`@`e14d201` on 2026-08-19._

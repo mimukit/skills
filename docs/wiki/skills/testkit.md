@@ -119,4 +119,4 @@ npx skills add mimukit/skills -s testkit
 
 Source: [`skills/testkit/SKILL.md`](../../../skills/testkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`b2e3fd3` on 2026-08-18._
+_Verified against `main`@`e14d201` on 2026-08-19._

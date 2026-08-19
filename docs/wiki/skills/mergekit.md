@@ -104,4 +104,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1e73cea` on 2026-08-07._
+_Verified against `main`@`e14d201` on 2026-08-19._

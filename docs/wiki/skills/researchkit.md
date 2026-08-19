@@ -87,4 +87,4 @@ npx skills add mimukit/skills -s researchkit
 
 Source: [`skills/researchkit/SKILL.md`](../../../skills/researchkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`c9d55aa` on 2026-08-07._
+_Verified against `main`@`e14d201` on 2026-08-19._
