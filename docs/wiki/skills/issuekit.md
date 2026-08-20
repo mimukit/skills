@@ -147,6 +147,8 @@ triage only classifies. The fixes it can't make itself route to a sibling mode.
 
 **Labels are repokit's to create.** The label maps here are a shared contract with [`repokit`](./repokit.md), duplicated on purpose because each skill must stand alone once installed. This repo's `make lint` diffs them on every full run and errors on drift — one check covers both namespaces, since the rows share a format.
 
+**Whether a project uses GitHub Issues at all is [`statuskit`](./statuskit.md)'s question, not issuekit's.** It sounds like it should live here, and the charter argument for that is real. It doesn't, because invoking issuekit already answers it: someone asking to file, start, or close an issue has said where their work lives. So `create` files issues without first checking whether the project files issues, and no mode ever declines on the grounds that the repo looks like it tracks work in Linear. statuskit needs the answer because it surveys a repo nobody has told it anything about and has to crown exactly one move; issuekit is always invoked deliberately.
+
 ## Hands off to
 
 By mode and by what came back. `create` with `ready` issues → `start` on the highest-priority one, breaking a tie on whichever frees the most other work. `create` with everything `needs-planning` → [`grillkit`](./grillkit.md), because nothing is workable unattended yet. `start` → the worktree and [`implementkit`](./implementkit.md), or [`afkkit`](./afkkit.md) for an unattended run. `close` → whatever this close unblocked, unless **the worktree survived dirty**, which outranks everything, because unlanded work in a stale worktree is what gets lost.
@@ -159,4 +161,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`06848f6` on 2026-08-20._

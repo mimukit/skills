@@ -8,7 +8,7 @@ Implement a plan, spec, or issue into working code — then stop, gated on the r
 |---|---|
 | Modes | straight-through or TDD, resolved by precedence |
 | Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `Skill` |
-| Writes | application code — unstaged, never committed |
+| Writes | application code, and a `(built …)` stamp on the phases it finished — unstaged, never committed |
 | Visibility | public |
 
 ## What it does
@@ -70,9 +70,25 @@ While building, it also typechecks and runs the single affected test file as eac
 
 When the work includes UI and [`uikit`](./uikit.md) is installed, implementkit applies it to those files rather than writing them blind — uikit carries the project's design constraint and runs its own visual pre-flight. Without it, the UI is written directly. Everything else is unchanged: the input contract, the resolved mode, and the done-gate, which remains the only gate.
 
+## It stamps the phase it built
+
+When the input was a plan file and the gate went green, implementkit appends `(built YYYY-MM-DD)` to the heading of each phase it finished:
+
+```markdown
+### Phase 2: auth (#41) (built 2026-08-20)
+```
+
+The slot is [`plankit`](./plankit.md)'s, shared with the `(#41)` [`issuekit`](./issuekit.md) writes when it files that phase. Both can sit there at once.
+
+**Why implementkit and not something else:** it's the only skill that knows. A survey tool reading git history has to guess, and a human-maintained status line goes stale — this repo has one that spent weeks announcing "Not yet built" for a skill that had already shipped. The skill that finishes the work is the one that can say so without inferring anything.
+
+Three rules keep the stamp trustworthy. It goes on **only the phases actually built**, so a run narrowed to one phase leaves every other heading alone. It goes on **after the gate passes**, never before, because the stamp is a claim that the work proved out. And it's left **unstaged** like everything else in the run, so commitkit picks up the plan alongside the code that implements it.
+
+It stamps on every run, whatever the project's tracker is. Deciding whether this project files GitHub issues would be a judgment implementkit doesn't need, and keeping that judgment in exactly one skill ([`statuskit`](./statuskit.md)) is what stops four skills drifting into four different answers.
+
 ## Hands off to
 
-[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, and the gate result — then stops.
+[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, the gate result, and which phases it stamped — then names the next unbuilt phase, or says the plan is fully built, and stops.
 
 ## Install
 
@@ -82,4 +98,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`06848f6` on 2026-08-20._

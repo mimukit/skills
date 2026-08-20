@@ -39,6 +39,10 @@ That guard holds no matter who runs it: an issue only reaches `ready` after a hu
 
 This is the one companion it will **not degrade around**. If issuekit isn't installed, afkkit refuses the run rather than reaching for `gh` to re-implement the guard — because a second copy of a gate is a gate that can drift open, and the copy inside an unattended orchestrator is exactly the one nobody would notice drifting.
 
+**A GitHub tracker is required too, and that's a separate refusal.** The safety property is a label, so a project tracking its work in Linear, Jira, a file, or nobody's system has nothing for afkkit to stand on, even with every companion kit installed. afkkit is the one kit in the collection that genuinely cannot run without GitHub Issues, and unlike the rest it does not degrade to a plain `gh` fallback or a plan document — there is no substitute for a guard a human has to open.
+
+It says that as the reason, rather than emitting a missing-dependency error. Those read as "go install issuekit," which sends you off to install a kit you already have and tells you nothing about the actual blocker. The route is [`issuekit`](./issuekit.md) `create` to file the plan first.
+
 ## How the conductor works
 
 The session you invoke runs as a **conductor**, dispatching each heavy step as a subagent working inside the issue's worktree. That keeps the conductor's context small and lets each step run on the model that fits it.
@@ -168,4 +172,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`06848f6` on 2026-08-20._

@@ -105,20 +105,23 @@ Its ladder, when `gh` is available:
 
 | # | What it sees | Where it routes you |
 |---|---|---|
-| 0 | a workable `critical` issue that isn't already the crowned move | drop what you're on — `issuekit start` it, or resume it |
+| 0 † | a workable `critical` issue that isn't already the crowned move | drop what you're on — `issuekit start` it, or resume it |
 | 1 | your PR is red or has changes requested | `mergekit fix` |
 | 2 | your PR that nobody is reviewing | self-review it, or request a reviewer |
-| 3 | an in-progress issue whose branch you're on | `implementkit` |
+| 3 † | an in-progress issue whose branch you're on | `implementkit` |
 | 4 | orphaned uncommitted or unpushed work | `commitkit`, then push |
 | 5 | a stash | restore or drop it |
 | 6 | an unmerged local feature branch | `gitkit` |
-| 7 | a stale-tracker signal | `issuekit sync` |
-| 8 | a `ready` issue waiting | `issuekit start`, then `implementkit` |
-| 9 | an unlabeled or odd-status issue | `issuekit triage` |
-| 10 | an unassessed backlog — open issues with no priority label | `issuekit triage` |
+| 7 † | a stale-tracker signal | `issuekit sync` |
+| 8 † | a `ready` issue waiting | `issuekit start`, then `implementkit` |
+| 8b | **no tracker:** the next unbuilt phase of the newest plan | `implementkit` |
+| 9 † | an unlabeled or odd-status issue | `issuekit triage` |
+| 10 † | an unassessed backlog — open issues with no priority label | `issuekit triage` |
 | 11 | an unfiled plan, or nothing at all | `issuekit create` or `plankit` |
 
 **Rung 0 is numbered zero because it is not really a rung.** It is the one documented override of the finish-first spine — everything below it is the actual ladder, read in order. If rung 0 fires most runs, `critical` has stopped meaning anything, and the real move is `issuekit triage`.
+
+**† fires only when the project actually tracks work in GitHub Issues.** That is a policy fact rather than a capability one, so `gh` answering proves nothing: a repo can have Issues enabled and full of user bug reports while every planned change lives in Linear. statuskit resolves it explicitly — the prompt, then the repo's agent-guide file, then detection, then unknown — and it is the only skill in the collection that does. Six of these twelve rungs turn on the answer, which is why rung 8b exists: without it a trackerless project falls past every issue rung and gets crowned nothing.
 
 Without `gh` it falls back to a six-rung git-only ladder over the same shape: uncommitted work, unpushed commits, a stash, an unmerged branch, the newest plan on disk, then "start something". No repo yet? The move is `plankit`.
 
@@ -155,7 +158,7 @@ The code is throwaway by construction — marked `*.prototype.*`, registered in 
 
 ## Phase 2 — Plan
 
-The flow is **plankit drafts → grillkit hardens → issuekit files**. The plan document is the contract all three read.
+The flow is **plankit drafts → grillkit hardens → issuekit files**, and on a project that tracks work outside GitHub it is **plankit drafts → grillkit hardens → implementkit builds**. The plan document is the contract every one of them reads, and on the second path it is also the work list: `implementkit` stamps `(built YYYY-MM-DD)` onto each phase heading it finishes, so the plan itself says what is left and `statuskit` can rank it.
 
 ### plankit — draft the plan
 

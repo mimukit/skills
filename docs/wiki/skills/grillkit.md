@@ -94,9 +94,13 @@ When a frontier question needs an environmental fact and a sub-agent tool exists
 
 A hardened plan gets stamped `Grilled: YYYY-MM-DD` directly under the title. That stamp is durable, machine-readable provenance: [`issuekit`](./issuekit.md) reads it and only labels a plan's issues `ready` — safe for unattended work — when it's present, filing ungrilled plans as `needs-planning` instead.
 
+The stamp is provenance rather than a tracker artifact, so it's written identically on a project that files no issues at all. There it clears the plan to be built directly instead of clearing it to be filed.
+
 ## Hands off to
 
-[`issuekit`](./issuekit.md), because the stamp is the whole point of finishing a grill: a hardened plan is ready to become issues.
+Whatever the stamp unlocks on this project, because that is the whole point of finishing a grill. Where work is tracked in GitHub Issues, that's [`issuekit`](./issuekit.md): the hardened plan is ready to become issues. Where it's tracked in Linear, a file, or nowhere, the same stamp clears the plan to be built, so it names [`implementkit`](./implementkit.md) and the first phase instead.
+
+It doesn't assume the first case. A project living on GitHub may still run its backlog elsewhere, and the prompt or the repo's agent-guide file is what says which.
 
 Without a plan file, the decisions feed [`implementkit`](./implementkit.md) or a decision record via [`domainkit`](./domainkit.md). Any question raised and *not* resolved gets named — a deferred decision is not a decision, and it resurfaces downstream as a blocked build.
 
@@ -108,4 +112,4 @@ npx skills add mimukit/skills -s grillkit
 
 Source: [`skills/grillkit/SKILL.md`](../../../skills/grillkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`06848f6` on 2026-08-20._

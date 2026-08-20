@@ -15,7 +15,9 @@ Turn a rough feature or change into a structured plan document, before any code.
 
 plankit is generative. It brainstorms the approach, settles the decisions a coherent draft needs, and writes a plan grounded in the real codebase rather than a guess.
 
-It's the front of a three-step flow — **plankit drafts → [`grillkit`](./grillkit.md) hardens → [`issuekit`](./issuekit.md) files** — so the document it writes is the exact input those next steps expect.
+It's the front of a flow whose last step depends on the project: **plankit drafts → [`grillkit`](./grillkit.md) hardens → [`issuekit`](./issuekit.md) files** where work is tracked in GitHub Issues, and **plankit drafts → grillkit hardens → [`implementkit`](./implementkit.md) builds** where it isn't. Either way the document it writes is the exact input the next step expects.
+
+That branch used to be missing, and the flow was stated as three fixed steps ending in issuekit. Plenty of teams plan in a repo on GitHub and track their work in Linear, Jira, or a file, and telling them on every run to go file GitHub issues is a confident recommendation built on an assumption nobody checked.
 
 plankit **plans only**: no application code, no issues.
 
@@ -72,9 +74,23 @@ This is a contract, not a suggestion — grillkit and issuekit both read it. The
 
 A hardened plan carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when a plan survives a session, and issuekit reads it as the gate for filing issues as `ready`. plankit never writes the stamp itself — a fresh draft is ungrilled by definition.
 
+### The phase-heading annotation slot
+
+A phase heading ends in an optional annotation, and two other kits write into it. plankit writes the bare heading and never annotates one, because a fresh plan has been neither filed nor built.
+
+```markdown
+### Phase 2: auth (#41) (built 2026-08-20)
+```
+
+`(#41)` is [`issuekit`](./issuekit.md) saying where the phase is tracked. `(built …)` is [`implementkit`](./implementkit.md) saying the phase is done, written after its gate goes green. They coexist.
+
+The slot is documented here because plankit owns the plan-doc format, and issuekit's `(#41)` arguably belonged here all along. It matters most on projects that file no issues: those plans are their own work list, and something has to be able to answer "what's left in this plan?" from the plan alone.
+
+**A plan with no annotation anywhere makes no claim about itself.** Nothing may read its phases as unbuilt. That's what lets the convention arrive with no migration and no backfill — plans written before it stay silent and correct, and a plan starts making claims the first time something stamps it.
+
 ## Hands off to
 
-[`grillkit`](./grillkit.md) to pressure-test the draft, which can update the same file in place. Then [`issuekit`](./issuekit.md) to turn the hardened plan into GitHub issues.
+[`grillkit`](./grillkit.md) to pressure-test the draft, which can update the same file in place. Then [`issuekit`](./issuekit.md) to turn the hardened plan into GitHub issues, or [`implementkit`](./implementkit.md) to build straight from it when the project files no issues. It names whichever applies, and both when nothing settles which.
 
 If the planning surfaced project vocabulary worth pinning down or a hard-to-reverse trade-off, it offers [`domainkit`](./domainkit.md) — otherwise, recording a glossary entry or ADR directly.
 
@@ -86,4 +102,4 @@ npx skills add mimukit/skills -s plankit
 
 Source: [`skills/plankit/SKILL.md`](../../../skills/plankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`06848f6` on 2026-08-20._
