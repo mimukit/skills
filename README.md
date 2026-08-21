@@ -49,6 +49,7 @@ Makefile                        command surface (run `make help`)
 | `wikikit` | generate and maintain in-repo reader docs — getting-started, how-tos, architecture, runbooks — with every command verified against the code | public |
 | `qakit` | generate a manual QA/test plan for a just-built feature | public |
 | `validatekit` | pressure-test a startup idea and grade the evidence behind it before you build | public |
+| `namekit` | name a project to a convention you already use, and prove the name is free on the domain, npm, and GitHub | public |
 | `plankit` | turn a rough idea into a structured plan doc before any code | public |
 | `grillkit` | interrogate any idea one decision at a time before you commit | public |
 | `researchkit` | research the options for a technical decision against primary sources and recommend one | public |

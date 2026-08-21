@@ -20,7 +20,7 @@
     {
       "title": "Planning & Design",
       "description": "Validate that an idea is worth building, research a technical decision, prototype your way to the answers reading won't settle, survey the code you already have for the structural change worth making, draft a plan from a rough idea, then pressure-test it before you write any code.",
-      "skills": ["validatekit", "researchkit", "prototypekit", "refactorkit", "plankit", "grillkit"]
+      "skills": ["validatekit", "namekit", "researchkit", "prototypekit", "refactorkit", "plankit", "grillkit"]
     },
     {
       "title": "Building",
