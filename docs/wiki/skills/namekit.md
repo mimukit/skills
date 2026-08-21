@@ -15,7 +15,7 @@ Name a project to a naming convention you already use, then prove the name is fr
 
 Naming is two jobs that get done badly together. The creative half wants range, and a model asked for names returns ten spellings of one idea. The clerical half wants exactness, and nobody runs it until they have already fallen for a name that turns out to be a Series B startup.
 
-namekit splits them. It mines roots from four separate sources so the candidate set is genuinely plural, joins each one to your convention under a stated rule, then puts the survivors through three registry probes before you ever see the list. What reaches you is a ranked shortlist of names that exist to be taken.
+namekit splits them and runs them in that order. It mines roots from four separate sources so the candidate set is genuinely plural, joins each one to your convention under a stated rule, and shows you the ranked list. You pick two or three you actually like, and only those go to the registries.
 
 ## Why a convention and not a blank page
 
@@ -25,25 +25,27 @@ So namekit is a convention engine rather than a name generator. It resolves your
 
 It does not teach the `kit` convention that this collection's own skills use. [`skillkit`](./skillkit.md) owns that rule and states it inline, so namekit points at nothing and repeats nothing.
 
-## Why availability is a filter, not a score
+## Why the names come before the probes
 
-The obvious design ranks availability alongside sound and meaning, and it produces a shortlist whose best entry you cannot have. A taken name is not a slightly worse name. It is not a name.
+The first version of this skill probed all twelve candidates before printing anything, on the theory that a shortlist you cannot act on is worthless. Two things went wrong in the first real run. RDAP rate-limits a burst and answers 429, so a sweep of sixty names threw away its own domain results. And the whole creative half of the job disappeared behind a wall of registry calls the user never asked for.
 
-So a probe hit removes the candidate outright, with one exception that the strict version needs: **a namespace you already own passes, and reads *yours*.** Without it, a house convention rejects its own portfolio, and `codealoy` fails a `codealoy` filter on the grounds that `codealoy` exists. namekit resolves your owner from the git remote, or from the repos that sourced the convention, and treats a match as a pass.
+So the order is inverted. You see the ranked twelve first, with root, seam, and rubric and no availability column. You pick two or three. Those get probed, nothing else does. A batch that comes back all taken reprints what is left and asks for the next pick, and the pick is always yours.
 
-Because the filter is hard, the pool has to be wide. namekit generates 25 or more raw candidates and ranks 12 into the filter, and when fewer than three survive it regenerates once with the taken roots excluded. Two passes is the cap. A run that empties still reports the two best rejects with the probe that killed each, because "that one is gone, and here is who has it" closes the question instead of leaving it open.
+The verdict itself is still hard. A probe hit removes that name rather than scoring it down, because a taken name is not a slightly worse name. One exception keeps the strict version honest: **a namespace you already own passes, and reads *yours*.** Without it a house convention rejects its own portfolio, and `codealoy` fails on the grounds that `codealoy` exists. namekit resolves your owner from the git remote, or from the repos that sourced the convention, and treats a match as a pass.
+
+The pool stays wide for a different reason now. Twelve candidates feed four or five pick rounds, so the list has to outlast several batches before regenerating is worth it. Regeneration happens only when all twelve are probed and taken, and two passes is the cap.
 
 ## Why one web search, at the end
 
 RDAP, npm, and the GitHub API are exact-match lookups against real registries. They are cheap, they are unambiguous, and they miss the thing that actually hurts: a product with your name that never registered the `.com` you wanted, or a live trademark.
 
-A web search catches that, and it is fuzzy enough that running it per candidate returns noise for every short common root. namekit runs exactly one, on the crowned name, after the filter. That is the single point where the answer changes a decision, and a hit re-crowns the runner-up.
+A web search catches that, and it is fuzzy enough that running it per candidate returns noise for every short common root. namekit runs exactly one, on the crowned name, after the probes clear it. That is the single point where the answer changes a decision, and a hit re-crowns the next free name.
 
 ## Modes
 
 ### `generate`
 
-A description in, a ranked shortlist out. It restates your description back before anything else, so a misread costs one line rather than a whole run.
+A description in, a ranked shortlist out, then a probe loop you drive. It restates your description back before anything else, so a misread costs one line rather than a whole run.
 
 Then it interviews, every time. That was a deliberate choice over asking only when the description looked thin, because "AI growth platform for SMBs" reads complete and still names no audience, no tone, and no surface the name has to fit. The questions come from a fixed pool of six, it asks only the ones you have not already answered, and it caps at five. The pool's least obvious member is **where the name gets typed**, which sets the length tolerance and decides which probes run at all: a CLI-only tool needs no npm name, and an internal tool needs no domain.
 

@@ -12,7 +12,7 @@ metadata:
 
 Name a project against a **convention** rather than a blank page, and hand back only names that are actually free. Two explicit **modes**:
 
-- **`generate`.** Turn a project description into a ranked shortlist of names built to the user's naming convention, filtered against the domain, npm, and GitHub namespaces, with one crowned.
+- **`generate`.** Turn a project description into a ranked shortlist of names built to the user's naming convention, then probe the two or three the user picks against the domain, npm, and GitHub namespaces and crown one.
 - **`check`.** Take names the user already has and report whether each one is free. No generation.
 
 The reason this is a skill and not a one-line ask: left alone, a model returns ten spellings of one idea, invents a convention nobody uses, and never checks whether any candidate is taken. namekit fixes all three, in that order.
@@ -41,9 +41,11 @@ gh api /users/<name>
 
 Check `.com` plus whichever second TLD the project's surface implies (`.dev` for a developer tool, `.ai` for a model product, the country TLD for a local audience). Skip a namespace the project will never occupy: a CLI-only tool does not need an npm name, and an internal tool needs no domain.
 
+**Probe two or three names at a time.** RDAP answers a small batch and returns 429 to a burst, and a 429 is not a verdict. A bulk sweep of dozens of names throws away its own domain results.
+
 **Report each result as that probe's own claim.** A 404 from RDAP means the domain is not registered. It does not mean the domain is for sale, is affordable, or is free of a trademark. Say "not registered", and let the user find out the price.
 
-**Degrade rather than block.** With no shell, no network, or no `gh`, say which probes were skipped, drop the availability filter entirely, and rank on the four rubric criteria alone. A shortlist with a stated gap beats no shortlist.
+**Degrade rather than block.** With no shell, no network, or no `gh`, say which probes were skipped and hand back the ranked shortlist on the four rubric criteria alone. A shortlist with a stated gap beats no shortlist.
 
 ---
 
@@ -88,25 +90,31 @@ Draw roots from **four separate sources**, so the set is genuinely plural instea
 
 A non-English root passes **one gate**: a single Latin transliteration dominates in common use. When a root has two spellings people genuinely both write, drop it rather than scoring it down, because a name the audience types three ways fails on the one job a name has.
 
-Join each root to the affix with the [seam rule](#the-seam-rule), score it against the [rubric](#the-rubric), then cut. Generate **25 or more raw candidates**, and rank the best **12** into the filter. The width is deliberate: the filter is hard, and a thin candidate pool empties the shortlist and burns the second pass every run.
+Join each root to the affix with the [seam rule](#the-seam-rule), score it against the [rubric](#the-rubric), then cut. Generate **25 or more raw candidates**, and rank the best **12** into the shortlist. The width is deliberate: the user probes two or three names per batch, so the list has to feed several batches before it needs regenerating.
 
 **Done when** the ranked 12 draw roots from at least three of the four sources, and each carries a one-line rationale plus its rubric verdict.
 
-### 4. Filter on availability
+### 4. Show the shortlist, then probe what the user picks
 
-Run [the probes](#the-probes-both-modes) over the ranked 12. **Any hit removes the candidate.** Availability is a filter here, not a score, because a name you cannot have is not a shortlist entry.
+**Print the ranked 12 before you probe anything.** The names come first, in a table of name, root and source, seam case, and rubric verdict, with no availability column yet. The user reads the whole list, reacts to the ideas, and keeps the creative half of the job in front of them.
+
+Then ask the user to pick **two or three names** to probe. Use `AskUserQuestion` when it is available, and a plain one-line ask when it is not. **Probe only the names the user picks.** An unpicked name stays unprobed, however good its rubric score.
+
+Run [the probes](#the-probes-both-modes) over the picks. **Any hit removes that name.** Availability is a verdict here, not a score, because a name the user cannot have is not a candidate.
 
 **One exception: a namespace the user already owns passes, and reads *yours*.** Resolve their owner from the git remote when a repo exists (`gh repo view --json owner`), from the repos that sourced the convention otherwise, and by asking once when neither answers. Without this exception a house convention rejects its own portfolio, which is how `codealoy` fails a `codealoy` filter.
 
-**When fewer than three candidates survive**, run [Mine roots and build candidates](#3-mine-roots-and-build-candidates) once more with the taken roots excluded, and probe again. **Two generation passes is the cap.** Then report what survived alongside the two best rejects, each with the probe that killed it named, because "growaloy is gone, and here is who holds it" is a useful answer.
+**When a batch returns nothing free**, report each pick with the probe that killed it, reprint the candidates still unprobed, and ask for the next batch of two or three. Repeat the loop until one name is free or the user stops it. Never auto-select the next batch, because the pick is the user's.
 
-**Done when** every reported candidate carries a result for every probe that ran, and the second pass has either run or been unnecessary.
+**Regenerate only when the list runs out.** Once every one of the 12 is probed and taken, run [Mine roots and build candidates](#3-mine-roots-and-build-candidates) again with the taken roots excluded, and show the new list the same way. **Two generation passes is the cap.**
+
+**Done when** at least one probed name is free, or the user stops the loop, and every probed name carries a result for every probe that ran.
 
 ### 5. Crown, then search once
 
-Crown the top survivor. Then run **one** web search, on that name alone, for the existing product or live trademark the registries miss. Fetch the top hit when the search result is ambiguous about what the thing is.
+Crown the free name that ranks highest on the rubric. Then run **one** web search, on that name alone, for the existing product or live trademark the registries miss. Fetch the top hit when the search result is ambiguous about what the thing is.
 
-A hit re-crowns the runner-up and states the conflict in a line. This is the only search in the run: the registries are exact-match and cheap, the web is fuzzy and expensive, so it earns one call at the point the answer changes a decision.
+A hit re-crowns the next free name and states the conflict in a line. When the batch left no runner-up, say so and send the user back to the pick loop. This is the only search in the run: the registries are exact-match and cheap, the web is fuzzy and expensive, so it earns one call at the point the answer changes a decision.
 
 **Done when** the crowned name has been searched and either survives or has been replaced.
 
@@ -114,13 +122,13 @@ A hit re-crowns the runner-up and states the conflict in a line. This is the onl
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Print the shortlist as a ranked table before the three beats:
+Print the probed names as a ranked table before the three beats:
 
 | Name | Root (source) | Seam | Rubric | `.com` | npm | GitHub |
 |------|---------------|------|--------|--------|-----|--------|
 | `growaloy` | grow (outcome verb) | hard join | 4/4 | free | free | free |
 
-**What changed.** Report the resolved convention, the crowned name and the one-sentence reason, how many candidates the filter removed, and whether a second generation pass ran. Name the two best rejects and the probe that killed each.
+**What changed.** Report the resolved convention, the crowned name and the one-sentence reason, how many batches the user probed, and whether a second generation pass ran. Name each probed name the registries took, with the probe that killed it. List the candidates that stayed unprobed, so the user can come back to them.
 
 **Where it landed.** namekit writes no file by default. Write `docs/names/names-<slug>-YYYY-MM-DD.md` only when the user asks, where `<slug>` is the project's short kebab-case name and the date is the file's creation date. Keep that date stable on a later edit. Follow the host repository's own artifact convention when it documents one. With no filesystem, print the document as a codeblock and give the filename.
 
@@ -143,7 +151,7 @@ Four criteria, scored pass, weak, or fail. Rank by the count of passes, and brea
 - **Seam quality.** A clean hard join or a clean elision, per the seam rule.
 - **Spell-on-hearing.** Someone who hears the name spells it one way.
 
-Availability is deliberately absent. It is a filter in [Filter on availability](#4-filter-on-availability), not a fifth criterion, because a taken name never reaches the ranking.
+Availability is deliberately absent. It is a verdict in [Show the shortlist, then probe what the user picks](#4-show-the-shortlist-then-probe-what-the-user-picks), not a fifth criterion, because the rubric ranks names the user has not probed yet.
 
 ---
 
