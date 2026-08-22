@@ -1,6 +1,6 @@
 # ideakit
 
-Think an idea through across many sessions — one ideas repo with a folder per idea, one idea open at a time, and every research or validation answer folded back into that idea's own log.
+Think an idea through across many sessions: one ideas repo with a folder per idea, one idea open at a time, and nothing written to disk until you ask for it.
 
 **Reach for it when** an idea arrives at the wrong moment and you have nowhere to put it, or when you sit down to think about one you started weeks ago and can't remember where you stopped.
 
@@ -8,7 +8,7 @@ Think an idea through across many sessions — one ideas repo with a folder per 
 |---|---|
 | Modes | [`capture`](#capture) · [`session`](#session) · [`status`](#status) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
 | Tools | `Read`, `Write`, `Edit`, `Glob`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
-| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides) — Markdown only; nothing in `status` |
+| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides), Markdown only. `capture` and `close` write; `session`, `research`, and `validate` write only on your yes; `status` never writes |
 | Visibility | public |
 
 ## What it does
@@ -28,6 +28,20 @@ A conventions file describes a procedure; it doesn't perform one. "Capture an id
 And a repo can't dispatch. Sending a question to a research skill and getting the answer back into the idea's own log needs something that knows both ends.
 
 The `AGENTS.md` still exists, cut to about ten lines. It carries the isolation guard and the path rule, so both hold in a session where the skill never fires. Everything else moved into the skill, which is where the no-duplication seam falls: the file states the rule, the skill owns the derivation.
+
+## Why saving is something you ask for
+
+The first version wrote on every mode. A session always appended to `NOTES.md`, a research run always saved its artifact, and the reasoning was that an optional write empties the repo.
+
+That reasoning holds for the sessions worth keeping and gets the common case backwards. Most nights you open an idea, push it around for twenty minutes, and land nowhere in particular. Recording that produces a log of entries you never meant to write, and the cost is not disk. It is that [`status`](#status) reads every row as something you decided, so a repo padded with exploratory noise gives worse answers than a thin one.
+
+So the gate inverted. The discussion is the deliverable, and a file is what you ask for when the discussion earned one. The mechanism matters more than the rule: the agent **composes the entry anyway**, prints it under the path it would land at, and then asks. An offer with the draft attached is nearly free to accept. An offer that asks "want me to save this?" with nothing to look at gets declined because judging it costs more than skipping it.
+
+Two modes are exempt, and they are exempt for the same reason. `capture` and `close` have the file as their entire output, so the ask you made is the write. Prompting there asks you to confirm what you just requested.
+
+The router row goes through the gate with everything else, rather than repairing itself quietly. `INDEX.md` carries a summary and an open question, which are thinking and not bookkeeping, so the row travels with the entry that changed it. A session you didn't save didn't touch the idea, and `Last touched` should say so.
+
+The cost is real and the skill states it rather than hiding it. `session` opens on a status report, `status` crowns the coldest idea with an open question, and both read the log. Sessions you decline to save leave those reads behind what you actually think. What holds it is the hand-off: every run that writes nothing says so in one line, so a thin log never passes for a quiet month.
 
 ## Why the router carries labels and not thinking
 
@@ -49,7 +63,7 @@ There is one exception, and it's bounded on both sides. When you name a second i
 
 The log is the record; `IDEA.md` is a cache of it. That leaves the question of when to refresh the cache, and "rewrite it when the idea changed" is not something an agent can check itself against — it ends when the agent feels finished, which is where run-to-run variance comes from.
 
-Splitting the file fixes that. A stable **head** says what the idea is, who it's for, and what has to be true for it to matter; it gets rewritten only when a session changed what the idea *is*. An **`## Open` block** below it gets refreshed every session, no exceptions, and its bound is checkable: the block matches the last `NOTES.md` entry.
+Splitting the file fixes that. A stable **head** says what the idea is, who it's for, and what has to be true for it to matter; it gets rewritten only when a session changed what the idea *is*. An **`## Open` block** below it gets redrafted every session, no exceptions, and travels with the log entry in the same save offer. Its bound is checkable: the block matches the last `NOTES.md` entry.
 
 The split earns its keep in the other direction too. An inconclusive session — and plenty of them are — refreshes the block and leaves the head alone, instead of churning the whole file to say nothing changed.
 
@@ -73,13 +87,13 @@ The mode that thinks, and the only one that discusses.
 
 There's an escape: say you're thinking out loud and the stress pass is skipped. The kill condition still reaches the log either way, so an expansive night costs the record nothing.
 
-**Every session appends to `NOTES.md`**, three to six lines at minimum. Making that optional is what empties an ideas repo — and it costs the isolation guard its payload, since the whole point of reading one folder is that the folder holds the thread.
+**Every session composes a `NOTES.md` entry, three to six lines at minimum, and then offers it.** You get the draft, its path, and a save-edit-drop choice. Say no and the folder is untouched. See [Why saving is something you ask for](#why-saving-is-something-you-ask-for) for what that trade costs and why the draft comes with the offer.
 
 With no idea named it **asks** rather than guessing, offering recent ideas plus "a new idea". It never falls through to `status`; a session is a different transaction from a report, and silently swapping one for the other is worse than one question.
 
 ### `status`
 
-Reports and writes nothing but a router repair. It has two scopes, which is why there's no separate `list` mode — the difference between "where do all my ideas stand" and "where does this one stand" is an argument, not a posture.
+Reports and writes nothing at all. It has two scopes, which is why there's no separate `list` mode — the difference between "where do all my ideas stand" and "where does this one stand" is an argument, not a posture.
 
 **Cross-idea, it opens no topic folder at all**, getting everything from the router and a directory listing. Then it crowns one move, and the ranking rule is the interesting part: **the crown goes to the coldest active idea carrying an open question, not the warmest.**
 
@@ -87,7 +101,7 @@ Ranking on recency was the first draft, and it produced a crown that just restat
 
 There's no stale marker. A tag most rows would wear within a year is a verdict on a repo whose entire premise is that ideas sit. It prints the age instead — `untouched 94 days` — and lets you judge.
 
-**Its cache repair is detect-only**, which is the one place the guard and the self-heal genuinely conflict. Writing a router row needs five fields that all live inside the folder, so repairing an unregistered folder means opening it — for bookkeeping. So `status` names the folder, says to run `session` on it, and stops. The modes that already have a folder open repair their own row.
+**Its cache repair is detect-only**, which is the one place the guard and the self-heal genuinely conflict. Writing a router row needs five fields that all live inside the folder, so repairing an unregistered folder means opening it — for bookkeeping. So `status` names the folder, says to run `session` on it, and stops. The modes that already have a folder open offer their own row with the entry that changed it.
 
 ### `research`
 
@@ -95,11 +109,13 @@ Classifies before it acts, because "research" covers three different asks with t
 
 A tool, library, framework, or architecture decision goes to [`researchkit`](./researchkit.md). A build-or-drop question isn't research at all and gets redirected to [`validate`](#validate). A market, competitor, category, or customer-signal question has no owner among the kits, so ideakit runs that one itself — who else does this, what the category is called, how incumbents price it, what users publicly complain about, each with a source and a date.
 
+The answer arrives inline whichever branch runs. Keeping it as a file is a separate yes, asked once, after you've seen what the answer was worth.
+
 ### `validate`
 
-Hands a startup or SaaS idea to [`validatekit`](./validatekit.md) and folds the verdict, the wedge, and the assignment back into the log.
+Hands a startup or SaaS idea to [`validatekit`](./validatekit.md), takes the verdict inline, and offers the verdict, the wedge, and the assignment as one log entry.
 
-It **honors validatekit's side-project off-ramp** rather than routing around it. That off-ramp fires often here, because most ideas in a personal ideas repo are not businesses, and "this is a side project, not a company" is a real answer worth writing down rather than an obstacle to a verdict.
+It **honors validatekit's side-project off-ramp** rather than routing around it. That off-ramp fires often here, because most ideas in a personal ideas repo are not businesses, and "this is a side project, not a company" is a real answer worth offering to write down rather than an obstacle to a verdict.
 
 ### `close`
 
@@ -111,15 +127,17 @@ It was called `archive` first. The status flip is a one-line edit; the substance
 
 ## Why the dispatch is owned end to end
 
-Both dispatch modes drive the sibling skill rather than suggesting it, and there are three concrete reasons — each one a thing that breaks otherwise.
+Both dispatch modes drive the sibling skill rather than suggesting it, and there are three concrete reasons, each one a thing that breaks otherwise.
 
-The sibling writes to the wrong root. [`validatekit`](./validatekit.md) documents `docs/validation/` with no deference to a host convention, so left alone it writes into whatever directory you're standing in. ideakit passes the absolute path under `topics/<slug>/docs/`.
+The sibling writes to the wrong root. [`validatekit`](./validatekit.md) documents `docs/validation/` with no deference to a host convention, so left alone it writes into whatever directory you're standing in. When you keep the answer, ideakit writes the file itself at the absolute path under `topics/<slug>/docs/`, rather than re-running the sibling and hoping it lands right.
 
-The sibling writes nothing by default. Both [`researchkit`](./researchkit.md) and validatekit answer inline and offer a file only if asked, which is right for their normal use and wrong here, because the fold-back needs an artifact to point at.
+The sibling's inline-only default is now the right one. Both [`researchkit`](./researchkit.md) and validatekit answer in the conversation and offer a file only if asked. The first version overrode that and answered their save prompt yes, because the fold-back wanted an artifact to point at. That override is gone. The sibling's default and ideakit's are the same default now, and the save question gets asked once, by ideakit, after the answer exists.
+
+Asking after rather than before is the load-bearing half. A question posed before the dispatch asks you to commit to keeping an answer you haven't read.
 
 And two hand-offs help nobody. The dispatch is a sub-step, so the sibling's next-move line is suppressed and ideakit prints its own.
 
-Then the answer goes into the idea's own `NOTES.md` as a dated entry naming the question, the answer, and the file. That fold-back is what keeps one thread authoritative — a later session reads one log and finds every answer, instead of reconstructing them from a directory of artifacts.
+What you keep goes into the idea's own `NOTES.md` as a dated entry naming the question, the answer, and the file. That fold-back is what keeps one thread authoritative: a later session reads one log and finds every saved answer, instead of reconstructing them from a directory of artifacts.
 
 ## What it is not
 
@@ -128,6 +146,7 @@ Then the answer goes into the idea's own `NOTES.md` as a dated entry naming the 
 - **Not a scheduler.** No due dates, no review queue, no spaced retrieval. That's [`tutorkit`](./tutorkit.md) on a different repo with a different premise.
 - **Not a theme sweep.** No mode reads every idea looking for connections; that breaks the guard wholesale for something rarely wanted.
 - **Not a replacement for the kits it calls.** Its fallbacks without them are short and say so.
+- **Not an autosaver.** Outside `capture` and `close`, it writes when you say yes and not before.
 - **It never commits the ideas repo on its own.**
 
 ## Hands off to
@@ -146,4 +165,4 @@ npx skills add mimukit/skills -s ideakit
 
 Source: [`skills/ideakit/SKILL.md`](../../../skills/ideakit/SKILL.md)
 
-_Verified against `main`@`86f5eb3` on 2026-08-20._
+_Verified against `main`@`2ba074a` on 2026-08-22._
