@@ -6,7 +6,7 @@ Create git commits with Conventional Commits messages derived from the actual di
 
 | | |
 |---|---|
-| Modes | single procedure; commit or draft-only |
+| Modes | main procedure (commit or draft-only) · draft mode (headless, message only) |
 | Tools | `Bash`, `Read` |
 | Writes | git commits. Never pushes |
 | Visibility | public |
@@ -84,6 +84,18 @@ It never runs `git add -A` blindly across unrelated concerns. If nothing has cha
 
 If a commit fails — a pre-commit hook rejects it — the `&&` chain stops at that group, later groups stay uncommitted, and the hook output gets surfaced. It never retries blindly or reaches for `--no-verify` unless told to.
 
+## Draft mode
+
+The other way to run commitkit is from a git tool that has no agent session behind it — a lazygit custom command, a git hook, anything that shells out. That caller inlines `SKILL.md`, appends the staged diff, captures stdout, and drops the result into its commit panel. Draft mode exists for that path.
+
+Two things change, and both follow from who is driving.
+
+**One commit, not many.** Multiple commits is the whole point of the main procedure, and it depends on commitkit being able to stage files itself. A commit panel has already staged the set and won't let anything restage it, so the default inverts: one message for whatever is staged.
+
+**Output is the message, nothing around it.** No preamble, no code fence, no summary table, no hand-off. The runner doesn't read the output, it *pastes* it, so a friendly opening line lands in the commit as a friendly opening line. This is also why draft mode overrides the codeblock fallback the skill uses elsewhere when it has no shell: a fence helps a human who copies by hand and breaks a pipe.
+
+Type, mandatory scope, and the required body carry over unchanged. The payload can also carry `git log --oneline`, which is what lets a toolless run still match the repo's existing style, and a `[diff truncated]` marker, which the message works around silently rather than confessing. An empty payload produces no output at all.
+
 ## Hands off to
 
 [`prkit`](./prkit.md), to open a pull request from exactly these commits. The work is committed but unpublished, and the report says whether the branch has an upstream — commits on a local-only branch exist nowhere but your machine, which is usually the most useful line in the report.
@@ -98,4 +110,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`f490fd8` on 2026-08-19._
+_Verified against `main`@`5723c6a` on 2026-08-22._
