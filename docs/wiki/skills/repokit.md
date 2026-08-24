@@ -9,6 +9,7 @@ Set up a GitHub repo's metadata through the `gh` CLI — an inferred About descr
 | Modes | [`about`](#about) · [`labels`](#labels) |
 | Tools | `Bash`, `Read` |
 | Writes | GitHub repo metadata — description, topics, labels |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

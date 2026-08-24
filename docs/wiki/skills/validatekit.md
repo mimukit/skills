@@ -9,6 +9,7 @@ Pressure-test a SaaS or startup idea before you build it — forcing questions, 
 | Modes | single procedure, staged by evidence level |
 | Tools | `Read`, `Write`, `WebSearch`, `AskUserQuestion`, `Task`, `Agent` |
 | Writes | `docs/validation/validation-<slug>-YYYY-MM-DD.md` on request only |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

@@ -9,6 +9,7 @@ Think an idea through across many sessions: one ideas repo with a folder per ide
 | Modes | [`jot`](#jot) · [`promote`](#promote) · [`capture`](#capture) · [`session`](#session) · [`status`](#status) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
 | Tools | `Read`, `Write`, `Edit`, `Glob`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
 | Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides), Markdown only. `jot`, `promote`, `capture`, and `close` write; `session`, `research`, and `validate` write only on your yes; `status` never writes |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

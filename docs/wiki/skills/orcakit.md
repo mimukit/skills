@@ -9,6 +9,7 @@ Keep the [Orca](https://www.onorca.dev/) desktop app's workspace list honest abo
 | Modes | [`list`](#list) · [`link`](#link) · [`clean`](#clean) · [`align`](#align) |
 | Tools | `Bash`, `Read`, `Skill` |
 | Writes | Orca workspace metadata; removes merged worktrees on confirmation |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

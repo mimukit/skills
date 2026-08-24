@@ -9,6 +9,7 @@ Sharpen the prompt before you send it — the one-shot instruction you're about 
 | Modes | [`task`](#task) (default) · [`system`](#system) |
 | Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob`, `AskUserQuestion` |
 | Writes | nothing in `task`; `docs/prompts/…` in `system`, plus the prompt string on confirmation |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

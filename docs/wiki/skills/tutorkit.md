@@ -9,6 +9,7 @@ Teach a topic across many sessions — one learning repo with a folder per topic
 | Modes | [`status`](#status) · [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`exam`](#exam) |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `AskUserQuestion`, `Task`, `Agent` |
 | Writes | a learning repo at `~/learning` (`$TUTORKIT_HOME` overrides) — HTML lessons, Markdown state; nothing in `explain` or `status` |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

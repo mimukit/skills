@@ -3,6 +3,7 @@ name: ideakit
 description: >-
   Think an idea through across many sessions, with one ideas repo holding a folder per idea, a jotpad for the thoughts that have none, one idea open at a time, and nothing written to disk until you ask for it. Use when the user says "capture this idea", "I just had an idea", "jot this down", "random thought", "promote that jot", "let's think about the <X> idea", "brainstorm <X> with me", "what was I thinking about <X>", "where do my ideas stand", "what should I think about next", or names their ideas repo or runs "/ideakit".
 license: MIT
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Bash, AskUserQuestion, WebSearch, WebFetch
 metadata:
   internal: false

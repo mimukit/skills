@@ -9,6 +9,7 @@ Create a new AI agent skill from scratch — naming, drafting, live testing, and
 | Modes | single procedure, driven one step at a time |
 | Tools | `Read`, `Edit`, `Write`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
 | Writes | `skills/<name>/SKILL.md` in the host collection's layout |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

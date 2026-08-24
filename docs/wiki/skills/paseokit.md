@@ -9,6 +9,7 @@ Push the git worktrees your workflow actually creates into [Paseo](https://paseo
 | Modes | [`list`](#list) · [`sync`](#sync) · [`align`](#align) |
 | Tools | `Bash`, `Read`, `Skill` |
 | Writes | Paseo workspace rows — registers, archives, retitles. Never a directory or a branch |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

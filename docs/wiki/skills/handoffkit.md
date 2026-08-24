@@ -22,7 +22,7 @@ That distinction is the whole design. A handoff that pastes the diff, the spec, 
 
 ## Explicit invocation only
 
-Alone among these skills, handoffkit sets `disable-model-invocation: true` in its frontmatter. An agent cannot decide on its own to run it.
+handoffkit sets `disable-model-invocation: true` in its frontmatter — the first of the kits to do so, now shared by the ones only ever started by name. An agent cannot decide on its own to run it.
 
 That's deliberate. A skill that fires when context gets tight would interrupt work mid-flow to write a document nobody asked for — and it would do so precisely when the session is most loaded and least able to spare the tokens. You invoke it, or it doesn't run.
 

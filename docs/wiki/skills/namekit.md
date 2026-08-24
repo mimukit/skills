@@ -9,6 +9,7 @@ Name a project to a naming convention you already use, then prove the name is fr
 | Modes | [`generate`](#generate) · [`check`](#check) |
 | Tools | `Bash`, `Read`, `Write`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
 | Writes | nothing by default; `docs/names/names-<slug>-YYYY-MM-DD.md` on request |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does

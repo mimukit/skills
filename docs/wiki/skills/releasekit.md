@@ -9,6 +9,7 @@ Cut a release from the Conventional Commits a repo already writes — derive the
 | Modes | none — one procedure with two exits (`preview`, or cut it) |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `AskUserQuestion`, `Skill` |
 | Writes | `CHANGELOG.md`, the ecosystem's version manifest, one `chore(release)` commit, an annotated tag, a GitHub release |
+| Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## The gap it fills
