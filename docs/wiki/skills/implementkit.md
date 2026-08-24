@@ -22,6 +22,8 @@ Two hard boundaries define it:
 
 **Where a bounce goes depends on *why* the input is thin.** Unresolved decisions route back to [`plankit`](./plankit.md) or [`grillkit`](./grillkit.md). But a design that's unsettled because nobody has *seen it work* — a state model that reads fine on paper, a screen never laid out — won't yield to more interrogation, because the missing input is evidence rather than a decision. That routes to [`prototypekit`](./prototypekit.md), or a deliberate throwaway spike when it isn't installed, and comes back here once the question is answered.
 
+**A plan or an issue can be narrowed to one phase** — "implement phase 3 of `plan-sso-2026-07-23.md`", "implement phase 2 of #42". Both carry phases as headings, which is what makes the narrowing addressable at all, and it's the interface an unattended run uses to build a large issue one phase at a time. The whole document still gets read either way: phases above the named one say what the code may already assume, phases below say what it must not.
+
 ## Mode resolution is the defining feature
 
 The same request builds differently depending on whether the repo wants test-driven development. implementkit works that out by a fixed precedence rather than defaulting blindly, taking the first tier that gives an answer:
@@ -98,4 +100,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`8cfe301` on 2026-08-24._

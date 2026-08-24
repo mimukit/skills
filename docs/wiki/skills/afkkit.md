@@ -88,7 +88,7 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 | Step | Model | Why |
 |------|-------|-----|
 | Spec gate | `opus` | gates the whole run; every later step inherits its orientation and its check list |
-| Implement | `opus` | the bulk of the work, with implementkit's own gate underneath; commits its own work |
+| Implement | `opus` | the bulk of the work, with implementkit's own gate underneath; commits its own work; runs once per phase |
 | Verify | `opus` | runs the code rather than reading it; small context, so the strong tier is cheap here |
 | Review | `fable` | a **different model family** from the one that wrote the code |
 | Fix | `opus` | applying findings against a concrete list; commits its own work |
@@ -105,12 +105,22 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 
 1. **Start the issue** — issuekit `start`, dispatched on the conductor's own model rather than the cheap tier, because issuekit can refuse four distinguishable ways and a relay that flattens them breaks the escalation policy silently. The conductor then verifies what came back rather than taking it on faith.
 2. **Spec gate** — classify gaps between what the issue specifies and what building it requires, and write the run directory. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed.
-3. **Implement** — implementkit, which resolves its own mode and enforces the repo's gate. The same agent commits through commitkit before it returns.
+3. **Implement** — implementkit, which resolves its own mode and enforces the repo's gate. The same agent commits through commitkit before it returns. On a multi-phase issue this step [runs once per phase](#one-dispatch-per-phase); every step after it still runs once.
 4. **Verify** — run the gate's check list against the now-green code, then probe up to six adjacent behaviors. Writes `verified.md`, edits nothing, and never rebuilds.
 5. **Review** — reviewkit against the branch diff plus `verified.md`, told it *is* the fresh reviewer so it doesn't delegate again and pay for a second full read.
 6. **Fix loop** — bounded at two rounds, re-review **delta-scoped** to the fix commits. Round 1 sweeps every cheap nit alongside the blockers; a delta re-review's nits go to the PR body instead of earning a round, so only a blocker can extend the loop.
 7. **QA plan** — qakit, handed the check list, the recorded outcomes, the green gate, and the build location. It re-runs the checks against the final code and writes the human plan; it never rebuilds.
 8. **Open the PR** — prkit, handed paths: the assumptions file, the findings files and the unresolved nit IDs, `verified.md`, unmet criteria, and the QA-plan path.
+
+## One dispatch per phase
+
+Issues are sized to a whole plan now rather than to what fits in one agent's context, so [`issuekit`](./issuekit.md) writes them with `## Phase N` headings and afkkit walks them. The spec gate returns the phase list as a value — it read the whole body anyway — and Implement dispatches one subagent per phase, each narrowed to that phase and each committing before it returns. A single-phase issue gets exactly one dispatch, which is the step's original shape and cost.
+
+**This looks like the opposite of the dispatch floor, and it follows from the same rule.** The floor removes a dispatch when the next step needs *the previous agent's context* — that's why the commit stays folded in. It keeps a dispatch when the next step needs the *repository state* the previous agent produced and none of the reasoning behind it. Phase N+1 needs phase N's committed code, not its transcript, so a fresh agent starts from a clean tree and the branch carries the hand-off. One dispatch for a four-phase issue would instead ask a single agent to carry three phases of exploration while writing the fourth.
+
+**Only Implement loops.** Verify, review, the fix loop, the QA plan, and the PR all still run once, over the whole branch diff. Reviewing per phase would re-read a growing diff once per phase and split the reviewer's judgment across pieces it can't see whole — the opposite of what the `fable` tier is bought for.
+
+**Phases are not ticked on the issue as they land.** It would read as useful progress, and it's a new unprompted tracker mutation that no mode owns. The pipeline has exactly two such exemptions, both belonging to the kit that owns the mutation rather than to afkkit, and a progress indicator doesn't earn a third. The commits on the branch are the record while the run is live; the escalation comment names which phases landed if the run stops.
 
 ## Why verification moved before review
 
@@ -142,7 +152,7 @@ Then escalation always means the same five things:
 
 ## Batch mode: `all`
 
-Takes its queue from `gh issue list --label ready` and walks it **sequentially** — a conclusion, not an unexamined v1 limit. Implement alone was 44% of the measured wall clock and is irreducibly serial, so perfect parallelization of everything else caps the saving near 55%. The one genuinely independent pair, QA and review, is unsafe: a QA plan written from a diff the fix loop then changes describes behavior that no longer exists. Moving live verification to its own early step captures the useful part of that overlap without the staleness.
+Takes its queue from `gh issue list --label ready` and walks it **sequentially** — a conclusion, not an unexamined v1 limit. Implement alone was 44% of the measured wall clock and is irreducibly serial — its phases build on one another in one branch, so the phase loop is serial for the same reason at a smaller scale — and perfect parallelization of everything else caps the saving near 55%. The one genuinely independent pair, QA and review, is unsafe: a QA plan written from a diff the fix loop then changes describes behavior that no longer exists. Moving live verification to its own early step captures the useful part of that overlap without the staleness.
 
 **The queue is ordered by [`issuekit`](./issuekit.md) priority** — `critical` first, then `high`, `medium`, `low`, unassessed last, with oldest-updated breaking ties within a level. The labels come back in the same `labels` array the call already fetches, so the ordering costs nothing. It matters more here than anywhere else in the workflow because an unattended batch is the one place nobody is watching to reorder it: a run that stops early after four of nine issues has silently *chosen* which four shipped, and priority is what makes that choice yours rather than the tracker's arbitrary sort. With no priorities set anywhere it falls back to oldest-first and says so, rather than implying a ranking that isn't there.
 
@@ -162,7 +172,7 @@ By outcome. **Opened** → [`mergekit`](./mergekit.md) `start`, which pulls the 
 
 Nobody watched the run, so the report *is* the handover — and it always names the worktree path, because on an escalation those commits are real work sitting on disk and a human who doesn't know where they are will start over.
 
-It also prints a **per-step metrics table** — model, time, tool uses, and tokens where the harness reports them. The conductor fills it from what each dispatch hands back and measures nothing itself. That table exists so the routing table's baselines get corrected from real runs rather than one remembered one, which is why it prints only the columns the host actually provides: an estimated number would defeat the entire point. The metrics live in the report and nowhere else — writing them to disk would put the conductor inside the workspace its own boundary rules out.
+It also prints a **per-step metrics table** — model, time, tool uses, and tokens where the harness reports them, with each per-phase implement dispatch on its own row. The conductor fills it from what each dispatch hands back and measures nothing itself. That table exists so the routing table's baselines get corrected from real runs rather than one remembered one, which is why it prints only the columns the host actually provides: an estimated number would defeat the entire point. The metrics live in the report and nowhere else — writing them to disk would put the conductor inside the workspace its own boundary rules out.
 
 ## Install
 
@@ -172,4 +182,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`8cfe301` on 2026-08-24._
