@@ -218,7 +218,7 @@ check_skill() {
 #     colors must match; the meaning columns intentionally differ in wording).
 #     Both namespaces are covered by one diff — the rows share a format, so
 #     label_pairs picks up all of them without caring which table they sit in.
-#   - the commit-type table: commitkit ↔ issuekit (issuekit adds `epic`)
+#   - the commit-type table: commitkit ↔ issuekit (identical sets)
 # Nothing else keeps the copies aligned, so diff them here on full runs.
 
 # Emit "name color" pairs from a SKILL.md's label table rows
@@ -246,10 +246,10 @@ check_shared_tables() {
   done <<<"$d"
 
   d="$(diff <(type_tokens "$SKILLS_DIR/commitkit/SKILL.md") \
-            <(type_tokens "$SKILLS_DIR/issuekit/SKILL.md" | grep -vx 'epic') \
+            <(type_tokens "$SKILLS_DIR/issuekit/SKILL.md") \
         | grep -E '^[<>]' || true)"
   [[ -n "$d" ]] && while IFS= read -r line; do
-    tissues+=("type table drift (commitkit '<' vs issuekit '>', epic excluded): ${line}")
+    tissues+=("type table drift (commitkit '<' vs issuekit '>'): ${line}")
   done <<<"$d"
 
   if [[ ${#tissues[@]} -eq 0 ]]; then

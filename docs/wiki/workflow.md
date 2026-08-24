@@ -184,7 +184,7 @@ Started from anything else — a concept, an architecture, a PR — it recaps an
 
 | Mode | What it does |
 |---|---|
-| `issuekit create` | turn a plan document or a plain description into well-formed issues, with parent→child links |
+| `issuekit create` | turn a plan document or a plain description into well-formed issues, one per plan by default |
 | `issuekit start` | take a `ready` issue into its own worktree and flip it `in-progress` |
 | `issuekit close` | once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down |
 | `issuekit sync` | reconcile and repair PR↔issue links after the fact, across the whole tracker |
@@ -297,7 +297,7 @@ Name a PR without an action and it assumes `start`, because setting a PR up is r
 
 ### issuekit close — reconcile the tracker
 
-After the merge, `issuekit close` is one action that closes the issue, ticks the parent checklist, unblocks dependents, and tears the worktree down through `gitkit`. It requires proof the PR merged — a merged PR is required, not assumed. `mergekit` hands off here rather than doing any of it itself.
+After the merge, `issuekit close` is one action that closes the issue, unblocks dependents, and tears the worktree down through `gitkit`. It requires proof the PR merged — a merged PR is required, not assumed. `mergekit` hands off here rather than doing any of it itself.
 
 If the tracker has drifted more broadly — several merged PRs whose issues are still open — use `issuekit sync` instead, which sweeps everything and touches no worktree.
 

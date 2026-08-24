@@ -95,7 +95,7 @@ Full runs only (skipped when skill names are passed):
 | Check | Severity |
 |-------|----------|
 | `issuekit` and `repokit` label maps agree on names and colors | error |
-| `commitkit` and `issuekit` commit-type tables agree, `epic` excluded | error |
+| `commitkit` and `issuekit` commit-type tables agree | error |
 | Every skill named in the workflow map exists | error |
 | Every `<kit> <mode>` in the workflow map names a real mode | error |
 | Every lifecycle label in the workflow map's vocabulary section still exists in `issuekit` | error |

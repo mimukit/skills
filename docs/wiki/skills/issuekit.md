@@ -47,7 +47,7 @@ Two pairs carry the design:
 
 **`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**. An issue earns it only once a grill settled its decisions.
 
-**Type lives in the title, not a label** — issues carry `feat(scope):` per the Conventional-Commits title convention shared with [`commitkit`](./commitkit.md), so the map holds only lifecycle status. A **closed** issue needs no `done` label; the closed state is the signal.
+**Type lives in the title, not a label** — issues carry `feat(scope):` per the Conventional-Commits title convention shared with [`commitkit`](./commitkit.md), whose type set it now matches exactly, so the map holds only lifecycle status. A **closed** issue needs no `done` label; the closed state is the signal.
 
 ## The priority labels
 
@@ -74,16 +74,18 @@ The second label namespace, and the one that decides what gets picked up next. L
 
 Turn a plan document or a plain description into well-formed issues.
 
+**The default shape is one issue per plan**, carrying the plan's phases as `## Phase N` headings in its body. That is a deliberate reversal of the epic-and-children breakdown this skill used to propose. Every split costs a worktree, a branch, a PR, a review, and a close, and it buys sequencing that phases in one body already carry for free — while an agent can now build a large issue phase by phase in a single unattended run. So the split has to earn itself: a piece gets its own issue when it ships on its own, wants its own PR, or has a real ordering constraint that survived the attempt to design it away.
+
 Four principles govern the breakdown, applied **before** anything is presented:
 
-- **Fewest issues by default.** Actively look for scopes where related tasks collapse into **one issue with a checklist**. Splitting on request beats starting fragmented.
-- **Vertical slices.** Size each issue to complete **one testable feature end to end** — "user can log in with SSO" rather than separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues, with those layers folded in as checklist items. Size it to fit a single fresh agent context, too.
-- **Independent by default.** When two slices share state, first try to **design the dependency away** — fold them together, or resequence so the shared piece ships inside the prerequisite. Only a surviving real constraint gets recorded.
-- **Prefactor first.** Look for a simplifying refactor that makes the real change trivial. A clean prefactor often *removes* a dependency that would otherwise force a `blocked` chain, so it earns its keep even as an extra issue.
+- **One issue per plan by default.** Phases go in the body, not in separate issues. Starting consolidated beats starting fragmented, because splitting later is one request and merging later is not.
+- **Vertical slices.** Size each issue to complete **one testable feature end to end** — "user can log in with SSO" rather than separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues. **Nothing caps a slice at what fits in one agent context**; a multi-phase issue is the normal shape.
+- **Independent by default.** Where a plan does yield more than one issue and two of them share state, first try to **design the dependency away** — fold them back into one issue as consecutive phases, or resequence so the shared piece ships inside the prerequisite. Only a surviving real constraint gets recorded.
+- **Prefactor first.** Look for a simplifying refactor that makes the real change trivial. It normally belongs as the issue's **first phase**, where the code that needs it follows in the same branch; it earns its own issue only when it ships and reviews on its own merits whether or not the feature lands.
 
-A wide mechanical refactor that genuinely can't be one slice gets sequenced **expand → migrate → contract** — turning one un-sliceable change into a fan of mostly-parallel issues with honest `Blocked by #N` edges, reusing the existing machinery with no new labels.
+A wide mechanical refactor is the standing exception. Renaming a shared column or retyping a symbol used everywhere gets sequenced **expand → migrate → contract**, because the migrate batches are independent *of each other* and want parallel branches — the one thing phases in a single issue cannot do. It reuses the existing `blocked` machinery with no new labels.
 
-The proposal comes as a **preview table** and stops for approval. The **Depends on** column is where independence is decided out loud, and keeping it as empty as honesty allows is the goal — a mostly-blank column is a tracker you can fan out. **This guard is the point: never spray a repo with auto-generated issues.**
+The proposal comes as a **preview table** and stops for approval. Its **Phases** column is the plan's structure carried into one issue, and its **Depends on** column is empty by construction on a one-issue breakdown. When a phase looks like it ships on its own, the split is offered explicitly, with its cost named: a second branch, PR, review, and close. **This guard is the point: never spray a repo with auto-generated issues.**
 
 The table also carries a **Priority** column. issuekit proposes a priority per row read off the plan — what it calls core versus polish, what it defers, what it flags as a risk — and expects to be overruled, because a plan can say what's central without saying why the work is being done at all, which is the thing priority actually encodes. It never proposes `critical` from a plan: that label means *preempt work already in progress*, a claim about right now that a document written last week can't make, so the most important row gets `high` and you escalate it if you mean it. Approved priorities land in the same `gh issue edit` call as the lifecycle label, so a fresh issue never sits half-labeled where a concurrent survey could read it. And they land **regardless of the grill gate**, which governs only the lifecycle namespace — an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment you just made in the preview. Dropping it would leave the ungrilled backlog, the exact pile that most needs ordering, as the one part of the tracker nothing can rank.
 
@@ -119,7 +121,7 @@ Teardown goes to gitkit, whose rules aren't overridden: **a dirty worktree stops
 
 Reconcile the PR↔issue relationship after the fact.
 
-It **deliberately does not write the forward `Closes #N` link onto a fresh PR** — that's [`prkit`](./prkit.md)'s job at open time. sync earns its place only where the automatic chain *broke*: a merged PR whose issue never closed, a missing link on an existing PR, an un-ticked parent checklist, and the dependency payoff — when a blocker closes, finding what it was holding up and swapping `blocked` → `ready`.
+It **deliberately does not write the forward `Closes #N` link onto a fresh PR** — that's [`prkit`](./prkit.md)'s job at open time. sync earns its place only where the automatic chain *broke*: a merged PR whose issue never closed, a missing link on an existing PR, and the dependency payoff — when a blocker closes, finding what it was holding up and swapping `blocked` → `ready`.
 
 **If which issue a PR should have closed is ambiguous, it asks rather than guesses.** Closing the wrong issue is worse than leaving one open.
 
@@ -129,9 +131,9 @@ Its hand-off prints the **actionable set** — every open issue that's `in-progr
 
 Report first, act on approval. **It never mutates the tracker just to tidy up.**
 
-It fetches `--state all`, because detecting a closed parent with open children needs the closed issues too, and it enumerates native sub-issues through the API rather than assuming the body tells the whole story.
+It fetches `--state all`, because a `Blocked by #N` pointing at an already-closed issue is drift the open-issue list alone cannot see.
 
-The drift it flags: stale · orphaned · broken hierarchy · **zombie label** (a closed issue still carrying a status) · **stale block** (a `blocked` whose target already closed) · dangling or circular dependencies · unmarked · **ungrilled `ready`** — an issue promoted too early, offered a move back to `needs-planning` so unattended workers skip it until a human grills it.
+The drift it flags: stale · orphaned · **zombie label** (a closed issue still carrying a status) · **stale block** (a `blocked` whose target already closed) · dangling or circular dependencies · unmarked · **ungrilled `ready`** — an issue promoted too early, offered a move back to `needs-planning` so unattended workers skip it until a human grills it.
 
 Three more come from the priority namespace: **unassessed** (no priority label — counted separately from *unmarked*, since a tracker with tidy lifecycle labels and no priorities anywhere is both common and invisible if the report prints one number), **double-ranked** (more than one priority label, which the GitHub UI will happily produce since it applies labels additively — the repair keeps the highest, because over-ranking an issue you're about to look at beats burying one somebody explicitly escalated), and **stale `critical`** (untouched for weeks, which is self-refuting: nobody dropped anything for it, so the tracker is saying out loud that it isn't critical, and left alone it outranks everything downstream forever and trains you to ignore the one level that's supposed to be unignorable).
 
@@ -161,4 +163,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`8cfe301` on 2026-08-24._
