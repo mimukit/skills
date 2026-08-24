@@ -197,4 +197,4 @@ npx skills add mimukit/skills -s ideakit
 
 Source: [`skills/ideakit/SKILL.md`](../../../skills/ideakit/SKILL.md)
 
-_Verified against `main`@`542b1cf` on 2026-08-24._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

@@ -150,4 +150,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

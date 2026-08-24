@@ -105,4 +105,4 @@ npx skills add mimukit/skills -s validatekit
 
 Source: [`skills/validatekit/SKILL.md`](../../../skills/validatekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

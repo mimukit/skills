@@ -76,4 +76,4 @@ npx skills add mimukit/skills -s namekit
 
 Source: [`skills/namekit/SKILL.md`](../../../skills/namekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`a512a6b` on 2026-08-21._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

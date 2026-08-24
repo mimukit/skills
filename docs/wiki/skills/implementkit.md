@@ -98,4 +98,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`06848f6` on 2026-08-20._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

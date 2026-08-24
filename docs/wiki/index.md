@@ -58,4 +58,4 @@ These predate the wiki and are maintained directly. They're mapped here so they'
 
 `AGENTS.md` is an instruction file for agents, not reader documentation. It's the authority on the conventions; the pages here describe the tooling that enforces them.
 
-_Verified against `main`@`e14d201` on 2026-08-19._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._

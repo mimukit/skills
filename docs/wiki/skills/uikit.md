@@ -135,4 +135,4 @@ npx skills add mimukit/skills -s uikit
 
 Source: [`skills/uikit/SKILL.md`](../../../skills/uikit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1f85177` on 2026-08-16._
+_Verified against `main`@`d2e9d3b` on 2026-08-24._
