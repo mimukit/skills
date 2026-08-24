@@ -1,14 +1,14 @@
 # ideakit
 
-Think an idea through across many sessions: one ideas repo with a folder per idea, one idea open at a time, and nothing written to disk until you ask for it.
+Think an idea through across many sessions: one ideas repo with a folder per idea, a jotpad for the thoughts that have none, one idea open at a time, and nothing written to disk until you ask for it.
 
-**Reach for it when** an idea arrives at the wrong moment and you have nowhere to put it, or when you sit down to think about one you started weeks ago and can't remember where you stopped.
+**Reach for it when** an idea arrives at the wrong moment and you have nowhere to put it, when a stray thought is too small to deserve a folder, or when you sit down to think about one you started weeks ago and can't remember where you stopped.
 
 | | |
 |---|---|
-| Modes | [`capture`](#capture) · [`session`](#session) · [`status`](#status) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
+| Modes | [`jot`](#jot) · [`promote`](#promote) · [`capture`](#capture) · [`session`](#session) · [`status`](#status) · [`research`](#research) · [`validate`](#validate) · [`close`](#close) |
 | Tools | `Read`, `Write`, `Edit`, `Glob`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
-| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides), Markdown only. `capture` and `close` write; `session`, `research`, and `validate` write only on your yes; `status` never writes |
+| Writes | an ideas repo at `~/ideas` (`$IDEAKIT_HOME` overrides), Markdown only. `jot`, `promote`, `capture`, and `close` write; `session`, `research`, and `validate` write only on your yes; `status` never writes |
 | Visibility | public |
 
 ## What it does
@@ -16,6 +16,8 @@ Think an idea through across many sessions: one ideas repo with a folder per ide
 An idea is a subject you want to think about, not a project you've committed to building. That distinction is the whole design. Most of what lands in an ideas repo stays notes, and a tool that treats every entry as a prospective product turns thinking into a backlog you feel guilty about.
 
 So ideakit does four things and refuses the fifth. It writes an idea down the moment it arrives, runs the discussion sessions, reports where everything stands, and sends the research and validation work out to the skills that own those postures. It never writes application code, never opens issues, and never moves an idea's folder anywhere.
+
+Below the folders sits the jotpad, which takes the thoughts that aren't ideas yet. A jot has no folder, no slug, and no subject requirement, and it becomes an idea only by being one you keep coming back to.
 
 ## Why a repo and a skill, not just a repo
 
@@ -59,6 +61,16 @@ The cost curve points the same direction. Thirty ideas cost about thirty router 
 
 There is one exception, and it's bounded on both sides. When you name a second idea and ask for the connection, that folder opens **read-only**, and the connection gets written into the primary idea's `NOTES.md` alone. One session, one owner of the log. The cost is real and accepted: the second idea's log never learns it was cited.
 
+## Why there's a pad under the folders
+
+A folder is a commitment. It costs a permanent slug, an `IDEA.md`, a log, and a row in a router you read every time you sit down. That price is right for a subject you mean to think about for months and wrong for a thought you had while making tea. Charge it on every thought and one of two things happens: you stop writing them down, or the router fills with rows you would never choose to open.
+
+The jotpad charges nothing. Say "jot this down" and the thought lands as a block in that day's file with an id and a one-line row. No subject requirement, no relevance test against the ideas you already have, no naming decision on the night it arrives.
+
+What makes it more than a scratch file is that promotion is earned rather than judged. A jot you come back to gets another block under the same id, and the router's `Entries` cell counts the returns. At three, [`status`](#status) crowns `promote` on it. So you never decide on the first night whether a thought deserves a folder. Coming back twice is the decision, and your own behaviour makes it instead of a guess.
+
+Both costs are stated rather than hidden. A dated file holds unrelated jots side by side, so reading one thread carries its neighbours into the window. That is exactly the contamination the [one-folder guard](#why-one-folder-per-session) exists to stop, and it is accepted here because the pad holds loose thoughts by construction and `promote` is the way out of it. The second cost is that a block is never edited after the day it lands. Every state change goes to the router instead, which is what keeps a thought's arrival date true and why a promoted jot leaves its text where it was.
+
 ## Why `IDEA.md` splits in two
 
 The log is the record; `IDEA.md` is a cache of it. That leaves the question of when to refresh the cache, and "rewrite it when the idea changed" is not something an agent can check itself against — it ends when the agent feels finished, which is where run-to-run variance comes from.
@@ -68,6 +80,24 @@ Splitting the file fixes that. A stable **head** says what the idea is, who it's
 The split earns its keep in the other direction too. An inconclusive session — and plenty of them are — refreshes the block and leaves the head alone, instead of churning the whole file to say nothing changed.
 
 ## Modes
+
+### `jot`
+
+Records a loose thought and stops. It proposes no slug, creates no folder, and does not ask what the thought is for.
+
+It reads the two routers and nothing else: the jot router, to see whether this is a thought you have had before, and the idea router, because that table is bounded and cheap to check. **When the thought plainly belongs to an idea you already have, it says so in one line and writes the jot anyway.** Routing on the way in is the friction the pad exists to remove, and [`promote`](#promote) can move it later without losing anything.
+
+A jot that matches one you already have gets a fresh block under the same id, and its row gains today's date. That accumulation is the whole promotion signal.
+
+### `promote`
+
+Turns a jot into an idea. It is [`capture`](#capture) with a source, and the only mode that reads the pad and writes a topic folder.
+
+It runs capture's match step against the idea router first, so a jot about something you already track appends to that idea rather than starting a rival folder. On a new idea it confirms the slug before creating anything, for the same reason capture does.
+
+**The jot's text stays in the pad.** Its row flips to `promoted` with the slug it became, and nothing is cut out of any dated file. Moving the text would tidy the pad and destroy the record of when the thought first arrived, which is the one thing the pad knows that the folder cannot reconstruct. The new folder's first log entry names the jot id and that original date instead.
+
+The reverse case needs no mode at all. A jot that turns out to be nothing gets state `dropped`, a single cell edit, and the row stays so the same thought does not come back as a new jot next month.
 
 ### `capture`
 
@@ -95,7 +125,7 @@ With no idea named it **asks** rather than guessing, offering recent ideas plus 
 
 Reports and writes nothing at all. It has two scopes, which is why there's no separate `list` mode — the difference between "where do all my ideas stand" and "where does this one stand" is an argument, not a posture.
 
-**Cross-idea, it opens no topic folder at all**, getting everything from the router and a directory listing. Then it crowns one move, and the ranking rule is the interesting part: **the crown goes to the coldest active idea carrying an open question, not the warmest.**
+**Cross-idea, it opens no topic folder and no dated jot file**, getting everything from the two routers and a directory listing. The pad gets one line under the table: how many jots are live, and which ones have three or more entries. Then it crowns one move, and the ranking rule is the interesting part: **the crown goes to the coldest active idea carrying an open question, not the warmest.**
 
 Ranking on recency was the first draft, and it produced a crown that just restated row one of a table already sorted by recency. Inverting it makes the crown carry information. Cold plus an open question means you stopped mid-thought, which is the recoverable case; cold with nothing open means you drifted off, which isn't. And it's precisely the row a recency sort buries.
 
@@ -146,12 +176,13 @@ What you keep goes into the idea's own `NOTES.md` as a dated entry naming the qu
 - **Not a scheduler.** No due dates, no review queue, no spaced retrieval. That's [`tutorkit`](./tutorkit.md) on a different repo with a different premise.
 - **Not a theme sweep.** No mode reads every idea looking for connections; that breaks the guard wholesale for something rarely wanted.
 - **Not a replacement for the kits it calls.** Its fallbacks without them are short and say so.
-- **Not an autosaver.** Outside `capture` and `close`, it writes when you say yes and not before.
+- **Not an autosaver.** Outside `jot`, `promote`, `capture`, and `close`, it writes when you say yes and not before.
+- **The jotpad is not an inbox.** Nothing in it is due, nothing expires, and no mode sweeps it for triage. A jot sits until you return to it or say it was nothing.
 - **It never commits the ideas repo on its own.**
 
 ## Hands off to
 
-Mostly to itself, chosen by state: another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`status`](#status) is that routing rule made available on demand.
+Mostly to itself, chosen by state: `promote` when a jot has come back three times, another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`status`](#status) is that routing rule made available on demand. A run that writes a jot hands off to nothing, which is the point of the mode.
 
 It leaves the repo when an idea is settled enough to shape work. Then the next move is [`plankit`](./plankit.md) in the project repo, not here — and the idea's folder stays put either way.
 
