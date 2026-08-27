@@ -1,7 +1,7 @@
 ---
 name: paseokit
 description: >-
-  Push the git worktrees your workflow actually creates into Paseo's workspace registry, and reap the rows whose directories are gone, because Paseo discovers nothing on its own and prunes nothing on its own. Use when the user says "paseokit", "sync my worktrees to paseo", "my paseo sidebar is missing worktrees", "paseo doesn't show my worktree", "clean up my paseo workspaces", "my paseo sidebar is full of dead entries", or "where should paseo put new worktrees".
+  Push the git worktrees your workflow actually creates into Paseo's workspace registry, and reap the rows whose directories are gone, because Paseo discovers nothing on its own and prunes nothing on its own. Use when the user says "paseokit", "sync my worktrees to paseo", "sync all my projects to paseo", "my paseo sidebar is missing worktrees", "paseo doesn't show my worktree", "clean up my paseo workspaces", "my paseo sidebar is full of dead entries", or "where should paseo put new worktrees".
 license: MIT
 disable-model-invocation: true
 allowed-tools: Bash, Read, Skill
@@ -15,7 +15,7 @@ metadata:
 
 **Paseo's registry is explicit-only in both directions.** A worktree that `git worktree add` created is invisible to Paseo until something registers it, and a workspace whose directory was deleted stays in the sidebar forever. There is no discovery setting to turn on and no prune command to run. So the sidebar drifts from the disk in both directions at once: real work that never appears, and finished work that never leaves.
 
-paseokit owns exactly that reconciliation: **Paseo's registry, made to match the worktrees that actually exist.** One command, machine-wide, and running it twice changes nothing the second time.
+paseokit owns exactly that reconciliation: **Paseo's registry, made to match the worktrees that actually exist.** One command, scoped to the project you run it from — or the whole machine with `sync all` — and running it twice changes nothing the second time.
 
 It is on-demand by design. Worktrees appear in Paseo when you run [`sync`](#mode-sync), not when they are created. That is a deliberate trade: no git hooks, no scheduler, no background process, nothing written into any repo.
 
@@ -35,7 +35,7 @@ Two consequences worth stating plainly:
 ## When this fires
 
 - **`list`.** "What does paseo think my worktrees are", "why isn't my worktree in the sidebar", "show me the drift". Read-only.
-- **`sync`.** "Sync my worktrees to paseo", "register my worktrees", "clean the dead rows out of my sidebar".
+- **`sync`.** "Sync my worktrees to paseo", "register my worktrees", "clean the dead rows out of my sidebar". Scoped to the current project by default; "sync all", "sync everything", or "all my projects" widens it to the whole machine — see [Scope](#scope).
 - **`align`.** "Where should paseo put new worktrees", "make paseo use my worktree root".
 
 **If no mode is clear, start with [`list`](#mode-list).** It is read-only and it names which rows [`sync`](#mode-sync) would touch, so it is never the wrong first move.
@@ -128,7 +128,16 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 The writing mode, and safe to run repeatedly by construction.
 
-Run [`list`](#mode-list)'s join first, because `sync` acts on exactly those verdicts.
+### Scope
+
+`sync` has two scopes, and the words in the request pick one:
+
+- **Project scope is the default.** Resolve the main checkout from the current directory with `git rev-parse --path-format=absolute --git-common-dir`, then act only on that project: its worktrees on disk, and the registry rows whose `projectId` matches it in `workspaces.json`. Every other project's rows and worktrees stay untouched and unreported.
+- **`sync all` is machine-wide.** The user asks for it with "sync all", "sync everything", or "all my projects". It covers every live project in `projects.json`, and it is the only scope that runs the unknown-repo walk below, because that walk is a machine-wide sweep by nature.
+
+**Outside a git repository, project scope has no referent.** Say so, and name `sync all` as the way to sweep the machine. Do not silently widen the scope the user did not ask for.
+
+Run [`list`](#mode-list)'s join first, filtered to the chosen scope, because `sync` acts on exactly those verdicts.
 
 ### Straight through, no confirmation
 
@@ -169,7 +178,7 @@ The title is `#<n> · <issue title>`, with `<n>` parsed from an `issue-<n>-<slug
 
 Both of these widen the scope past what the user asked for, so both stop and ask.
 
-**Unknown repos.** Walk `$WORKTREE_ROOT/*`, resolve each candidate to its main checkout with `git -C "$CANDIDATE" rev-parse --git-common-dir`, and collect the repos Paseo has never seen. List them, then on one OK register the main checkout first:
+**Unknown repos** (`sync all` only, per [Scope](#scope)). Walk `$WORKTREE_ROOT/*`, resolve each candidate to its main checkout with `git -C "$CANDIDATE" rev-parse --git-common-dir`, and collect the repos Paseo has never seen. List them, then on one OK register the main checkout first:
 
 ```sh
 paseo workspace create --isolation local --path "$REPO" --json
@@ -185,7 +194,7 @@ Paseo's own worktrees need no special case. They already carry a row, and their 
 
 ### Hand off
 
-**What changed.** Report registrations, archives, collapses, and retitles, each with a count. Name every skip with its reason. Put `busy` skips first, because those are live work.
+**What changed.** Name the scope you ran, the current project or the whole machine. Report registrations, archives, collapses, and retitles, each with a count. Name every skip with its reason. Put `busy` skips first, because those are live work.
 
 **Where it landed.** Paseo's registry only. Say plainly that no directory, branch, or git registration changed, and that the sidebar reflects the new rows within a few seconds.
 

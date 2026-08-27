@@ -18,7 +18,7 @@ Paseo shows one workspace per checkout and hangs agents off each one. The worktr
 
 **Paseo's registry is explicit-only in both directions.** It discovers nothing, and it prunes nothing. A worktree that `git worktree add` created is invisible until something registers it; a workspace whose directory was deleted stays in the sidebar forever. There is no discovery setting to turn on and no prune command to run.
 
-So the sidebar drifts from the disk two ways at once — real work that never appears, and finished work that never leaves. paseokit owns that reconciliation: **Paseo's registry, made to match the worktrees that actually exist.** Machine-wide, and running it twice changes nothing the second time.
+So the sidebar drifts from the disk two ways at once — real work that never appears, and finished work that never leaves. paseokit owns that reconciliation: **Paseo's registry, made to match the worktrees that actually exist.** Scoped to the project you run it from, machine-wide on request, and running it twice changes nothing the second time.
 
 ## Why it's a pump, not a janitor
 
@@ -92,6 +92,8 @@ A **stray project** has a clear signature — its `projectKey` matches a real pr
 
 The writing mode, safe to run repeatedly by construction.
 
+**Two scopes, picked by the words in the request.** Run from inside a repo, `sync` acts on that project alone — its worktrees, and the rows whose `projectId` matches. "Sync all" widens it to every live project on the machine, and is the only scope that runs the unknown-repo walk, which is machine-wide by nature. Outside a repo, project scope has no referent, so the skill says so and names `sync all` rather than silently sweeping everything.
+
 **Straight through, no confirmation** — register the `unregistered`, archive the `orphaned`, collapse each `duplicate` set to one row, retitle the machine-generated titles, and skip anything `busy` with the agent named. None of it can lose work, so none of it asks.
 
 Three rules carry most of the weight:
@@ -102,7 +104,7 @@ Three rules carry most of the weight:
 
 **Gated on one confirmation each**, because both widen scope past what was asked:
 
-- **Unknown repos.** It walks `$WORKTREE_ROOT`, resolves each candidate with `git rev-parse --git-common-dir`, and lists repos Paseo has never seen. On an OK it registers the main checkout first — *that call is what brings the project into being* — then re-reads `projects.json` for the new id and registers the worktrees under it. Paseo's own worktrees need no special case: they already carry a row and resolve to a known repo, so no hash-directory pattern has to be guessed at.
+- **Unknown repos** (`sync all` only). It walks `$WORKTREE_ROOT`, resolves each candidate with `git rev-parse --git-common-dir`, and lists repos Paseo has never seen. On an OK it registers the main checkout first — *that call is what brings the project into being* — then re-reads `projects.json` for the new id and registers the worktrees under it. Paseo's own worktrees need no special case: they already carry a row and resolve to a known repo, so no hash-directory pattern has to be guessed at.
 - **Tombstones.** An archived row **suppresses re-registration**. Someone archived that workspace deliberately, and silently re-adding it would undo the decluttering they just did — so it gets a verdict of its own and an explicit ask.
 
 One honest limitation: **there is no `paseo workspace unarchive` in 0.4.0.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
