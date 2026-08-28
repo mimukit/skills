@@ -107,4 +107,4 @@ Process artifacts record what was decided at a moment in time and are never read
 
 Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`fb4b4c1` on 2026-08-29._

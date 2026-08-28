@@ -163,4 +163,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`8cfe301` on 2026-08-24._
+_Verified against `main`@`fb4b4c1` on 2026-08-29._

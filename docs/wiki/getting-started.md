@@ -206,4 +206,4 @@ Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new
 
 To understand why the repo is laid out this way, read [Architecture](./architecture.md).
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`fb4b4c1` on 2026-08-29._
