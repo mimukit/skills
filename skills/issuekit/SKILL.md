@@ -52,7 +52,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance, for the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** Never merge PRs.
 
-**One exemption, and it belongs to the mode, not the caller.** [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress) runs without a preview, for every caller, meaning a person at the keyboard and an unattended orchestrator alike. It's the only mutation here that asks a question already answered twice over: [the `ready` guard](#1-guard-refuse-anything-not-ready) has refused everything a human hasn't grilled, and invoking `start <n>` *is* the instruction to start the issue. Flipping the label is what "started" means in the tracker, so a confirmation prompt buys nothing and costs the one thing `start` exists to protect: an issue sitting in a worktree while the tracker still advertises it as free for someone else to pick up. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
+**One exemption, and it belongs to the mode, not the caller.** [`start`'s `ready → in-progress` flip](#4-flip-the-label-ready--in-progress) runs without a preview, for every caller, meaning a person at the keyboard and an unattended orchestrator alike. It's the only mutation here that asks a question already answered twice over: [the `start` guard](#1-guard-refuse-anything-not-ready-or-stacked) has refused everything a human hasn't grilled, and invoking `start <n>` *is* the instruction to start the issue. Flipping the label is what "started" means in the tracker, so a confirmation prompt buys nothing and costs the one thing `start` exists to protect: an issue sitting in a worktree while the tracker still advertises it as free for someone else to pick up. Nothing else widens: `create` still previews, `close` still previews, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
 
 ## Title convention (every issue this skill creates)
 
@@ -98,7 +98,8 @@ The canonical map has exactly one **status** label active at a time, moving left
 | `triage` | `FBCA04` | filed, not yet assessed or broken down | create (ad-hoc), triage |
 | `needs-planning` | `F1C40F` | not yet specified enough to work; a human plan/grill session is still owed | issuekit create / afkkit gate |
 | `ready` | `0E8A16` | specified and **independent**, safe to take into its own git worktree now | issuekit create |
-| `blocked` | `D93F0B` | has an unmet prerequisite; the blocker is named in the body as `Blocked by #N` | issuekit create / sync |
+| `blocked` | `D93F0B` | has an unmet prerequisite that has not started | issuekit create / sync |
+| `stacked` | `006B75` | its prerequisite has an open PR, so it is workable now on a branch stacked on that one | prkit / issuekit sync |
 | `in-progress` | `1D76DB` | actively being worked in a worktree | issuekit start |
 | `in-review` | `5319E7` | a PR is open, awaiting review or merge | a PR-authoring skill / sync |
 | `needs-info` | `D4C5F9` | stalled pending more detail before it can proceed | triage |
@@ -107,7 +108,24 @@ The canonical map has exactly one **status** label active at a time, moving left
 
 A **closed** issue needs no `done` label, because the closed state is the signal.
 
-**`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint, and those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a `Blocked by #N` line in its body: the label says *that* it's blocked, the body says *by what*. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
+**`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint, and those get `ready`. The exception, an issue that genuinely can't start until another lands, gets `blocked` plus a recorded dependency naming the prerequisite. `gh issue list --label ready` is then the exact set the user can fan out in parallel right now.
+
+**`blocked` vs `stacked` splits waiting from stackable, and that split is the point.** A prerequisite nobody has started is a real wait, and its dependent stays `blocked`. A prerequisite that is *built, pushed, and sitting in an open PR* is not a wait at all: the code exists, so the dependent can be worked right now on a branch cut from the prerequisite's branch, and its PR targets that branch instead of trunk. That issue is `stacked`. Collapsing the two states is what makes a solo project idle, because the author is waiting on a review only they can do.
+
+`stacked` is a **stored** label rather than a computed state, so it earns the same `gh issue list --label stacked` fan-out that `ready` has. A stored label can go stale, so it never gates anything on its own: [`start` re-checks the prerequisite's PR live](#1-guard-refuse-anything-not-ready-or-stacked) before it cuts a branch.
+
+### Recording a dependency
+
+**GitHub's native issue dependencies are the source of truth.** Write the edge with `gh issue edit`, and read it back as structured data rather than by parsing prose:
+
+```sh
+gh issue edit 44 --add-blocked-by 43
+gh issue list --state open --json number,title,labels,blockedBy,blocking
+```
+
+Keep writing a `Blocked by #N` line in the body as well, because a person reading the issue should see what it waits on without opening a second view. **The line is prose, not the store.** When the two disagree, the native edge wins and the line gets repaired.
+
+The flags need `gh` 2.94.0 or newer. **Below that, degrade rather than refuse:** write the body line only, and say once that the native edge was skipped and why. These labels and this workflow have to keep working on whatever `gh` the machine has.
 
 **`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**, so an agent (or an orchestrator like afkkit) can take it straight to a PR without a human. `needs-planning` means a human plan/grill session is still owed before the issue is workable at all. An issue earns `ready` only once its decisions are settled by a grill; see [the grill gate at creation](#4-label-lifecycle-state-and-priority-and-record-dependencies). `gh issue list --label needs-planning` is then the exact set that still needs the human, the mirror of the `ready` fan-out set.
 
@@ -163,26 +181,31 @@ Read the plan's structure (phases, milestones, tasks) and decide the shape. Four
 
 - **One issue per plan by default.** A plan is work one person planned and grilled in a single session, so it becomes a single issue, and the plan's phases become [`## Phase N` sections in that issue's body](#3-create-the-issues) rather than separate issues. Every split costs a worktree, a branch, a PR, a review, and a close, and it buys sequencing the phases already carry for free. Split only where a piece has a genuinely different lifecycle: it ships on its own, it wants its own PR, or a real ordering constraint survives the attempt to design it away. The user can always ask to split one further, and starting consolidated beats starting fragmented.
 - **Vertical slices.** Size each issue so it completes **one testable feature end to end**, meaning something a person could verify on its own, rather than a horizontal layer (e.g. "all the DB models", "all the endpoints") that isn't demonstrable until other issues land. Where a plan does yield two issues, prefer "user can log in with SSO" over separate "add OIDC table" / "add OIDC route" / "add OIDC UI" issues. **Nothing caps a slice at what fits in one agent context.** A multi-phase issue is the normal shape here, and an unattended worker builds it phase by phase.
-- **Independent by default.** Where a plan does yield more than one issue, sequence them so each can be picked up in its own git worktree and worked **in parallel**, with no issue waiting on another. When two candidate issues share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them back into one issue as consecutive phases, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it: the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a `Blocked by #N` line, everything else gets `ready`.
+- **Independent by default.** Where a plan does yield more than one issue, sequence them so each can be picked up in its own git worktree and worked **in parallel**, with no issue waiting on another. When two candidate issues share state (a migration one creates and another consumes, an API contract one produces), first try to **design the dependency away**: fold them back into one issue as consecutive phases, or resequence so the shared piece ships inside the prerequisite. Only when a real ordering constraint survives do you record it: the dependent gets [`blocked`](#lifecycle-labels-every-mode) and a recorded dependency, everything else gets `ready`.
+- **A surviving dependency is a stack candidate, not a defeat.** Independence is still worth designing for, because a `ready` issue needs nothing from anybody. But the fallback is no longer a queue: a dependent whose prerequisite is *in flight* becomes [`stacked`](#lifecycle-labels-every-mode) and is worked on a branch cut from the prerequisite's, so the two land in order without the second one waiting for a review. Say so in the preview, so the user is choosing between "one issue with two phases" and "two issues that stack", rather than between one issue and an idle wait.
 - **Prefactor first.** Before slicing anything, look for a simplifying refactor that makes the real change trivial: *"make the change easy, then make the easy change."* It normally belongs as the issue's **first phase**, where the code that needs it follows in the same branch. File it as its own `ready` issue (behavior-preserving → `refactor(scope):`) only when it stands alone, meaning it ships and reviews on its own merits whether or not the feature ever lands.
 
 **Wide mechanical refactors are the standing exception to the one-issue default.** When a change has broad blast radius and genuinely can't be one vertical slice, such as renaming a shared column or retyping a symbol used everywhere, phases in one body are the wrong shape: the migrate batches are independent *of each other* and want to run in parallel branches, which is the one thing phases in a single issue cannot do. Sequence it **expand → migrate → contract**:
 
 - **expand.** Add the new form alongside the old; nothing breaks yet. `ready`.
-- **migrate.** Update call sites in batches by area, each batch its own issue [`blocked`](#lifecycle-labels-every-mode) by the expand issue (`Blocked by #<expand>`). The batches are independent of *each other*, so fan them out in parallel.
+- **migrate.** Update call sites in batches by area, each batch its own issue [`blocked`](#lifecycle-labels-every-mode) by the expand issue. The batches are independent of *each other*, so fan them out in parallel.
 - **contract.** Delete the old form once nothing uses it, `blocked` by all the migrate batches.
 
-This turns one un-sliceable change into a fan of mostly-parallel issues with honest `Blocked by #N` edges, and reuses the existing `ready`/`blocked` machinery, with no new labels. If the batches can't each stay green on their own, add one final integrate-and-verify issue blocked by them all.
+This turns one un-sliceable change into a fan of mostly-parallel issues with honest dependency edges, and reuses the existing `ready`/`blocked` machinery.
+
+**This is the shape stacking pays off on most, so mark the migrate batches `layer on #<expand>` in the Stack column.** The batches all depend on the expand issue and on nothing else, so the moment expand's PR opens they become [`stacked`](#lifecycle-labels-every-mode) and every batch can be worked at once on its own layer off expand's branch. Without that, the entire fan idles behind a single review. The contract issue stays a plain wait, because it genuinely cannot run until the batches have actually landed.
 
 **Milestones are opt-in.** Do **not** create GitHub milestones by default; map a plan's phases onto the issue body instead. Only when the user **explicitly asks** for milestones (or points at a repo that already uses them) should you create one (`gh api --method POST repos/{owner}/{repo}/milestones -f title="<title>"`, then `gh issue create --milestone <title>`) and attach issues to it. Absent that ask, never introduce a milestone the user would then have to maintain.
 
 Present the proposal as a **preview table** and stop for approval. Do **not** create anything yet:
 
-| # | Title | Priority | Depends on | Phases |
-|---|-------|----------|-----------|--------|
-| 1 | `feat(auth): add sso login` | high | none | oidc provider · session + token refresh · login UI · account linking |
+| # | Title | Priority | Depends on | Stack | Phases |
+|---|-------|----------|-----------|-------|--------|
+| 1 | `feat(auth): add sso login` | high | none | — | oidc provider · session + token refresh · login UI · account linking |
 
-Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase. The **Phases** column is the plan's structure, carried into one issue rather than scattered across four. The **Depends on** column is where independence is decided out loud, and on a one-issue breakdown it is empty by construction: a cell filled with `#N` means that issue is `blocked` by another one in the table, and every empty cell is an issue the user can take into a worktree now. Let the user add, drop, retitle, **reprioritize**, **resequence to break a dependency**, or **split** any row before you proceed. Offer the split explicitly when a phase looks like it ships on its own, and say what the split would cost: a second branch, PR, review, and close. This guard is the point, so never spray a repo with auto-generated issues.
+Titles follow the [title convention](#title-convention-every-issue-this-skill-creates): `type(scope): summary`, lowercase. The **Phases** column is the plan's structure, carried into one issue rather than scattered across four. The **Depends on** column is where independence is decided out loud, and on a one-issue breakdown it is empty by construction: a cell filled with `#N` means that issue is `blocked` by another one in the table, and every empty cell is an issue the user can take into a worktree now.
+
+The **Stack** column says what happens to a dependent once its prerequisite is in flight: `layer on #N` means it is intended to be worked as a stacked branch rather than waited on, and `—` means it is a plain wait. Fill it for every row whose *Depends on* cell is non-empty, because that is the decision that turns a queue into parallel work, and it is cheapest to make here while the user is looking at the whole shape. Nothing is stacked at creation time, since no prerequisite has a PR yet; the column records the intent that [`sync`](#mode-sync) and the PR-authoring skill act on later. Let the user add, drop, retitle, **reprioritize**, **resequence to break a dependency**, or **split** any row before you proceed. Offer the split explicitly when a phase looks like it ships on its own, and say what the split would cost: a second branch, PR, review, and close. This guard is the point, so never spray a repo with auto-generated issues.
 
 **Propose a [priority](#priority-labels-every-mode) per row, and expect to be overruled.** You can read relative importance off a plan, meaning what it calls out as the core of the feature versus the polish, what it defers, and what it flags as a risk, and that's a real signal worth putting in the column. What you cannot read is why the work is being done at all, which is the thing priority actually encodes. So propose from the plan, mark anything the plan doesn't rank as `medium`, and treat the column as the one most likely to be corrected. This is exactly the right moment for that correction: setting priority here costs the user one glance at a table they're already reviewing, where doing it later means a pass back over issues that have scattered across the tracker.
 
@@ -230,8 +253,10 @@ Use a temp file for each body (multi-line markdown through `--body` is flaky) an
 ### 4. Label lifecycle state and priority, and record dependencies
 Apply the [lifecycle labels](#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies, because `ready` is a promise the work can run *unattended*, earned only when the decisions are already settled:
 
-- **Grilled source.** The input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a `Blocked by #N` line in its body naming the prerequisite.
-- **Ungrilled source.** An ad-hoc description, or a plan with no grill stamp. The decisions aren't settled, so **every issue gets `needs-planning`**, because it still needs a human plan/grill session before anything unattended should touch it. Record any `Blocked by #N` dependency in the body anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
+- **Grilled source.** The input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a [recorded dependency](#recording-a-dependency) naming the prerequisite.
+- **Ungrilled source.** An ad-hoc description, or a plan with no grill stamp. The decisions aren't settled, so **every issue gets `needs-planning`**, because it still needs a human plan/grill session before anything unattended should touch it. Record the dependency anyway; it takes effect once the issue is grilled into `ready`. This is what keeps afkkit (and any unattended worker) from picking up work a human hasn't grilled yet.
+
+**Nothing is labeled `stacked` at creation time.** A dependent only becomes stackable once its prerequisite has an open PR, and at creation nothing has been built. The Stack column records the *intent*; the label arrives later, from the PR-authoring skill or from [`sync`](#mode-sync).
 
 Then apply the [priority label](#priority-labels-every-mode) the user approved in the preview table, **one per issue, in the same `gh issue edit` call** as the lifecycle label, so a fresh issue never exists in a half-labeled state that a concurrent survey could read.
 
@@ -242,10 +267,12 @@ Confirm each label exists first (`gh label list`), and if one is missing, stop a
 ```sh
 # grilled plan → ready / blocked, each with its approved priority
 gh issue edit 43 --add-label ready --add-label high
-gh issue edit 44 --add-label blocked --add-label medium   # body carries: Blocked by #43
+gh issue edit 44 --add-label blocked --add-label medium --add-blocked-by 43
 # ungrilled source → needs-planning, still ranked
 gh issue edit 45 --add-label needs-planning --add-label low
 ```
+
+Record the dependency in the same call that labels the issue, so a dependent never exists with a `blocked` label and no recorded prerequisite. On `gh` below 2.94.0, drop `--add-blocked-by`, keep the body line, and say the native edge was skipped.
 
 Preview the label set alongside the issues and get an OK before applying, as with any other mutation.
 
@@ -273,7 +300,7 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 - **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Crown the **highest-priority** one rather than listing all of them, breaking a tie on whichever frees the most other work.
 - **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session, meaning **grillkit** on the plan, then re-run `create`, or relabel by hand once the decisions are settled. Nothing here is workable unattended yet, so say that plainly rather than offering `start`.
-- **everything is `blocked`** → surface the root prerequisite; that's the only thing anyone can act on.
+- **everything is `blocked`** → surface the root prerequisite; that's the only thing anyone can act on. When the breakdown marked dependents as stack candidates, say so here: starting the root frees them as soon as its PR opens, not when it merges.
 
 ---
 
@@ -281,22 +308,38 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 Pick an issue up: guard that it's actually workable, get it a worktree, and move it to `in-progress`. This is the moment the tracker and the filesystem meet, and it is deliberately thin: the tracker half is issuekit's, the worktree half is gitkit's, and there is nothing in between.
 
-### 1. Guard: refuse anything not `ready`
+### 1. Guard: refuse anything not `ready` or `stacked`
 
-**Never start an issue that isn't labeled `ready`.**
+**Never start an issue that isn't labeled `ready` or `stacked`.**
 
 ```sh
-gh issue view <n> --json labels,title,state
+gh issue view <n> --json labels,title,state,blockedBy
 ```
 
 This one guard carries more weight than its size suggests, and it is the reason `start` lives here rather than in a worktree skill. An issue only reaches `ready` two ways: a human grilled its decisions settled, or issuekit `sync` promoted it `blocked → ready` when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free**: no unattended worker can get ahead of the tracker, and none can get ahead of human judgment.
+
+**`stacked` passes the same gate for the same reason, and then earns a second check.** An issue reaches `stacked` only from `blocked`, and it reached `blocked` from a grilled breakdown, so the human-grill gate is already satisfied. What is *not* satisfied is the dependency half, because the prerequisite has not landed, it is merely in flight. So a `stacked` issue gets a live verification before anything is cut:
+
+```sh
+gh pr list --search "<blocker>" --state open --json number,headRefName,state
+```
+
+**The label is discovery; this check is the gate.** `stacked` is written by another skill at PR-open time and repaired by `sync`, so between those moments it can be wrong in exactly the way that costs the most: the PR was closed unmerged, or it merged and its branch was deleted. Cutting a layer from a branch that is gone fails much later and far from its cause.
+
+Refuse a `stacked` issue when the prerequisite's PR is closed, merged, or missing, and say which:
+
+- **PR merged** → the prerequisite landed, so this is no longer stacked work. Point at `sync`, which promotes it `stacked → ready` and lets a normal start cut from the base ref.
+- **PR closed unmerged** → the prerequisite was abandoned. The issue is `blocked` again, not stackable. Say so and stop.
+- **No PR found** → the label is drift. Point at `sync` to repair it.
+
+Never soften this into a warning. A refusal here costs one command; a worktree cut from a dead branch costs a confusing debugging session days later.
 
 That last part is load-bearing for an orchestrator that calls `start` itself with nobody watching (afkkit does exactly this, as the first step of every run). The gate does not depend on who types the command: it's the `ready` *label* that carries the human's judgment, earned upstream at the grill, and nothing that calls `start` can award it. So refuse on the label alone, and never soften the guard because the caller sounds confident, names a plan, or says it's fine.
 
 Refuse with the reason, not a bare error:
 
 - **`needs-planning`** → the decisions aren't settled; it needs a human grill session first.
-- **`blocked`** → name the `Blocked by #N` prerequisite and its state.
+- **`blocked`** → name the prerequisite and its state. When that prerequisite turns out to have an open PR, the issue should be `stacked`, so point at `sync` to promote it rather than starting it here.
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
 - **closed, or no lifecycle label** → say which, and offer `triage` to classify it.
 
@@ -304,9 +347,13 @@ Refuse with the reason, not a bare error:
 
 **gitkit owns branch naming**, so hand it the issue number and title and use what comes back. For an issue titled in the [`type(scope): summary` convention](#title-convention-every-issue-this-skill-creates), that yields `issue-<n>-<slug>`: the prefix stripped, the summary kebab-cased and capped. Don't re-derive the shape here; a second copy of the slug rules drifts from the one gitkit uses to *find* the worktree later, and then lookup silently stops matching.
 
+A `stacked` issue takes the same branch name. A layer is an ordinary branch, and it is named after the issue it builds, not after its position in the stack.
+
 ### 3. Get the worktree from gitkit, create or adopt
 
 Call gitkit for the branch. It looks the branch up first and **adopts an existing worktree** if there is one, creating a fresh one off the resolved base ref only when there is none. That is what makes `start` safe to re-run: the re-run path is real (an issue escalated back to `needs-planning`, grilled, and picked up again), and it must never recreate, never error, and never disturb work already sitting in the worktree.
+
+**A `stacked` issue passes gitkit one extra fact: the base is the prerequisite's head branch**, taken from the PR the guard just verified, rather than the repo's base ref. gitkit states this as the one deliberate exception to its sibling-branch ban and gives the layer its own worktree, so nothing else about this step changes. Ask gitkit to add the layer to the stack so GitHub renders the chain; without the stack extension it falls back to a plain branch off the parent, which is the same topology with no stack map.
 
 issuekit does not choose the path, the base ref, or the git commands. If gitkit isn't installed, say so and stop rather than improvising a worktree convention, because a worktree in the wrong place is worse than none, since everything downstream then looks in the right place and finds nothing.
 
@@ -314,9 +361,12 @@ issuekit does not choose the path, the base ref, or the git commands. If gitkit 
 
 ```sh
 gh issue edit <n> --remove-label ready --add-label in-progress
+gh issue edit <n> --remove-label stacked --add-label in-progress   # the stacked path
 ```
 
-**Run it without asking.** This is [the skill's single exemption from the preview rule](#preflight-every-mode), it applies to every caller, and it applies to this flip and nothing else. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so. If either label is missing from the repo, [report the gap](#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check.
+**Run it without asking.** This is [the skill's single exemption from the preview rule](#preflight-every-mode), it applies to every caller, and it applies to this flip and nothing else. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+
+A `stacked` issue flips exactly the same way, and the exemption covers it for the same reason: the guard has already refused everything a human hasn't grilled *and* everything whose prerequisite isn't live, so the confirmation would ask a question answered twice over. If either label is missing from the repo, [report the gap](#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check.
 
 ### 5. Hand off
 
@@ -375,6 +425,7 @@ gitkit's own teardown rules apply and issuekit does not override them:
 - **A dirty worktree stops the removal** and shows what would be lost. A merged PR does not guarantee an empty worktree: scratch files, a stashed experiment, or an un-pushed follow-up commit all live there, and none of them are in the PR.
 - **Already gone → "already gone"**, not an error. `close` is idempotent in the same spirit as `start`'s adopt-and-stop; re-running it after a partial run is normal.
 - **The branch is deleted only if it's merged**, with `-d` rather than `-D`, so git itself refuses to drop unmerged work.
+- **A branch another layer is stacked on stays.** When this issue's branch is the base of a layer above it, removing the branch strips that layer of its base and its open PR of its target. Check for dependents still labeled `stacked` on this issue before the teardown, and when there are any, remove the worktree but keep the branch, naming the layers that still need it. GitHub re-targets a layer automatically once the branch below it *merges*; it cannot recover one that was deleted underneath it.
 
 If no worktree matches the branch, say so and carry on, because the tracker half of `close` still succeeded.
 
@@ -430,13 +481,26 @@ gh pr edit <pr> --body-file <updated-body>
 ```
 
 ### 3. Labels: advance lifecycle state, unblock what's freed
-Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, find the issues whose body says `Blocked by #<it>` and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
+Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, find the issues that depend on it and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
 
 ```sh
 gh issue edit 44 --remove-label blocked --add-label ready
 gh issue comment 44 --body "Unblocked: #43 (the prerequisite) merged."
 gh issue edit 42 --remove-label in-review   # closing → strip the active status label; the closed state is the signal
 ```
+
+**`sync` is the repair sweep for `stacked`, not its primary writer.** A dependent becomes stackable the moment its prerequisite's PR opens, and the skill that opens that PR sets the label there, where it is fresh. `sync` catches everything that path missed: a PR opened by hand or on GitHub, a run where the flip was declined, a label that has since gone stale. Three moves, each previewed like any other:
+
+```sh
+# prerequisite's PR opened → the dependent is workable on a layer
+gh issue edit 44 --remove-label blocked --add-label stacked
+# prerequisite merged → the dependent no longer needs a layer
+gh issue edit 44 --remove-label stacked --add-label ready
+# prerequisite's PR closed unmerged → the dependent is a real wait again
+gh issue edit 44 --remove-label stacked --add-label blocked
+```
+
+**A stack merge closes several issues at once**, because merging one PR in a stack merges every unmerged PR below it. So reconcile the whole cascade rather than the one PR someone named: read every merged PR in that stack, close each issue it closes, and then run the promotions above for whatever those closures freed. Handling only the top PR leaves the layers underneath looking unlanded when their code is already on trunk.
 
 As everywhere in sync, **preview each move and wait for the OK**, and never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line, because issuekit uses labels and doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
