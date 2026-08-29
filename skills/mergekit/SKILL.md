@@ -34,6 +34,7 @@ If a PR is named but the action isn't, assume `start`, because setting a PR up i
 Every merge requires an explicit, per-PR confirmation from a human who has just reviewed *that* PR. Concretely:
 
 - **Never a batch.** "Merge them all" is not a confirmation for any individual PR. Ask once per PR, naming the number and title.
+- **A stack cascade is one action, so it takes one confirmation that names every PR in it.** Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, and a passing local gate are *inputs to the human's decision*, and none of them is the decision. A perfectly green PR still waits.
 - **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `finish` merges, and only after the confirmation.
@@ -72,8 +73,9 @@ Three facts that command cannot give you matter more than the ones it can, so ga
 - **Unresolved review threads.** REST does not expose thread resolution state at all; only GraphQL does, via a `reviewThreads` connection carrying `isResolved` and `isOutdated`. Query it with `gh api graphql`; if the shape has moved, check the current [GraphQL API docs](https://docs.github.com/en/graphql) rather than guessing. A PR with a bot review sitting unanswered is not ready for your time.
 - **Behind the base branch.** Run `git fetch origin` once, then compare each head against `origin/<base>`, because a PR that is behind is one you would be reviewing in a state that will never exist.
 - **A QA plan and proof.** Look for the artifacts your repo's conventions produce (a QA plan doc, a proof bundle, whatever the PR body links). Absence is a fact worth printing, not a silence.
+- **Stack position.** A PR whose base is another feature branch is a layer, and that is the single most important thing to know before opening it: its diff is only its own slice, and merging it merges everything below it. Mark the layer and its depth (`layer 2 of 3`), and group a stack's PRs together in the table rather than scattering them by update time.
 
-Print one table, most-ready first, with drafts and PRs authored by others clearly marked. **Do not crown a "next" PR**, because ranking work is a project-status job, and a reviewer's queue is theirs to order.
+Print one table, most-ready first, with drafts and PRs authored by others clearly marked. **Do not crown a "next" PR**, because ranking work is a project-status job, and a reviewer's queue is theirs to order. Within a stack, print bottom layer first: that is merge order, and the bottom is the only layer that can land alone.
 
 ## Mode `start <n>`: make it merge-ready
 
@@ -153,6 +155,16 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 ### Merge path
 
 1. **Confirm**, per [Never merge automatically](#never-merge-automatically). Name the PR number and title, state what you are about to do, and wait.
+
+   **First establish whether this PR is a layer in a stack**, because that changes what "merge this" means. Ask gitkit, or read the base ref: a PR whose base is another feature branch is a layer. If it is, list the whole cascade in the prompt and wait on that:
+
+   > Merging #53 also merges #52 and #51 below it, bottom-up:
+   > 1. #51 `feat(auth): oidc provider`
+   > 2. #52 `feat(auth): session + token refresh`
+   > 3. #53 `feat(auth): login ui`
+   > All three land on `main`. Proceed?
+
+   **Merge from the layer the reviewer approved, never from the top for convenience.** Merging a lower layer is legal and leaves the layers above it open, rebased onto the base automatically. That partial landing is a feature: a reviewer who is happy with the bottom two and not the third should land two.
 2. **Approve, when it's possible.** GitHub does not permit approving your own pull request, so on a self-authored PR (the common case when an agent opens PRs under your account) skip the approval, say once that it was skipped and why, and merge directly. When the author is someone else (or a machine identity), offer `gh pr review <n> --approve` first.
 3. **Merge** with a merge commit and a fixed subject:
 
@@ -161,9 +173,17 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    ```
 
    No squash, no rebase-merge. If your repo's merge-commit convention differs, that subject is the one line to change.
+
+   **A cascade merges through the stack tool, not one PR at a time:**
+
+   ```sh
+   gh stack merge --merge
+   ```
+
+   This is the one `gh stack` command mergekit owns, and it owns it because merging is mergekit's alone; gitkit takes the stack plumbing and deliberately leaves this out. Run it only after the enumerated confirmation above. Without the stack extension, merge each PR by hand in bottom-up order, waiting for each to land before the next, since every merge re-targets the layer above it.
 4. **Hand the landing off to the tracker with `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
 
-   - **`close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action, and `close` gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue.
+   - **`close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action, and `close` gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue. **After a cascade, run it once per merged layer**, bottom-up, because the cascade landed several PRs and each one retires its own issue and its own worktree. Closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk.
    - **`sync`, immediately after, including when there was no issue to close.** `close` lands the one issue you named; `sync` sweeps for what the merge shook loose *around* it: a second issue the PR body closed, a link the PR never carried, a parent checklist still un-ticked, a dependent left `blocked` on a prerequisite that just landed. That drift is invisible from here, because mergekit sees one PR where `sync` reads the whole tracker, and it is cheapest to repair now, while the merge that caused it is the thing everyone is looking at.
 
    Both modes preview before they mutate, so the pair costs a confirmation, not a surprise. Without issuekit installed, fall back to plain `gh issue close` / `gh issue edit` calls, previewed and confirmed like any other mutation, and say that the tracker-wide sweep did not happen, rather than implying the tracker is now clean.
@@ -175,7 +195,7 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
 6. **Hand off.**
 
-   **What changed.** Report the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: `close`'s issue closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at.
+   **What changed.** Report the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: `close`'s issue closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
 
    **Where it landed.** Say which worktrees were removed and which were deliberately left standing, with paths. An adopted worktree that survives is someone's live workspace; naming it is how they know it's still theirs.
 
