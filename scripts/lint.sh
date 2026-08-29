@@ -169,9 +169,18 @@ check_skill() {
 
   # public skills (internal:false) must be portable / self-contained
   if [[ "$internal_val" == "false" ]]; then
-    if grep -qE '\]\(\.\.?/' "$file"; then
+    # `](../…)` escapes the skill directory and breaks once installed. `](./x.md)`
+    # does not: a satellite file inside the skill's own directory ships with it,
+    # and AGENTS.md's disclosure ladder calls for exactly that pointer. Flag the
+    # first, allow the second, and check the second actually resolves.
+    if grep -qE '\]\(\.\./' "$file"; then
       issues+=("W:public skill has a repo-relative link (../…) — won't resolve once installed")
     fi
+    while IFS= read -r rel; do
+      [[ -z "$rel" ]] && continue
+      [[ -e "$SKILLS_DIR/$1/$rel" ]] \
+        || issues+=("E:pointer to ./$rel, but skills/$1/$rel does not exist")
+    done < <(grep -oE '\]\(\./[^)#]+' "$file" | sed 's/^](\.\///' | sort -u)
     if grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
       issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
