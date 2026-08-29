@@ -30,7 +30,7 @@ If you only remember one thing: **[`statuskit`](./skills/statuskit.md) tells you
             ▼
    RELEASE  releasekit ──▶ changelog · tag · GitHub release   (when you're cutting one)
 
-            gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge
+            gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge · stacks
                           borrowed by issuekit start, prkit, mergekit, issuekit close
             domainkit ┄┄▶ CONTEXT.md glossary + ADRs, as PLAN settles decisions
 ```
@@ -70,7 +70,7 @@ flowchart TD
 
     RL["releasekit<br>changelog · tag · GitHub release<br>per release, not per issue"]
 
-    GK["gitkit<br>worktree · branch name · base ref · rebase vs merge"]
+    GK["gitkit<br>worktree · branch name · base ref · rebase vs merge · stacks"]
     DK["domainkit<br>CONTEXT.md glossary + ADRs"]
 
     V --> P
@@ -198,12 +198,13 @@ Two orthogonal axes, one label from each. **Lifecycle** answers *can this be wor
 
 Exactly one lifecycle label is active at a time. Two pairs carry most of the meaning:
 
-- **`ready` vs `blocked`** is the *parallel-work* pair. `ready` means specified and independent — safe to take into its own worktree right now. `blocked` means it has an unmet prerequisite, named in the body as `Blocked by #N`. The label says *that* it's blocked; the body says *by what*.
+- **`ready` vs `blocked`** is the *parallel-work* pair. `ready` means specified and independent — safe to take into its own worktree right now. `blocked` means it has an unmet prerequisite that hasn't started. The dependency itself is recorded as a native GitHub issue dependency, with a `Blocked by #N` body line kept as prose for a human reader.
+- **`blocked` vs `stacked`** splits a wait from stackable work. Once the prerequisite's PR is *open*, the code exists on a branch, so the dependent becomes `stacked` and is worked on a layer cut from that branch rather than waiting for a review. On a solo project this is the difference between working and idling.
 - **`needs-planning` vs `ready`** is the *human-gate* pair. `ready` means specified enough to work unattended.
 
 The rest: `triage` (filed, not yet assessed), `in-progress` (being worked in a worktree), `in-review` (PR open), `needs-info`, `wontfix`, `duplicate`. A closed issue needs no `done` label — the closed state is the signal. Type lives in the title, never in a label.
 
-There are only two paths to `ready`: a human grilled its decisions settled, or `issuekit sync` promoted it from `blocked` when its prerequisite landed.
+There are only two paths to `ready`: a human grilled its decisions settled, or `issuekit sync` promoted it from `blocked` or `stacked` when its prerequisite landed. `stacked` is written by `prkit` when it opens the prerequisite's PR, and repaired by `issuekit sync`; because a stored label can go stale, `issuekit start` re-checks the prerequisite's PR live before it cuts a layer.
 
 Priority is a four-step scale — `critical`, `high`, `medium`, `low` — and **its absence is a real state, not a default.** An unranked issue is unassessed; treating it as `medium` makes it indistinguishable from one somebody actually thought about, which is the entire value of the scale. That absence is what `issuekit triage` hunts for, and what `statuskit` reports rather than silently sorting around.
 

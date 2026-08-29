@@ -164,6 +164,8 @@ Takes its queue from `gh issue list --label ready` and walks it **sequentially**
 
 **Issues start just in time**, each at the top of its own run — so a worktree branches off a freshly fetched base rather than one that went stale in a queue, and a batch that stops early leaves untouched issues in `ready` rather than orphaned at `in-progress`.
 
+**`stacked` issues are skipped, and the preview says so out loud.** An issue whose prerequisite has an open PR is workable by hand, and [`issuekit`](./issuekit.md) `start` will take it — but a batch can't safely chain a stack, because every layer depends on the one below staying green, so a bad bottom layer silently poisons everything above it, and repairing a stack needs an interactive tool nothing unattended can drive. So the batch declines them and **names them, with their priorities**, rather than passing over them quietly. The distinction matters to a returning human: silence would read as "the rest isn't workable," when the truth is it's workable and only *this runner* won't do it. Name one explicitly (`afkkit 44`) to run it, or work the chain by hand. Chain-draining is deferred, not rejected.
+
 Each issue's payloads are **dropped once it terminates**, so a batch working its tenth issue isn't still paying for the first one's findings on every turn.
 
 ## Hands off to
@@ -182,4 +184,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`1135855` on 2026-08-29._

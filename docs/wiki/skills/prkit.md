@@ -63,6 +63,20 @@ This only happens when the PR actually references an issue, and prefers issuekit
 
 The exemption is narrow in two directions. It covers exactly two starting states — `in-progress` gets the flip, `ready` gets `in-review` added with no removal — because those are the only two a PR legitimately arrives from. Every other lifecycle state is drift rather than a transition, so prkit changes nothing, reports what it found, and either asks or escalates. And it covers this one label move: creating the PR, committing a handed-in path, and force-pushing a sync all still preview.
 
+## Unblocking what the PR makes stackable
+
+Opening a PR is the exact moment every issue waiting on *this* one becomes workable, because the code now exists on a branch even though nothing has merged. Those dependents move `blocked` → `stacked` and can be built immediately on layers cut from this branch.
+
+**This one previews and waits, and does not inherit the exemption above.** The difference is whose issue is being mutated. The `in-review` flip touches the PR's *own* linked issue, where opening the PR is itself the instruction. This touches a **different** issue — one you didn't name — to advertise it as ready to pick up, and deciding that work should be stacked rather than waited on is a judgment about how to sequence the project. Declined, or nobody there to answer, and nothing changes: [`issuekit`](./issuekit.md) `sync` is the repair sweep for exactly this, so the label is deferred rather than lost. A draft PR skips it entirely, because a draft isn't something to build on.
+
+## Stacked PRs
+
+A branch that's a layer in a stack targets the branch below it rather than trunk, and prkit gets that base from [`gitkit`](./gitkit.md) like any other. Three things follow. The diff is the layer's own slice rather than the whole chain, which is the point of stacking. The "current branch equals base" stop can't fire, because a layer's base is never itself. And a sync rebase becomes **cascading** — replaying one layer moves every layer above it, so it goes through gitkit rather than rebasing one branch and stranding the rest.
+
+The body gains a short **stack map**: position, the layer below, what merges first. GitHub renders its own navigation, so this stays to a few lines — it exists for the reader seeing the PR in a notification email, where that navigation is absent, and for whom a diff against a non-trunk base otherwise reads as incomplete.
+
+`gh stack submit` opens a PR per layer with every base set correctly, and **prkit owns that command** — gitkit deliberately doesn't run it, because gitkit never opens anything. A single layer stays a plain `gh pr create --base <parent>`, which is simpler and leaves the layers above untouched.
+
 ## Hands off to
 
 [`mergekit`](./mergekit.md), which pulls the PR down into a worktree for local review and QA. The PR now waits on review, so the next move is on the reviewer's side.
@@ -77,4 +91,4 @@ npx skills add mimukit/skills -s prkit
 
 Source: [`skills/prkit/SKILL.md`](../../../skills/prkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`1135855` on 2026-08-29._

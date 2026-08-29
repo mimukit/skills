@@ -62,7 +62,8 @@ This mode **stands alone**. The labels are useful for any issue workflow, so it 
 | `triage` | `FBCA04` | filed, not yet assessed or broken down |
 | `needs-planning` | `F1C40F` | needs a human plan/grill session before it is workable |
 | `ready` | `0E8A16` | specified and independent — safe to take into its own worktree now |
-| `blocked` | `D93F0B` | has an unmet prerequisite (see 'Blocked by #N' in the body) |
+| `blocked` | `D93F0B` | has an unmet prerequisite that hasn't started |
+| `stacked` | `006B75` | its prerequisite is in flight with an open PR; workable now on a branch stacked on it |
 | `in-progress` | `1D76DB` | actively being worked in a worktree |
 | `in-review` | `5319E7` | a PR is open, awaiting review or merge |
 | `needs-info` | `D4C5F9` | stalled pending more detail before it can proceed |
@@ -114,4 +115,4 @@ npx skills add mimukit/skills -s repokit
 
 Source: [`skills/repokit/SKILL.md`](../../../skills/repokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`1135855` on 2026-08-29._

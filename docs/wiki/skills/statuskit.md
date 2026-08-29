@@ -25,9 +25,9 @@ The stance used to be stated as "zero mutation," which was never quite true, bec
 
 Most of the dashboard is counts, which is right for signals you only need a feel for. Three aren't:
 
-- **Unblocked issues** — the pick-up-now list: every open issue you could actually start, by ID, with its bucket and title. That means `ready`, unlabeled, and `in-progress` work you can resume. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label.
+- **Unblocked issues** — the pick-up-now list: every open issue you could actually start, by ID, with its bucket and title. That means `ready`, unlabeled, and `in-progress` work you can resume. "Blocked" means the `blocked` label, or a `Blocked by #N` line pointing at a still-open issue in repos that don't use the label — **except when that prerequisite already has an open PR**, in which case the work is built and pushed, the dependent can be started right now on a branch stacked on it, and the row belongs here with a `stacked` marker. The open-PR read this survey already performs is what settles it, so the check costs nothing. Getting it wrong is expensive in one direction only: filing stackable work under "blocked" buries it in the single table a reader is told to skip, which is the opposite of what the survey is for.
 - **PRs waiting for review** — a table of every open non-draft PR whose review is still outstanding, with **what it closes** right beside its number, then its CI state, its author, and whose move it is.
-- **Blocked issues** — the other half of the issue read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning.
+- **Blocked issues** — the other half of the issue read, with what each one says it's waiting on. It comes free, and "2 blocked" doesn't tell you whether they're waiting on a PR that merged this morning. It holds only genuine waits now, meaning a prerequisite nobody has built; anything whose blocker has an open PR has moved up to the pick-up-now table.
 
 **An `in-review` issue never appears in the unblocked table.** Its next move is a review of a PR, and the waiting-for-review row already names the person and the CI state — strictly more than a second row in a list of work you can start would say. The count stays on the Issues line, because it's still a fact about the tracker. An `in-review` issue with no open PR at all is the one case with nothing to point at; that's tracker drift, so it gets a note on the count line and a route to [`issuekit`](./issuekit.md) `triage` rather than a silent restoration to the pick-up-now list.
 
@@ -295,4 +295,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`1135855` on 2026-08-29._

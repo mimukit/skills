@@ -36,7 +36,8 @@ issuekit **uses** these labels and never creates them. Provisioning is [`repokit
 | `triage` | filed, not yet assessed |
 | `needs-planning` | a human plan/grill session is still owed |
 | `ready` | specified and **independent** — safe to take into its own worktree now |
-| `blocked` | has an unmet prerequisite, named in the body as `Blocked by #N` |
+| `blocked` | has an unmet prerequisite that hasn't started |
+| `stacked` | its prerequisite has an open PR, so it's workable now on a branch stacked on that one |
 | `in-progress` | actively being worked |
 | `in-review` | a PR is open |
 | `needs-info` · `wontfix` · `duplicate` | side exits |
@@ -44,6 +45,12 @@ issuekit **uses** these labels and never creates them. Provisioning is [`repokit
 Two pairs carry the design:
 
 **`ready` vs `blocked` is the parallel-work pair.** issuekit sizes and sequences issues so each can be picked up in its own worktree with no ordering constraint. `gh issue list --label ready` is then the exact set you can fan out right now.
+
+**`blocked` vs `stacked` splits a real wait from stackable work, and that split is why the label exists.** A prerequisite nobody has started is a genuine wait. A prerequisite that's *built, pushed, and sitting in an open PR* is not: the code exists on a branch, so the dependent can be worked right now on a layer cut from it, with its PR targeting that branch instead of trunk. Collapsing the two is what makes a solo project idle, because the author ends up waiting on a review only they can do.
+
+`stacked` is **stored rather than computed**, which buys the same `gh issue list --label stacked` fan-out `ready` has and costs the usual price of a stored fact: it can go stale. So it never gates anything by itself. `start` re-checks the prerequisite's PR live before cutting a branch, and refuses when it's merged, closed, or missing — because a layer cut from a deleted branch fails much later and far from its cause. The label finds the work; the live check decides.
+
+**Dependencies are recorded natively.** `gh issue edit --add-blocked-by` writes GitHub's own edge and `--json blockedBy` reads it back as structured data, which is what [`statuskit`](./statuskit.md) was already reading and nothing was writing. The `Blocked by #N` body line stays, as prose for a human — it is not the store, and the native edge wins when they disagree. The flags need `gh` 2.94.0, and below that the skill writes the line alone and says the edge was skipped rather than refusing to work.
 
 **`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**. An issue earns it only once a grill settled its decisions.
 
@@ -83,7 +90,9 @@ Four principles govern the breakdown, applied **before** anything is presented:
 - **Independent by default.** Where a plan does yield more than one issue and two of them share state, first try to **design the dependency away** — fold them back into one issue as consecutive phases, or resequence so the shared piece ships inside the prerequisite. Only a surviving real constraint gets recorded.
 - **Prefactor first.** Look for a simplifying refactor that makes the real change trivial. It normally belongs as the issue's **first phase**, where the code that needs it follows in the same branch; it earns its own issue only when it ships and reviews on its own merits whether or not the feature lands.
 
-A wide mechanical refactor is the standing exception. Renaming a shared column or retyping a symbol used everywhere gets sequenced **expand → migrate → contract**, because the migrate batches are independent *of each other* and want parallel branches — the one thing phases in a single issue cannot do. It reuses the existing `blocked` machinery with no new labels.
+A wide mechanical refactor is the standing exception. Renaming a shared column or retyping a symbol used everywhere gets sequenced **expand → migrate → contract**, because the migrate batches are independent *of each other* and want parallel branches — the one thing phases in a single issue cannot do. It reuses the existing `blocked` machinery.
+
+**This is the shape stacking pays off on hardest**, which is why the preview table carries a **Stack** column. The migrate batches all depend on the expand issue and on nothing else, so the moment expand's PR opens every batch becomes `stacked` and they can all be worked at once on layers off expand's branch. Without that, an entire fan of parallel work idles behind one review. The contract issue stays a plain wait, because it genuinely can't run until the batches have landed. Filling the column is a decision made once, while you're already looking at the whole shape, and it's the difference between a queue and parallel work.
 
 The proposal comes as a **preview table** and stops for approval. Its **Phases** column is the plan's structure carried into one issue, and its **Depends on** column is empty by construction on a one-issue breakdown. When a phase looks like it ships on its own, the split is offered explicitly, with its cost named: a second branch, PR, review, and close. **This guard is the point: never spray a repo with auto-generated issues.**
 
@@ -163,4 +172,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`1135855` on 2026-08-29._

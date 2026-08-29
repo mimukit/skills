@@ -1,21 +1,23 @@
 # gitkit
 
-The shared git layer every other skill borrows — worktree convention and lifecycle, base-ref resolution, and rebase-versus-merge policy.
+The shared git layer every other skill borrows — worktree convention and lifecycle, base-ref resolution, rebase-versus-merge policy, and stacked branches.
 
-**Reach for it when** you need a worktree, or when another skill needs any git fact it shouldn't be re-deriving.
+**Reach for it when** you need a worktree, when you want to build on a branch that's still in review, or when another skill needs any git fact it shouldn't be re-deriving.
 
 | | |
 |---|---|
 | Modes | primitives, called rather than run |
 | Tools | `Bash`, `Read` |
-| Writes | git worktrees and branches |
+| Writes | git worktrees, branches, and stack layers |
 | Visibility | public |
 
 ## What it does
 
-gitkit is the one place the git facts live that every other skill keeps re-deriving: **where a worktree goes and what it's named, how it's created, adopted, and removed, which branch is the base, and when to rebase versus merge.**
+gitkit is the one place the git facts live that every other skill keeps re-deriving: **where a worktree goes and what it's named, how it's created, adopted, and removed, which branch is the base, when to rebase versus merge, and how to stack a branch on one that hasn't merged yet.**
 
-Nothing in it is clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree) — no vendor CLI, no GUI dependency, no recorded state anywhere but git's own. That's the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there's no second code path to keep in sync and no degraded mode to reason about.
+Its **core** isn't clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree) — no vendor CLI, no GUI dependency, no recorded state anywhere but git's own. That's the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there's no second code path to keep in sync and no degraded mode to reason about.
+
+**[Stacked branches](#stacked-branches) are the one part that sits outside that**, and the page says so rather than quietly weakening the claim. That branch drives GitHub's `gh stack` extension, so it needs `gh` and a GitHub remote. It degrades to plain git rather than failing, and nothing else in the skill depends on it, so a box with no `gh` runs everything else untouched.
 
 It's a **primitives skill**. Most of its runs come from another skill calling it, not from a human saying its name. It answers *where and how*, never *what the change should be* — committing, opening a PR, and judging code all belong elsewhere.
 
@@ -82,6 +84,20 @@ Never assume `main`. Repos default to `develop`, `trunk`, and `master` in the wi
 4. Whichever of `origin/main` / `origin/master` exists.
 5. Ask. No guessing past this point.
 
+A worktree's base is never a sibling feature branch — with **one stated exception**, a [stack layer](#stacked-branches), whose base *is* the branch below it. The ban is worth keeping precisely because the exception is narrow: what it catches is the accidental case, a worktree cut from whatever happened to be checked out. A layer base is legal because somebody named the branch and said why.
+
+## Stacked branches
+
+A **stack** is a chain of branches where each is cut from the one below and the bottom sits on trunk. It's what you reach for when the work you want to start depends on work that's built but not merged: rather than waiting for a review, you branch from the prerequisite and keep going. GitHub renders the chain, each PR reviews as its own small diff, and merging any layer merges everything below it bottom-up.
+
+**Each layer keeps its own worktree.** The one-branch-one-worktree invariant is untouched — a layer is a branch, so it gets a directory named after it. The alternative, one worktree for the whole stack with `gh stack up`/`down` moving between layers inside it, is what the extension's own navigation assumes, and it's deliberately *not* what this collection does: every caller here keys a worktree to the issue being worked, and a stack is several issues. So the navigation commands are out of scope, because they'd move a checkout another worktree already holds.
+
+**gitkit takes the plumbing and nothing else** — create, add a layer, restack, sync, inspect, adopt. Two commands are excluded on purpose, and the reason is the same boundary gitkit holds everywhere else: `gh stack submit` opens pull requests, and gitkit never opens anything ([`prkit`](./prkit.md) owns it); `gh stack merge` merges them, and gitkit never merges ([`mergekit`](./mergekit.md) owns it, behind a confirmation naming every PR in the cascade). `gh stack modify` is excluded for a different reason: it's a terminal UI, so no agent can drive it, and gitkit prints the command for a human instead.
+
+**No depth limit is stated**, deliberately. Every layer is one more PR to review and one more branch to rebase whenever anything below it changes, and restacking cascades upward. How deep is too deep depends on layer size and review speed, so the skill names the mechanism and lets the human size it rather than inventing a number the tool doesn't enforce.
+
+The command surface lives in a satellite, `stacks.md`, rather than inline — it's material only some runs reach, where the base-ref exception and the worktree rule are things every run's logic touches.
+
 ## Rebase or merge
 
 > **Rebase onto the base to sync a feature branch — published or not. Merging the base in is an exception that needs a stated reason and consent.**
@@ -106,6 +122,8 @@ Worktrees store **absolute** paths, so a repo bind-mounted at a different path b
 
 **No skill may create or remove a worktree through a vendor CLI.** The moment one does, two machines diverge. A vendor's *metadata* about a worktree — the issue its card links to, a status, a comment — is a different layer and fair game, which is what [`orcakit`](./orcakit.md) reconciles. gitkit never calls in that direction; it must keep working where no such tool is installed.
 
+`gh stack` looks like it breaks this rule and doesn't. The rule protects against a *worktree* created two different ways on two machines. A stack is a GitHub-side relationship between branches, not a worktree, and its layers are still created and removed through the same native git path everything else uses — which is why the degradation is plain git rather than a second code path.
+
 ## Hands off to
 
 Nothing, deliberately. gitkit prepares the ground and tears it down — **creating a worktree implies nothing about what to do in it.** It's the one skill in the collection exempt from the closing hand-off requirement, by design rather than oversight.
@@ -128,4 +146,4 @@ npx skills add mimukit/skills -s gitkit
 
 Source: [`skills/gitkit/SKILL.md`](../../../skills/gitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`1135855` on 2026-08-29._

@@ -32,6 +32,8 @@ That permission is earned by a single hard precondition: **a human confirms that
 
 Because the confirmation needs a human in front of it, **mergekit must never be dispatched inside an unattended pipeline** — "the orchestrator said yes" is not a human review. It also does no polling, enables no auto-merge, and acts on no schedule.
 
+**A stack cascade is where that first rule earns its keep.** Merging one PR in a stack merges every unmerged PR *below* it, bottom-up, so saying yes to the top is saying yes to all of them. mergekit doesn't carve an exception for this; it applies the rule honestly by **listing every PR the cascade will land, in merge order, with number and title**, and waiting on that. A cascade nobody enumerated is precisely the batch the rule bans. It also merges from the layer you approved rather than from the top for convenience — landing a lower layer is legal, leaves the rest open and automatically rebased, and is exactly what you want when the bottom two are good and the third isn't. `gh stack merge` is the one stack command mergekit owns, because merging is its alone.
+
 ## Modes
 
 ### `list`
@@ -66,7 +68,7 @@ Merge or fix, depending on which verdict you reached.
 
 **Merge path** — confirm, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), merge with a fixed subject, then hand the landing to [`issuekit`](./issuekit.md) — `close` first, then `sync`.
 
-`close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview before mutating, so the pair costs a confirmation rather than a surprise, and a sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
+`close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. After a cascade it runs **once per merged layer**, bottom-up, since the cascade landed several PRs and each retires its own issue and worktree — closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview before mutating, so the pair costs a confirmation rather than a surprise, and a sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
 
 Cleanup covers **only what mergekit created** — the fork-PR case where it invented both the branch and its worktree. An *adopted* worktree is someone else's context, possibly with an editor and dev server pointed at it. It's left standing and named, so you know it's still yours.
 
@@ -104,4 +106,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`1135855` on 2026-08-29._
