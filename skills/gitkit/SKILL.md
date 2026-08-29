@@ -1,7 +1,7 @@
 ---
 name: gitkit
 description: >-
-  The shared git layer every other skill borrows: where a worktree lives and what it's called, how to create/adopt/tear one down, which branch is the base, and whether to rebase or merge. Use when the user says "spin up a worktree for this", "make me a worktree", "where's the worktree for #42", "tear down this worktree", "clean up my worktrees", "what's the base branch here", "should I rebase or merge", or runs "/gitkit", and whenever another skill needs any of those answers.
+  The shared git layer every other skill borrows: where a worktree lives and what it's called, how to create/adopt/tear one down, which branch is the base, whether to rebase or merge, and how to stack a branch on one still in review. Use when the user says "spin up a worktree for this", "make me a worktree", "where's the worktree for #42", "tear down this worktree", "clean up my worktrees", "what's the base branch here", "should I rebase or merge", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -12,7 +12,9 @@ metadata:
 
 One place where the git facts live that every other skill in a toolchain keeps re-deriving: **where a worktree goes and what it's named, how it is created, adopted, and removed, which branch is the base, and when to rebase versus merge.**
 
-Nothing here is clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree), with no vendor CLI, no GUI dependency, and no recorded state anywhere but git's own. That is the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there is no second code path to keep in sync and no "degraded mode" to reason about.
+The **core** here is not clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree), with no vendor CLI, no GUI dependency, and no recorded state anywhere but git's own. That is the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there is no second code path to keep in sync and no "degraded mode" to reason about.
+
+**One branch of this skill sits outside that core, and says so.** [Stacked branches](#stacked-branches) drive GitHub's `gh stack` extension, so that branch alone needs `gh` and a GitHub remote. It degrades to plain git rather than failing, and nothing else in this file depends on it, so a box with no `gh` runs everything above untouched.
 
 gitkit is a **primitives skill**. Most of its runs come from another skill calling it, not from a human saying its name.
 
@@ -21,6 +23,7 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 - **worktree.** "Spin up a worktree for this branch", "make me a worktree for #42", "where is the worktree for `issue-42-…`", "tear down this worktree", "list my worktrees", "clean up the ones that are merged".
 - **base ref.** "What's the base branch here", "diff me against the base".
 - **sync.** "Should I rebase or merge here", "this branch is behind, bring it up to date".
+- **stack.** "Stack this on #43", "start #44 on top of #43's branch", "restack this chain", "show me the stack".
 - **called by another skill.** Any skill that needs a worktree, a base ref, a branch name, or a sync decision delegates here and uses what comes back.
 
 **Not this skill:** committing, opening a PR, reviewing a diff, judging code. gitkit answers *where and how*, never *what the change should be*.
@@ -91,7 +94,7 @@ git -C "$REPO" worktree add -b "$BRANCH" "$WORKTREE_ROOT/$(basename "$REPO")/$BR
 ```
 
 - Fetch first, always. Branching off a stale base is silent and only surfaces as conflicts later.
-- `$BASE` comes from [The base ref](#the-base-ref), never a hard-coded `origin/main`, and never a sibling feature branch.
+- `$BASE` comes from [The base ref](#the-base-ref), never a hard-coded `origin/main`, and never a sibling feature branch. The one exception is a [stack layer](#stacked-branches), whose base *is* the branch below it, named deliberately by the caller.
 - Drop `-b` when the branch already exists locally (a same-repo PR you have fetched, a branch you made earlier); `git worktree add <path> <branch>` checks it out.
 - For a **fork** pull request, fetch the head into a local branch first with `git fetch origin "pull/<n>/head:pr-<n>-<slug>"`, then add the worktree on that branch, no `-b`.
 
@@ -133,6 +136,8 @@ Never assume `main`. Repos default to `develop`, `trunk`, and `master` in the wi
 5. Ask the human. Do not guess past this point.
 
 Everything downstream uses the answer: `git diff <base>...HEAD`, ahead/behind counts, and the branch a worktree is cut from.
+
+**A stack layer is the one deliberate exception, and the ladder still runs.** A layer's base is the branch below it rather than the repo default, so the caller names it and this ladder is not consulted for that branch. The ladder is still what resolves the **trunk** the stack's bottom layer sits on. The ban on a sibling-branch base keeps its teeth everywhere else, because what it catches is the *accidental* case: a worktree cut from whatever happened to be checked out. A layer base is legal because somebody said which branch and why. See [Stacked branches](#stacked-branches).
 
 ## Rebase or merge
 
@@ -176,6 +181,33 @@ git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 ### Never bare `git pull`
 
 `git pull` on a branch behind its remote merges by default, and writes `Merge branch 'main' of github.com:owner/repo` without asking anyone. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself: configure it or pass the flag, but never let the default run.
+
+## Stacked branches
+
+A **stack** is a chain of branches in one repository where each branch is cut from the one below it and the bottom sits on trunk. It is what you reach for when work depends on work that is built but not yet merged: instead of waiting for the prerequisite's pull request to land, you branch from it and keep going.
+
+GitHub supports this natively, and the `gh stack` extension drives it. **This is the one part of gitkit that needs `gh` and a GitHub remote.** The full command surface, the preflight, and the degradation path live in **[stacks.md](./stacks.md)**; read it when a run actually touches a stack. What follows is the part every run needs.
+
+### One worktree per layer
+
+**Each layer keeps its own worktree, cut from the layer below.** The [one branch, one worktree](#the-invariant-one-branch-one-worktree) invariant is unchanged: a layer is a branch, so it gets a directory named after it, and [lookup is still by branch](#look-up-a-branchs-worktree).
+
+The alternative, one worktree for the whole stack with `gh stack up` and `down` moving between layers inside it, is what the extension's own navigation assumes. It is not what this collection does, because every caller here keys a worktree to *the issue being worked*, and a stack is several issues. So `gh stack`'s navigation commands are out of scope, and `up`, `down`, `switch`, `top`, and `bottom` are not gitkit's to run: they would move a checkout that another worktree already holds.
+
+### What gitkit owns here, and what it does not
+
+gitkit takes the **plumbing** and nothing else: create a stack, add a layer, restack, sync, inspect, and adopt existing branches into one. Two commands are deliberately excluded, because they cross boundaries this skill holds elsewhere:
+
+- **`gh stack submit` opens pull requests.** gitkit never opens anything. That belongs to whichever skill authors pull requests.
+- **`gh stack merge` merges them.** gitkit never merges, and a stack merge is a *cascade* that lands several pull requests at once, which needs a human confirmation naming every one of them. That belongs to whichever skill owns merging.
+
+Naming the owner rather than the command is the point: gitkit prepares ground, and publishing is somebody else's job whether the branch is stacked or not.
+
+### The cost of depth
+
+Every layer added to a stack is one more pull request to review and one more branch to rebase each time anything below it changes. Restacking is cascading, so a change to the bottom layer rewrites every layer above it.
+
+**No number is stated here on purpose.** How deep a stack should go depends on how big each layer is and how fast they get reviewed, which is the human's call. State the mechanism when they ask, so they can size it themselves.
 
 ## Containers and remote boxes
 
