@@ -1,14 +1,14 @@
 # paseokit
 
-Push the git worktrees your workflow actually creates into [Paseo](https://paseo.sh)'s workspace registry, and reap the rows whose directories are gone.
+Push the git worktrees your workflow actually creates into [Paseo](https://paseo.sh)'s workspace registry, and reap the finished work — the dead rows, and the worktrees whose PRs merged.
 
-**Reach for it when** a worktree you just made is missing from your Paseo sidebar, or the sidebar is full of entries whose directories no longer exist.
+**Reach for it when** a worktree you just made is missing from your Paseo sidebar, the sidebar is full of entries whose directories no longer exist, or your machine is full of worktrees whose work already landed.
 
 | | |
 |---|---|
-| Modes | [`list`](#list) · [`sync`](#sync) · [`align`](#align) |
+| Modes | [`list`](#list) · [`sync`](#sync) · [`clean`](#clean) · [`align`](#align) |
 | Tools | `Bash`, `Read`, `Skill` |
-| Writes | Paseo workspace rows — registers, archives, retitles. Never a directory or a branch |
+| Writes | Paseo workspace rows — `sync` registers and retitles, `clean` archives. `clean`'s confirmed teardown also removes merged worktrees, branches, and sessions |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
@@ -18,7 +18,7 @@ Paseo shows one workspace per checkout and hangs agents off each one. The worktr
 
 **Paseo's registry is explicit-only in both directions.** It discovers nothing, and it prunes nothing. A worktree that `git worktree add` created is invisible until something registers it; a workspace whose directory was deleted stays in the sidebar forever. There is no discovery setting to turn on and no prune command to run.
 
-So the sidebar drifts from the disk two ways at once — real work that never appears, and finished work that never leaves. paseokit owns that reconciliation: **Paseo's registry, made to match the worktrees that actually exist.** Scoped to the project you run it from, machine-wide on request, and running it twice changes nothing the second time.
+So the sidebar drifts from the disk two ways at once — real work that never appears, and finished work that never leaves. paseokit owns that reconciliation, split by direction: [`sync`](#sync) adds what is missing, [`clean`](#clean) removes what is finished. Scoped to the project you run it from, machine-wide on request, and running either twice changes nothing the second time.
 
 ## Why it's a pump, not a janitor
 
@@ -44,8 +44,8 @@ The trade is stated rather than hidden: worktrees appear in Paseo when you run [
 
 Two facts make the rest of the design possible:
 
-- **`paseo workspace archive` is registry-only** — verified. It drops the row and leaves the directory, the branch, and git's own worktree registration intact. That is why `sync` can reap without a destructive-confirm gate: nothing it does can lose work, which is the sharpest divergence from orcakit's `clean`, where every removal is irreversible and needs a preview and an OK.
-- **Paseo never notices a deleted directory**, so removing a worktree is still gitkit's job, and the row has to be archived afterward — which is exactly what `sync` is for.
+- **`paseo workspace archive` is registry-only** — verified. It drops the row and leaves the directory, the branch, and git's own worktree registration intact. That is why [`clean`](#clean)'s registry reap runs without a destructive-confirm gate: that half cannot lose work, which is the sharpest divergence from orcakit's `clean`, where every removal is irreversible and needs a preview and an OK.
+- **Paseo never notices a deleted directory**, so removing a worktree is still gitkit's job, and the row has to be archived afterward — which is exactly what [`clean`](#clean)'s registry reap is for. `clean` is the one mode that removes anything at all: `sync` only adds, and the disk teardown reaches the filesystem by calling gitkit rather than by growing its own teardown.
 
 **It never touches the tracker.** It reads issues and pull requests to build a title and judge a verdict; it never closes, labels, or edits. Tracker drift routes to [`issuekit`](./issuekit.md) `close`.
 
@@ -77,12 +77,12 @@ It joins `git worktree list --porcelain` per project, `paseo workspace ls --json
 | `busy` | a non-idle agent's `cwd` is inside this workspace | leave it |
 | `registered` | worktree exists, exactly one active row points at it | nothing |
 | `unregistered` | worktree exists, no row points at it | [`sync`](#sync) |
-| `orphaned` | an active row points at a path that no longer exists | [`sync`](#sync) |
-| `duplicate` | two or more active rows share one `cwd` | [`sync`](#sync) |
+| `orphaned` | an active row points at a path that no longer exists | [`clean`](#clean) |
+| `duplicate` | two or more active rows share one `cwd` | [`clean`](#clean) |
 | `tombstoned` | worktree exists, and its only row is archived | [`sync`](#sync), on confirmation |
 | `unknown repo` | worktree under `$WORKTREE_ROOT` whose repo Paseo has never seen | [`sync`](#sync), on confirmation |
 | `stray project` | a project whose `rootPath` is a worktree, not a main checkout | reported only; no CLI deletes a project |
-| `reapable` | pull request merged, issue closed, tree clean | [`gitkit`](./gitkit.md) teardown, then [`sync`](#sync) |
+| `reapable` | pull request merged, issue closed, tree clean | [`clean`](#clean) |
 
 `busy` rows go first when any exist. Those are the rows where an action would interrupt live work.
 
@@ -90,16 +90,15 @@ A **stray project** has a clear signature — its `projectKey` matches a real pr
 
 ### `sync`
 
-The writing mode, safe to run repeatedly by construction.
+The adding mode, safe to run repeatedly by construction. It registers, retitles, and restores — it never archives a row, never collapses a duplicate, and never touches a directory or a branch. Every removal, registry or disk, belongs to [`clean`](#clean).
 
 **Two scopes, picked by the words in the request.** Run from inside a repo, `sync` acts on that project alone — its worktrees, and the rows whose `projectId` matches. "Sync all" widens it to every live project on the machine, and is the only scope that runs the unknown-repo walk, which is machine-wide by nature. Outside a repo, project scope has no referent, so the skill says so and names `sync all` rather than silently sweeping everything.
 
-**Straight through, no confirmation** — register the `unregistered`, archive the `orphaned`, collapse each `duplicate` set to one row, retitle the machine-generated titles, and skip anything `busy` with the agent named. None of it can lose work, so none of it asks.
+**Straight through, no confirmation** — register the `unregistered`, retitle the machine-generated titles, and skip anything `busy` with the agent named. `orphaned` rows and `duplicate` sets get reported and routed to [`clean`](#clean), never archived here. None of what `sync` does can lose work, so none of it asks.
 
-Three rules carry most of the weight:
+Two rules carry most of the weight:
 
 - **`--project` is mandatory, and an unresolvable id means skip.** Registering without it creates a stray project instead of a workspace. A missing row is recoverable; a stray project is not, so the skip is the safe failure.
-- **A duplicate set collapses to the agent's row, otherwise the oldest.** The agent pass is already running for the `busy` verdict, so this costs nothing extra.
 - **Only a title that is null or exactly the branch name gets rewritten.** Titles are `#<n> · <issue title>` from `gh`, degrading to the branch name. Anything else was set by a human and is reported as a disagreement rather than overwritten — the same rule orcakit applies to hand-written metadata.
 
 **Gated on one confirmation each**, because both widen scope past what was asked:
@@ -109,13 +108,25 @@ Three rules carry most of the weight:
 
 One honest limitation: **there is no `paseo workspace unarchive` in 0.4.0.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
 
+### `clean`
+
+The removing mode, and the only one — every archive and every delete in the skill lives here, in two halves. The **registry reap** archives `orphaned` rows and collapses `duplicate` sets: registry-only, provably safe, no confirmation. The **worktree teardown** removes the whole local footprint of work that already landed: the agent sessions in the worktree, the directory, the local branch, and the registry row. It takes the same two scopes as `sync`, picked by the same words.
+
+**A merged pull request is the teardown's precondition, and nothing substitutes for it.** `gh pr list --head <branch> --state merged` is the test; a closed-unmerged PR fails it and a suggestive branch name means nothing. Three more gates follow: a clean tree, no unpushed commit, and no live agent. Because the merge is the whole basis for the delete, a missing or unauthenticated `gh` stops the teardown outright instead of degrading it — the one place in paseokit where that happens. The registry reap still runs, since it proves nothing against the tracker.
+
+**One preview, one confirmation.** Every candidate is printed with its branch, merged PR, path, workspace id, and the sessions that go with it, and the ask covers exactly that listed set. Rejected worktrees are printed underneath with their reason, since "why is this one still here" is the next question every time.
+
+**The teardown order is fixed**: stop the sessions, remove the worktree through gitkit, delete the branch with the safe `-d` (a squash merge that refuses gets its own ask before `-D`), then archive the row. Each step strands the next if it runs late. A failure stops that candidate, reports the step, and moves to the next one; nothing is unwound.
+
+An open issue does not block the clean. The code is on the base branch either way, so the local copy is redundant, and the drift routes to [`issuekit`](./issuekit.md) `close` in the hand-off rather than being fixed here.
+
 ### `align`
 
 One-time configuration, per machine. It touches no workspace at all.
 
 It compares `worktrees.root` in `~/.paseo/config.json` against `$WORKTREE_ROOT`, because two roots in play means every sweep classifies by path forever. Aligning them **only affects worktrees Paseo creates itself** — existing ones are untouched, and git stores absolute paths, so nothing moves. It says that out loud, because "aligned" reads like "migrated" and it isn't.
 
-It also surfaces `daemon.autoArchiveAfterMerge`, which would let Paseo archive a workspace itself when its change request merges — covering part of `sync`'s reaping natively. It's recommended as an experiment to observe, with both limits flagged: undocumented, and it only reaches workspaces where Paseo detected a pull request.
+It also surfaces `daemon.autoArchiveAfterMerge`, which would let Paseo archive a workspace itself when its change request merges — covering part of [`clean`](#clean)'s reaping natively. It's recommended as an experiment to observe, with both limits flagged: undocumented, and it only reaches workspaces where Paseo detected a pull request.
 
 ## Preflight
 
@@ -123,11 +134,11 @@ No `paseo` on the machine means there is nothing to reconcile — it says exactl
 
 A daemon that is down gets named (`paseo start`) rather than started. It does not launch a daemon on someone's machine unasked.
 
-Without `gh`, titles degrade to the branch name and the tracker column reads unknown. Nothing else degrades and no mode is blocked — unlike orcakit's `clean`, no operation here rests on proving a merge.
+Without `gh`, titles degrade to the branch name and the tracker column reads unknown. Nothing else degrades in `list`, `sync`, and `align`. [`clean`](#clean)'s worktree teardown is the exception and stops, because only the tracker can prove a merge; its registry reap still runs.
 
 ## Hands off to
 
-Whatever the sweep surfaced, ranked. **`busy`** outranks everything: run `sync` again once the agent finishes. Then any **stray project**, which is manual by necessity — edit `projects.json`, then `paseo restart` — and which the skill deliberately will not perform, because a restart kills every running agent including its own. Then **`reapable`** rows to [`gitkit`](./gitkit.md) teardown followed by another `sync`, and tracker drift to [`issuekit`](./issuekit.md) `close`. A registry that already matches the disk gets said plainly, and it stops.
+Whatever the sweep surfaced, ranked. **`busy`** outranks everything: run the mode again once the agent finishes. Then any **stray project**, which is manual by necessity — edit `projects.json`, then `paseo restart` — and which the skill deliberately will not perform, because a restart kills every running agent including its own. Then **`orphaned`**, **`duplicate`**, and **`reapable`** rows to [`clean`](#clean), and tracker drift to [`issuekit`](./issuekit.md) `close`. A registry that already matches the disk gets said plainly, and it stops.
 
 ## A note on optionality
 
