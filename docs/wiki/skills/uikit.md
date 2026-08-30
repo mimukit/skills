@@ -105,7 +105,7 @@ Entries are scoped **product** or **marketing**, so product entries don't fire o
 
 ## The stack layer
 
-The house default is Tailwind v4 + shadcn/ui, skippable whole by a project on another stack. These are **correctness rules that prevent silent wrongness**, not style preferences.
+The house default is Tailwind v4 + shadcn/ui, skippable whole by a project on another stack. These are **correctness rules that prevent silent wrongness**, not style preferences. The rules live in a `stack.md` satellite beside the `SKILL.md`, loaded only when the project actually uses that stack, so a run on another stack never pays for them.
 
 The v3→v4 renames are the reason to check the version first. Every one is a valid class name in v4 that renders *smaller* than intended — no error, no warning, just a subtly wrong result that reads as a design decision: `shadow-sm`→`shadow-xs`, `shadow`→`shadow-sm`, `rounded`→`rounded-sm`, `ring`→`ring-3`, `outline-none`→`outline-hidden`, `bg-gradient-to-r`→`bg-linear-to-r`.
 
@@ -135,4 +135,4 @@ npx skills add mimukit/skills -s uikit
 
 Source: [`skills/uikit/SKILL.md`](../../../skills/uikit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`ada7efe` on 2026-08-30._
