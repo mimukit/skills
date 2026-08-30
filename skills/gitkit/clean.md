@@ -2,7 +2,7 @@
 
 Reference for gitkit's [`clean`](./SKILL.md#clean) mode. Read this only when a run actually sweeps; nothing else in gitkit depends on it.
 
-The sweep finds the worktrees and local branches whose work has landed, and removes them one at a time. It is the counterpart to [create, or adopt](./SKILL.md#create-or-adopt): the same three teardown rules in [Remove](./SKILL.md#remove) govern every removal here, and this file adds only the classification that decides which rows reach them.
+The sweep finds the worktrees, local branches, and remote branches whose work has landed, and removes them one at a time. It is the counterpart to [create, or adopt](./SKILL.md#create-or-adopt): the same three teardown rules in [Remove](./SKILL.md#remove) govern every removal here, and this file adds only the classification that decides which rows reach them.
 
 ## 1. Enumerate
 
@@ -10,11 +10,12 @@ The sweep finds the worktrees and local branches whose work has landed, and remo
 git -C "$REPO" fetch origin --prune
 git -C "$REPO" worktree list --porcelain
 git -C "$REPO" branch -vv
+git -C "$REPO" branch -r --list 'origin/*'
 ```
 
 Fetch with `--prune` first. It is what deletes the stale remote-tracking refs the classification below reads, so a sweep on an unfetched repo misreads every row.
 
-Ends with one row per worktree and one row per local branch. A branch with no worktree is a legal row; so is a worktree whose branch is gone.
+Ends with one row per worktree, one row per local branch, and one row per `origin/*` branch. A branch with no worktree is a legal row; so is a worktree whose branch is gone, and so is a remote branch with no local copy.
 
 ## 2. Classify
 
@@ -27,6 +28,17 @@ Every row lands in exactly one bucket. Work down the list and stop at the first 
 - **orphan** — a worktree whose directory is gone, or whose branch was deleted elsewhere. `git worktree prune` handles these and needs no confirmation, because there is nothing left to lose.
 
 A row that matches nothing is **active** by default. Silence is the safe answer.
+
+### A remote branch is its own row
+
+A branch on GitHub whose work is in the base is reapable on the remote, whether or not a local copy still exists. Classify it by the same tests below, and hold it back for any of these:
+
+- **the base branch itself**, `origin/HEAD`, and any release or long-lived branch the repo keeps. Deleting one of these is the failure this sweep must never cause.
+- **an open pull request on that head.** Check with `gh pr list --head "$BRANCH" --state open`. Deleting the head branch closes the pull request.
+- **a branch you cannot prove landed.** The remote delete has no `-d` guard behind it, so require a merged pull request from `gh`, or a passing test 3 patch-id match. A bare `: gone]` proves nothing here, because the remote branch is the thing in question.
+- **a branch on a remote other than `origin`**. Sweep `origin` only.
+
+Ends with each remote row marked reapable or held, and each held row carrying its reason.
 
 ## 3. Decide "merged", the part that is not obvious
 
@@ -71,7 +83,9 @@ Ends when every reapable row carries a named reason.
 
 ## 4. Preview, and confirm per item
 
-Print one table: the branch, its worktree path, the bucket, and the reason. Then confirm **each removal on its own**.
+Print one table: the branch, its worktree path, whether the remote branch goes too, the bucket, and the reason. Then confirm **each removal on its own**.
+
+**A remote delete takes its own confirmation, even for a branch you are already deleting locally.** The local delete is recoverable from the reflog. The remote delete reaches a shared server and other people's clones.
 
 **Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and legitimately takes one confirmation, because there the rebase and the push are one decision about one branch.
 
@@ -89,8 +103,18 @@ git -C "$REPO" worktree prune
 
 `-d`, never `-D`. It is the last guard: git itself refuses a branch whose commits are not in the base, so a wrong reapable verdict fails loudly here rather than deleting the work. When `-d` refuses, keep the worktree removal and report the refusal — the branch stays, and that is the correct outcome.
 
+Then delete the remote branch, once its own confirmation is in:
+
+```sh
+git -C "$REPO" push origin --delete "$BRANCH"
+```
+
+**Let a local `-d` refusal veto the remote delete too.** The refusal is git saying the work is not in the base, which is the same verdict the remote delete depends on. When the branch has no local copy, take the `gh` merged pull request as the proof instead.
+
+A server-side rejection is a normal outcome. A protected branch rule refuses the push; report the refusal and move to the next row.
+
 ## Hand off
 
-Report the buckets by count, then each removed worktree by path and each deleted branch by name. Name the dirty rows you left and what is in them. Say when nothing was reapable.
+Report the buckets by count, then each removed worktree by path, each deleted local branch by name, and each deleted remote branch as `origin/<name>`. Name the dirty rows you left and what is in them. Name the remote rows you held and why. Say when nothing was reapable.
 
 **A removed worktree leaves a stale row in any workspace tool that tracked it.** Clean that next: run `orcakit clean` for Orca, or `paseokit sync` for Paseo, when either is installed. With neither installed there is nothing further to do.

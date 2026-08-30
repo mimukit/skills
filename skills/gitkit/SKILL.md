@@ -214,11 +214,11 @@ git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 
 ## `clean`
 
-Sweep away the worktrees and branches whose work has landed. It classifies every worktree and local branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time.
+Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed.
 
 Two things make it more than a `git branch --merged` loop, and both live in **[clean.md](./clean.md)**: a squash-merged branch is invisible to ancestry, so "merged" needs three detections rather than one; and the per-item confirmation is deliberate, because a sweep's rows are not equally safe to delete. Read that file when a run actually sweeps.
 
-The [Remove](#remove) rules govern every removal the sweep makes. It never deletes a branch with `-D`, never touches a worktree it adopted, and stops on a dirty one.
+The [Remove](#remove) rules govern every removal the sweep makes. It never deletes a branch with `-D`, never touches a worktree it adopted, and stops on a dirty one. On `origin` it never deletes the base branch and never deletes the head of an open pull request.
 
 ## `rescue`
 

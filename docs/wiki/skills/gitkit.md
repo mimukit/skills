@@ -29,7 +29,7 @@ Five, though you rarely name one. Three of them have their own sections further 
 
 ### `clean`
 
-Sweeps away the worktrees and branches whose work has landed. Every worktree and local branch gets sorted into one bucket — active, adopted, dirty, reapable, orphan — and only the reapable ones are offered for removal.
+Sweeps away the worktrees and branches whose work has landed, on your machine and on `origin`. Every worktree, local branch, and `origin/*` branch gets sorted into one bucket — active, adopted, dirty, reapable, orphan — and only the reapable ones are offered for removal.
 
 **The reason it needs a satellite file rather than a `git branch --merged` loop is squash merges.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges, which is the common GitHub default, a sweep built on `--merged` finds nothing on every run and reports a tidy repo full of dead branches. So "merged" is decided by three tests, each catching a merge shape the one before it misses: ancestry for a merge commit or fast-forward, `git cherry` for a rebase-merge, and a combined patch-id comparison for a squash.
 
@@ -40,6 +40,8 @@ Two more signals corroborate without settling: a `: gone]` upstream marker is ca
 **It confirms per item, never in a batch**, and that's the one place gitkit's confirmation policy differs from `sync`'s. `sync` legitimately takes one confirmation because the rebase and its push are a single decision about a single branch. A sweep's rows are independent, and they're not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt would hide.
 
 `-d` and never `-D` is the last guard: git itself refuses a branch whose commits aren't in the base, so a wrong verdict fails loudly instead of deleting the work.
+
+**A branch on `origin` gets deleted too, and it's held to a higher bar**, because nothing on the server plays the part `-d` plays locally. A local delete is recoverable from the reflog; a `git push origin --delete` reaches a shared server and everybody else's next fetch. So a remote row needs positive proof it landed — a merged pull request from `gh`, or the patch-id match — where a bare `: gone]` marker is worthless here, since the remote branch is the very thing in question. The base branch, a release branch, and the head of any open pull request are never offered. And the remote delete asks separately even when the local delete of the same branch was already approved.
 
 ### `rescue`
 
