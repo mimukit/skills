@@ -116,6 +116,14 @@ Edit `skills/gitkit/SKILL.md` and add `skills/gitkit/stacks.md`.
 
 `Closes #N` needs no change; GitHub resolves it per layer.
 
+**Known limitation: a closing keyword is inert on a layer.** This is a property of the platform, not a defect in the kits. GitHub honours `Closes #N` only when the pull request targets the repository's **default branch**. On any other base the keyword is plain text, so every layer above the bottom one ships an issue link that resolves to nothing, and `closingIssuesReferences` comes back empty for it.
+
+Observed in `mimukit/saasaloy`: PR #96 targets `issue-86-…` rather than `main` and carries `Closes #87` exactly as written, and its `closingIssuesReferences` is empty, while sibling PRs #89 and #95 target `main` and both link.
+
+There is no API that registers the link early. `gh issue develop <n> --name <existing branch>` fails with `API returned empty branch name`, and the raw `createLinkedBranch` mutation returns `linkedBranch: null` for a branch that already exists. The link registers only once the base **is** the default branch, which happens by itself when the layer below merges and GitHub retargets the PR.
+
+The consequence for this plan is documentation rather than code. `prkit` keeps writing the keyword, states the limitation in the stack map, checks `closingIssuesReferences` after opening a layer PR, and reports an empty result as expected. `prkit` never retargets a PR to force the link, because that discards the stack. `issuekit sync` treats a body carrying `Closes #N` alongside an empty `closingIssuesReferences` as the stack signature and repairs it. `statuskit` falls back to a body scrape for a PR whose base is not the default branch.
+
 **Done when** `prkit` opens a layer PR against its parent branch, the body carries the stack map, the dependent flip previews before it writes, and a non-stacked branch takes exactly the path it takes today.
 
 ### Phase 4: `mergekit` (built 2026-08-29)
