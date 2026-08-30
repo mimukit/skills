@@ -19,6 +19,8 @@ A repo built by agents accumulates plans, reviews, QA docs, and decision records
 
 **It is not the GitHub Wiki.** Everything it writes is in-repo Markdown, versioned with the code and reviewed in the same pull request.
 
+The skill is split for context economy: `SKILL.md` carries the routing, the doc map, and the grounding rules, and each mode's procedure lives in its own `modes/<mode>.md` satellite, loaded only when that mode fires — so the large `publish` workflow costs nothing on an `update` run.
+
 ## Four things it isn't
 
 - **Not the GitHub Wiki.** In-repo Markdown is the source of truth in every mode. The wiki tab is at most a **derived, disposable mirror**, and only when [`publish`](#publish) is asked for by name. It never reads the wiki as input.
@@ -121,4 +123,4 @@ npx skills add mimukit/skills -s wikikit
 
 Source: [`skills/wikikit/SKILL.md`](../../../skills/wikikit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`ada7efe` on 2026-08-30._
