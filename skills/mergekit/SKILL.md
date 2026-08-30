@@ -41,6 +41,8 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 
 The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, relabeling, closing an issue. Show what will happen, wait for the OK.
 
+**One exemption, on the merge path only.** Once the merge is confirmed and done, the lifecycle labels that record it run straight through: strip the merged PR's status label, strip the closed issue's `in-review` or `in-progress`, and flip its dependents `blocked → ready`. The merge is the decision, and these labels only state what already happened, so a second prompt re-asks a settled question and a refusal leaves the tracker lying about merged work. Report the label moves in the hand-off. A priority label stays previewed, and every mutation outside this merge-path bookkeeping keeps the rule above.
+
 ## Preflight
 
 Every mode starts here:
