@@ -18,6 +18,8 @@ Every other skill in this collection assumes you already know the thing and help
 
 tutorkit is the one that does. It keeps a picture of what you know, pitches the next thing at the edge of it, and comes back later to check whether it stuck.
 
+The skill is split for context economy: `SKILL.md` carries the routing, the repo layout, the spacing schedule, and the lesson-artifact rules, and each mode's procedure lives in its own `modes/<mode>.md` satellite, loaded only when that mode fires.
+
 The name is the design. A tutor is by definition someone who remembers you and adapts; a teacher delivers a lesson and needs no memory. Persistence is not a feature bolted onto this skill — it's the reason it exists, so the name carries it.
 
 ## Why one repo, not one per topic
@@ -163,4 +165,4 @@ npx skills add mimukit/skills -s tutorkit
 
 Source: [`skills/tutorkit/SKILL.md`](../../../skills/tutorkit/SKILL.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`ada7efe` on 2026-08-30._
