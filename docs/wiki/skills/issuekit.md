@@ -23,15 +23,15 @@ The skill is split for context economy: `SKILL.md` carries the routing, the safe
 
 ## Safety stance
 
-Creating, closing, and relabeling issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
+Creating, closing, and editing issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
 
-**Two exemptions exist, and both belong to the mode rather than the caller.** They run unprompted whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did, and both cover the same thing: a lifecycle label whose approval the surrounding action already gave.
+**Label writes are the exemption, in every mode and for every caller.** Adding or removing a label on an issue or a PR runs unprompted, whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did, and it covers both namespaces — lifecycle and priority.
 
-`start`'s `ready → in-progress` flip is approved twice over — the `ready` guard has refused everything a human hasn't grilled, and asking for the issue to be started is asking for it to be marked started. The cost of prompting is real, too: an issue that sits in a worktree while the tracker still shows it `ready` is an issue another worker can pick up.
+The reasoning is the asymmetry between the two failure modes. A label is cheap, visible on the issue, and undone with one `gh issue edit`, so a wrong one costs a correction. A prompt on every label write costs attention on every run, and a declined write costs something worse: a tracker that describes merged work as in review, or an issue sitting in a worktree while it still advertises itself as `ready` for someone else to pick up. Prompting protects the cheap failure and invites the expensive one.
 
-`close`'s label reconciliation is the mirror image. The mode already gates on a merged PR and already previews the close itself, so a separate prompt for stripping `in-review` and unblocking dependents asks you to re-approve the bookkeeping half of a decision you just made — and a `no` there leaves the tracker describing merged work as in review, which the next `triage` run then has to clean up.
+What keeps that honest is the report rather than the prompt. Every label write is named in the preview it rides with and again in the hand-off, so the change is auditable after the fact. Priority is the case where this matters most: `triage` still prints its whole ranking as one table, because you are deciding what beats what and a table is the only shape that shows the comparison — but the table informs you rather than gating the write.
 
-**Priority is never exempt**, in any mode: that namespace is a claim only you can make. Nothing else widens either, and **no caller of any kind gets to skip the guard itself.**
+**Nothing outside the label namespaces widens.** `create` previews the issues it files, `close` previews the close and the worktree teardown, `sync` previews each pairing, and `triage` previews every close and comment.
 
 ## The lifecycle labels
 
@@ -102,7 +102,7 @@ A wide mechanical refactor is the standing exception. Renaming a shared column o
 
 The proposal comes as a **preview table** and stops for approval. Its **Phases** column is the plan's structure carried into one issue, and its **Depends on** column is empty by construction on a one-issue breakdown. When a phase looks like it ships on its own, the split is offered explicitly, with its cost named: a second branch, PR, review, and close. **This guard is the point: never spray a repo with auto-generated issues.**
 
-The table also carries a **Priority** column. issuekit proposes a priority per row read off the plan — what it calls core versus polish, what it defers, what it flags as a risk — and expects to be overruled, because a plan can say what's central without saying why the work is being done at all, which is the thing priority actually encodes. It never proposes `critical` from a plan: that label means *preempt work already in progress*, a claim about right now that a document written last week can't make, so the most important row gets `high` and you escalate it if you mean it. Approved priorities land in the same `gh issue edit` call as the lifecycle label, so a fresh issue never sits half-labeled where a concurrent survey could read it. And they land **regardless of the grill gate**, which governs only the lifecycle namespace — an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment you just made in the preview. Dropping it would leave the ungrilled backlog, the exact pile that most needs ordering, as the one part of the tracker nothing can rank.
+The table also carries a **Priority** column. issuekit proposes a priority per row read off the plan — what it calls core versus polish, what it defers, what it flags as a risk — and expects to be overruled, because a plan can say what's central without saying why the work is being done at all, which is the thing priority actually encodes. It never proposes `critical` from a plan: that label means *preempt work already in progress*, a claim about right now that a document written last week can't make, so the most important row gets `high` and you escalate it if you mean it. Priorities land in the same `gh issue edit` call as the lifecycle label, so a fresh issue never sits half-labeled where a concurrent survey could read it. And they land **regardless of the grill gate**, which governs only the lifecycle namespace — an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment the preview table already states. Dropping it would leave the ungrilled backlog, the exact pile that most needs ordering, as the one part of the tracker nothing can rank.
 
 It also **guards against duplicates** before creating, because `create` is the workflow's entry point and gets re-invoked. And **milestones are opt-in** — never introduced by default, because you'd then have to maintain them.
 
@@ -128,7 +128,7 @@ The other bookend. The issue's PR merged, so close it out and reclaim its worksp
 
 That precondition is the whole reason `close` is safe to run on a name you half-remember. Its two irreversible acts — closing the issue and deleting a worktree — are both gated behind evidence the work actually landed. Forced teardown of unlanded work stays something you do deliberately, through gitkit directly.
 
-The preview names **every** effect, including routine ones: unblocking a dependent changes what someone else picks up next, and removing a worktree deletes a directory they may have a terminal sitting in. The label moves are named there and then run inside that one OK, per the exemption above.
+The preview names **every** effect, including routine ones: unblocking a dependent changes what someone else picks up next, and removing a worktree deletes a directory they may have a terminal sitting in. The label moves are named there but need no OK of their own, per the exemption above.
 
 Teardown goes to gitkit, whose rules aren't overridden: **a dirty worktree stops the removal**, because a merged PR does not guarantee an empty worktree — scratch files, a stashed experiment, an unpushed follow-up all live there and none are in the PR.
 
@@ -148,7 +148,7 @@ Its hand-off prints the **actionable set** — every open issue that's `in-progr
 
 ### `triage`
 
-Report first, act on approval. **It never mutates the tracker just to tidy up.**
+Report first, then act — on approval for a close or a comment, straight through for a relabel. **It never mutates the tracker beyond the fixes its own report named.**
 
 It fetches `--state all`, because a `Blocked by #N` pointing at an already-closed issue is drift the open-issue list alone cannot see.
 
@@ -158,7 +158,7 @@ Three more come from the priority namespace: **unassessed** (no priority label �
 
 **Ranking a backlog is proposed as one table, not one question per issue.** Priority is comparative by nature — you're deciding what beats what — and a table is the only shape that shows the comparison you're actually making. Asked one at a time, twenty issues become twenty context-free judgments and every one comes back `medium`, which is the same as not ranking at all. The proposal aims for a *distribution* (`critical` empty or nearly so, `high` a handful, a long `medium`/`low` tail), because a backlog where most things are `high` carries no priority information: the label stops discriminating and every consumer silently falls back to the tiebreak underneath.
 
-**And it never applies a priority you didn't approve.** Every other triage fix repairs a state that's provably wrong — a zombie label on a closed issue, a block whose blocker landed. Priority is a claim about what matters, and only you can make it.
+**The table informs you; it doesn't gate the write.** issuekit prints the ranking and applies it, then says any row is one `gh issue edit` away from a correction. Priority is a claim about what matters and only you can make it, so the table exists to show you the claim it made — not to hold the tracker unranked until you answer.
 
 triage only classifies. The fixes it can't make itself route to a sibling mode.
 

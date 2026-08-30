@@ -39,9 +39,9 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 - **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.
 
-The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, relabeling, closing an issue. Show what will happen, wait for the OK.
+The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, closing an issue. Show what will happen, wait for the OK.
 
-**One exemption, on the merge path only.** Once the merge is confirmed and done, the lifecycle labels that record it run straight through: strip the merged PR's status label, strip the closed issue's `in-review` or `in-progress`, and flip its dependents `blocked → ready`. The merge is the decision, and these labels only state what already happened, so a second prompt re-asks a settled question and a refusal leaves the tracker lying about merged work. Report the label moves in the hand-off. A priority label stays previewed, and every mutation outside this merge-path bookkeeping keeps the rule above.
+**Label writes are exempt, in every mode.** Adding or removing a label on an issue or a PR runs straight through, with no prompt: strip a merged PR's status label, strip a closed issue's `in-review` or `in-progress`, flip its dependents `blocked → ready`, set a priority. A label is cheap, visible, and reversible with one command, and a declined write leaves the tracker lying about merged work. Report every label move in the hand-off. The exemption reaches the labels and nothing else.
 
 ## Preflight
 

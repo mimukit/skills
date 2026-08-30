@@ -58,9 +58,9 @@ gh issue edit <n> --remove-label ready --add-label in-progress
 gh issue edit <n> --remove-label stacked --add-label in-progress   # the stacked path
 ```
 
-**Run it without asking.** This is [the skill's single exemption from the preview rule](../SKILL.md#preflight-every-mode), it applies to every caller, and it applies to this flip and nothing else. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
+**Run it without asking**, per [the label exemption](../SKILL.md#preflight-every-mode), which applies to every caller. Report the flip in the hand-off rather than proposing it first. If the issue was already `in-progress` (the adopt path), leave the label alone and say so.
 
-A `stacked` issue flips exactly the same way, and the exemption covers it for the same reason: the guard has already refused everything a human hasn't grilled *and* everything whose prerequisite isn't live, so the confirmation would ask a question answered twice over. If either label is missing from the repo, [report the gap](../SKILL.md#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check.
+A `stacked` issue flips exactly the same way. If either label is missing from the repo, [report the gap](../SKILL.md#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check.
 
 ### 5. Hand off
 

@@ -120,7 +120,7 @@ Issues are sized to a whole plan now rather than to what fits in one agent's con
 
 **Only Implement loops.** Verify, review, the fix loop, the QA plan, and the PR all still run once, over the whole branch diff. Reviewing per phase would re-read a growing diff once per phase and split the reviewer's judgment across pieces it can't see whole — the opposite of what the `fable` tier is bought for.
 
-**Phases are not ticked on the issue as they land.** It would read as useful progress, and it's a new unprompted tracker mutation that no mode owns. The pipeline has exactly two such exemptions, both belonging to the kit that owns the mutation rather than to afkkit, and a progress indicator doesn't earn a third. The commits on the branch are the record while the run is live; the escalation comment names which phases landed if the run stops.
+**Phases are not ticked on the issue as they land.** It would read as useful progress, and it's a new unprompted tracker mutation that no mode owns. The pipeline's exemptions cover label writes only, they belong to the kit that owns the mutation rather than to afkkit, and a checkbox edit is not a label write. The commits on the branch are the record while the run is live; the escalation comment names which phases landed if the run stops.
 
 ## Why verification moved before review
 
@@ -138,7 +138,7 @@ The one policy afkkit owns. Whenever a step can't proceed, it escalates rather t
 
 **First, it verifies a "pre-existing" claim before accepting it.** A step reporting a gate as red-but-already-broken is asking to be excused from the one check standing between an unattended run and a shipped regression — and it's the easiest thing for a subagent to get wrong, because a failure it caused and one it inherited look identical from inside the worktree. The conductor re-runs that command against the **base branch** first.
 
-**A step that needs consent, with nobody to ask, escalates.** No prompt can be answered in an unattended run, so a step reaching a preview-and-confirm gate stops rather than waiting or assuming a yes — an execution gap, commented and left `in-progress`. Two mutations in this pipeline are exempt at the *mode*, not by afkkit's asking: [`issuekit`](./issuekit.md) `start`'s `ready → in-progress` flip and [`prkit`](./prkit.md)'s advance to `in-review`. Both run unprompted for every caller, which is why the pipeline reaches an open PR without a human. afkkit relies on exemptions the owning skill already wrote and never widens one.
+**A step that needs consent, with nobody to ask, escalates.** No prompt can be answered in an unattended run, so a step reaching a preview-and-confirm gate stops rather than waiting or assuming a yes — an execution gap, commented and left `in-progress`. Label writes are exempt in the kits that own them, not by afkkit's asking: [`issuekit`](./issuekit.md) `start`'s `ready → in-progress` flip and [`prkit`](./prkit.md)'s advance to `in-review` both run unprompted. Both run unprompted for every caller, which is why the pipeline reaches an open PR without a human. afkkit relies on exemptions the owning skill already wrote and never widens one.
 
 Then escalation always means the same five things:
 

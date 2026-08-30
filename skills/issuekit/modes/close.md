@@ -1,6 +1,6 @@
 ## Mode: `close`
 
-The other bookend to [`start`](./start.md): the issue's PR has merged, so close it out and reclaim its workspace. Closing the issue and removing the worktree are destructive, so this mode **previews and waits for an OK** before it runs them. The lifecycle labels ride along in that one OK, per [the close exemption](../SKILL.md#preflight-every-mode).
+The other bookend to [`start`](./start.md): the issue's PR has merged, so close it out and reclaim its workspace. Closing the issue and removing the worktree are destructive, so this mode **previews and waits for an OK** before it runs them. The label writes need no OK at all, per [the label exemption](../SKILL.md#preflight-every-mode); name them in the preview and run them.
 
 ### 1. Confirm the PR actually merged, a hard precondition
 
@@ -34,7 +34,7 @@ gh issue edit <dep> --remove-label blocked --add-label ready
 
 Closing strips the active status label in the same action, because a closed issue must never carry a stale `in-review`.
 
-**Run these label writes straight through, with no second prompt.** The preview above already named them and the user already said yes, so ask again and the user re-approves the bookkeeping half of their own decision. Report what the labels became in the hand-off instead. A priority label is not part of this step and stays previewed like any other priority write.
+**Run these label writes straight through, with no prompt**, per [the label exemption](../SKILL.md#preflight-every-mode). Report what the labels became in the hand-off.
 
 ### 4. Tear the worktree down through gitkit, keyed on the branch
 

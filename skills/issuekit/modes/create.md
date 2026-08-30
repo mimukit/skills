@@ -88,9 +88,9 @@ Apply the [lifecycle labels](../SKILL.md#lifecycle-labels-every-mode) so the fre
 
 **Nothing is labeled `stacked` at creation time.** A dependent only becomes stackable once its prerequisite has an open PR, and at creation nothing has been built. The Stack column records the *intent*; the label arrives later, from the PR-authoring skill or from [`sync`](./sync.md).
 
-Then apply the [priority label](../SKILL.md#priority-labels-every-mode) the user approved in the preview table, **one per issue, in the same `gh issue edit` call** as the lifecycle label, so a fresh issue never exists in a half-labeled state that a concurrent survey could read.
+Then apply the [priority label](../SKILL.md#priority-labels-every-mode) shown in the preview table, **one per issue, in the same `gh issue edit` call** as the lifecycle label, so a fresh issue never exists in a half-labeled state that a concurrent survey could read.
 
-Priority is applied **regardless of the grill gate**. The gate governs the lifecycle namespace only: an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment the user just made in the preview and it doesn't need a grill session to be true. Dropping it here would mean the ungrilled backlog, the exact pile that most needs ordering, is the one part of the tracker nothing can rank.
+Priority is applied **regardless of the grill gate**. The gate governs the lifecycle namespace only: an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment the preview table already states and it doesn't need a grill session to be true. Dropping it here would mean the ungrilled backlog, the exact pile that most needs ordering, is the one part of the tracker nothing can rank.
 
 Confirm each label exists first (`gh label list`), and if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself. Check both namespaces in that one call; a repo that predates priority will have the lifecycle nine and none of the four.
 
@@ -104,7 +104,7 @@ gh issue edit 45 --add-label needs-planning --add-label low
 
 Record the dependency in the same call that labels the issue, so a dependent never exists with a `blocked` label and no recorded prerequisite. On `gh` below 2.94.0, drop `--add-blocked-by`, keep the body line, and say the native edge was skipped.
 
-Preview the label set alongside the issues and get an OK before applying, as with any other mutation.
+Show the label set alongside the issues in the preview. The OK covers filing the issues; the labels themselves ride along without a separate prompt.
 
 ### 5. Write the issue numbers back into the plan
 Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's creation-date suffix:

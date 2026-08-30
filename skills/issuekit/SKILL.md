@@ -52,12 +52,9 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # inside a repo?
 
 **Safety stance, for the whole skill.** Creating, closing, relabeling issues and editing PR bodies are outward-facing mutations. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** Never merge PRs.
 
-**Two exemptions, and both belong to the mode, not the caller.** They cover **lifecycle label writes whose answer the surrounding action already gave**, and they run without a preview for every caller, meaning a person at the keyboard and an unattended orchestrator alike:
+**Label writes are exempt, in every mode and for every caller.** Adding or removing a label on an issue or a PR runs straight through, with no preview and no prompt, whether a person is at the keyboard or an orchestrator drives the run. This covers both namespaces, [lifecycle](#lifecycle-labels-every-mode) and [priority](#priority-labels-every-mode). A label is cheap, visible, and reversible with one command, so a prompt on each write costs more attention than the write is worth, and a declined write leaves the tracker lying about work that already happened. **State every label write in the preview that accompanies it, and report what the labels became in the hand-off**, so the change is still auditable.
 
-- [`start`'s `ready → in-progress` flip](modes/start.md#4-flip-the-label-ready--in-progress). The question is answered twice over: [the `start` guard](modes/start.md#1-guard-refuse-anything-not-ready-or-stacked) has refused everything a human hasn't grilled, and invoking `start <n>` *is* the instruction to start the issue. Flipping the label is what "started" means in the tracker, so a confirmation prompt buys nothing and costs the one thing `start` exists to protect: an issue sitting in a worktree while the tracker still advertises it as free for someone else to pick up.
-- [`close`'s label reconciliation](modes/close.md#3-reconcile-the-tracker): stripping the active status label from the issue being closed, and flipping its dependents `blocked → ready`. `close` already gates on a merged PR and already previews the close itself, so a second prompt asks the user to re-approve the bookkeeping half of a decision they just made. A stale `in-review` on a closed issue is pure noise the next `triage` run has to clean up.
-
-**A priority label is never exempt.** Priority is a claim only the user can make, so every write to that namespace previews, in every mode. Nothing else widens either: `create` still previews, `close` still previews the close and the worktree teardown, `sync` and `triage` still preview every move, and no caller of any kind gets to skip the guard itself.
+The exemption reaches the labels and nothing else. Every other outward-facing mutation keeps the rule above: `create` previews the issues it files, `close` previews the close and the worktree teardown, `sync` previews each pairing and each body edit, and `triage` previews every close and comment it proposes. Never merge PRs.
 
 ## Title convention (every issue this skill creates)
 
@@ -141,7 +138,7 @@ The flags need `gh` 2.94.0 or newer. **Below that, degrade rather than refuse:**
 > Label `blocked` isn't in this repo. Provision the workflow labels with **repokit**, or add just this one:
 > `gh label create blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"`
 
-Apply a label only once it exists (`gh issue edit <n> --add-label <label>`) and, like every mutation in this skill, [preview it and get an OK first](#preflight-every-mode), outside the two mode exemptions named there.
+Apply a label only once it exists (`gh issue edit <n> --add-label <label>`). The write itself needs no prompt, per [the label exemption](#preflight-every-mode); name it in the preview it rides with and report it in the hand-off.
 
 ---
 

@@ -67,7 +67,7 @@ gh issue comment 44 --body "Unblocked: #43 (the prerequisite) merged."
 gh issue edit 42 --remove-label in-review   # closing → strip the active status label; the closed state is the signal
 ```
 
-**`sync` is the repair sweep for `stacked`, not its primary writer.** A dependent becomes stackable the moment its prerequisite's PR opens, and the skill that opens that PR sets the label there, where it is fresh. `sync` catches everything that path missed: a PR opened by hand or on GitHub, a run where the flip was declined, a label that has since gone stale. Three moves, each previewed like any other:
+**`sync` is the repair sweep for `stacked`, not its primary writer.** A dependent becomes stackable the moment its prerequisite's PR opens, and the skill that opens that PR sets the label there, where it is fresh. `sync` catches everything that path missed: a PR opened by hand or on GitHub, a run where the flip was declined, a label that has since gone stale. Three moves, each run without a prompt:
 
 ```sh
 # prerequisite's PR opened → the dependent is workable on a layer
@@ -80,10 +80,10 @@ gh issue edit 44 --remove-label stacked --add-label blocked
 
 **A stack merge closes several issues at once**, because merging one PR in a stack merges every unmerged PR below it. So reconcile the whole cascade rather than the one PR someone named: read every merged PR in that stack, close each issue it closes, and then run the promotions above for whatever those closures freed. Handling only the top PR leaves the layers underneath looking unlanded when their code is already on trunk.
 
-As everywhere in sync, **preview each move and wait for the OK**, and never auto-relabel. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line, because issuekit uses labels and doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
+**Relabel without asking**, per [the label exemption](../SKILL.md#preflight-every-mode), and list every move in the hand-off. The closes and body edits around them still wait for an OK. If a label the map needs isn't provisioned, stop and point the user at **repokit** or the `gh label create` line, because issuekit uses labels and doesn't create them. If the repo predates this map and runs its own status scheme, follow that instead and say you did.
 
 ### 4. Hand off
-**What changed.** Report issues closed, PR bodies repaired, and issues advanced or **unblocked** (`blocked` → `ready`), each an action the user approved. Say plainly if nothing needed repairing; a clean sweep is a real result.
+**What changed.** Report issues closed, PR bodies repaired, and issues advanced or **unblocked** (`blocked` → `ready`). Name every label move, because those ran without a prompt. Say plainly if nothing needed repairing; a clean sweep is a real result.
 
 **Where it landed.** Give the **actionable set**: a table of every open issue that is `in-progress` or `ready` *after* the sync, so the user sees at a glance what's being worked and what they can pick up next in a fresh worktree:
 

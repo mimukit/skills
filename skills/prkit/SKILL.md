@@ -134,13 +134,13 @@ Opening the PR is the moment the linked issue moves from being worked to awaitin
 gh issue edit <n> --remove-label in-progress --add-label in-review
 ```
 
-- **Run it without asking.** This is prkit's one exemption from the preview rule, and it belongs to this step rather than to whoever called it. Opening the pull request *is* the instruction to move the issue to review, so a confirmation asks a question the invocation already answered, and it costs the one thing this step protects: an issue that still advertises itself as being worked while its PR sits open for review. Report the flip in the hand-off rather than proposing it first.
-- **The exemption covers two starting states and no others.** An issue carrying `in-progress` gets the flip above. An issue carrying `ready` gets `in-review` **added**, with no removal, and you say what you found. That is the state issuekit `start` produces, so it is the other one a PR can legitimately arrive from.
+- **Run it without asking.** Label writes are exempt from prkit's preview rule, in every step and for every caller: a label is cheap, visible, and reversible with one command, and an issue that still advertises itself as being worked while its PR sits open for review is worse than a label nobody confirmed. Report the flip in the hand-off rather than proposing it first.
+- **The transition covers two starting states and no others.** An issue carrying `in-progress` gets the flip above. An issue carrying `ready` gets `in-review` **added**, with no removal, and you say what you found. That is the state issuekit `start` produces, so it is the other one a PR can legitimately arrive from.
 - **Any other lifecycle state is drift, not a transition.** For `blocked`, `needs-planning`, `triage`, `needs-info`, already `in-review`, or no lifecycle label at all, stop and change nothing. Report the state you found. Ask when a human is present; escalate when the run is unattended. A label nobody checked is worse than a label nobody set.
-- **Everything else in prkit still previews.** The exemption is this one label move. Creating the PR, committing a handed-in path, and force-pushing a sync are unchanged.
+- **Everything else in prkit still previews.** The exemption reaches label writes only. Creating the PR, committing a handed-in path, and force-pushing a sync are unchanged.
 - If the `in-review` label is missing from the repo, point the user at repokit or give `gh label create in-review --color 5319E7 --description "a PR is open, awaiting review or merge"`, and don't mutate around the gap. The exemption skips the prompt, never the provisioning check.
 
-### 9. Offer to unblock what this PR makes stackable
+### 9. Unblock what this PR makes stackable
 
 Opening a PR is the moment every issue waiting on *this* issue becomes workable, because the code now exists on a branch even though it hasn't merged. Those dependents can move `blocked → stacked` and be built on layers cut from this branch, instead of idling until review finishes. Run this only when the PR closes an issue that something else depends on:
 
@@ -149,13 +149,10 @@ gh issue view <n> --json blocking          # issues waiting on this one
 gh issue edit <dep> --remove-label blocked --add-label stacked
 ```
 
-**Preview this one and wait for an OK.** It does *not* inherit [the `in-review` exemption above](#8-advance-the-linked-issue), and the difference is whose issue is being mutated. That exemption covers the PR's **own** linked issue, where opening the PR is itself the instruction. This step relabels a **different** issue, one the user did not name, to advertise it as ready to pick up. Deciding that work should be stacked rather than waited on is a judgment about how to sequence the project, so it gets a prompt.
-
-Show the whole consequence in one line and wait:
+**Run it without asking**, under the same label exemption as [the `in-review` flip](#8-advance-the-linked-issue). These labels relabel a **different** issue than the one the user named, so state the whole consequence in one line:
 
 > PR #51 opened → #52 and #53 move `blocked → stacked`, so both can be started now on layers off `issue-51-oidc-provider`.
 
-- **Declined, or nobody is there to answer** → change nothing and say so. An issue-lifecycle skill's `sync` mode is the repair sweep for exactly this, so the label is not lost, only deferred.
 - **`stacked` missing from the repo** → point at repokit or `gh label create stacked --color 006B75 --description "prerequisite is in flight with an open PR; workable now on a branch stacked on it"`, and don't mutate around the gap.
 - **No dependents, or a draft PR** → skip the step entirely. A draft is not ready to build on.
 

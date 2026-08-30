@@ -25,7 +25,7 @@ Produce a **status report**, as a table, surfacing:
 - **Status cross-checks.** Issues whose linked PR merged but that are still open (hand off to `sync` for the actual close).
 
 ### 3. Offer fixes
-For each flagged item, propose a concrete fix (relabel, reprioritize, close as stale, post a decision comment) and apply **only what the user approves**:
+For each flagged item, apply the fix. A relabel or a reprioritize runs straight through, per [the label exemption](../SKILL.md#preflight-every-mode); a close or a comment is proposed and applied **only when the user approves it**:
 
 ```sh
 gh issue edit <n> --add-label <label>
@@ -38,7 +38,7 @@ gh issue close <n> --comment "Closing as stale; reopen if still relevant."
 
 **Propose a distribution, not a wall of `high`.** A backlog where most things are `high` has no priority information in it: the label stops discriminating and every consumer falls back to whatever tiebreak sits underneath it. Aim for a shape where `critical` is empty or nearly so, `high` is a handful, and the long tail is `medium` and `low`. When your own proposal comes out top-heavy, that's a signal to re-read the issues rather than to ship the table.
 
-**Never apply a priority the user didn't approve, even in a batch.** Ranking is the one thing in this map that can't be derived from the tracker: every other triage fix repairs a state that's provably wrong (a zombie label on a closed issue, a block whose blocker landed), where a priority is a claim about what matters that only the user can make. Approve-the-table is fine; approve-nothing-and-apply-anyway is not.
+**Show the table, then apply it.** Ranking is a claim the user owns, so the table is how they see and correct the ranking you chose, but it does not gate the write: print it, apply the priorities, and say the user can rewrite any row with one `gh issue edit`. Re-read the issues before you print a top-heavy table rather than after.
 
 ### 4. Hand off
 **What changed.** Report what the report found, and which fixes you applied versus left alone. A flagged item the user declined is worth naming; it stays drift until someone decides otherwise.
