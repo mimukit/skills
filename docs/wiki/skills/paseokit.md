@@ -44,7 +44,7 @@ The trade is stated rather than hidden: worktrees appear in Paseo when you run [
 
 Two facts make the rest of the design possible:
 
-- **`paseo workspace archive` is registry-only** — verified. It drops the row and leaves the directory, the branch, and git's own worktree registration intact. That is why [`clean`](#clean)'s registry reap runs without a destructive-confirm gate: that half cannot lose work, which is the sharpest divergence from orcakit's `clean`, where every removal is irreversible and needs a preview and an OK.
+- **`paseo workspace archive` is registry-only** — verified. It drops the row and leaves the directory, the branch, and git's own worktree registration intact. That is what keeps [`clean`](#clean)'s registry reap reversible: an archived row can be restored, where a deleted worktree cannot. The reap still sits behind `clean`'s preview and confirmation, so the user sees every row before it leaves the sidebar.
 - **Paseo never notices a deleted directory**, so removing a worktree is still gitkit's job, and the row has to be archived afterward — which is exactly what [`clean`](#clean)'s registry reap is for. `clean` is the one mode that removes anything at all: `sync` only adds, and the disk teardown reaches the filesystem by calling gitkit rather than by growing its own teardown.
 
 **It never touches the tracker.** It reads issues and pull requests to build a title and judge a verdict; it never closes, labels, or edits. Tracker drift routes to [`issuekit`](./issuekit.md) `close`.
@@ -110,11 +110,11 @@ One honest limitation: **there is no `paseo workspace unarchive` in 0.4.0.** "Re
 
 ### `clean`
 
-The removing mode, and the only one — every archive and every delete in the skill lives here, in two halves. The **registry reap** archives `orphaned` rows and collapses `duplicate` sets: registry-only, provably safe, no confirmation. The **worktree teardown** removes the whole local footprint of work that already landed: the agent sessions in the worktree, the directory, the local branch, and the registry row. It takes the same two scopes as `sync`, picked by the same words.
+The removing mode, and the only one — every archive and every delete in the skill lives here, in two halves. The **registry reap** archives `orphaned` rows and collapses `duplicate` sets: registry-only and reversible, since an archived row can be restored. The **worktree teardown** removes the whole local footprint of work that already landed: the agent sessions in the worktree, the directory, the local branch, and the registry row. It takes the same two scopes as `sync`, picked by the same words. Neither half runs before the preview: both candidate sets are collected first, shown as one list, and gated on a single confirmation.
 
-**A merged pull request is the teardown's precondition, and nothing substitutes for it.** `gh pr list --head <branch> --state merged` is the test; a closed-unmerged PR fails it and a suggestive branch name means nothing. Three more gates follow: a clean tree, no unpushed commit, and no live agent. Because the merge is the whole basis for the delete, a missing or unauthenticated `gh` stops the teardown outright instead of degrading it — the one place in paseokit where that happens. The registry reap still runs, since it proves nothing against the tracker.
+**A merged pull request is the teardown's precondition, and nothing substitutes for it.** `gh pr list --head <branch> --state merged` is the test; a closed-unmerged PR fails it and a suggestive branch name means nothing. Three more gates follow: a clean tree, no unpushed commit, and no live agent. Because the merge is the whole basis for the delete, a missing or unauthenticated `gh` stops the teardown outright instead of degrading it — the one place in paseokit where that happens. The registry reap still goes to the preview, since it proves nothing against the tracker.
 
-**One preview, one confirmation.** Every candidate is printed with its branch, merged PR, path, workspace id, and the sessions that go with it, and the ask covers exactly that listed set. Rejected worktrees are printed underneath with their reason, since "why is this one still here" is the next question every time.
+**One preview, one confirmation.** The table has an archive section (workspace id, title, reason) and a delete section (branch, merged PR, path, workspace id, and the sessions that go with it), and the ask covers exactly that listed set. Rejected worktrees are printed underneath with their reason, since "why is this one still here" is the next question every time. An empty list ends the mode without asking anything.
 
 **The teardown order is fixed**: stop the sessions, remove the worktree through gitkit, delete the branch with the safe `-d` (a squash merge that refuses gets its own ask before `-D`), then archive the row. Each step strands the next if it runs late. A failure stops that candidate, reports the step, and moves to the next one; nothing is unwound.
 
@@ -134,7 +134,7 @@ No `paseo` on the machine means there is nothing to reconcile — it says exactl
 
 A daemon that is down gets named (`paseo start`) rather than started. It does not launch a daemon on someone's machine unasked.
 
-Without `gh`, titles degrade to the branch name and the tracker column reads unknown. Nothing else degrades in `list`, `sync`, and `align`. [`clean`](#clean)'s worktree teardown is the exception and stops, because only the tracker can prove a merge; its registry reap still runs.
+Without `gh`, titles degrade to the branch name and the tracker column reads unknown. Nothing else degrades in `list`, `sync`, and `align`. [`clean`](#clean)'s worktree teardown is the exception and stops, because only the tracker can prove a merge; its registry reap still runs, behind its own preview and confirmation.
 
 ## Hands off to
 
