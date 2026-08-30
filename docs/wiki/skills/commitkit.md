@@ -8,7 +8,7 @@ Create git commits with Conventional Commits messages derived from the actual di
 |---|---|
 | Modes | main procedure (commit or draft-only) · draft mode (headless, message only) |
 | Tools | `Bash`, `Read` |
-| Writes | git commits. Never pushes |
+| Writes | git commits, pushed to `origin` by default |
 | Visibility | public |
 
 ## What it does
@@ -17,7 +17,7 @@ commitkit turns the current changes into one or more clean commits with [Convent
 
 **Multiple commits is the default**, not the exception. A session that touched three concerns produces three commits, each with its own scope — not one catch-all.
 
-It's built for AI coding sessions where you hand off with a bare "commit". In that mode it works autonomously: staging the right files, grouping the work into as many commits as it deserves, committing them, and reporting a table — without stopping to ask at each step.
+It's built for AI coding sessions where you hand off with a bare "commit". In that mode it works autonomously: staging the right files, grouping the work into as many commits as it deserves, committing them, pushing them, and reporting a table — without stopping to ask at each step.
 
 ## It reads the stat, not the diff — when it can
 
@@ -30,7 +30,7 @@ The most interesting decision in the skill is how much diff to read, and it turn
 
 When in doubt, it reads. A vague commit message costs more than the tokens it saved.
 
-The same economics drive the git calls themselves. commitkit fires at the end of a session, when the context window is at its largest, and every extra Bash call re-pays that whole window as input. So the state read is one chained call, and the entire commit sequence — every `git add`/`git commit` pair plus the closing `git status -sb` — is another.
+The same economics drive the git calls themselves. commitkit fires at the end of a session, when the context window is at its largest, and every extra Bash call re-pays that whole window as input. So the state read is one chained call, and the entire commit sequence — every `git add`/`git commit` pair plus the closing push and `git status -sb` — is another.
 
 **Generated files are never read** in either mode — lockfiles, build output, vendored directories, snapshots, compiled assets. Their stat line carries every bit of signal a commit message can use, and their diffs are the largest in most repos.
 
@@ -76,6 +76,16 @@ Grouping is by **what the change accomplishes**, not by file type or directory. 
 
 Groups are ordered so dependencies land first. A file with hunks from multiple groups gets staged interactively rather than assigned wholesale.
 
+## The push
+
+commitkit **pushes by default** once the commits exist, as the last link in the same chained call. The reasoning is an asymmetry: a commit that lives only on one disk is one lost machine away from gone, while a fast-forward push publishes work that a revert can undo. The old default protected against the cheap failure and left the expensive one open.
+
+The gate is the shape of the push, not the name of the branch. It pushes when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream yet. A topic branch and the base branch are treated the same, because plenty of solo repos commit straight to `main` and asking there would fire on every run.
+
+It holds and asks when the remote rejects the push, when there is no `origin`, or when the branch tracks some other remote. A rejected push means the branch moved on the remote, and commitkit will not reach for `--force-with-lease` to get past it — rewriting a published branch belongs to [`gitkit`](./gitkit.md) and [`prkit`](./prkit.md), which take a confirmation for it.
+
+Opt out per run by saying so: "commit, don't push", "don't publish yet", or asking for a message only. The report then says the commits are local and names the push command.
+
 ## When it pauses
 
 Delegated committing means it stages files itself without asking. It only stops when intent is genuinely ambiguous: half-finished work in the tree, secrets, changes you probably didn't mean to commit, or a partially staged file where staging the whole path would sweep in deliberately unstaged hunks.
@@ -98,9 +108,9 @@ Type, mandatory scope, and the required body carry over unchanged. The payload c
 
 ## Hands off to
 
-[`prkit`](./prkit.md), to open a pull request from exactly these commits. The work is committed but unpublished, and the report says whether the branch has an upstream — commits on a local-only branch exist nowhere but your machine, which is usually the most useful line in the report.
+[`prkit`](./prkit.md), to open a pull request from exactly these commits. The work is already on the remote by then, so the PR is the only step left. When the push was held or skipped, the report crowns the push instead and gives the command, because commits that exist nowhere but your machine are the most useful line in the report.
 
-It never pushes, amends, or rewrites history without an explicit ask.
+It never amends or rewrites history without an explicit ask.
 
 ## Install
 

@@ -109,7 +109,7 @@ Its ladder, when `gh` is available:
 | 1 | your PR is red or has changes requested | `mergekit fix` |
 | 2 | your PR that nobody is reviewing | self-review it, or request a reviewer |
 | 3 † | an in-progress issue whose branch you're on | `implementkit` |
-| 4 | orphaned uncommitted or unpushed work | `commitkit`, then push |
+| 4 | orphaned uncommitted or unpushed work | `commitkit`, which commits and pushes |
 | 5 | a stash | `gitkit rescue`, or drop it |
 | 6 | an unmerged local feature branch | `gitkit clean` |
 | 7 † | a stale-tracker signal | `issuekit sync` |
@@ -235,7 +235,7 @@ It works off a precedence ladder — `DESIGN.md`, then the shipped components, t
 
 ### commitkit — land it in git
 
-[`commitkit`](./skills/commitkit.md) reads the working tree and writes Conventional Commits messages from the actual diff. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the right files, groups the work, commits, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files.
+[`commitkit`](./skills/commitkit.md) reads the working tree and writes Conventional Commits messages from the actual diff. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the right files, groups the work, commits, pushes to `origin` when the push is a fast-forward, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files.
 
 The message shape, with a mandatory scope (fallback `repo`) and a required body:
 
@@ -400,7 +400,7 @@ issuekit create                     # → ready / blocked issues from the plan
 # Working one
 issuekit start 42                   # → gitkit worktree, ready → in-progress
 /implementkit #42                   # → unstaged, tests + build green
-/commitkit                          # → grouped conventional commits
+/commitkit                          # → grouped conventional commits, pushed
 /reviewkit                          # → four passes over the branch diff
 /verifykit                          # → docs/verify/... proof bundle (frontend)
 /qakit                              # → docs/qa/qa-<slug>-2026-08-03.md
