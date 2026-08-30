@@ -25,9 +25,13 @@ The skill is split for context economy: `SKILL.md` carries the routing, the safe
 
 Creating, closing, and relabeling issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
 
-**One exemption exists, and it belongs to the mode rather than the caller.** `start`'s `ready → in-progress` flip runs unprompted, whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did.
+**Two exemptions exist, and both belong to the mode rather than the caller.** They run unprompted whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did, and both cover the same thing: a lifecycle label whose approval the surrounding action already gave.
 
-It's the only mutation whose approval is already implied twice: the `ready` guard has refused everything a human hasn't grilled, and asking for the issue to be started is asking for it to be marked started. The cost of prompting is real, too — an issue that sits in a worktree while the tracker still shows it `ready` is an issue another worker can pick up. Nothing else widens, and **no caller of any kind gets to skip the guard itself.**
+`start`'s `ready → in-progress` flip is approved twice over — the `ready` guard has refused everything a human hasn't grilled, and asking for the issue to be started is asking for it to be marked started. The cost of prompting is real, too: an issue that sits in a worktree while the tracker still shows it `ready` is an issue another worker can pick up.
+
+`close`'s label reconciliation is the mirror image. The mode already gates on a merged PR and already previews the close itself, so a separate prompt for stripping `in-review` and unblocking dependents asks you to re-approve the bookkeeping half of a decision you just made — and a `no` there leaves the tracker describing merged work as in review, which the next `triage` run then has to clean up.
+
+**Priority is never exempt**, in any mode: that namespace is a claim only you can make. Nothing else widens either, and **no caller of any kind gets to skip the guard itself.**
 
 ## The lifecycle labels
 
@@ -124,7 +128,7 @@ The other bookend. The issue's PR merged, so close it out and reclaim its worksp
 
 That precondition is the whole reason `close` is safe to run on a name you half-remember. Its two irreversible acts — closing the issue and deleting a worktree — are both gated behind evidence the work actually landed. Forced teardown of unlanded work stays something you do deliberately, through gitkit directly.
 
-The preview names **every** effect, including routine ones: unblocking a dependent changes what someone else picks up next, and removing a worktree deletes a directory they may have a terminal sitting in.
+The preview names **every** effect, including routine ones: unblocking a dependent changes what someone else picks up next, and removing a worktree deletes a directory they may have a terminal sitting in. The label moves are named there and then run inside that one OK, per the exemption above.
 
 Teardown goes to gitkit, whose rules aren't overridden: **a dirty worktree stops the removal**, because a merged PR does not guarantee an empty worktree — scratch files, a stashed experiment, an unpushed follow-up all live there and none are in the PR.
 

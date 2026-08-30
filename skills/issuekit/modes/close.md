@@ -1,6 +1,6 @@
 ## Mode: `close`
 
-The other bookend to [`start`](./start.md): the issue's PR has merged, so close it out and reclaim its workspace. Every step here is destructive or outward-facing, so unlike `start` this mode **previews and waits for an OK** before it mutates anything.
+The other bookend to [`start`](./start.md): the issue's PR has merged, so close it out and reclaim its workspace. Closing the issue and removing the worktree are destructive, so this mode **previews and waits for an OK** before it runs them. The lifecycle labels ride along in that one OK, per [the close exemption](../SKILL.md#preflight-every-mode).
 
 ### 1. Confirm the PR actually merged, a hard precondition
 
@@ -17,9 +17,9 @@ This precondition is the whole reason `close` is safe to run on a name you half-
 
 Show the full consequence in one line and wait:
 
-> PR #10 (`feat(auth): add sso login`) merged → close #42, unblock #44, remove the worktree for `issue-42-add-sso-login`.
+> PR #10 (`feat(auth): add sso login`) merged → close #42 and strip its `in-review`, unblock #44 (`blocked → ready`), remove the worktree for `issue-42-add-sso-login`.
 
-Name every effect, including the ones that feel routine. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in.
+Name every effect, including the ones that feel routine. Name the label moves here too, because this is the only place the user sees them before they run. Unblocking a dependent changes what someone else picks up next; removing a worktree deletes a directory they may have a terminal sitting in.
 
 ### 3. Reconcile the tracker
 
@@ -33,6 +33,8 @@ gh issue edit <dep> --remove-label blocked --add-label ready
 ```
 
 Closing strips the active status label in the same action, because a closed issue must never carry a stale `in-review`.
+
+**Run these label writes straight through, with no second prompt.** The preview above already named them and the user already said yes, so ask again and the user re-approves the bookkeeping half of their own decision. Report what the labels became in the hand-off instead. A priority label is not part of this step and stays previewed like any other priority write.
 
 ### 4. Tear the worktree down through gitkit, keyed on the branch
 
