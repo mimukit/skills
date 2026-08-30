@@ -6,7 +6,7 @@ Take an open GitHub PR and make it merge-ready on your machine — worktree, syn
 
 | | |
 |---|---|
-| Modes | [`list`](#list) · [`start`](#start) · [`finish`](#finish) · [`fix`](#fix) |
+| Modes | [`list`](#list) · [`start`](#start) · [`close`](#close) · [`fix`](#fix) |
 | Tools | `Bash`, `Read`, `Write`, `Skill` |
 | Writes | worktrees, commits, pushes; merges a PR behind a human gate |
 | Visibility | public |
@@ -62,13 +62,13 @@ The **review pack** assembles everything so you don't go hunting: title, author,
 
 It **names what's missing**. "No QA plan in this repo's conventional location" is information; printing nothing where one would go is not.
 
-### `finish`
+### `close`
 
 Merge or fix, depending on which verdict you reached.
 
 **Merge path** — confirm, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), merge with a fixed subject, then hand the landing to [`issuekit`](./issuekit.md) — `close` first, then `sync`.
 
-`close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. After a cascade it runs **once per merged layer**, bottom-up, since the cascade landed several PRs and each retires its own issue and worktree — closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview before mutating, so the pair costs a confirmation rather than a surprise, and a sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
+issuekit's `close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. After a cascade it runs **once per merged layer**, bottom-up, since the cascade landed several PRs and each retires its own issue and worktree — closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview before mutating, so the pair costs a confirmation rather than a surprise, and a sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
 
 Cleanup covers **only what mergekit created** — the fork-PR case where it invented both the branch and its worktree. An *adopted* worktree is someone else's context, possibly with an editor and dev server pointed at it. It's left standing and named, so you know it's still yours.
 
@@ -78,7 +78,7 @@ Cleanup covers **only what mergekit created** — the fork-PR case where it inve
 
 The mirror of `start`, for a PR **you authored** that came back with review comments, a change request, or red CI.
 
-It overlaps `finish`'s fix path in mechanics but differs at both ends: that path implements a verdict *you* just reached on someone else's PR, whereas this starts from feedback *someone else* left on yours. So it opens by gathering the punch list — unresolved threads, failing checks with log tails, the review decision — and closes by answering it.
+It overlaps `close`'s fix path in mechanics but differs at both ends: that path implements a verdict *you* just reached on someone else's PR, whereas this starts from feedback *someone else* left on yours. So it opens by gathering the punch list — unresolved threads, failing checks with log tails, the review decision — and closes by answering it.
 
 Nothing to service (no unresolved threads, green CI) means it says so and stops.
 

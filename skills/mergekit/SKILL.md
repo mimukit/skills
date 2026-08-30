@@ -22,7 +22,7 @@ The PR already exists, and you are either reviewing it, or you authored it and i
 
 - **list.** "What PRs are waiting on me", "show me the ready-for-review PRs", "mergekit list".
 - **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA", "get #34 merge-ready".
-- **finish `<n>`.** "Merge #34", "this one's good, land it", "#34 needs changes: <findings>".
+- **close `<n>`.** "Merge #34", "this one's good, land it", "#34 needs changes: <findings>".
 - **fix `<n>`.** The author's side: "my PR is red, fix the CI", "address the review comments on #34", "respond to the feedback on my PR". It triages the feedback before acting on it; it does not apply every comment on sight.
 
 If a PR is named but the action isn't, assume `start`, because setting a PR up is safe and reversible while merging is not.
@@ -37,7 +37,7 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 - **A stack cascade is one action, so it takes one confirmation that names every PR in it.** Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, and a passing local gate are *inputs to the human's decision*, and none of them is the decision. A perfectly green PR still waits.
 - **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
-- **Never as a side effect.** `start` never merges. A fix round never merges. Only `finish` merges, and only after the confirmation.
+- **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.
 
 The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, relabeling, closing an issue. Show what will happen, wait for the OK.
 
@@ -52,7 +52,7 @@ gh repo view --json nameWithOwner           # inside a repo
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login`. Don't work around it.
 - **Get the base branch from gitkit.** Never assume `main`, and don't re-derive it here; repos that default to `develop` or `trunk` are real. Everything below written as `origin/<base>` means whatever gitkit returns.
-- For `start` and `finish`, confirm the PR exists and is open before touching the filesystem.
+- For `start` and `close`, confirm the PR exists and is open before touching the filesystem.
 
 ## What gitkit owns
 
@@ -144,11 +144,11 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 **Where it landed.** Two lines: the worktree path, and the single command that starts the app.
 
-**Next.** The reviewer reads, runs, and forms an opinion; then `finish <n>` executes whichever verdict they reach, whether a merge or a fix round. Say both halves, so it's clear merging isn't the assumed outcome.
+**Next.** The reviewer reads, runs, and forms an opinion; then `close <n>` executes whichever verdict they reach, whether a merge or a fix round. Say both halves, so it's clear merging isn't the assumed outcome.
 
-Then stop, because the human reviews and tests. mergekit does not judge the code, and does not proceed to `finish` on its own.
+Then stop, because the human reviews and tests. mergekit does not judge the code, and does not proceed to `close` on its own.
 
-## Mode `finish <n>`: merge or fix
+## Mode `close <n>`: merge or fix
 
 The reviewer has formed an opinion. Which fork you take depends entirely on which one they state.
 
@@ -181,10 +181,10 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    ```
 
    This is the one `gh stack` command mergekit owns, and it owns it because merging is mergekit's alone; gitkit takes the stack plumbing and deliberately leaves this out. Run it only after the enumerated confirmation above. Without the stack extension, merge each PR by hand in bottom-up order, waiting for each to land before the next, since every merge re-targets the layer above it.
-4. **Hand the landing off to the tracker with `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
+4. **Hand the landing off to the tracker with issuekit's `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
 
-   - **`close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action, and `close` gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue. **After a cascade, run it once per merged layer**, bottom-up, because the cascade landed several PRs and each one retires its own issue and its own worktree. Closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk.
-   - **`sync`, immediately after, including when there was no issue to close.** `close` lands the one issue you named; `sync` sweeps for what the merge shook loose *around* it: a second issue the PR body closed, a link the PR never carried, a parent checklist still un-ticked, a dependent left `blocked` on a prerequisite that just landed. That drift is invisible from here, because mergekit sees one PR where `sync` reads the whole tracker, and it is cheapest to repair now, while the merge that caused it is the thing everyone is looking at.
+   - **issuekit `close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action, and that mode gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue. **After a cascade, run it once per merged layer**, bottom-up, because the cascade landed several PRs and each one retires its own issue and its own worktree. Closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk.
+   - **issuekit `sync`, immediately after, including when there was no issue to close.** `close` lands the one issue you named; `sync` sweeps for what the merge shook loose *around* it: a second issue the PR body closed, a link the PR never carried, a parent checklist still un-ticked, a dependent left `blocked` on a prerequisite that just landed. That drift is invisible from here, because mergekit sees one PR where `sync` reads the whole tracker, and it is cheapest to repair now, while the merge that caused it is the thing everyone is looking at.
 
    Both modes preview before they mutate, so the pair costs a confirmation, not a surprise. Without issuekit installed, fall back to plain `gh issue close` / `gh issue edit` calls, previewed and confirmed like any other mutation, and say that the tracker-wide sweep did not happen, rather than implying the tracker is now clean.
 5. **Clean up only what *you* created.** After the handoff, one thing may be left that no issue-lifecycle skill knows about: the **fork-PR case**, where mergekit invented both the `pr-<n>-<slug>` branch and its worktree. Remove that through gitkit.
@@ -195,11 +195,11 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
 6. **Hand off.**
 
-   **What changed.** Report the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: `close`'s issue closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
+   **What changed.** Report the PR merged (number, title, merge commit), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: the issue `close` closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
 
    **Where it landed.** Say which worktrees were removed and which were deliberately left standing, with paths. An adopted worktree that survives is someone's live workspace; naming it is how they know it's still theirs.
 
-   **Next.** A merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked, from either the `close` or the `sync` pass, is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins, because finishing outranks starting.
+   **Next.** A merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked, from either the issuekit `close` or the issuekit `sync` pass, is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins, because finishing outranks starting.
 
 ### Fix path
 
@@ -209,13 +209,13 @@ The reviewer wants changes. They already have the code checked out and running, 
 2. Run the repo's test and build gate.
 3. Commit in the repo's own style, preferring an installed commit skill.
 4. Push. The PR updates in place; the reviewer stays in the same worktree with the app still running.
-5. **Hand off.** Return to the review, re-printing only what changed (the commits you added, the gate result, the pushed branch), name the worktree still standing with the app still running, and give the next move: re-test the fixed behavior, then `finish <n>` again for the merge decision. Do not merge; that is a fresh decision, and it needs a fresh confirmation.
+5. **Hand off.** Return to the review, re-printing only what changed (the commits you added, the gate result, the pushed branch), name the worktree still standing with the app still running, and give the next move: re-test the fixed behavior, then `close <n>` again for the merge decision. Do not merge; that is a fresh decision, and it needs a fresh confirmation.
 
 ## Mode `fix <n>`: service review feedback on your own PR
 
 The mirror of `start`. `start` pulls down a PR for *you* to review; `fix` is for a PR *you authored* that has come back with review comments, a change request, or red CI, meaning the author's side of the same loop. It reads the feedback, **judges which of it is worth acting on**, drives those changes, pushes, and answers every thread. Like every mergekit mode, it stops short of merging.
 
-It overlaps `finish`'s [Fix path](#fix-path) in mechanics but differs at both ends: that path implements a verdict *you* just reached while reviewing someone else's PR, whereas `fix` starts from feedback *someone else* left on yours, so it opens by gathering that feedback and closes by answering it.
+It overlaps `close`'s [Fix path](#fix-path) in mechanics but differs at both ends: that path implements a verdict *you* just reached while reviewing someone else's PR, whereas `fix` starts from feedback *someone else* left on yours, so it opens by gathering that feedback and closes by answering it.
 
 ### 1. Gather the feedback
 
@@ -266,7 +266,7 @@ Close the loop so the reviewer sees every item handled, fixed *and* declined, ea
 - **Reply and resolve** each thread you actually fixed, pointing at the commit that did it. **Never resolve a thread you didn't fix.**
 - **Reply to each declined thread with the reason, and leave it open.** A declined item is a position, not a silence: name what it conflicts with, whether the convention, the decision, or the PR's scope, and let the reviewer overrule you. Out-of-scope items are the exception worth going further on: offer to file the follow-up issue rather than leaving the point to evaporate.
 - **Re-request review** when the decision was `CHANGES_REQUESTED` (`gh pr edit <n> --add-reviewer <login>`, or the `requested_reviewers` REST endpoint).
-- **Do not merge.** Servicing feedback earns a fresh review, not a landing, because merging is `finish`'s job, behind its human gate.
+- **Do not merge.** Servicing feedback earns a fresh review, not a landing, because merging is `close`'s job, behind its human gate.
 
 ### 6. Hand off
 
@@ -274,7 +274,7 @@ Close the loop so the reviewer sees every item handled, fixed *and* declined, ea
 
 **Where it landed.** Give the branch pushed and the PR updated in place, plus the worktree path you worked in.
 
-**Next.** The ball is back in the reviewer's court, so the move is theirs, not yours: the re-requested review, or CI re-running on the push. Name first what you *couldn't* service and what you *declined*, because a rejected comment, an ambiguous one, or a gate you couldn't get green is the thing standing between this PR and a merge, and it needs the reviewer, not another fix round. Once they approve, `finish <n>` lands it.
+**Next.** The ball is back in the reviewer's court, so the move is theirs, not yours: the re-requested review, or CI re-running on the push. Name first what you *couldn't* service and what you *declined*, because a rejected comment, an ambiguous one, or a gate you couldn't get green is the thing standing between this PR and a merge, and it needs the reviewer, not another fix round. Once they approve, `close <n>` lands it.
 
 ## Notes
 

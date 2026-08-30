@@ -26,7 +26,7 @@ If you only remember one thing: **[`statuskit`](./skills/statuskit.md) tells you
             ▼
    SHIP     prkit ──▶ PR open, issue ──▶ in-review
             ▼
-   LAND     mergekit start ──▶ mergekit finish ──▶ issuekit close
+   LAND     mergekit start ──▶ mergekit close ──▶ issuekit close
             ▼
    RELEASE  releasekit ──▶ changelog · tag · GitHub release   (when you're cutting one)
 
@@ -65,7 +65,7 @@ flowchart TD
 
     subgraph land["LAND"]
         direction LR
-        M1["mergekit start"] --> M2["mergekit finish"] --> M3["issuekit close"]
+        M1["mergekit start"] --> M2["mergekit close"] --> M3["issuekit close"]
     end
 
     RL["releasekit<br>changelog · tag · GitHub release<br>per release, not per issue"]
@@ -287,8 +287,8 @@ At PR-open time the sync rule resolves to **rebase** onto the base, and force-pu
 
 - **`mergekit list`** — what's waiting on you, most-ready first, drafts and other people's PRs marked. It deliberately does not crown a "next" PR.
 - **`mergekit start`** — pulls the PR into a worktree, syncs it, sets the project up, and prints a review pack: PR metadata, the linked issue and its acceptance criteria, the commit log and diffstat, the QA plan and proof artifacts, unresolved review threads with `file:line`, CI status, and — explicitly — what's *missing*. It ends with the worktree path and the one command that starts the app.
-- **`mergekit finish`** — forks on your verdict. Say it's good and it merges with a merge commit (no squash, no rebase-merge). Say it needs changes and it takes the fix path instead.
-- **`mergekit fix`** — the author's side, for a PR *you* opened that came back with review comments or red CI. It gathers the unresolved threads and failing checks, drives the fixes in the worktree, syncs through `gitkit`, pushes, and answers the threads — then stops. It never merges; that's still `finish`, behind its human gate.
+- **`mergekit close`** — forks on your verdict. Say it's good and it merges with a merge commit (no squash, no rebase-merge). Say it needs changes and it takes the fix path instead.
+- **`mergekit fix`** — the author's side, for a PR *you* opened that came back with review comments or red CI. It gathers the unresolved threads and failing checks, drives the fixes in the worktree, syncs through `gitkit`, pushes, and answers the threads — then stops. It never merges; that's still `close`, behind its human gate.
 
 Name a PR without an action and it assumes `start`, because setting a PR up is reversible and merging isn't.
 
@@ -410,7 +410,7 @@ afkkit 42
 # Landing it
 mergekit list
 mergekit start 34                   # → worktree + review pack + run command
-mergekit finish 34                  # → merge commit, on your say-so
+mergekit close 34                   # → merge commit, on your say-so
 issuekit close 42                   # → close, unblock dependents, tear down
 ```
 
