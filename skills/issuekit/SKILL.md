@@ -454,14 +454,19 @@ Reconcile and repair the PR↔issue relationship. **Sync deliberately does not w
 | **issuekit sync** | reconcile drift after merge, repair a missing link on an **existing** PR, advance lifecycle labels and unblock dependents |
 
 ### 1. Reconcile a merged PR whose issue never closed
-Find PRs merged recently whose linked issue is still open because the `Closes #` keyword was missing:
+Find PRs merged recently whose linked issue is still open. Two causes produce the same drift, and the sweep has to catch both:
 
 ```sh
-gh pr list --state merged --limit 20 --json number,title,body,closingIssuesReferences
+gh pr list --state merged --limit 20 --json number,title,body,baseRefName,closingIssuesReferences
 gh issue list --state open --json number,title
 ```
 
-For each merged PR that *should* have closed an issue (evident from the branch, title, plan, or the user telling you), **preview it and confirm before closing**:
+- **The keyword was never written.** The body carries no `Closes #N` at all, so GitHub had nothing to resolve.
+- **The keyword was written and GitHub ignored it, which is the stack signature.** A body that carries `Closes #N` while `closingIssuesReferences` comes back **empty** is the case this mode exists to repair. GitHub honors a closing keyword only on a PR that targets the repository's **default branch**, so every stack layer above the bottom one ships a correct keyword that does nothing. The link normally registers by itself once the layer below merges and GitHub retargets the PR to trunk; when the merge happened without that retarget, the issue stays open with a perfect-looking body and nothing else in the tracker points at the gap.
+
+Read the body and `closingIssuesReferences` together rather than either alone. A body with the keyword is not evidence of a link, and an empty `closingIssuesReferences` is not evidence of a missing keyword.
+
+For each merged PR that *should* have closed an issue (evident from `Closes #N` in the body, the branch, the title, the plan, or the user telling you), **preview it and confirm before closing**:
 
 > PR #10 (`feat(auth): add sso login`) merged, but issue #42 is still open → close #42 with a comment linking the PR?
 
@@ -479,6 +484,25 @@ If an **open** PR should reference an issue but doesn't, add `Closes #N` to its 
 ```sh
 gh pr edit <pr> --body-file <updated-body>
 ```
+
+**Sweep the open layer PRs too, so the drift is caught before the merge rather than after.** A layer PR needs a different repair from a body rewrite, so classify it before you touch it:
+
+```sh
+gh pr list --state open --json number,title,body,baseRefName,closingIssuesReferences
+gh repo view --json defaultBranchRef -q .defaultBranchRef.name
+```
+
+- **Base is the default branch, body has no keyword** → the plain repair above. Add `Closes #N` and the link registers.
+- **Base is not the default branch, body carries `Closes #N`, `closingIssuesReferences` empty** → **expected, not drift.** The keyword is inert until GitHub retargets the PR to trunk, which happens when the layer below merges. Report it and change nothing. Rewriting the body here repairs nothing, and retargeting the PR to trunk would destroy the stack.
+- **Base is not the default branch, body has no keyword** → a real gap, and the fix is the same body edit. Write `Closes #N` now so the link registers the moment the retarget lands.
+- **Base is now the default branch, body carries `Closes #N`, `closingIssuesReferences` still empty** → a layer GitHub already retargeted, whose body it never re-parsed. Force the re-parse by writing the same body back, and check the link again:
+
+```sh
+gh pr view <pr> --json body -q .body > <file>
+gh pr edit <pr> --body-file <file>
+```
+
+Preview each of these like any other mutation, and say which of the four cases each PR fell into.
 
 ### 3. Labels: advance lifecycle state, unblock what's freed
 Move issues through the [lifecycle labels](#lifecycle-labels-every-mode) as PRs advance: an issue whose PR just opened → `in-review`; and, the dependency payoff, when an issue that was a **blocker** closes, find the issues that depend on it and swap them `blocked` → `ready`, optionally commenting that the prerequisite landed:
