@@ -110,8 +110,8 @@ Its ladder, when `gh` is available:
 | 2 | your PR that nobody is reviewing | self-review it, or request a reviewer |
 | 3 † | an in-progress issue whose branch you're on | `implementkit` |
 | 4 | orphaned uncommitted or unpushed work | `commitkit`, then push |
-| 5 | a stash | restore or drop it |
-| 6 | an unmerged local feature branch | `gitkit` |
+| 5 | a stash | `gitkit rescue`, or drop it |
+| 6 | an unmerged local feature branch | `gitkit clean` |
 | 7 † | a stale-tracker signal | `issuekit sync` |
 | 8 † | a `ready` issue waiting | `issuekit start`, then `implementkit` |
 | 8b | **no tracker:** the next unbuilt phase of the newest plan | `implementkit` |
@@ -336,7 +336,9 @@ The label map is a shared contract with `issuekit`: `repokit` writes them, `issu
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
 - **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. An unpublished branch rebases straight through; a published one previews the rebase and its `--force-with-lease` together, naming how many review threads it outdates.
 
-Invoke it directly for worktree housekeeping: "spin up a worktree for this", "where's the worktree for #42", "tear down this worktree", "clean up my worktrees".
+Those four facts are what the other kits borrow. Five modes act on them: `worktree` (create, adopt, look up, remove), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), and `stack`.
+
+Invoke it directly for housekeeping: "spin up a worktree for this", "where's the worktree for #42", "tear down this worktree", "clean up my merged worktrees", "I lost a commit".
 
 ### domainkit — scribe the model
 

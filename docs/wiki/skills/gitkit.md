@@ -6,7 +6,7 @@ The shared git layer every other skill borrows — worktree convention and lifec
 
 | | |
 |---|---|
-| Modes | primitives, called rather than run |
+| Modes | `worktree` · `sync` · `clean` · `rescue` · `stack` |
 | Tools | `Bash`, `Read` |
 | Writes | git worktrees, branches, and stack layers |
 | Visibility | public |
@@ -20,6 +20,36 @@ Its **core** isn't clever. All of it is native [git worktree](https://git-scm.co
 **[Stacked branches](#stacked-branches) are the one part that sits outside that**, and the page says so rather than quietly weakening the claim. That branch drives GitHub's `gh stack` extension, so it needs `gh` and a GitHub remote. It degrades to plain git rather than failing, and nothing else in the skill depends on it, so a box with no `gh` runs everything else untouched.
 
 It's a **primitives skill**. Most of its runs come from another skill calling it, not from a human saying its name. It answers *where and how*, never *what the change should be* — committing, opening a PR, and judging code all belong elsewhere.
+
+## Modes
+
+Five, though you rarely name one. Three of them have their own sections further down this page — [`worktree`](#operations-are-idempotent) is the worktree lifecycle, [`sync`](#sync) sits under rebase-versus-merge because that's the policy it executes, and [`stack`](#stacked-branches) is the `gh stack` half. The two below are the ones with nothing else on the page to hang them from.
+
+`worktree` and `sync` live in `SKILL.md` itself because nearly every run and every calling kit reaches them. `clean`, `rescue`, and `stack` each load from a satellite file only when they fire — the repo's disclose-by-branch rule, applied to a skill whose common path shouldn't pay for its rare ones.
+
+### `clean`
+
+Sweeps away the worktrees and branches whose work has landed. Every worktree and local branch gets sorted into one bucket — active, adopted, dirty, reapable, orphan — and only the reapable ones are offered for removal.
+
+**The reason it needs a satellite file rather than a `git branch --merged` loop is squash merges.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges, which is the common GitHub default, a sweep built on `--merged` finds nothing on every run and reports a tidy repo full of dead branches. So "merged" is decided by three tests, each catching a merge shape the one before it misses: ancestry for a merge commit or fast-forward, `git cherry` for a rebase-merge, and a combined patch-id comparison for a squash.
+
+**The middle one is the trap, and it looks like the answer.** `git cherry` compares patch content rather than ancestry, so it reads like the fix for the squash problem — but it compares one commit at a time, and a squash collapses several commits into a single patch matching none of them individually. A two-commit branch that was squash-merged prints both commits as unmerged. Only the third test catches it, by reducing the whole branch to one patch-id and looking for that patch on the base, which is exactly what a squash commit is.
+
+Two more signals corroborate without settling: a `: gone]` upstream marker is caused by a merge and equally by a human deleting a branch, and `gh pr list --state merged` is authoritative when `gh` is there, which makes the three tests the offline path. The sweep names which one fired per row, so you can disagree with a specific signal rather than with the whole list.
+
+**It confirms per item, never in a batch**, and that's the one place gitkit's confirmation policy differs from `sync`'s. `sync` legitimately takes one confirmation because the rebase and its push are a single decision about a single branch. A sweep's rows are independent, and they're not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt would hide.
+
+`-d` and never `-D` is the last guard: git itself refuses a branch whose commits aren't in the base, so a wrong verdict fails loudly instead of deleting the work.
+
+### `rescue`
+
+Finds work that looks lost — a bad rebase, a hard reset, a deleted branch, a stash nobody can find — and puts it back. It reads git's own logs: the per-worktree `HEAD` reflog, a branch reflog, `ORIG_HEAD`, and `git fsck` last because it's slow and noisy.
+
+**It restores by adding a branch, never by moving one.** That's the rule the whole mode is built around. A reset, a checkout over a dirty tree, or a force update is the same class of operation that lost the work in the first place, and it can lose a second thing on the way to recovering the first. A new branch at the found SHA touches nothing that exists, so a wrong guess costs one `git branch -d`.
+
+**The gc window is a real bound, not a disclaimer.** An unreachable commit survives only until git prunes it — reflog entries expire, and `git gc --prune=now` ends the window immediately. The mode says so plainly rather than implying the object is safe, which is also why it never runs `git gc`, `git prune`, or `git reflog expire` itself. And when the search comes back empty it says the work is unrecoverable rather than continuing to look: changes that were never staged or stashed leave no object at all.
+
+It closes a real dead end. `statuskit` has a rung that spots a stash and routes it to nobody, and `testkit` and `debugkit` both print a bare `git stash apply <sha>` line pointing at an unreachable object with no procedure behind it.
 
 ## The worktree convention
 
@@ -111,6 +141,16 @@ Rebasing's real cost is mechanical, not aesthetic: it rewrites SHAs. Once a PR i
 - **Count the threads before asking.** "3 review threads will be marked outdated" is a fact you can decide on; "this may outdate review comments" is not.
 - **Unresolved threads are the reason to *offer* the merge exception, not to take it.** The rebase is still recommended, with merge named as the alternative alongside the count. A preference that folds in the case against it was never a preference.
 - **`--force-with-lease`, never bare `--force`.**
+
+### `sync`
+
+The one runnable procedure in an otherwise reference-shaped skill: fetch, measure the gap against the base, preview once, rebase, resolve each conflict file by file, run the repo's gate, then `git push --force-with-lease`.
+
+It exists because "rebase onto the base" as a stated policy still left every caller writing the seven steps itself, and the steps are exactly where the mistakes live — pushing a dirty tree, skipping the gate after a conflict resolution, reaching for bare `--force` when the lease is rejected. A conflict resolution is a code change, which is why the gate sits *before* the push rather than after it.
+
+The lease rejection is the step worth knowing about. It means somebody pushed while you were rebasing, so the sync stops and shows their commits instead of retrying. Retrying past a rejected lease is how the flag's whole purpose gets thrown away.
+
+A branch already level with its base pushes nothing and says so. That keeps the procedure safe to run twice.
 
 The merge exception, when taken, never uses git's default subject — `Merge branch 'main' into issue-42-…` is what git writes when nobody chose a message, and it reads that way forever. The base is interpolated rather than hardcoded, and `--no-ff` is not used: if the sync can fast-forward, there was nothing of the branch's own to preserve.
 

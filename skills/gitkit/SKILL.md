@@ -1,7 +1,7 @@
 ---
 name: gitkit
 description: >-
-  The shared git layer every other skill borrows: where a worktree lives and what it's called, how to create/adopt/tear one down, which branch is the base, whether to rebase or merge, and how to stack a branch on one still in review. Use when the user says "spin up a worktree for this", "make me a worktree", "where's the worktree for #42", "tear down this worktree", "clean up my worktrees", "what's the base branch here", "should I rebase or merge", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
+  The shared git layer every other skill borrows: where a worktree lives and what it's called, how to create/adopt/tear one down, which branch is the base, whether to rebase or merge, how to sync a feature branch with its base and force-push it, how to sweep merged worktrees and branches away, how to recover work that looks lost, and how to stack a branch on one still in review. Use when the user says "spin up a worktree for this", "make me a worktree", "where's the worktree for #42", "tear down this worktree", "clean up my merged worktrees", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "this PR is behind, bring it up to date", "I lost a commit", "recover my work after a bad rebase", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -20,13 +20,29 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 
 ## When this fires
 
-- **worktree.** "Spin up a worktree for this branch", "make me a worktree for #42", "where is the worktree for `issue-42-…`", "tear down this worktree", "list my worktrees", "clean up the ones that are merged".
+- **worktree.** "Spin up a worktree for this branch", "make me a worktree for #42", "where is the worktree for `issue-42-…`", "tear down this worktree", "list my worktrees".
 - **base ref.** "What's the base branch here", "diff me against the base".
-- **sync.** "Should I rebase or merge here", "this branch is behind, bring it up to date".
+- **sync.** "Should I rebase or merge here", "sync this branch with main", "this branch is behind, bring it up to date", "make this PR review-ready on the latest base".
+- **clean.** "Clean up my merged worktrees", "which branches can I delete", "this repo is full of dead branches".
+- **rescue.** "I lost a commit", "my rebase ate my work", "I reset the wrong branch", "what's in this stash".
 - **stack.** "Stack this on #43", "start #44 on top of #43's branch", "restack this chain", "show me the stack".
 - **called by another skill.** Any skill that needs a worktree, a base ref, a branch name, or a sync decision delegates here and uses what comes back.
 
 **Not this skill:** committing, opening a PR, reviewing a diff, judging code. gitkit answers *where and how*, never *what the change should be*.
+
+## Modes
+
+| mode | does | lives |
+|---|---|---|
+| `worktree` | create, adopt, look up, list, and remove a worktree | [below](#worktree) |
+| `sync` | bring a feature branch onto the latest base and force-push it with a lease | [below](#sync) |
+| `clean` | sweep the merged worktrees and branches away, one confirmation each | [clean.md](./clean.md) |
+| `rescue` | find work that looks lost and restore it onto a new branch | [rescue.md](./rescue.md) |
+| `stack` | build and restack a chain of branches through `gh stack` | [stacks.md](./stacks.md), and [Stacked branches](#stacked-branches) |
+
+`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other three load only when their mode fires.
+
+**When the mode is not clear from the ask, pick it from the verb and say which one you picked.** "Tidy this up" after a merge is `clean`; "tidy this up" on a branch behind its base is `sync`. Naming the mode in the first line is what lets the human correct a wrong pick before anything runs.
 
 ## The convention
 
@@ -68,7 +84,7 @@ Consequences:
 
 For a same-repo pull request there is already a local branch name: use it. Inventing a `pr-*` name for a branch that exists is how you land on the two-worktrees-one-branch failure above.
 
-## Worktree operations
+## `worktree`
 
 All four are native git, and all four are **idempotent**, so running one twice is a normal thing to do and must never error or destroy work.
 
@@ -121,7 +137,7 @@ Already gone? Report "already gone" and succeed. Teardown is idempotent in the s
 git -C "$REPO" worktree list
 ```
 
-Worth pairing with a staleness signal when the user asks to clean up, since a worktree whose branch is fully merged into the base is a teardown candidate. Offer them; do not remove on your own initiative.
+A plain inventory. When the user asks to tidy up rather than to look, that is the [`clean`](#clean) mode, which classifies every row before it offers anything.
 
 If paths look wrong after a move or a restore, `git worktree repair <path>` rewrites the back-pointers. Git stores absolute paths in `.git/worktrees/<name>/gitdir` and in each worktree's `.git` file, so moving a worktree by hand always needs a repair.
 
@@ -165,6 +181,20 @@ git rebase "origin/$BASE"
 - **`--force-with-lease`, never bare `--force`.** The lease is what stops you overwriting a commit someone else pushed while you were rebasing.
 - **On conflict**, stop and surface it (`git diff --name-only --diff-filter=U`). Propose a resolution per file and confirm before writing. A conflict resolution is a code change: run the repo's test gate afterward.
 
+### `sync`
+
+The runnable form of the rule above: bring one feature branch up to date with its base, resolve every conflict, and leave the branch and its pull request on the latest base code. Run it in the branch's worktree. Each step names the condition that ends it.
+
+1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Ends when the base name, the branch name, and a clean tree are all known.
+2. **Measure the gap.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already current: report that, push nothing, and stop. Ends with a behind count and an ahead count.
+3. **Preview and confirm, once.** An unpushed branch skips this step and goes straight through. A published branch gets one preview that covers the rebase *and* the force-push: the base, the behind and ahead counts, and the unresolved review thread count from the GraphQL `reviewThreads` connection when a pull request is open. Name merge as the alternative, and still recommend the rebase. Ends on the user's answer.
+4. **Rebase.** Run `git rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
+5. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Read each conflicted file, propose a resolution that keeps the branch's intent and the base's new code, and confirm before writing. Stage the file, then `git rebase --continue`. Repeat for every remaining stop. `git rebase --abort` restores the pre-rebase state, and it is the answer when a conflict is not yours to settle. Ends when no conflict marker remains and the rebase is complete.
+6. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
+7. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
+
+**Hand off.** Report the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
+
 ### The merge exception
 
 When the user takes the merge, or asks for it outright, it is still a sync, and it says so:
@@ -181,6 +211,22 @@ git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 ### Never bare `git pull`
 
 `git pull` on a branch behind its remote merges by default, and writes `Merge branch 'main' of github.com:owner/repo` without asking anyone. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself: configure it or pass the flag, but never let the default run.
+
+## `clean`
+
+Sweep away the worktrees and branches whose work has landed. It classifies every worktree and local branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time.
+
+Two things make it more than a `git branch --merged` loop, and both live in **[clean.md](./clean.md)**: a squash-merged branch is invisible to ancestry, so "merged" needs three detections rather than one; and the per-item confirmation is deliberate, because a sweep's rows are not equally safe to delete. Read that file when a run actually sweeps.
+
+The [Remove](#remove) rules govern every removal the sweep makes. It never deletes a branch with `-D`, never touches a worktree it adopted, and stops on a dirty one.
+
+## `rescue`
+
+Find work that looks lost and put it back. A bad rebase, a hard reset, a deleted branch, a stash nobody can find: the commits usually still exist, and git's own logs say where they went.
+
+The procedure is in **[rescue.md](./rescue.md)**. Two rules shape it. It is **read-only until the restore**, and the restore **adds a branch rather than moving one**, because a reset is the operation that lost the work in the first place. It also states the bound rather than implying safety: an unreachable commit lives until git prunes it.
+
+Never run `git gc`, `git prune`, or `git reflog expire` during a rescue, in any mode.
 
 ## Stacked branches
 

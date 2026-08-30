@@ -194,8 +194,8 @@ On an unknown reading only, statuskit offers to append one sentence to the agent
 |---|-------|------|
 | 1 | uncommitted work on a feature branch | continue / [`commitkit`](./commitkit.md) |
 | 2 | unpushed commits | `git push` |
-| 3 | a stash | restore or drop it |
-| 4 | an unmerged local feature branch | finish or clean up — [`gitkit`](./gitkit.md) |
+| 3 | a stash | restore with [`gitkit rescue`](./gitkit.md), or drop it |
+| 4 | an unmerged local feature branch | finish it, or [`gitkit clean`](./gitkit.md) |
 | 5 | a plan doc on disk — filed or not is unknowable with no tracker | implement the newest — [`implementkit`](./implementkit.md) |
 | 6 | clean on base, nothing pending | start something |
 
@@ -208,8 +208,8 @@ On an unknown reading only, statuskit offers to append one sentence to the agent
 | 2 | your PR that nobody is reviewing | self-review — [`mergekit`](./mergekit.md) `<N>`, or request a reviewer |
 | 3 † | in-progress issue whose branch you're on | resume / [`implementkit`](./implementkit.md) |
 | 4 | orphaned work — uncommitted on base, untracked branch, unpushed commits | [`commitkit`](./commitkit.md) / push |
-| 5 | a stash | restore or drop |
-| 6 | an unmerged local feature branch | [`gitkit`](./gitkit.md) |
+| 5 | a stash | restore with [`gitkit rescue`](./gitkit.md), or drop |
+| 6 | an unmerged local feature branch | [`gitkit clean`](./gitkit.md) |
 | 7 † | stale-tracker signal fired | [`issuekit`](./issuekit.md) `sync` |
 | 8 † | a `ready` issue to start (highest priority, then `unblocks`) | [`issuekit`](./issuekit.md) `start`, then implement |
 | 8b | **no tracker:** the next unbuilt phase of the newest plan | build it — [`implementkit`](./implementkit.md) |

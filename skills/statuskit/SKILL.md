@@ -175,8 +175,8 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 |---|-------|--------|
 | 1 | uncommitted work on a feature branch | continue, or run `commitkit` |
 | 2 | unpushed commits | `git push` |
-| 3 | a stash | restore or drop it |
-| 4 | an unmerged local feature branch | finish it, or clean it up with `gitkit` |
+| 3 | a stash | inspect and restore it with `gitkit rescue`, or drop it |
+| 4 | an unmerged local feature branch | finish it, or clean it up with `gitkit clean` |
 | 5 | a plan doc on disk, where filed or not is unknowable with no tracker to check | implement the newest with `implementkit` |
 | 6 | clean on the base branch, nothing pending | start something (newest plan), or run `plankit` |
 
@@ -189,8 +189,8 @@ Map the signals onto candidate actions, each tagged with its owning kit/command,
 | 2 | your PR that nobody is reviewing (highest priority, then `unblocks`, then most-recently-updated) | self-review it with `mergekit <N>`, or request a reviewer |
 | 3 † | in-progress issue whose branch you're on *(uncommitted work folds in here as "continue")* | resume, or run `implementkit` |
 | 4 | orphaned work: uncommitted on the base branch or an untracked branch, or unpushed commits | run `commitkit`, or push |
-| 5 | a stash | restore it to finish the work, or drop it if obsolete |
-| 6 | an unmerged local feature branch | finish it, or clean it and its worktree up with `gitkit` |
+| 5 | a stash | restore it with `gitkit rescue` to finish the work, or drop it if obsolete |
+| 6 | an unmerged local feature branch | finish it, or clean it and its worktree up with `gitkit clean` |
 | 7 † | stale-tracker signal fired | reconcile with `issuekit sync` |
 | 8 † | a `ready` issue to start (highest priority, then `unblocks`, then most-recently-updated) | `issuekit start` (worktree via `gitkit`), then `implementkit` |
 | 8b | **no tracker:** the next unbuilt phase of the newest plan | build it with `implementkit` |
