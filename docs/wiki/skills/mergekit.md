@@ -19,6 +19,8 @@ It gets the PR into a worktree, syncs it with the base, gets the project running
 
 It forms **no opinion about the code**. Judging the source is [`reviewkit`](./reviewkit.md)'s job; mergekit sets the review up and executes the decision you reach.
 
+The skill is split for context economy: `SKILL.md` carries the routing, the merge guard, and the gitkit boundary, and each mode's procedure lives in its own `modes/<mode>.md` satellite, loaded only when that mode fires.
+
 ## The merge exception
 
 mergekit is the **one skill permitted to merge a pull request** — a deliberate exception to the rule the rest of the collection holds.
@@ -106,4 +108,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`ada7efe` on 2026-08-30._
