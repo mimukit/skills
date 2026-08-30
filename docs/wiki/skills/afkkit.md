@@ -66,7 +66,7 @@ So everything lands in `.afkkit/` at the worktree root, excluded from git as a d
 | `orientation.md` | spec gate | every later step |
 | `assumptions.md` | spec gate | PR |
 | `checks.md` | spec gate | verify, QA |
-| `verified.md` | verify, refreshed by QA | review, QA |
+| `verified.md` | verify, refreshed by the fix rounds | review, QA |
 | `findings-r<N>.md` | review round N | fix round N |
 
 Each file carries **facts with sources, never conclusions**: not "the auth flow is fine" but "`src/auth/session.ts:40` sets the cookie `maxAge` from `SESSION_TTL`".
@@ -87,34 +87,35 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 
 | Step | Model | Why |
 |------|-------|-----|
-| Spec gate | `opus` | gates the whole run; every later step inherits its orientation and its check list |
-| Implement | `opus` | the bulk of the work, with implementkit's own gate underneath; commits its own work; runs once per phase |
+| Start + spec gate | `opus` | one dispatch: issuekit `start`, then the gate in the worktree it acquired; every later step inherits its orientation and its check list |
+| Implement | `opus` | the bulk of the work, with implementkit's own gate underneath; commits its own work; runs once per phase group |
 | Verify | `opus` | runs the code rather than reading it; small context, so the strong tier is cheap here |
-| Review | `fable` | a **different model family** from the one that wrote the code |
-| Fix | `opus` | applying findings against a concrete list; commits its own work |
-| QA plan | `opus` | grounded generation against an already-green gate and an already-run check list |
+| Review, round 1 | `fable` | a **different model family** from the one that wrote the code |
+| Review, rounds 2–3 | `opus` | delta-scoped to named fixes, where independence buys least and the `fable` premium buys nothing |
+| Fix | `opus` | applying findings against a concrete list; re-runs the checks its changes touch, refreshes `verified.md`, commits its own work |
+| QA plan | `opus` | transcribes the recorded outcomes and writes the manual cases; re-runs nothing |
 | PR | `opus` | title and body from real commits plus handed-in payload paths |
 
 **Commit has no row on purpose**, and the consequence is that no step routes to `haiku` any more. The arithmetic that made `haiku` the cheap tier still holds; the table simply has no mechanical-enough step left to spend it on.
 
-**Review runs on a different family, not a "better" one.** An implementer and reviewer from the same family share blind spots by construction, so routing review to `fable` buys *independence*. It is explicitly **not the cheap option** — `fable` ran roughly 4× `opus`'s cost per token in the measured run. That's a deliberate purchase of a second opinion, priced so nobody mistakes it for a saving. Verify doesn't get the same tier even though independence is its point too: a fresh `opus` agent already has no memory of writing the code, which is the property Verify actually needs, and paying the premium twice buys very little.
+**Review runs on a different family, not a "better" one.** An implementer and reviewer from the same family share blind spots by construction, so routing review to `fable` buys *independence*. It is explicitly **not the cheap option** — `fable` ran roughly 4× `opus`'s cost per token in the measured run. That's a deliberate purchase of a second opinion, priced so nobody mistakes it for a saving. The purchase is scoped to round 1: a delta round re-checks named fixes against a findings list the run already trusts, which is where independence buys least, so rounds 2–3 run on `opus`. Verify doesn't get the same tier even though independence is its point too: a fresh `opus` agent already has no memory of writing the code, which is the property Verify actually needs, and paying the premium twice buys very little.
 
 **Implement, the spec gate, and Verify's probe are never budgeted.** Implement needed 175 tool uses because the work needed 175, the gate's exploration is what every later step depends on, and Verify's probe is where the run's three surprise defects came from. Nudging any of them toward a smaller number buys cheaper, worse output — the one trade this pipeline should never make.
 
 ## The pipeline
 
-1. **Start the issue** — issuekit `start`, dispatched on the conductor's own model rather than the cheap tier, because issuekit can refuse four distinguishable ways and a relay that flattens them breaks the escalation policy silently. The conductor then verifies what came back rather than taking it on faith.
-2. **Spec gate** — classify gaps between what the issue specifies and what building it requires, and write the run directory. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed.
-3. **Implement** — implementkit, which resolves its own mode and enforces the repo's gate. The same agent commits through commitkit before it returns. On a multi-phase issue this step [runs once per phase](#one-dispatch-per-phase); every step after it still runs once.
-4. **Verify** — run the gate's check list against the now-green code, then probe up to six adjacent behaviors. Writes `verified.md`, edits nothing, and never rebuilds.
+1. **Start the issue** — issuekit `start`, sharing one dispatch with the spec gate: start alone is a handful of tool uses under a full dispatch floor, and the gate's first need is the worktree path the same agent is already holding. issuekit can refuse four distinguishable ways, and on a refusal the agent returns it verbatim and never begins the gate. The conductor then verifies what came back rather than taking it on faith, in a single batched shell call.
+2. **Spec gate** — the same agent classifies gaps between what the issue specifies and what building it requires, and writes the run directory. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed. It also returns the issue's phases **grouped into dispatch groups**, folding consecutive light phases together.
+3. **Implement** — implementkit, which resolves its own mode and enforces the repo's gate. The same agent commits through commitkit before it returns. On a multi-phase issue this step [runs once per phase group](#one-dispatch-per-phase); every step after it still runs once.
+4. **Verify** — run the gate's check list against the now-green code, then probe up to six adjacent behaviors. Writes `verified.md`, edits nothing, never rebuilds, rescaffolds, or installs, and records the exact server start and stop commands it used so no later step rediscovers them.
 5. **Review** — reviewkit against the branch diff plus `verified.md`, told it *is* the fresh reviewer so it doesn't delegate again and pay for a second full read.
-6. **Fix loop** — bounded at two rounds, re-review **delta-scoped** to the fix commits. Round 1 sweeps every cheap nit alongside the blockers; a delta re-review's nits go to the PR body instead of earning a round, so only a blocker can extend the loop.
-7. **QA plan** — qakit, handed the check list, the recorded outcomes, the green gate, and the build location. It re-runs the checks against the final code and writes the human plan; it never rebuilds.
+6. **Fix loop** — bounded at two rounds. The fix agent re-runs the checks its changes touch and refreshes `verified.md` before committing, which is what lets QA transcribe instead of re-run. Re-review is **delta-scoped** to the fix commits, on `opus`, with vendor code out of scope. Round 1 sweeps every cheap nit alongside the blockers; a delta re-review's nits go to the PR body instead of earning a round, so only a blocker can extend the loop.
+7. **QA plan** — qakit, handed the check list, the recorded outcomes, the green gate, and the build location. It transcribes the outcomes and writes the human plan; it re-runs nothing and never rebuilds.
 8. **Open the PR** — prkit, handed paths: the assumptions file, the findings files and the unresolved nit IDs, `verified.md`, unmet criteria, and the QA-plan path.
 
 ## One dispatch per phase
 
-Issues are sized to a whole plan now rather than to what fits in one agent's context, so [`issuekit`](./issuekit.md) writes them with `## Phase N` headings and afkkit walks them. The spec gate returns the phase list as a value — it read the whole body anyway — and Implement dispatches one subagent per phase, each narrowed to that phase and each committing before it returns. A single-phase issue gets exactly one dispatch, which is the step's original shape and cost.
+Issues are sized to a whole plan now rather than to what fits in one agent's context, so [`issuekit`](./issuekit.md) writes them with `## Phase N` headings and afkkit walks them. The spec gate returns the phase list as a value — it read the whole body anyway — grouped into dispatch groups: a heavy phase stands alone, consecutive light phases fold into one group. The test is whether a phase needs a fresh context of its own, not whether the issue gave it a heading; a measured run paid four dispatch floors for four ~22-tool-use phases that two dispatches would have carried. Implement dispatches one subagent per group, each narrowed to its phases and each committing before it returns. A single-group issue gets exactly one dispatch, which is the step's original shape and cost.
 
 **This looks like the opposite of the dispatch floor, and it follows from the same rule.** The floor removes a dispatch when the next step needs *the previous agent's context* — that's why the commit stays folded in. It keeps a dispatch when the next step needs the *repository state* the previous agent produced and none of the reasoning behind it. Phase N+1 needs phase N's committed code, not its transcript, so a fresh agent starts from a clean tree and the branch carries the hand-off. One dispatch for a four-phase issue would instead ask a single agent to carry three phases of exploration while writing the fourth.
 
@@ -168,13 +169,15 @@ Takes its queue from `gh issue list --label ready` and walks it **sequentially**
 
 Each issue's payloads are **dropped once it terminates**, so a batch working its tenth issue isn't still paying for the first one's findings on every turn.
 
+**Two conductors are slower than one.** Parallel afkkit sessions in separate terminals share one usage budget: a measured pair started in the same minute stalled each other into a session limit for hours mid-run, and one paid twice for a PR dispatch that died at the limit. Queue the issues into one conductor.
+
 ## Hands off to
 
 By outcome. **Opened** → [`mergekit`](./mergekit.md) `start`, which pulls the PR into the worktree it was built in. **Escalated to `needs-planning`** → [`grillkit`](./grillkit.md) on the open questions, then re-run — re-running as-is would stop at the same wall. **Escalated still `in-progress`** → pick it up in the existing worktree by hand.
 
 Nobody watched the run, so the report *is* the handover — and it always names the worktree path, because on an escalation those commits are real work sitting on disk and a human who doesn't know where they are will start over.
 
-It also prints a **per-step metrics table** — model, time, tool uses, and tokens where the harness reports them, with each per-phase implement dispatch on its own row. The conductor fills it from what each dispatch hands back and measures nothing itself. That table exists so the routing table's baselines get corrected from real runs rather than one remembered one, which is why it prints only the columns the host actually provides: an estimated number would defeat the entire point. The metrics live in the report and nowhere else — writing them to disk would put the conductor inside the workspace its own boundary rules out.
+It also prints a **per-step metrics table** — model, time, tool uses, and tokens where the harness reports them, with each per-phase implement dispatch on its own row. The conductor fills it from what each dispatch hands back and measures nothing itself. That table exists so the routing table's baselines get corrected from real runs rather than one remembered one, which is why it prints only the columns the host actually provides: an estimated number would defeat the entire point. When the host reports cache reads and writes, those print too — the headline per-dispatch token figure understates real billing by an order of magnitude, because cache reads dominate an agent's cost. The metrics live in the report and nowhere else — writing them to disk would put the conductor inside the workspace its own boundary rules out.
 
 ## Install
 
@@ -184,4 +187,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`b251461` on 2026-08-30._
