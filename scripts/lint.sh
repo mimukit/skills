@@ -9,7 +9,11 @@
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
 #   - every intra-doc [..](#anchor) link resolves to a real heading (error)
 #   - no number-based "step N", "step-N", or "§N" cross-references — they rot on reorder (warn)
-#   - a closing hand-off section exists, so the skill recaps and routes (warn)
+#   - every satellite .md in the skill directory gets the same two checks (error/warn)
+#   - every relative pointer, root or satellite, resolves inside the directory (error)
+#   - a closing hand-off section exists, so the skill recaps and routes (warn);
+#     a split skill (one with a modes/ directory) passes when the root or every
+#     modes/*.md carries one
 # On a full run it also checks that every skill has a reader-facing wiki page
 # under docs/wiki/skills/ and that the modes each page documents still exist.
 # On a full run it also cross-checks the human-facing docs/wiki/workflow.md map
@@ -77,6 +81,28 @@ check_anchors() {
   ' "$1"
 }
 
+# Relative link targets in a markdown file, fence-aware, one per line, with the
+# anchor part stripped: `](modes/close.md)` → modes/close.md, `](./SKILL.md#x)`
+# → ./SKILL.md. Pure-anchor links and external schemes (http:, mailto:) are
+# excluded — the former is check_anchors' job, the latter isn't checkable here.
+relative_link_targets() {
+  LC_ALL=C awk '
+    /^```/ || /^~~~/ { infence = !infence; next }
+    infence { next }
+    {
+      line = $0
+      while (match(line, /\]\([^)]+\)/)) {
+        t = substr(line, RSTART + 2, RLENGTH - 3)
+        line = substr(line, RSTART + RLENGTH)
+        if (t ~ /^#/) continue
+        if (t ~ /^[a-z][a-z0-9+.-]*:/) continue
+        sub(/#.*$/, "", t)
+        if (t != "") print t
+      }
+    }
+  ' "$1" | sort -u
+}
+
 # Skills exempt from the closing hand-off requirement, by design rather than by
 # oversight: gitkit is the primitives layer other skills call, and states outright
 # that preparing a worktree implies nothing about what to do in it.
@@ -106,6 +132,9 @@ has_closing_section() {
       sub(/^#+[ \t]+/, "", h)
       if (h ~ /hand[ -]?off|hand over|report|output|finish|after creating/) found = 1
     }
+    # a hand-off written as a numbered procedure step (`6. **Hand off.**`),
+    # the shape mergekit close uses, counts too
+    /^[0-9]+\.[ \t]+\*\*[Hh]and[ -]?off/ { found = 1 }
     END { exit !found }
   ' "$1"
 }
@@ -172,26 +201,54 @@ check_skill() {
     # `](../…)` escapes the skill directory and breaks once installed. `](./x.md)`
     # does not: a satellite file inside the skill's own directory ships with it,
     # and AGENTS.md's disclosure ladder calls for exactly that pointer. Flag the
-    # first, allow the second, and check the second actually resolves.
+    # first, allow the second (resolution is checked below for every skill).
     if grep -qE '\]\(\.\./' "$file"; then
       issues+=("W:public skill has a repo-relative link (../…) — won't resolve once installed")
     fi
-    while IFS= read -r rel; do
-      [[ -z "$rel" ]] && continue
-      [[ -e "$SKILLS_DIR/$1/$rel" ]] \
-        || issues+=("E:pointer to ./$rel, but skills/$1/$rel does not exist")
-    done < <(grep -oE '\]\(\./[^)#]+' "$file" | sed 's/^](\.\///' | sort -u)
     if grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
       issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
   fi
 
-  # closing hand-off: recap what changed, then name the next move
+  # satellite files: every other .md in the skill directory (modes/*.md, a
+  # stacks.md) ships with the skill, so it gets the same reference-integrity
+  # checks as the root instead of rotting invisibly.
+  local sats=() sat
+  while IFS= read -r sat; do
+    [[ -n "$sat" ]] && sats+=("$sat")
+  done < <(find "$SKILLS_DIR/$name" -type f -name '*.md' ! -name 'SKILL.md' | sort)
+
+  # relative pointers resolve, root and satellites alike: a dead pointer is a
+  # broken skill whether it's `](./stacks.md)` or `](modes/close.md)`.
+  local lf ldir lrel rel
+  for lf in "$file" ${sats[@]+"${sats[@]}"}; do
+    ldir="$(dirname "$lf")"
+    lrel="${lf#"$SKILLS_DIR/$name/"}"
+    while IFS= read -r rel; do
+      [[ -z "$rel" ]] && continue
+      [[ -e "$ldir/$rel" ]] \
+        || issues+=("E:$lrel: pointer to $rel, but it does not resolve from skills/$name/")
+    done < <(relative_link_targets "$lf")
+  done
+
+  # closing hand-off: recap what changed, then name the next move. A split
+  # skill (one with a modes/ directory) moves its per-mode hand-offs with the
+  # mode bodies, so it passes when the root *or* every modes/*.md carries one.
   if [[ "$HANDOFF_EXEMPT" != *" $name "* ]] && ! has_closing_section "$file"; then
-    issues+=("W:no closing section — end with '## Hand off' (what changed · where it landed · next)")
+    local closing_ok=0 m
+    if [[ -d "$SKILLS_DIR/$name/modes" ]]; then
+      closing_ok=1
+      for m in "$SKILLS_DIR/$name/modes/"*.md; do
+        [[ -f "$m" ]] || { closing_ok=0; break; }
+        has_closing_section "$m" || { closing_ok=0; break; }
+      done
+    fi
+    [[ "$closing_ok" -eq 1 ]] \
+      || issues+=("W:no closing section — end with '## Hand off' (what changed · where it landed · next); a split skill may carry it in every modes/*.md instead")
   fi
 
-  # reference integrity: intra-doc anchors resolve; no number-based step refs
+  # reference integrity: intra-doc anchors resolve; no number-based step refs.
+  # Satellites get the same pass, with the finding prefixed by their filename.
   local _sev _ln _msg
   while IFS=$'\t' read -r _sev _ln _msg; do
     [[ -z "${_sev:-}" ]] && continue
@@ -201,6 +258,17 @@ check_skill() {
       issues+=("W:$_msg (line $_ln)")
     fi
   done < <(check_anchors "$file")
+  for sat in ${sats[@]+"${sats[@]}"}; do
+    lrel="${sat#"$SKILLS_DIR/$name/"}"
+    while IFS=$'\t' read -r _sev _ln _msg; do
+      [[ -z "${_sev:-}" ]] && continue
+      if [[ "$_sev" == "E" ]]; then
+        issues+=("E:$lrel: $_msg (line $_ln)")
+      else
+        issues+=("W:$lrel: $_msg (line $_ln)")
+      fi
+    done < <(check_anchors "$sat")
+  done
 
   if [[ ${#issues[@]} -eq 0 ]]; then
     echo "  ${C_GREEN}✓${C_RESET} $name"
