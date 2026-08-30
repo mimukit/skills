@@ -85,6 +85,7 @@ If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-bra
 - **Title**: one line, imperative, in the repo's commit style (match `git log`, often Conventional Commits like `feat(auth): add SSO login`). No trailing period.
 - **Body**: if `.github/pull_request_template.md` (or `PULL_REQUEST_TEMPLATE.md`) exists, read it and fill it in *exactly*, matching its sections and checkboxes. Otherwise use: a one-paragraph **Summary** of what changed and why, a **Changes** bullet list, and a **Test plan** (how it was verified, or checkboxes for what to run). Reference the issue in the body (`Closes #123`) when there is one.
 - **Stack map**, on a layer only. Add a short section naming this layer's position, the branch and PR directly below it, and what merges first. GitHub renders its own stack navigation, so keep this to two or three lines; it exists so the diff makes sense to somebody reading the PR in a notification email, where that navigation is absent. Say plainly that the PR targets the layer below rather than trunk, because a reviewer who assumes a trunk base reads the diff as incomplete.
+- **On a layer, `Closes #123` is written but inert until the retarget.** GitHub honors a closing keyword only on a PR that targets the repository's **default branch**, so on any other base the keyword is plain text and the issue link never registers. Keep writing `Closes #123` anyway, because the keyword takes effect by itself once the layer below merges and GitHub retargets this PR to trunk. Then say so in the stack map, in writing, so the fallback travels with the PR: name the issue this layer closes and state that the link registers after the retarget. A reviewer who sees no linked issue on the sidebar otherwise reads it as a missing reference and adds a duplicate one.
 
 ### 6. Embed proof artifacts (if present)
 This step is optional and runs only when a verifykit proof bundle exists. verifykit leaves a dated bundle at `docs/verify/verify-<slug>-YYYY-MM-DD/` (slug = the linked issue number, else the feature slug) with a ready-to-embed `proof.md`. If more than one matches, use the newest creation date; if multiple bundles share that date, ask which run to use. Splice the selected proof into the body under a **Proof** section. The images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline, so there's no upload work here; just embed the fragment as-is. If no bundle exists, skip this entirely and open the PR exactly as before. If a bundle exists but its `proof.md` points at local paths (verifykit couldn't publish, e.g. on a private repo), don't embed dead links: add a short note listing the local artifact paths for manual attachment instead.
@@ -113,6 +114,16 @@ gh stack submit --auto        # a PR per layer, bases already correct
 ```
 
 Write each layer's title and body first, exactly as above, then submit. Opening a **single** layer stays a plain `gh pr create --base <parent>`, which is simpler and does not touch the layers above it.
+
+**On a layer, check the closing link and report it.** Run this once per layer PR, right after it is created or updated, and skip it entirely on a PR whose base is the default branch:
+
+```sh
+gh api graphql -f query='{repository(owner:"<owner>",name:"<repo>"){pullRequest(number:<n>){closingIssuesReferences(first:5){nodes{number}}}}}'
+```
+
+- **An empty result on a layer is the expected reading, not a failure.** Report it as a fact and give the sequence that resolves it: the layer below merges, GitHub retargets this PR to the default branch, and the `Closes #123` keyword registers then. Nothing is broken and nothing needs repairing.
+- **A non-empty result on a layer means GitHub already retargeted the PR.** Report the issue numbers it returns.
+- **Do not retarget the PR to trunk to force the link.** That discards the base the stack depends on and turns the layer's small diff into the whole chain. There is no API that registers the link on a non-default base; `gh issue develop` and the `createLinkedBranch` mutation both refuse a branch that already exists. Waiting for the merge below is the only path.
 
 ### 8. Advance the linked issue
 Opening the PR is the moment the linked issue moves from being worked to awaiting review, so flip its lifecycle label `in-progress` → `in-review` (the same transition issuekit's `sync` mode performs when a PR opens). Do this only when the PR references an issue, meaning the `#123` / `Closes #123` found in [Gather context](#2-gather-context); skip this step entirely if there is none.
@@ -154,7 +165,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **What changed.** Report the PR created or updated (title and number), whether a sync rebase ran, whether a handed-in path was committed, whether a proof section was embedded, whether the linked issue was flipped to `in-review`, and which dependents moved to `stacked`.
 
-**Where it landed.** Give the PR URL and the branch it points at. Mention that CI will run if configured. On a layer, name the branch it targets and say it is not trunk.
+**Where it landed.** Give the PR URL and the branch it points at. Mention that CI will run if configured. On a layer, name the branch it targets and say it is not trunk. On a layer, also report the closing-link check: say the issue link is inert for now, and say it registers after the layer below merges and GitHub retargets this PR.
 
 **Next.** The PR now waits on review, so the move is on the reviewer's side: **mergekit** `start <n>` when it's installed pulls it down into a worktree for local review and QA; otherwise review it on GitHub. **A dependent that just moved to `stacked` outranks that**, because it is work the user can start immediately while the review happens: offer **issuekit** `start <n>` on the highest-priority one. First offer, don't auto-run, the small follow-ups when they apply: `gh pr edit --add-reviewer <user>`, `--add-label <label>`, or `gh pr ready` for a draft. prkit's job ends here.
 

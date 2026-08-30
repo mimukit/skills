@@ -75,6 +75,16 @@ A branch that's a layer in a stack targets the branch below it rather than trunk
 
 The body gains a short **stack map**: position, the layer below, what merges first. GitHub renders its own navigation, so this stays to a few lines — it exists for the reader seeing the PR in a notification email, where that navigation is absent, and for whom a diff against a non-trunk base otherwise reads as incomplete.
 
+### The issue link is inert on a layer
+
+GitHub honours a closing keyword only when the PR targets the repository's **default branch**. On any other base `Closes #123` is plain text, so every layer above the bottom one ships an issue link that resolves to nothing and `closingIssuesReferences` comes back empty. Nothing in the PR body is wrong; the platform simply doesn't look.
+
+prkit writes the keyword anyway, because it starts working on its own the moment the layer below merges and GitHub retargets the PR to trunk. What it adds is the fallback in writing: the stack map names the issue the layer closes and says the link registers after the retarget, so a reviewer who finds an empty sidebar doesn't read it as a missing reference and add a duplicate.
+
+After creating a layer PR, prkit queries `closingIssuesReferences` and **reports an empty result as expected rather than as a failure**, naming the sequence that resolves it. That report is the whole point: silence here is what let a broken-looking link ship unnoticed, since the body reads perfectly and nothing else in the workflow contradicts it.
+
+**prkit never retargets the PR to force the link.** Retargeting to trunk discards the base the stack depends on and turns the layer's small diff into the whole chain. There is no API that registers the link early either — `gh issue develop` and the `createLinkedBranch` mutation both refuse a branch that already exists — so waiting for the merge below is the only path, and saying so plainly beats letting somebody go looking for a workaround that doesn't exist.
+
 `gh stack submit` opens a PR per layer with every base set correctly, and **prkit owns that command** — gitkit deliberately doesn't run it, because gitkit never opens anything. A single layer stays a plain `gh pr create --base <parent>`, which is simpler and leaves the layers above untouched.
 
 ## Hands off to
