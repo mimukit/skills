@@ -19,6 +19,8 @@ Five jobs in one skill, because they're the same job at five points in a dev wor
 
 **If no mode is clear, it asks first.** It won't guess between creating and mutating the tracker.
 
+The skill is split for context economy: `SKILL.md` carries the routing, the safety stance, and both label namespaces, and each mode's procedure lives in its own `modes/<mode>.md` satellite, loaded only when that mode fires. A run pays for the shared material plus one mode instead of all five.
+
 ## Safety stance
 
 Creating, closing, and relabeling issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
@@ -176,4 +178,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`ada7efe` on 2026-08-30._
