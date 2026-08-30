@@ -226,15 +226,20 @@ check_skill() {
 #   - the label maps, lifecycle and priority: issuekit ↔ repokit (names +
 #     colors must match; the meaning columns intentionally differ in wording).
 #     Both namespaces are covered by one diff — the rows share a format, so
-#     label_pairs picks up all of them without caring which table they sit in.
+#     label_pairs picks up all of them without caring which table they sit in,
+#     minus UNSHARED_LABELS, the labels repokit provisions for nobody here.
 #   - the commit-type table: commitkit ↔ issuekit (identical sets)
 # Nothing else keeps the copies aligned, so diff them here on full runs.
 
 # Emit "name color" pairs from a SKILL.md's label table rows
-# (`| `label` | `RRGGBB` | … |`).
+# (`| `label` | `RRGGBB` | … |`), minus the labels only one side owns.
+# repokit provisions a third, automation namespace (`ai-review`, a PR trigger)
+# that issuekit never reads, so it is deliberately outside the shared contract.
+UNSHARED_LABELS='^(ai-review) '
 label_pairs() {
   grep -oE '^\| *`[a-z-]+` *\| *`[0-9A-Fa-f]{6}` *\|' "$1" \
-    | sed -E 's/^\| *`([a-z-]+)` *\| *`([0-9A-Fa-f]{6})` *\|.*/\1 \2/' | sort -u
+    | sed -E 's/^\| *`([a-z-]+)` *\| *`([0-9A-Fa-f]{6})` *\|.*/\1 \2/' \
+    | grep -vE "$UNSHARED_LABELS" | sort -u
 }
 
 # Emit the type tokens from a SKILL.md's commit-type table: backticked words in

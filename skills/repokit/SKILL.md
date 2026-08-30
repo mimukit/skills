@@ -1,7 +1,7 @@
 ---
 name: repokit
 description: >-
-  Set up a GitHub repo's metadata through the gh CLI: an inferred one-line About description + topics from the repo's own contents, and the issuekit lifecycle and priority labels. Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", or "configure this repo's metadata", meaning anything about a repo's About panel or its label vocabulary.
+  Set up a GitHub repo's metadata through the gh CLI: an inferred one-line About description + topics from the repo's own contents, and the workflow labels (issuekit's lifecycle and priority sets, plus an `ai-review` trigger label for AI PR review tools). Use when the user says "repokit", "set the repo description", "add topics/tags", "write an About blurb for this repo", "provision the workflow labels", "set up this repo's labels", "add priority labels", or "configure this repo's metadata", meaning anything about a repo's About panel or its label vocabulary.
 license: MIT
 disable-model-invocation: true
 allowed-tools: Bash, Read
@@ -14,7 +14,7 @@ metadata:
 Configure a GitHub repository's metadata through the [`gh` CLI](https://cli.github.com), in two explicit **modes**:
 
 - **`about`.** Infer a one-line *About* description and a focused set of topics from the repo's own contents (README, manifest, code), show them against whatever is already set, and apply what you approve.
-- **`labels`.** Provision the issue-workflow **lifecycle and priority labels** (the sets issuekit uses to track work and rank it), creating what's missing and reconciling what drifted.
+- **`labels`.** Provision the workflow labels: the **lifecycle and priority** sets issuekit uses to track work and rank it, and the **automation** label that asks a repo's AI review tooling to look at a PR. Create what's missing, reconcile what drifted.
 
 Two jobs, one skill, because both answer "make this repo's GitHub metadata right": the outward-facing blurb people read, and the label vocabulary the issue workflow runs on.
 
@@ -23,7 +23,7 @@ Two jobs, one skill, because both answer "make this repo's GitHub metadata right
 The user wants to set a repo's GitHub metadata. Route to a mode from what they ask:
 
 - **about.** "Set the repo description", "add topics", "write an About blurb", "tag this repo", "update the repo's About".
-- **labels.** "Provision the workflow labels", "set up this repo's labels", "add the issuekit labels", "add priority labels", "the `blocked` label is missing".
+- **labels.** "Provision the workflow labels", "set up this repo's labels", "add the issuekit labels", "add priority labels", "add an `ai-review` label", "the `blocked` label is missing".
 - **both.** A vague "set up this repo" or "configure repo metadata" → offer to run `about` then `labels`.
 
 **If no mode is clear, ask first.** Present the two modes and let the user pick before touching anything.
@@ -116,16 +116,19 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 ## Mode: `labels`
 
-Provision the issue-workflow **lifecycle and priority labels** so issuekit (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them, and repokit never applies one to an issue. This mode **stands alone**, because both sets are useful for any issue workflow, so it never checks whether issuekit is installed before provisioning them.
+Provision the **workflow labels** so issuekit (and any workflow that reads them) has the vocabulary it expects. repokit *creates and reconciles* these labels; issuekit only *uses* them, and repokit never applies one to an issue or a PR. This mode **stands alone**, because the sets are useful for any issue workflow, so it never checks whether issuekit is installed before provisioning them.
 
-### Two sets, two independent namespaces
+### Three sets, three independent namespaces
 
-The map below is really two, and keeping them apart is what makes both usable:
+The map below is really three, and keeping them apart is what makes all three usable:
 
 - **Lifecycle** answers *can this be worked?*, meaning where the issue sits in the workflow.
 - **Priority** answers *should this be worked next?*, meaning how much it matters relative to everything else workable.
+- **Automation** answers *what should a machine do with this?*, meaning a label a tool subscribes to.
 
-They are **orthogonal**: an issue carries at most one label from each, and neither implies the other. `ready` + `low` is a perfectly coherent issue (workable, not urgent), and so is `blocked` + `critical` (urgent, and that's exactly why its blocker matters). Downstream skills read them as two separate signals, so never collapse them into one ordered set.
+Lifecycle and priority are **orthogonal**: an issue carries at most one label from each, and neither implies the other. `ready` + `low` is a perfectly coherent issue (workable, not urgent), and so is `blocked` + `critical` (urgent, and that's exactly why its blocker matters). Downstream skills read them as two separate signals, so never collapse them into one ordered set.
+
+Automation is a different kind of label again, and the difference decides how you treat it. Lifecycle and priority **describe** an issue, so a human reads them and one of each is true at a time. An automation label **acts**: a person adds it to a pull request to start a tool, and usually removes it once the tool has run. It is PR-scoped, additive, and carries no state anybody reads later, so it never competes with a lifecycle or priority label.
 
 ### The canonical lifecycle set
 Provision exactly this map. The `description` column here is canonical; issuekit mirrors the same names, colors, and meanings in execution-oriented wording.
@@ -159,25 +162,45 @@ Colors are 6-hex, no leading `#`.
 
 **Four levels is the ceiling, and it's already generous.** The point of a priority scale is a backlog someone can order in their head; every level past the fourth is one more place for the same issue to plausibly sit, which is how a scale turns into a coin flip. If the user asks for a fifth, say what it costs before adding it.
 
-### 1. Check for an existing scheme first, in both namespaces
-You read the repo's labels in [Detect](#detect-every-mode). Before diffing, look for a **different-but-equivalent scheme** the repo already runs, in either namespace:
+### The canonical automation set
+One label, for the one automation this collection assumes: an AI review of a pull request.
+
+| name | color | description |
+|------|-------|-------------|
+| `ai-review` | `34495E` | run the repo's AI review tooling on this PR |
+
+The color sits outside both ramps on purpose. An automation label is not a state and not a rank, so it must not read as a step on either scale.
+
+**The label is a switch with nothing behind it until something listens.** Creating `ai-review` does not review anything by itself: a GitHub Actions workflow or an installed review app has to subscribe to it. Check what the repo already has before you promise a result:
+
+```sh
+grep -rl 'labeled' .github/workflows/    # a workflow that fires on a label event
+```
+
+An installed review app (Copilot, CodeRabbit, Claude) is configured outside the repo, so ask the user about that half instead of guessing. Report what you find. When nothing listens yet, say so in one line and name the gap; the user still gets a real label, and the wiring is their next move.
+
+**The listener owns the name, not this map.** A workflow fires on the exact string in its `if:` condition, so a repo that already listens for `claude-review`, `copilot-review`, `coderabbit`, or `gemini-review` keeps that name. Adopt it and skip `ai-review`, because a second trigger label that nothing reads is a switch wired to nothing. Rename ours, never theirs.
+
+### 1. Check for an existing scheme first, in every namespace
+You read the repo's labels in [Detect](#detect-every-mode). Before diffing, look for a **different-but-equivalent scheme** the repo already runs, in any namespace:
 
 - **Lifecycle.** `status: blocked`, `S-ready`, `blocked ⛔`, or a `needs-*` family that already covers this ground.
 - **Priority.** `P0`/`P1`/`P2`, `priority: high`, `pri-1`, `urgent`, or a `severity:` family being used as a de facto priority.
+- **Automation.** `claude-review`, `copilot-review`, `coderabbit`, `gemini-review`, `needs-ai-review`, or any label a workflow file names as a trigger.
 
 If one exists, **don't silently add a parallel set** (two ways to say "blocked" is worse than none, and two ways to say "urgent" is worse still, because the two will disagree). Surface it and ask which way to go:
 
 - **Map onto theirs.** Treat the repo's labels as canonical; skip provisioning and (optionally) note the name mapping so issuekit-style workflows can be pointed at the existing names.
 - **Add the canonical set.** The repo's scheme is incidental or abandoned; provision ours alongside it, and offer to retire the old labels only if the user explicitly asks.
 
-Handle the namespaces **independently**, because a repo very often has a mature lifecycle scheme and no priority scheme at all, and the answer there is "map onto theirs for lifecycle, provision ours for priority." Asking one question about both forces a wrong answer to half of it.
+Handle the namespaces **independently**, because a repo very often has a mature lifecycle scheme and no priority scheme at all, and the answer there is "map onto theirs for lifecycle, provision ours for priority." One question covering all three forces a wrong answer to two of them.
 
 **Priority names collide harder than lifecycle names, so check meaning and not just spelling.** `ready` and `in-review` are workflow-shaped words that mostly mean this one thing; `critical`, `high`, and `low` are generic English and a repo may already be using them for something else entirely: bug **severity** (how badly it breaks), effort or T-shirt **size**, risk, or a customer tier. A name match is not a meaning match. When the repo already has a `critical` or `high`, read its description and a couple of the issues carrying it before assuming it's the same axis, and if it turns out to be severity, say so plainly. Severity and priority are genuinely different things (a critical crash nobody hits can be `low`), so the honest fix is to name the collision and let the user decide whether to rename theirs, rename ours, or map onto it.
 
 Absent any existing scheme in a namespace, go straight to the diff for that one.
 
 ### 2. Diff against the canonical sets and preview
-Sort each canonical label, from **both** sets, into one of three buckets and show the plan before touching anything, grouped by namespace so the user can approve one and decline the other:
+Sort each canonical label, from **all three** sets, into one of three buckets and show the plan before touching anything, grouped by namespace so the user can approve one and decline another:
 
 - **Missing.** Not in the repo → will be **created**.
 - **Drifted.** Present but wrong color or description → offer to **update** (this rewrites the label; get an explicit OK per label or for the batch).
@@ -192,6 +215,7 @@ On approval:
 # create a missing label
 gh label create ready --color 0E8A16 --description "specified and independent, safe to take into its own worktree now"
 gh label create critical --color B60205 --description "drop everything; preempts work already in progress"
+gh label create ai-review --color 34495E --description "run the repo's AI review tooling on this PR"
 
 # update a drifted label (rewrites color/description in place)
 gh label edit blocked --color D93F0B --description "has an unmet prerequisite (see 'Blocked by #N' in the body)"
@@ -200,19 +224,21 @@ gh label edit blocked --color D93F0B --description "has an unmet prerequisite (s
 `gh label create --force` also upserts (create-or-overwrite) if you'd rather not branch on existence, but prefer the explicit create/edit split so the preview in [Diff against the canonical sets and preview](#2-diff-against-the-canonical-sets-and-preview) stays honest about what's new versus changed.
 
 ### 4. Hand off
-**What changed.** Report what was created, updated, and left as-is, per namespace, and confirm which of the two sets the repo now carries in full. Provisioning one and skipping the other is a normal outcome, not a partial failure, so say which, and nobody goes looking for the missing half later.
+**What changed.** Report what was created, updated, and left as-is, per namespace, and confirm which of the three sets the repo now carries in full. Provisioning one set and skipping another is a normal outcome, not a partial failure, so say which, and nobody goes looking for a missing set later.
 
-**Where it landed.** Name the repo's label list. If you mapped onto an existing scheme instead of provisioning ours in either namespace, say which names won, because everything downstream now has to use those.
+**Where it landed.** Name the repo's label list. If you mapped onto an existing scheme instead of provisioning ours in any namespace, say which names won, because everything downstream now has to use those.
 
-**Next.** Name one move and stop. The labels are a vocabulary, not an outcome: what they unblock is the issue workflow, so the move is to start using it, with **issuekit** `create` to file work from a plan, or `triage` to classify and rank issues that were sitting unlabeled while the vocabulary was missing. When the repo already had open issues and priority is the set you just provisioned, `triage` is the stronger of the two: every one of those issues is now formally unassessed, and nothing downstream can rank them until somebody says what matters. Absent issuekit, say the labels are now available to whatever issue workflow the repo runs. If `about` hasn't run yet and the repo's About panel is empty, offer that as the smaller follow-up.
+**Next.** Name one move and stop. The labels are a vocabulary, not an outcome: what they unblock is the issue workflow, so the move is to start using it, with **issuekit** `create` to file work from a plan, or `triage` to classify and rank issues that were sitting unlabeled while the vocabulary was missing.
+
+**When you created `ai-review` and nothing listens for it, crown that gap instead.** The label starts no review until a workflow or a review app subscribes to it. Say that in one line, and name `.github/workflows/` as the place to wire it. repokit provisions the label; it does not write the workflow. When the repo already had open issues and priority is the set you just provisioned, `triage` is the stronger of the two: every one of those issues is now formally unassessed, and nothing downstream can rank them until somebody says what matters. Absent issuekit, say the labels are now available to whatever issue workflow the repo runs. If `about` hasn't run yet and the repo's About panel is empty, offer that as the smaller follow-up.
 
 ---
 
 ## Notes
 
 - **Never** delete a repo's topics wholesale or its labels outside the canonical sets without an explicit ask; the default is additive and reconciling, not destructive.
-- The `labels` maps are a **shared contract with issuekit**: the same thirteen names across two namespaces, with the same colors and meanings, and repokit's descriptions canonical.
-- **repokit provisions the vocabulary; it never applies it.** No mode here ever puts a label on an issue, neither a lifecycle one nor a priority one. Deciding that #42 is `high` is a judgment about the work, which is issuekit `create` and `triage`'s job; repokit only guarantees the word exists to say it with. Keeping that line is what makes this mode safe to re-run on a repo with a live tracker.
+- The lifecycle and priority maps are a **shared contract with issuekit**: the same names across both namespaces, with the same colors and meanings, and repokit's descriptions canonical. The automation set is repokit's alone, because issuekit runs the tracker and `ai-review` acts on a pull request.
+- **repokit provisions the vocabulary; it never applies it.** No mode here ever puts a label on an issue or a PR. Deciding that #42 is `high` is a judgment about the work, which is issuekit `create` and `triage`'s job; asking for an AI review is a call the author makes on their own PR. repokit only guarantees the word exists to say it with. Keeping that line is what makes this mode safe to re-run on a repo with a live tracker.
 - **Labels can't enforce one-per-namespace, so the writer has to.** GitHub will happily let an issue carry `critical` and `low` at once, and nothing here can prevent it. Provisioning is the only half repokit owns; the mutual exclusion is enforced at write time by whoever applies the label, which is why that rule lives in issuekit rather than in this map.
-- Defer to what the repo already curates: an existing scheme in either namespace is handled in [Check for an existing scheme first, in both namespaces](#1-check-for-an-existing-scheme-first-in-both-namespaces), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical sets as an addition, not a replacement.
+- Defer to what the repo already curates: an existing scheme in any namespace is handled in [Check for an existing scheme first, in every namespace](#1-check-for-an-existing-scheme-first-in-every-namespace), and a curated About/topics is reconciled per-field (never blind-overwritten) in `about`. Offer the canonical sets as an addition, not a replacement.
 - Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output, because the JSON fields are a stable contract and the display text isn't.

@@ -1,6 +1,6 @@
 # repokit
 
-Set up a GitHub repo's metadata through the `gh` CLI — an inferred About description and topics, and the issue lifecycle and priority labels.
+Set up a GitHub repo's metadata through the `gh` CLI — an inferred About description and topics, and the workflow labels: issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools.
 
 **Reach for it when** a repo's About panel is empty or its label vocabulary is missing.
 
@@ -49,11 +49,11 @@ The proposal comes as a side-by-side table, and **each field is decided independ
 
 ### `labels`
 
-Provisions the issue-workflow labels so [`issuekit`](./issuekit.md) — and any workflow reading them — has the vocabulary it expects. repokit *creates and reconciles* these; issuekit only *uses* them.
+Provisions the workflow labels so [`issuekit`](./issuekit.md) — and any workflow reading them — has the vocabulary it expects. repokit *creates and reconciles* these; issuekit only *uses* them.
 
 This mode **stands alone**. The labels are useful for any issue workflow, so it never checks whether issuekit is installed first.
 
-**There are two sets, and they're two independent namespaces.** Lifecycle answers *can this be worked?*; priority answers *should this be worked next?* An issue carries at most one from each, and neither implies the other — `ready` + `low` is coherent (workable, not urgent), and so is `blocked` + `critical` (urgent, which is exactly why its blocker matters). Collapsing them into one ordered set is the mistake this split exists to prevent: it would force a repo to choose between saying *where* work is and saying *how much it matters*.
+**There are three sets, and they're three independent namespaces.** Lifecycle answers *can this be worked?*; priority answers *should this be worked next?*; automation answers *what should a machine do with this?* An issue carries at most one lifecycle and one priority label, and neither implies the other — `ready` + `low` is coherent (workable, not urgent), and so is `blocked` + `critical` (urgent, which is exactly why its blocker matters). Collapsing them into one ordered set is the mistake this split exists to prevent: it would force a repo to choose between saying *where* work is and saying *how much it matters*.
 
 **Lifecycle:**
 
@@ -85,25 +85,39 @@ This mode **stands alone**. The labels are useful for any issue workflow, so it 
 
 **Four levels is the ceiling.** A priority scale is only useful if someone can order a backlog in their head; every level past the fourth is one more place the same issue could plausibly sit, which turns the scale into a coin flip.
 
-**It looks for an existing scheme first — in both namespaces, independently.** A repo already running `status: blocked` or `S-ready`, or `P0`/`P1` or `priority: high`, gets surfaced rather than silently given a parallel set. The namespaces are asked about separately because the common case is a mature lifecycle scheme and no priority scheme at all — one question covering both forces a wrong answer to half of it.
+**Automation** — one label, for the one automation this collection assumes:
+
+| name | color | description |
+|------|-------|-------------|
+| `ai-review` | `34495E` | run the repo's AI review tooling on this PR |
+
+**Why it's a third namespace and not a lifecycle label.** Lifecycle and priority *describe* an issue — a human reads them, and one of each is true at a time. `ai-review` *acts*: somebody puts it on a pull request to start a tool, and takes it off once the tool has run. It is PR-scoped, additive, and nothing downstream reads it as state, so filing it beside `ready` and `blocked` would break the one-label-at-a-time rule that makes those readable. Its graphite color sits outside both ramps for the same reason — it must not look like a step on either scale.
+
+**The label is a switch with nothing behind it until something listens.** Creating `ai-review` reviews nothing by itself; a workflow in `.github/workflows/` or an installed review app has to subscribe to the label event. So the skill greps the workflow files, reports what it finds, and crowns *wiring the listener* as the next move when nothing does. It never writes the workflow — provisioning the vocabulary is the whole job.
+
+**And the listener owns the name.** A workflow fires on the exact string in its condition, so a repo already listening for `claude-review` or `coderabbit` keeps that name and gets no `ai-review`. A second trigger label nothing reads is worse than none, because it looks like it works.
+
+**It looks for an existing scheme first — in every namespace, independently.** A repo already running `status: blocked` or `S-ready`, or `P0`/`P1` or `priority: high`, gets surfaced rather than silently given a parallel set. The namespaces are asked about separately because the common case is a mature lifecycle scheme and no priority scheme at all — one question covering both forces a wrong answer to half of it.
 
 **Priority names collide harder, so it checks meaning and not just spelling.** `ready` and `in-review` are workflow words that mostly mean this one thing. `critical` and `high` are generic English, and a repo may already use them for bug **severity**, effort size, or risk. Those are genuinely different axes — a critical crash nobody hits is `low` priority — so a name match isn't a meaning match, and the skill reads the existing label's description before assuming it's the same thing.
 
 Otherwise each label sorts into **missing** (create), **drifted** (offer to update, since that rewrites the label), or **matches** (leave alone). Labels *outside* the canonical sets — GitHub's `bug`/`enhancement` defaults, or the repo's own — are **never touched**.
 
-**repokit provisions the vocabulary; it never applies it.** No mode here puts a label on an issue. Deciding #42 is `high` is a judgment about the work, which belongs to issuekit; repokit only guarantees the word exists to say it with. That line is what makes this mode safe to re-run against a live tracker.
+**repokit provisions the vocabulary; it never applies it.** No mode here puts a label on an issue or a PR. Deciding #42 is `high` is a judgment about the work, which belongs to issuekit; repokit only guarantees the word exists to say it with. That line is what makes this mode safe to re-run against a live tracker.
 
 ## The shared contract
 
 The label maps are duplicated in [`issuekit`](./issuekit.md) on purpose: each skill must stand alone once installed, so neither can point at a shared source. repokit's descriptions are canonical; issuekit mirrors the same names and colors in execution-oriented wording.
 
-Nothing else keeps the copies aligned, so this repo's `make lint` diffs them on every full run and errors on drift. One diff covers both namespaces — the rows share a format, so the check picks up all thirteen without caring which table they sit in.
+Nothing else keeps the copies aligned, so this repo's `make lint` diffs them on every full run and errors on drift. One diff covers both namespaces — the rows share a format, so the check picks up every row without caring which table it sits in. The automation set is the exception, listed in lint's `UNSHARED_LABELS`: `ai-review` acts on a pull request, issuekit runs the tracker, so there is no second copy to drift from.
 
 **Labels can't enforce one-per-namespace, so the writer has to.** GitHub will happily let an issue carry `critical` and `low` at once, and nothing repokit provisions can prevent it. The mutual exclusion is enforced at write time by whoever applies the label, which is why that rule lives in issuekit rather than in this map.
 
 ## Hands off to
 
 [`issuekit`](./issuekit.md). The labels are a vocabulary, not an outcome — what they unblock is the issue workflow, so the move is to start using it: `create` to file work from a plan, or `triage` to classify and rank issues that sat unlabeled while the vocabulary was missing. On a repo that already had open issues when priority was provisioned, `triage` is the stronger of the two — every one of those issues is now formally unassessed, and nothing downstream can rank them until somebody says what matters.
+
+The exception is a fresh `ai-review` label with no listener. Then the next move is a workflow in `.github/workflows/` that subscribes to it, because until one exists the label is inert and nobody downstream can tell.
 
 If only one mode has run, the other is the smaller follow-up.
 
