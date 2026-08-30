@@ -38,6 +38,8 @@ gh stack add <new-branch>
 
 Then hand the new branch to gitkit's [create-or-adopt](./SKILL.md#create-or-adopt) step for its own worktree, exactly as any other branch. The layer's base is the parent branch, which is the [one stated exception](./SKILL.md#the-base-ref) to the sibling-branch ban.
 
+**Keep every lower layer on the remote while a layer above it has an open pull request.** A lower layer is the base of the pull request above it, so `git push origin --delete` on that branch closes the pull request, and GitHub then refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back. The [clean sweep](./clean.md) holds such a branch back for this reason; check with `gh pr list --base "$BRANCH" --state open` before any manual delete.
+
 **Restack after something below changes:**
 
 ```sh

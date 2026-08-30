@@ -35,6 +35,7 @@ A branch on GitHub whose work is in the base is reapable on the remote, whether 
 
 - **the base branch itself**, `origin/HEAD`, and any release or long-lived branch the repo keeps. Deleting one of these is the failure this sweep must never cause.
 - **an open pull request on that head.** Check with `gh pr list --head "$BRANCH" --state open`. Deleting the head branch closes the pull request.
+- **an open pull request on that base.** Check with `gh pr list --base "$BRANCH" --state open`, and name the pull request number in the hold reason. Deleting a base branch closes every pull request stacked on it, and GitHub then refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back.
 - **a branch you cannot prove landed.** The remote delete has no `-d` guard behind it, so require a merged pull request from `gh`, or a passing test 3 patch-id match. A bare `: gone]` proves nothing here, because the remote branch is the thing in question.
 - **a branch on a remote other than `origin`**. Sweep `origin` only.
 
