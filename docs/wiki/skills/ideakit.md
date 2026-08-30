@@ -20,6 +20,8 @@ So ideakit does four things and refuses the fifth. It writes an idea down the mo
 
 Below the folders sits the jotpad, which takes the thoughts that aren't ideas yet. A jot has no folder, no slug, and no subject requirement, and it becomes an idea only by being one you keep coming back to.
 
+The skill is split for context economy: `SKILL.md` carries the routing, the repo layout, the isolation guard, and the save gate, and each mode's procedure lives in its own `modes/<mode>.md` satellite, loaded only when that mode fires.
+
 ## Why a repo and a skill, not just a repo
 
 `~/ideas` started as a plain repo with an `AGENTS.md` full of rules. That covers one case well and leaves three gaps.
@@ -197,4 +199,4 @@ npx skills add mimukit/skills -s ideakit
 
 Source: [`skills/ideakit/SKILL.md`](../../../skills/ideakit/SKILL.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`ada7efe` on 2026-08-30._
