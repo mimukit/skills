@@ -46,7 +46,7 @@ The receiver is **an agent with filesystem access in this repo** — a fresh ses
 
 Then the **five-part contract** — goal · file scope · constraints · done signal · stop condition. Five rather than seven, because a checklist nobody completes is worse than a short one they do. The done signal is a concrete check (a command, a test, an observable state), never "when it works".
 
-The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. The `SKILL.md` carries a worked run end to end — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row.
+The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. A `worked-example.md` satellite beside the `SKILL.md` carries a worked run end to end, loaded on demand — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row.
 
 ### `system`
 
@@ -150,4 +150,4 @@ npx skills add mimukit/skills -s promptkit
 
 Source: [`skills/promptkit/SKILL.md`](../../../skills/promptkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`ada7efe` on 2026-08-30._
