@@ -9,8 +9,11 @@ Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD
 Fetch the current settings and diff them against the canonical map:
 
 ```sh
-gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge,hasIssuesEnabled,hasWikiEnabled,hasProjectsEnabled,defaultBranchRef
+gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge,autoMergeAllowed,hasIssuesEnabled,hasWikiEnabled,hasProjectsEnabled,defaultBranchRef
+gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 ```
+
+`gh repo view` carries no field for the update-branch button or for secret scanning, so the API call above supplies both current values.
 
 | Setting | Value | Why |
 |---------|-------|-----|
@@ -21,14 +24,26 @@ gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMerge
 | `--enable-wiki` | false | Proposed off; wikikit `publish` is opt-in and enabling later is one click. Flippable in this preview. |
 | `--enable-projects` | false | Nothing in this collection reads a project board. |
 | `--enable-issues` | true | The issue tracker is the workflow's substrate. |
+| `--allow-update-branch` | true | Puts the "Update branch" button on a PR behind its base, the sync mergekit runs. |
+| `--enable-auto-merge` | true | Lets `gh pr merge --auto` land a PR once checks pass, which is how afkkit finishes unattended. |
+| `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
+| `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
 
-Show current vs proposed per field, the same side-by-side shape `about` uses, and let the user approve or flip **each row independently** — the wiki row is the one most often flipped. The default branch is report-only: state it when it isn't `main` and change nothing, because renaming a default branch breaks open PRs and clones. On approval, apply with one echoed command:
+Show current vs proposed per field, the same side-by-side shape `about` uses. Drop every row that already matches; only a row that differs is a change to decide.
+
+**Ask the settings as their own question, separate from every other decision in this mode.** Do not fold them into the scaffold or the license question, and do not ask for one blanket approval of the whole map. Put one option per differing row, in the map's order, worded as `current → proposed` with the Why column as the option's explanation, and let the user select the rows to apply and leave the rest untouched. The wiki row is the one most often flipped, so never bundle it with another row. When the user selects nothing, change no setting and continue.
+
+The default branch is report-only: state it when it isn't `main` and change nothing, because renaming a default branch breaks open PRs and clones.
+
+**Both secret-scanning rows are free on a public repo and need GitHub Advanced Security on a private one.** Propose them on a public repo. On a private repo, say in one line that the plan may reject them, and offer them anyway — the cost of a rejected flag is one error message.
+
+Apply only the selected rows, in one echoed command built from those flags:
 
 ```sh
-gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-wiki=false --enable-projects=false --enable-issues
+gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
-This step is done when every row in the map is either applied, deliberately kept as-is by the user, or already matching.
+When the command fails, re-run it without the rejected flag rather than dropping the whole batch, and report which row GitHub refused. This step is done when every row in the map is either applied, deliberately left unselected by the user, refused by GitHub with that refusal reported, or already matching.
 
 ## 3. Scaffold diff
 List which baseline files exist and which are missing. Propose only the missing ones; an existing file is never overwritten, and patching one happens only when the user asks. Preview every file's content before writing it.

@@ -59,7 +59,7 @@ Read the repo's current state once before proposing anything. It's the raw mater
 
 ```sh
 # guardrail flags + about state
-gh repo view --json isArchived,isFork,isTemplate,description
+gh repo view --json isArchived,isFork,isTemplate,description,homepageUrl
 gh api repos/{owner}/{repo}/topics --jq '.names'    # current topics (about mode)
 gh label list --json name,color,description          # current labels (labels mode)
 ```

@@ -46,6 +46,9 @@ The proposal comes as a side-by-side table, and **each field is decided independ
 |-------|---------|----------|
 | Description | `old blurb` | `new blurb` |
 | Topics | `a, b` | `a, c, d` (+`c`,`d`; −`b`) |
+| Homepage | `none` | `https://example.com` |
+
+**Homepage is optional and only ever proposed from a URL the repo already names** — a deployed site, a docs site, a package page. There is no inference to fall back on, so a repo that names none keeps an empty homepage. The repo's own GitHub URL is not a candidate; the About panel shows it already.
 
 ### `labels`
 
@@ -109,7 +112,9 @@ Otherwise each label sorts into **missing** (create), **drifted** (offer to upda
 
 Brings an already-created repo up to convention in one span: repo settings, baseline files, then `about` and `labels` delegated on top with one closing hand-off for the whole run. It **configures, never creates** — `gh repo create` stays with you, and the root preflight stops when there's no GitHub remote. It also never commits: scaffold files land unstaged for [`commitkit`](./commitkit.md) to group.
 
-**Why merge-commit-only.** [`mergekit`](./mergekit.md) closes every PR with `gh pr merge --merge`, and a squash breaks the branch ancestry that [`gitkit`](./gitkit.md)'s `clean` needs three separate detections to see through. So `setup` proposes enabling merge commits and disabling squash and rebase — one merge method, one shape of history — plus delete-branch-on-merge so the remote branch dies with its PR. The wiki toggle is proposed off (wikikit `publish` is opt-in), and every row in the settings preview flips independently. The default branch is report-only: renaming one breaks open PRs and clones, so `setup` states a mismatch and changes nothing.
+**Why merge-commit-only.** [`mergekit`](./mergekit.md) closes every PR with `gh pr merge --merge`, and a squash breaks the branch ancestry that [`gitkit`](./gitkit.md)'s `clean` needs three separate detections to see through. So `setup` proposes enabling merge commits and disabling squash and rebase — one merge method, one shape of history — plus delete-branch-on-merge so the remote branch dies with its PR. The wiki toggle is proposed off (wikikit `publish` is opt-in). The settings come as their own question, one option per row that differs from the map, so you pick the changes you want instead of approving the map whole — a repo that keeps squash merges on purpose should not have to fight the scaffold question to say so. The default branch is report-only: renaming one breaks open PRs and clones, so `setup` states a mismatch and changes nothing.
+
+**The rest of the map serves the skills downstream of it.** Update-branch puts the button mergekit's sync step reaches for, and auto-merge is what lets [`afkkit`](./afkkit.md) land a PR after checks pass without a human at the keyboard. Both secret-scanning rows are free on a public repo and need Advanced Security on a private one, so on a private repo `setup` says the plan may reject them and offers them anyway — a refused flag costs one error message, and a leaked credential costs a rotation. Neither `gh repo view` field set covers update-branch or secret scanning, so `setup` reads those two from the REST API.
 
 **Why branch protection is out.** Rulesets need admin rights and, on private repos, a paid plan — a mode that fails on half its target repos isn't a convention, it's a coin flip.
 
