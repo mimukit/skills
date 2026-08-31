@@ -44,7 +44,7 @@ The trade is stated rather than hidden: worktrees appear in Paseo when you run [
 
 Two facts make the rest of the design possible:
 
-- **`paseo workspace archive` is registry-only** — verified. It drops the row and leaves the directory, the branch, and git's own worktree registration intact. That is what keeps [`clean`](#clean)'s registry reap reversible: an archived row can be restored, where a deleted worktree cannot. The reap still sits behind `clean`'s preview and confirmation, so the user sees every row before it leaves the sidebar.
+- **`paseo workspace archive` is not registry-only** — it archives every agent the workspace owns, kills every terminal in it, and then tries to delete the backing directory. Only the row is reversible. The delete fires on a worktree Paseo created itself and refuses on one git created, which is why `clean` sorts its candidates by path shape before it queues a single archive, and why the reap still sits behind a preview and one confirmation.
 - **Paseo never notices a deleted directory**, so removing a worktree is still gitkit's job, and the row has to be archived afterward — which is exactly what [`clean`](#clean)'s registry reap is for. `clean` is the one mode that removes anything at all: `sync` only adds, and the disk teardown reaches the filesystem by calling gitkit rather than by growing its own teardown.
 
 **It never touches the tracker.** It reads issues and pull requests to build a title and judge a verdict; it never closes, labels, or edits. Tracker drift routes to [`issuekit`](./issuekit.md) `close`.
@@ -55,13 +55,13 @@ Worth knowing before you trust it against a newer Paseo, because this is the par
 
 `paseo workspace ls --json` is a **thin projection** — `workspaceId`, `project`, `name`, `isolation`, `cwd`, active rows only. It answers one question (is a live row pointing at this path) and nothing else. Everything the modes actually decide on — `branch`, `title`, `createdAt`, `archivedAt`, `projectId` — lives in `~/.paseo/projects/workspaces.json` and `projects.json`.
 
-Reading those files is **unavoidable rather than a shortcut**. Paseo 0.4.0 ships no `project ls`; `--project` is mandatory on every registration and rejects both a name and a path; and the `prj_…` id is not derivable from `projectKey` by any hash. paseokit therefore reads the files and writes exclusively through the CLI — never into them, because a hand-edited state file needs a daemon restart, and a restart kills every running agent.
+0.6.1 ships `paseo project ls --json`, so the `prj_…` id that `--project` demands now comes from the CLI and the state file is only a fallback. `workspaces.json` is still unavoidable, because `workspace ls` exposes no `branch`, no `title`, no `createdAt`, and no archived row at all. paseokit reads those files and writes exclusively through the CLI — never into them, because a hand-edited state file needs a daemon restart, and a restart kills every running agent.
 
 An unreadable or unexpectedly-shaped file degrades every writing mode to read-only, naming which file and why. It never guesses at an id.
 
 Two registry quirks it documents rather than works around:
 
-- **`isPaseoOwnedWorktree` is a known lie** — set `true` for worktrees git created and Paseo merely adopted. No CLI corrects it, so the desktop app may offer to delete a worktree git owns. paseokit never reads the flag to make a decision.
+- **`isPaseoOwnedWorktree` is a known lie** — set `true` for worktrees git created and Paseo merely adopted, because the check behind it accepts any path two levels under the worktree root. The daemon's actual delete test is stricter and wants a hash directory, so the flag reads `true` on exactly the rows the delete refuses. paseokit reads the path shape instead and never trusts the flag.
 - **`workspace create` is not idempotent** — two identical calls on one path silently make two rows. Every existence check before a registration is load-bearing, and it has to count archived rows too, or the tombstone rule below fails silently.
 
 ## Modes
@@ -81,12 +81,14 @@ It joins `git worktree list --porcelain` per project, `paseo workspace ls --json
 | `duplicate` | two or more active rows share one `cwd` | [`clean`](#clean) |
 | `tombstoned` | worktree exists, and its only row is archived | [`sync`](#sync), on confirmation |
 | `unknown repo` | worktree under `$WORKTREE_ROOT` whose repo Paseo has never seen | [`sync`](#sync), on confirmation |
-| `stray project` | a project whose `rootPath` is a worktree, not a main checkout | reported only; no CLI deletes a project |
+| `stray project` | a project whose `rootPath` is a worktree, not a main checkout | reported; `paseo project delete` removes it, behind a confirmation |
 | `reapable` | pull request merged, issue closed, tree clean | [`clean`](#clean) |
 
 `busy` rows go first when any exist. Those are the rows where an action would interrupt live work.
 
-A **stray project** has a clear signature — its `projectKey` matches a real project's while its `rootPath` sits under `$WORKTREE_ROOT`. That is what a registration without `--project` produces, and it is the failure paseokit works hardest to avoid, because 0.4.0 has no command that deletes a project.
+A **stray project** has a clear signature — its `projectKey` matches a real project's while its `rootPath` sits under `$WORKTREE_ROOT`. That is what a registration without `--project` produces, and it is the failure paseokit works hardest to avoid. 0.6.1 ships `paseo project delete`, so it is now recoverable, but the fix deletes every workspace under the project and therefore sits behind `clean`'s confirmation, listing those workspaces first.
+
+The command has a trap the skill guards against: **a wrong project id is not an error.** The daemon accepts any well-formed `prj_…`, removes nothing, and reports success with a removed-workspace count of zero. `clean` therefore checks the returned count against what the preview promised rather than trusting the exit status.
 
 ### `sync`
 
@@ -106,7 +108,7 @@ Two rules carry most of the weight:
 - **Unknown repos** (`sync all` only). It walks `$WORKTREE_ROOT`, resolves each candidate with `git rev-parse --git-common-dir`, and lists repos Paseo has never seen. On an OK it registers the main checkout first — *that call is what brings the project into being* — then re-reads `projects.json` for the new id and registers the worktrees under it. Paseo's own worktrees need no special case: they already carry a row and resolve to a known repo, so no hash-directory pattern has to be guessed at.
 - **Tombstones.** An archived row **suppresses re-registration**. Someone archived that workspace deliberately, and silently re-adding it would undo the decluttering they just did — so it gets a verdict of its own and an explicit ask.
 
-One honest limitation: **there is no `paseo workspace unarchive` in 0.4.0.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
+One honest limitation: **there is still no `paseo workspace unarchive` in 0.6.1.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
 
 ### `clean`
 
@@ -126,7 +128,7 @@ One-time configuration, per machine. It touches no workspace at all.
 
 It compares `worktrees.root` in `~/.paseo/config.json` against `$WORKTREE_ROOT`, because two roots in play means every sweep classifies by path forever. Aligning them **only affects worktrees Paseo creates itself** — existing ones are untouched, and git stores absolute paths, so nothing moves. It says that out loud, because "aligned" reads like "migrated" and it isn't.
 
-It also surfaces `daemon.autoArchiveAfterMerge`, which would let Paseo archive a workspace itself when its change request merges — covering part of [`clean`](#clean)'s reaping natively. It's recommended as an experiment to observe, with both limits flagged: undocumented, and it only reaches workspaces where Paseo detected a pull request.
+It also surfaces `daemon.autoArchiveAfterMerge`, which would let Paseo archive a workspace itself when its change request merges — covering part of [`clean`](#clean)'s reaping natively. The page recommends leaving it `false`. An unattended archive stops the agents and kills the terminals with no preview, and on a Paseo-created worktree it deletes the directory with `--force`, skipping every gate `clean` applies.
 
 ## Preflight
 
@@ -138,7 +140,7 @@ Without `gh`, titles degrade to the branch name and the tracker column reads unk
 
 ## Hands off to
 
-Whatever the sweep surfaced, ranked. **`busy`** outranks everything: run the mode again once the agent finishes. Then any **stray project**, which is manual by necessity — edit `projects.json`, then `paseo restart` — and which the skill deliberately will not perform, because a restart kills every running agent including its own. Then **`orphaned`**, **`duplicate`**, and **`reapable`** rows to [`clean`](#clean), and tracker drift to [`issuekit`](./issuekit.md) `close`. A registry that already matches the disk gets said plainly, and it stops.
+Whatever the sweep surfaced, ranked. **`busy`** outranks everything: run the mode again once the agent finishes. Then any **stray project**, routed to [`clean`](#clean), because `paseo project delete` also removes every workspace under it. Then **`orphaned`**, **`duplicate`**, and **`reapable`** rows to [`clean`](#clean), and tracker drift to [`issuekit`](./issuekit.md) `close`. A registry that already matches the disk gets said plainly, and it stops.
 
 ## A note on optionality
 
@@ -152,4 +154,4 @@ npx skills add mimukit/skills -s paseokit
 
 Source: [`skills/paseokit/SKILL.md`](../../../skills/paseokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`1376f62` on 2026-08-31, with Paseo CLI 0.6.1 and daemon 0.5.1._
