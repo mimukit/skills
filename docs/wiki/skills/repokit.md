@@ -1,22 +1,22 @@
 # repokit
 
-Set up a GitHub repo's metadata through the `gh` CLI — an inferred About description and topics, and the workflow labels: issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools.
+Set up a GitHub repo through the `gh` CLI — an inferred About description and topics, the workflow labels (issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools), and a full new-repo setup that applies the house settings and scaffolds the baseline files.
 
-**Reach for it when** a repo's About panel is empty or its label vocabulary is missing.
+**Reach for it when** a repo's About panel is empty, its label vocabulary is missing, or a freshly created repo needs bringing up to convention in one pass.
 
 | | |
 |---|---|
-| Modes | [`about`](#about) · [`labels`](#labels) |
-| Tools | `Bash`, `Read` |
-| Writes | GitHub repo metadata — description, topics, labels |
+| Modes | [`about`](#about) · [`labels`](#labels) · [`setup`](#setup) |
+| Tools | `Bash`, `Read`, `Write` |
+| Writes | GitHub repo metadata and settings — description, topics, labels, merge config — plus scaffold files on disk (unstaged) |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does
 
-Two jobs, one skill, because both answer "make this repo's GitHub metadata right" — the outward-facing blurb people read, and the label vocabulary the issue workflow runs on.
+Three jobs, one skill, because all three answer "make this repo's GitHub configuration right" — the outward-facing blurb people read, the label vocabulary the issue workflow runs on, and the settings-and-files baseline a new repo starts from.
 
-**If no mode is clear, it asks first**, presenting both before touching anything. A vague "set up this repo" gets an offer to run `about` then `labels`.
+**If no mode is clear, it asks first**, presenting the three modes before touching anything. A vague "set up this repo" routes to `setup`, which subsumes the old "offer `about` then `labels`" answer.
 
 ## Safety stance
 
@@ -105,6 +105,18 @@ Otherwise each label sorts into **missing** (create), **drifted** (offer to upda
 
 **repokit provisions the vocabulary; it never applies it.** No mode here puts a label on an issue or a PR. Deciding #42 is `high` is a judgment about the work, which belongs to issuekit; repokit only guarantees the word exists to say it with. That line is what makes this mode safe to re-run against a live tracker.
 
+### `setup`
+
+Brings an already-created repo up to convention in one span: repo settings, baseline files, then `about` and `labels` delegated on top with one closing hand-off for the whole run. It **configures, never creates** — `gh repo create` stays with you, and the root preflight stops when there's no GitHub remote. It also never commits: scaffold files land unstaged for [`commitkit`](./commitkit.md) to group.
+
+**Why merge-commit-only.** [`mergekit`](./mergekit.md) closes every PR with `gh pr merge --merge`, and a squash breaks the branch ancestry that [`gitkit`](./gitkit.md)'s `clean` needs three separate detections to see through. So `setup` proposes enabling merge commits and disabling squash and rebase — one merge method, one shape of history — plus delete-branch-on-merge so the remote branch dies with its PR. The wiki toggle is proposed off (wikikit `publish` is opt-in), and every row in the settings preview flips independently. The default branch is report-only: renaming one breaks open PRs and clones, so `setup` states a mismatch and changes nothing.
+
+**Why branch protection is out.** Rulesets need admin rights and, on private repos, a paid plan — a mode that fails on half its target repos isn't a convention, it's a coin flip.
+
+**The scaffold set** is grounded in what the mimukit repos actually share: `LICENSE`, `README.md`, `.gitignore` (stack-matched, skipped when the stack is unknown), `AGENTS.md`, and a `.claude/CLAUDE.md` pointer to it. An existing file is never overwritten. A repo with history runs the identical flow — the diffs just shrink.
+
+**The license is a question, never an assumption, in both visibilities.** A public repo gets MIT recommended (text fetched from the GitHub licenses API, never written from memory); a private repo gets a proprietary all-rights-reserved file recommended, because the point is to say the code is proprietary where a reader will find it — with an open license offered as runner-up since private repos often go public later. "No license" stays available, with one line on what it means. The holder name comes from `gh api user`, falling back to `git config user.name`, always visible in the preview.
+
 ## The shared contract
 
 The label maps are duplicated in [`issuekit`](./issuekit.md) on purpose: each skill must stand alone once installed, so neither can point at a shared source. repokit's descriptions are canonical; issuekit mirrors the same names and colors in execution-oriented wording.
@@ -119,7 +131,7 @@ Nothing else keeps the copies aligned, so this repo's `make lint` diffs them on 
 
 The exception is a fresh `ai-review` label with no listener. Then the next move is a workflow in `.github/workflows/` that subscribes to it, because until one exists the label is inert and nobody downstream can tell.
 
-If only one mode has run, the other is the smaller follow-up.
+If only one metadata mode has run, the other is the smaller follow-up. After a `setup` run the first move is [`commitkit`](./commitkit.md), because the scaffold files are sitting unstaged.
 
 ## Install
 
@@ -129,4 +141,4 @@ npx skills add mimukit/skills -s repokit
 
 Source: [`skills/repokit/SKILL.md`](../../../skills/repokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`43654a5` on 2026-08-31._

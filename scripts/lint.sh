@@ -322,7 +322,7 @@ type_tokens() {
 check_shared_tables() {
   local tissues=() d
   d="$(diff <(label_pairs "$SKILLS_DIR/issuekit/SKILL.md") \
-            <(label_pairs "$SKILLS_DIR/repokit/SKILL.md") | grep -E '^[<>]' || true)"
+            <(label_pairs "$SKILLS_DIR/repokit/modes/labels.md") | grep -E '^[<>]' || true)"
   [[ -n "$d" ]] && while IFS= read -r line; do
     tissues+=("label map drift (issuekit '<' vs repokit '>'): ${line}")
   done <<<"$d"

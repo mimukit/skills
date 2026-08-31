@@ -41,7 +41,7 @@ Makefile                        command surface (run `make help`)
 | `mergekit` | pull an open PR into a worktree, sync it, set it up for manual review, then merge it on your say-so | public |
 | `releasekit` | cut a release from the Conventional Commits already in the log — derive the semver bump and changelog, bump the manifest, tag it, publish the GitHub release | public |
 | `issuekit` | create, start, close, sync, and triage GitHub issues across the workflow | public |
-| `repokit` | set a repo's About description + topics, and provision the issuekit lifecycle labels | public |
+| `repokit` | set a repo's About description + topics, provision the issuekit lifecycle labels, and set up a new repo's settings and baseline files | public |
 | `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |
 | `paseokit` | push your git worktrees into Paseo's workspace registry and reap the rows whose directories are gone — Paseo discovers nothing on its own | public |
 | `designkit` | derive a project's design system from the UI it already ships into a spec-compliant `DESIGN.md`, and keep it true as the code moves | public |
