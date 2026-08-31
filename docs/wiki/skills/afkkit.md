@@ -83,7 +83,9 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 
 **Cost tracks context size × turns, not token volume and not how often a step fires.** A measured run bears this out sharply: the two steps that *explored the codebase* — each running exactly once — were over 40% of the bill between them, while three mechanical commit dispatches were under 9% for work the previous agent could have done in a handful of turns.
 
-**The way to make a step cheap is to hand it what it needs, not to ask it to think less** — and the cheapest step of all is the one that never gets its own dispatch.
+**The way to make a step cheap is to hand it what it needs, not to ask it to think less** — and the cheapest step of all is the one that never gets its own dispatch. afkkit selects a routing table from the host's dispatch tool, so Claude Code and Codex never receive each other's model names.
+
+### Claude Code
 
 | Step | Model | Why |
 |------|-------|-----|
@@ -96,9 +98,26 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 | QA plan | `opus` | transcribes the recorded outcomes and writes the manual cases; re-runs nothing |
 | PR | `opus` | title and body from real commits plus handed-in payload paths |
 
-**Commit has no row on purpose**, and the consequence is that no step routes to `haiku` any more. The arithmetic that made `haiku` the cheap tier still holds; the table simply has no mechanical-enough step left to spend it on.
+The cost measurements below came from this Claude-compatible route.
 
-**Review runs on a different family, not a "better" one.** An implementer and reviewer from the same family share blind spots by construction, so routing review to `fable` buys *independence*. It is explicitly **not the cheap option** — `fable` ran roughly 4× `opus`'s cost per token in the measured run. That's a deliberate purchase of a second opinion, priced so nobody mistakes it for a saving. The purchase is scoped to round 1: a delta round re-checks named fixes against a findings list the run already trusts, which is where independence buys least, so rounds 2–3 run on `opus`. Verify doesn't get the same tier even though independence is its point too: a fresh `opus` agent already has no memory of writing the code, which is the property Verify actually needs, and paying the premium twice buys very little.
+### Codex
+
+| Step | Model | Reasoning | Why |
+|------|-------|-----------|-----|
+| Start + spec gate | `gpt-5.6-sol` | `xhigh` | the gate decides the run and writes the shared orientation |
+| Implement | `gpt-5.6-sol` | `high` | strong code generation, tool use, and validation |
+| Verify | `gpt-5.6-sol` | `high` | careful live probes and result interpretation |
+| Review, round 1 | `gpt-5.5` | `high` | a different model family reviews the full branch diff |
+| Review, rounds 2–3 | `gpt-5.6-sol` | `high` | delta review checks named fixes |
+| Fix | `gpt-5.6-sol` | `high` | code changes, affected checks, and commits |
+| QA plan | `gpt-5.6-terra` | `medium` | recorded-result transcription and manual cases |
+| PR | `gpt-5.6-terra` | `medium` | output from commits, the diff, and payload files |
+
+Codex uses current aliases instead of dated snapshots. If a listed model is unavailable, the subagent inherits the conductor's model.
+
+**Commit has no row on purpose**, and the consequence is that no Claude Code step routes to `haiku` any more. The arithmetic that made `haiku` the cheap tier still holds; the Claude table simply has no mechanical-enough step left to spend it on.
+
+**Review runs on a different family, not a "better" one.** An implementer and reviewer from the same family share blind spots by construction. Claude Code pairs `fable` with `opus`; Codex pairs `gpt-5.5` with `gpt-5.6-sol`. The measured Claude-compatible run priced `fable` at roughly 4× `opus` per token. That price does not describe Codex billing. The independence purchase is scoped to round 1, while delta rounds return to the host's primary writer model. Verify uses a fresh agent but not another family because it runs a prepared check list instead of reviewing the implementation logic.
 
 **Implement, the spec gate, and Verify's probe are never budgeted.** Implement needed 175 tool uses because the work needed 175, the gate's exploration is what every later step depends on, and Verify's probe is where the run's three surprise defects came from. Nudging any of them toward a smaller number buys cheaper, worse output — the one trade this pipeline should never make.
 
@@ -109,7 +128,7 @@ The gate writes it for one reason that matters more than the cost saving: **it r
 3. **Implement** — implementkit, which resolves its own mode and enforces the repo's gate. The same agent commits through commitkit before it returns. On a multi-phase issue this step [runs once per phase group](#one-dispatch-per-phase); every step after it still runs once.
 4. **Verify** — run the gate's check list against the now-green code, then probe up to six adjacent behaviors. Writes `verified.md`, edits nothing, never rebuilds, rescaffolds, or installs, and records the exact server start and stop commands it used so no later step rediscovers them.
 5. **Review** — reviewkit against the branch diff plus `verified.md`, told it *is* the fresh reviewer so it doesn't delegate again and pay for a second full read.
-6. **Fix loop** — bounded at two rounds. The fix agent re-runs the checks its changes touch and refreshes `verified.md` before committing, which is what lets QA transcribe instead of re-run. Re-review is **delta-scoped** to the fix commits, on `opus`, with vendor code out of scope. Round 1 sweeps every cheap nit alongside the blockers; a delta re-review's nits go to the PR body instead of earning a round, so only a blocker can extend the loop.
+6. **Fix loop** — bounded at two rounds. The fix agent re-runs the checks its changes touch and refreshes `verified.md` before committing, which is what lets QA transcribe instead of re-run. Re-review is **delta-scoped** to the fix commits, on the host's primary writer model, with vendor code out of scope. Round 1 sweeps every cheap nit alongside the blockers; a delta re-review's nits go to the PR body instead of earning a round, so only a blocker can extend the loop.
 7. **QA plan** — qakit, handed the check list, the recorded outcomes, the green gate, and the build location. It transcribes the outcomes and writes the human plan; it re-runs nothing and never rebuilds.
 8. **Open the PR** — prkit, handed paths: the assumptions file, the findings files and the unresolved nit IDs, `verified.md`, unmet criteria, and the QA-plan path.
 
@@ -119,7 +138,7 @@ Issues are sized to a whole plan now rather than to what fits in one agent's con
 
 **This looks like the opposite of the dispatch floor, and it follows from the same rule.** The floor removes a dispatch when the next step needs *the previous agent's context* — that's why the commit stays folded in. It keeps a dispatch when the next step needs the *repository state* the previous agent produced and none of the reasoning behind it. Phase N+1 needs phase N's committed code, not its transcript, so a fresh agent starts from a clean tree and the branch carries the hand-off. One dispatch for a four-phase issue would instead ask a single agent to carry three phases of exploration while writing the fourth.
 
-**Only Implement loops.** Verify, review, the fix loop, the QA plan, and the PR all still run once, over the whole branch diff. Reviewing per phase would re-read a growing diff once per phase and split the reviewer's judgment across pieces it can't see whole — the opposite of what the `fable` tier is bought for.
+**Only Implement loops.** Verify, review, the fix loop, the QA plan, and the PR all still run once, over the whole branch diff. Reviewing per phase would re-read a growing diff once per phase and split the reviewer's judgment across pieces it cannot see whole, which removes the value of the independent review model.
 
 **Phases are not ticked on the issue as they land.** It would read as useful progress, and it's a new unprompted tracker mutation that no mode owns. The pipeline's exemptions cover label writes only, they belong to the kit that owns the mutation rather than to afkkit, and a checkbox edit is not a label write. The commits on the branch are the record while the run is live; the escalation comment names which phases landed if the run stops.
 
@@ -187,4 +206,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`b251461` on 2026-08-30._
+_Verified against `main`@`6afe190` on 2026-08-31._

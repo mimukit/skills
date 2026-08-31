@@ -50,7 +50,7 @@ gh repo view --json nameWithOwner -q .nameWithOwner     # inside a repo on GitHu
 
 afkkit runs as a **conductor session**: the session you invoke it in sequences the pipeline, and each heavy step runs as a **subagent** dispatched to work inside the issue's worktree. This keeps the conductor's context small (the bulk of the tokens live in the subagents) and lets each step run on the model that fits it.
 
-- **Dispatch a subagent per step** with the host's subagent tool, whether `Task` or `Agent`, whichever the harness exposes (agent type `general-purpose`), passing it four things: the **worktree path** that [Start the issue](#1-start-the-issue) returned for *this* issue, the **run directory path** and the files in it this step reads (see [The run directory](#the-run-directory)), the **companion skill to invoke** for that step, and the **model** from the table below. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it); its second is to read the run-directory files it was handed.
+- **Dispatch a subagent per step** with the host's subagent tool: `spawn_agent` on Codex, or `Task` or `Agent` on Claude-compatible hosts (agent type `general-purpose`). Pass it the **worktree path** that [Start the issue](#1-start-the-issue) returned for *this* issue, the **run directory path** and the files in it this step reads (see [The run directory](#the-run-directory)), the **companion skill to invoke** for that step, and the **model** and optional **reasoning effort** from the selected host table. The subagent's first action is to work inside that worktree path (operate on its absolute paths, or `cd` into it); its second is to read the run-directory files it was handed.
 - **The worktree path is carried run state, not the conductor's location.** The conductor's own working directory is irrelevant and never changes, since it holds each issue's path and dispatches into it. That's what lets one conductor session walk a batch of issues, each in its own worktree, without ever being inside any of them.
 - **A dispatch has a floor.** Every subagent pays a fixed cost before it does any work (spawn, read its orientation, report back) and pays it again whether the step takes 175 tool uses or six. So **a step that needs nothing but the previous agent's context should not get its own dispatch.** That agent is already holding the diff, the gate result, and the file it just wrote; a fresh one has to rediscover all of it from cold to reach the same place. This is the rule that folds the commit into [Implement](#3-implement) and the fix rounds, and issuekit `start` into [the spec gate's dispatch](#1-start-the-issue), and it is the test any new step has to pass before it earns a dispatch of its own.
 - **Each subagent returns a small structured result** the conductor acts on: pass/fail, plus the identifiers and one-line summaries the conductor needs to decide the next move. **The payload itself goes in a file, not in the return**; see [The run directory](#the-run-directory) for which step writes what. The conductor holds the thread; the subagents hold the work.
@@ -93,11 +93,17 @@ So each step writes its payload down once, in one place, and every later step re
 
 ## Model routing
 
-Default per-step models. Two things drive each assignment: **what a mistake costs**, since a missed decision at the spec gate poisons every step after it while a clumsy commit message is cosmetic, and **what the step costs to run**, which is not what most people expect.
+Choose the routing table for the host before the first dispatch. A host that exposes `spawn_agent` is Codex. A host that exposes `Task` or `Agent` is Claude Code or a compatible harness. Never send a model name from one host's table to the other. If the host is ambiguous, omit the model override and let every subagent inherit the conductor's model.
+
+Two things drive each assignment: **what a mistake costs**, since a missed decision at the spec gate poisons every step after it while a clumsy commit message is cosmetic, and **what the step costs to run**, which is not what most people expect.
 
 **How a step's cost actually works.** Every tool use re-bills the agent's entire accumulated context. So cost tracks **context size × turns**, not token volume and not how often the step fires. A measured run bears this out sharply: the two steps that *explored the codebase*, each running exactly once, were over 40% of the bill between them, while three mechanical commit dispatches were under 9% for work the previous agent could have done in a handful of turns. **The way to make a step cheap is to hand it what it needs, not to ask it to think less**, and the cheapest step of all is the one that never gets its own dispatch. That is what [the run directory](#the-run-directory) and the dispatch floor are for, and it is why an expensive step is more often fixed by deleting a rediscovery than by dropping a tier.
 
 The **Tool uses** column is a descriptive baseline from observed runs, never a target, so read it as "this is roughly what this step needed." Where two runs disagreed the column gives the range. Implement is the row that does not generalize: it scales with the size of the change, it runs [once per phase](#one-dispatch-per-phase), and a run outside the range is not evidence that anything went wrong. [The run metrics](#run-metrics) in the hand-off are what keep this column honest, because they come from real runs rather than one remembered one.
+
+### Claude Code routing
+
+Use this table only when the host accepts the Claude-compatible aliases below.
 
 | Step | Model | Runs | Tool uses | Why |
 |------|-------|------|-----------|-----|
@@ -110,23 +116,40 @@ The **Tool uses** column is a descriptive baseline from observed runs, never a t
 | QA plan | `opus` | 1× | ~15 | Transcription plus the manual cases: `verified.md` is already current, so it re-runs nothing (see [QA plan](#7-qa-plan)). |
 | PR | `opus` | 1× | ~9–25 | Title and body from the real commits, plus the payload paths handed in. |
 
+The tool-use and cost measurements in this section came from Claude-compatible runs. Treat them as baselines, not Codex billing data.
+
+### Codex routing
+
+Use Codex model aliases, never dated model snapshots. Pass the reasoning effort with the model when the dispatch tool supports it. If a listed model is unavailable, omit the override and inherit the conductor's model instead of substituting an untested model.
+
+| Step | Model | Reasoning | Why |
+|------|-------|-----------|-----|
+| Start + spec gate | `gpt-5.6-sol` | `xhigh` | The gate decides the whole run and writes the orientation every later step inherits. |
+| Implement | `gpt-5.6-sol` | `high` | The bulk of the work needs strong code generation, tool use, and validation. |
+| Verify | `gpt-5.6-sol` | `high` | Live probes need careful command selection and result interpretation. |
+| Review, round 1 | `gpt-5.5` | `high` | A different model family gives the first review an independent pass over the full branch diff. |
+| Review, rounds 2–3 | `gpt-5.6-sol` | `high` | Delta review checks named fixes after the independent full review. |
+| Fix | `gpt-5.6-sol` | `high` | Fix rounds change code, refresh affected checks, and commit. |
+| QA plan | `gpt-5.6-terra` | `medium` | The step transcribes recorded outcomes and writes manual cases without exploring the codebase. |
+| PR | `gpt-5.6-terra` | `medium` | The step writes from commits, the diff, and named payload files. |
+
 **Commit has no row, on purpose.** It used to run as its own `haiku` dispatch and it is now folded into Implement and each fix round, which run it on their own tier. That is the dispatch floor applied: a standalone commit agent has to re-read a diff the previous agent authored minutes earlier, and in the measured run three of them spent 92,839 tokens and 55 tool uses doing exactly that. **The trade is real and worth naming:** the commit now runs inside a large context instead of a fresh cheap one, so the saving is the removed rediscovery and the three dispatch latencies, not the whole 92,839. [The run metrics](#run-metrics) are what settle whether it held.
 
-The consequence is that **no step routes to `haiku` any more.** The arithmetic below still holds; the table simply has no mechanical-enough step left to spend it on.
+The consequence is that **no Claude Code step routes to `haiku` any more.** The arithmetic below still holds; the Claude table simply has no mechanical-enough step left to spend it on.
 
-**Why review runs on a different family, not a "better" one.** The reviewer's job is to catch what the implementer got wrong, and an implementer and reviewer from the same model family share blind spots by construction. Routing review to `fable` buys *independence*, and the observed behavior is exactly what that's for: the review re-derived claims against the actual files rather than trusting the conductor's prompt about them. **It is not the cheap option**, since `fable` ran roughly 4× `opus`'s cost per token in the measured run, making review ~16% of the bill on ~5% of the tokens. That is a deliberate purchase of a second opinion on the quality gate, priced here so nobody mistakes it for a saving. **The purchase is scoped to round 1.** A delta round re-checks named fixes against a findings list the run already trusts, which is where independence buys least, and the measured delta rounds drifted anyway: one ran 46 tool uses against its own round 1's 18, at 4× the price. Rounds 2–3 route to `opus`.
+**Why review runs on a different family, not a "better" one.** The reviewer's job is to catch what the implementer got wrong, and an implementer and reviewer from the same model family share blind spots by construction. Claude Code uses `fable` against `opus`; Codex uses `gpt-5.5` against `gpt-5.6-sol`. In the measured Claude-compatible run, `fable` re-derived claims against the actual files rather than trusting the conductor's prompt. **It is not the cheap option**, since `fable` ran roughly 4× `opus`'s cost per token in that run, making review ~16% of the bill on ~5% of the tokens. That measured price applies only to the Claude route. **The independence purchase is scoped to round 1.** A delta round re-checks named fixes against a findings list the run already trusts, which is where independence buys least. Rounds 2–3 return to the host's primary writer model.
 
-The same arithmetic runs the other way and is worth stating outright: **moving a step *down* to `fable` would raise its cost, not lower it.** The cheap tier is `haiku`.
+For the measured Claude route, moving a step to `fable` raises its cost instead of lowering it. The Claude cheap tier is `haiku`.
 
-**Verify does not get `fable`, even though independence is its point.** The tier is bought for review specifically, and it bills roughly 4× per token. A fresh `opus` agent already has no memory of writing the code, which is the property Verify needs: it reads a check list somebody else wrote and runs commands. Paying the independence premium twice buys very little and costs a lot.
+**Verify does not get the independent review model.** A fresh verification agent already has no memory of writing the code. It reads a check list and runs commands, so a second model family buys little.
 
-Write the **alias** (`opus`, `fable`, `haiku`), never a pinned model ID, because an alias follows its tier as the tier moves and a pinned ID rots.
+Write the host's **alias**, never a dated model snapshot. An alias follows its model line as the provider updates it.
 
 **State the deliberation budget in the prompt, but only where exploring is the waste.** Don't lean on harness knobs to make a cheap step cheap; dispatch parameters vary by host and change between releases. Say it in the subagent's prompt instead: "this is a mechanical step: read the run-directory files and the diff, produce the output, don't go exploring the codebase." Apply that nudge to **QA, PR, and the delta re-review rounds**, the steps where orientation, an already-green gate, and a named findings list have removed the reason to explore.
 
 **Never budget Implement, the spec gate, or Verify's probe.** Implement needed 175 tool uses in the measured run because the work needed 175, and the gate's exploration is the thing every later step depends on. Verify's probe is capped by count rather than by budget for the same reason: it is the only step that exercises live behavior, and the three defects it caught in the measured run came from probing past the written list. Nudging any of the three toward a smaller number buys cheaper, worse output, the one trade this pipeline should never make. Treat every budget line as a nudge the subagent follows, not a floor the harness enforces.
 
-**Inline override.** The user can override any step's model at invocation in plain language: "afkkit 42, implement on opus", "afkkit all, review on fable". Honor the override for the named step(s); everything else keeps the table. There is no config file, so the table plus the spoken override is the whole routing surface.
+**Inline override.** The user can override any step's model at invocation in plain language: "afkkit 42, implement on opus" or "afkkit all, review on gpt-5.5". Honor the override for the named steps. Validate the requested model against the active host before dispatch. Everything else keeps that host's table. There is no config file, so the host table plus the spoken override is the whole routing surface.
 
 ## The pipeline (per issue)
 
@@ -244,7 +267,7 @@ Bounded at **two fix rounds**. Per round:
 
 1. Dispatch a subagent (worktree) to invoke **implementkit** with a **fix round**, dispatched by reference: the path to `findings-r<N>.md` and the IDs to apply. Never re-type the findings into the prompt, because the reviewer already wrote them out with their evidence, and re-quoting them bills the conductor for text that is already on disk.
 2. **The same subagent re-runs the checks its changes touch, then commits before returning.** It reads `checks.md`, re-runs the agent-confirmable entries its diff affects, and refreshes those entries in `verified.md`. It is already warm in the files, so this costs it a handful of turns, and it is what lets [the QA plan](#7-qa-plan) transcribe instead of re-run. Then it commits through commitkit, exactly as [Implement](#3-implement) does and for the same reason.
-3. Re-review (**reviewkit**), **delta-scoped** and on `opus` (see [Model routing](#model-routing)): point it at the fix commits and the surviving blocker IDs, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it is the most expensive thing this pipeline can do. Scope it in the prompt too: the fix commits and `findings-r<N>.md` are the input, vendor code under `node_modules` is out of scope, and nothing round 1 already cleared gets re-read. Left unscoped, a measured delta round grew past its own round 1 (46 tool uses against 18) while reading installed packages. Only re-review while **blockers** remain.
+3. Re-review (**reviewkit**), **delta-scoped** and on the host's primary writer model (see [Model routing](#model-routing)): point it at the fix commits and the surviving blocker IDs, not the whole branch diff again. Round 1 already covered the untouched code, and re-reading all of it is the most expensive thing this pipeline can do. Scope it in the prompt too: the fix commits and `findings-r<N>.md` are the input, vendor code under `node_modules` is out of scope, and nothing round 1 already cleared gets re-read. Left unscoped, a measured delta round grew past its own round 1 (46 tool uses against 18) while reading installed packages. Only re-review while **blockers** remain.
 
 **The nit sweep happens exactly once, in round 1.** Round 1's input is every surviving blocker **plus every cheap, concrete nit** review round 1 raised: a wrong ARIA attribute, a misleading doc line, a leaked handler. Those cost almost nothing to fix while an agent is already in the file, and they become someone's afternoon later. Nits too big for the sweep go to the PR body as "known follow-ups" instead.
 
