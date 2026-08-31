@@ -29,9 +29,9 @@ gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 | `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
 | `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
 
-Show current vs proposed per field, the same side-by-side shape `about` uses. Drop every row that already matches; only a row that differs is a change to decide.
+Show current vs proposed for every row in the map, the same side-by-side shape `about` uses. Mark each row as matching or differing; never drop a matching row, because the user may want to flip a setting the map already agrees with.
 
-**Ask the settings as their own question, separate from every other decision in this mode.** Do not fold them into the scaffold or the license question, and do not ask for one blanket approval of the whole map. Put one option per differing row, in the map's order, worded as `current → proposed` with the Why column as the option's explanation, and let the user select the rows to apply and leave the rest untouched. The wiki row is the one most often flipped, so never bundle it with another row. When the user selects nothing, change no setting and continue.
+**Ask the settings as their own question, separate from every other decision in this mode.** Do not fold them into the scaffold or the license question, and do not ask for one blanket approval of the whole map. Put one option per row, in the map's order, worded as `current → proposed` (or `current, matches` for a row already at the proposed value) with the Why column as the option's explanation, and let the user select per row whether to enable or disable that setting. A selected matching row flips to its opposite value; an unselected row stays untouched. The wiki row is the one most often flipped, so never bundle it with another row. When the user selects nothing, change no setting and continue.
 
 The default branch is report-only: state it when it isn't `main` and change nothing, because renaming a default branch breaks open PRs and clones.
 
