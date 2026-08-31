@@ -130,7 +130,6 @@ This is also why prose paragraphs lose to bullet sublists here. A wall of prose 
 # QA Plan: <Feature name>
 
 ## Summary                   — what it does, what "working" means
-## Overall result            — pass / fail / partial verdict boxes
 ## Environment               — once for the whole plan: build, base URL, creds, flags, launch
 ## Test cases at a glance    — table of TC-N.M, scenario, title, priority
 
@@ -145,7 +144,12 @@ This is also why prose paragraphs lose to bullet sublists here. A wall of prose 
 
 ## Automated verification (by AI agent)
 ## Not covered / needs human judgment
+## Overall result            — pass / fail / partial verdict boxes
 ```
+
+### The verdict sits at the foot
+
+The tester works down the file case by case, so the run ends at the bottom. A verdict box near the top would make them scroll back over everything they just finished to tick it, which is how it ends up never ticked. Placing it last puts the box exactly where the attention already is.
 
 ### Nothing to transcribe
 
@@ -171,4 +175,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`6d09df4` on 2026-08-31._
