@@ -2,13 +2,14 @@
 
 This repo has no application code. It's a collection of Markdown instruction files plus the shell tooling that keeps them consistent and gets them onto machines. Understanding it means understanding four things: where skills live, how they reach an agent, what enforces the conventions, and how they get published.
 
-## A skill is a directory with one file
+## A skill is a directory with one entry file
 
 ```
 skills/<name>/SKILL.md
+skills/<name>/modes/<mode>.md      # optional satellites
 ```
 
-That's the whole unit. YAML frontmatter declares the skill's identity and routing; the body is the instructions an agent reads. No manifest ties the collection together — `skill_names()` in `scripts/lib.sh` enumerates the collection by globbing `skills/*/` and keeping directories that contain a `SKILL.md`. Adding a skill is creating a directory; there is nothing to register.
+`SKILL.md` is the entry point and the only required file. YAML frontmatter declares the skill's identity and routing; the body is the instructions an agent reads. No manifest ties the collection together — `skill_names()` in `scripts/lib.sh` enumerates the collection by globbing `skills/*/` and keeping directories that contain a `SKILL.md`. Adding a skill is creating a directory; there is nothing to register.
 
 The frontmatter carries the contract:
 
@@ -16,6 +17,14 @@ The frontmatter carries the contract:
 - **`description`** front-loads an English "Use when …" trigger. This is a routing rule, not a title — agents and skills.sh decide whether to activate a skill primarily from this field, so the branded name never has to be the thing that matches.
 - **`metadata.internal`** declares visibility, and is the one field with consequences outside this repo.
 - **`allowed-tools`** scopes what the skill may do. Every skill here declares it. A skill that leaves it out inherits every tool the host offers, Bash included — lint warns and the security scan flags it.
+
+### Satellites, for a skill whose modes are skipped
+
+A skill that runs one mode per invocation makes the agent read the other modes for nothing. Nine skills split on that seam. `SKILL.md` keeps mode selection, the guards, and the vocabulary every mode shares, then points at one file per mode: `` mode `close` → read [modes/close.md](modes/close.md), then follow it ``. A satellite assumes the root is loaded, never repeats it, and carries the hand-off for the mode body it closes.
+
+The gate is the branch and never raw size. `statuskit` and `afkkit` walk their whole body on every run, so a split would only add reads, and they stay one file whatever they weigh. Six skills use the `modes/` shape: `ideakit`, `issuekit`, `mergekit`, `repokit`, `tutorkit`, and `wikikit`. Three more disclose one heavy branch to a flat sibling instead — `gitkit/clean.md` and `gitkit/rescue.md`, `promptkit/worked-example.md`, and `uikit/stack.md`.
+
+Satellites ship with the skill on install, so `make lint` holds them to the root's reference-integrity checks and resolves every relative pointer from the file that wrote it.
 
 ## Two homes, one boundary
 
@@ -65,13 +74,15 @@ Two scripts, both surfaced through the `Makefile` and both run in CI by `.github
 
 ### `make lint`
 
-Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger, `license` is present, `metadata.internal` is declared as a boolean — and then three more things:
+Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger, `license` is present, `metadata.internal` is declared as a boolean — and then four more things:
 
 **A declared tool surface.** `allowed-tools` is a warning rather than an error, because a skill can have a defensible reason to inherit everything. The escape hatch is `TOOLS_EXEMPT` in the script, currently empty, and joining it means writing the reason into the skill's own Notes. The field is load-bearing here rather than decorative: `researchkit` withholds Bash precisely so a host that honors the declaration cannot run a spike instead of reading sources. An undeclared surface should be a decision somebody made, not one nobody noticed.
 
-**Reference integrity.** It builds the set of GitHub heading anchors for the document (mirroring github-slugger's rules) and checks every intra-doc `](#anchor)` link against it. A broken anchor is an error. It also flags `step N`-style cross-references as warnings, because a bare number binds to a step's *position* — reorder the steps and the reference silently points at the wrong one, with no tool able to detect it. A named anchor binds to identity instead and breaks loudly right here.
+**Reference integrity.** It builds the set of GitHub heading anchors for the document (mirroring github-slugger's rules) and checks every intra-doc `](#anchor)` link against it. A broken anchor is an error. It also flags `step N`-style cross-references as warnings, because a bare number binds to a step's *position* — reorder the steps and the reference silently points at the wrong one, with no tool able to detect it. A named anchor binds to identity instead and breaks loudly right here. Both checks run over every satellite as well as the root, since a satellite ships with the skill and a rotting pointer inside one is invisible to the reader who never opens it.
 
-**A closing hand-off section.** Every skill is required to end by recapping what it did and naming the next move. Lint can only verify such a section exists; whether its content is any good is a review judgment. `gitkit` is the sole exemption, as the primitives layer other skills call into.
+**Pointer resolution.** Every relative link, in the root and in each satellite, has to resolve on disk from the directory of the file that wrote it. This is what makes the split shape safe: a root that points at a mode file it never created is a skill that dead-ends mid-run, and the failure only shows up in the one mode nobody tested. The portability check treats the two directions differently on purpose — `](../…)` in a `SKILL.md` escapes the skill directory and breaks once installed, while the same pointer in a satellite is just the satellite reaching its own root.
+
+**A closing hand-off section.** Every skill is required to end by recapping what it did and naming the next move. A split skill passes when the root carries that section or when every one of its `modes/*.md` does, because a per-mode hand-off belongs beside the mode body. Lint can only verify such a section exists; whether its content is any good is a review judgment. `gitkit` is the sole exemption, as the primitives layer other skills call into.
 
 Full runs add three cross-file checks that a per-skill run (`make lint name=<skill>`) deliberately skips:
 
@@ -107,4 +118,4 @@ Process artifacts record what was decided at a moment in time and are never read
 
 Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`17c5881` on 2026-09-01._

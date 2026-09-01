@@ -64,6 +64,14 @@ The three above are the ones a grep can check. Two more decide whether the skill
 
 **Decide what each piece needs to be, by branch.** Inline what every run reads; push into a satellite file inside the skill's own directory what only some runs reach. Keep a concept's definition, rules, and caveats under one heading rather than scattered, since the agent that reads one part may never meet the rest. A skill can be too long even when every line is live and unique, and no trim pass fixes that — only moving material down a rung does.
 
+**A skill whose modes are skipped branches has a fixed shape.** Keep mode selection, the guards, and the shared vocabulary in `SKILL.md`, then give each mode its own file at `modes/<mode>.md` with one pointer per mode in the trigger-carrying form:
+
+```markdown
+- Mode `close` → read [modes/close.md](modes/close.md), then follow it.
+```
+
+A satellite assumes the root is already loaded, so it never repeats the root's material, and its hand-off section moves with its mode body. The gate is the branch and never raw size: a straight-through skill walks its whole body on every run, so splitting it only adds reads. Lint holds satellites to the root's anchor and step-reference checks, and resolves every relative pointer from the file that wrote it, so a pointer at a mode file you never created fails the run.
+
 If you marked it `internal: false`, it must also be **portable**: conventions inlined rather than linked, no repo-relative links, no dependency on `make` or `AGENTS.md` or `scripts/`, and it should print its output as a code block when there's no filesystem to write to. It will be installed alone into repos that have none of the machinery here.
 
 ## 5. Lint it
@@ -150,4 +158,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`17c5881` on 2026-09-01._

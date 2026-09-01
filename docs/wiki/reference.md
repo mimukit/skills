@@ -86,9 +86,10 @@ Per skill:
 | `allowed-tools:` declared | warning |
 | Public skill has no repo-relative link (`](../…`) | warning |
 | Public skill doesn't reference repo machinery (`make lint`, `AGENTS.md`, `scripts/`) | warning |
-| Closing hand-off section exists | warning |
-| Every intra-doc `](#anchor)` resolves to a real heading | error |
-| No number-based `step N`, `step-N`, or `§N` reference | warning |
+| Closing hand-off section exists, in the root or in every `modes/*.md` | warning |
+| Every intra-doc `](#anchor)` resolves to a real heading, in `SKILL.md` and every satellite | error |
+| No number-based `step N`, `step-N`, or `§N` reference, in `SKILL.md` and every satellite | warning |
+| Every relative pointer resolves inside the skill directory, from the root and from every satellite | error |
 
 Full runs only (skipped when skill names are passed):
 
@@ -109,6 +110,10 @@ Full runs only (skipped when skill names are passed):
 | A commit touching exactly one skill also touched that skill's page | warning |
 
 The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
+
+A **satellite** is any `.md` in a skill's directory other than `SKILL.md`, most often a `modes/<mode>.md`. It ships with the skill on install, so it carries the same reference-integrity checks as the root rather than rotting where nothing looks. A relative pointer is checked from the file that writes it, so `](modes/close.md)` in a root and `](../SKILL.md#remove)` in a satellite both resolve against their own directory. The portability check reads `](../…)` in a root as an escape from the skill directory and flags it; the same pointer in a satellite is how a satellite reaches its own root.
+
+The hand-off check takes a split skill on either terms. A skill with a `modes/` directory passes when the root carries a closing section, or when every one of its `modes/*.md` does, because a per-mode hand-off belongs with the mode body it closes.
 
 The four page-registration checks ask one question of three files — can this page be found on disk, by a docs audit, and by a reader. They enforce **presence only**. Nothing checks *placement*: `index.md` groups skills by theme, and a skill filed under the wrong heading links just as correctly as one filed right.
 
@@ -162,4 +167,4 @@ Same subject means update in place, never a second file. On a genuine collision 
 
 `.github/workflows/lint.yml` runs on pushes to `main` and on every pull request. One job on `ubuntu-latest`: `actions/checkout@v4`, then `make lint`, then `make security`.
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`17c5881` on 2026-09-01._
