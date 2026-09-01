@@ -65,6 +65,7 @@ one-line summary of why the change was made
 
 - **Imperative mood, all lowercase subject.** No capitalized first word, no trailing period, aim for ≤ 50 characters.
 - The summary states the **effect** ("add retry to fetch client"), not the activity ("changes to fetch client").
+- **Body lines stay at 72 characters or fewer.** Hooks like commitlint's `body-max-line-length` reject longer lines, and 72 clears the common 72/80/100 limits, so a compliant message commits on the first try instead of costing a retry.
 - **A body is required.** One line of *why*, then bullets. Trivial commits don't get padded, but they always get the summary line and at least one bullet.
 - No `Co-authored-by` or tool advertising unless you ask for it.
 
@@ -120,4 +121,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`17c5881` on 2026-09-01._

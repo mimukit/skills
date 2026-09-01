@@ -93,6 +93,7 @@ The `(scope)` is required, so every message carries one, falling back to `(repo)
 Rules:
 - **Imperative mood**, **all lowercase** subject. Never capitalize the first word or any word in the title (proper nouns and acronyms are the only exceptions), use **no trailing period**, and aim for ≤ 50 characters.
 - The summary states the *effect* of the change ("add retry to fetch client"), not the activity ("changes to fetch client").
+- **Keep every body line at 72 characters or fewer.** Break a longer bullet into two bullets, or continue it on an indented next line. Commit hooks such as commitlint's `body-max-line-length` reject long lines, and 72 clears the common 72/80/100 limits.
 - **A body is required.** Open with a short one-line summary of *why*, then a bullet list capturing the reasons and the concrete changes. Keep it to what a reviewer needs. Don't pad trivial commits, but always include the summary line and at least one bullet.
 - Do **not** add `Co-authored-by` or tool advertising unless the user asked for it.
 
