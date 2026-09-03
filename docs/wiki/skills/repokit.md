@@ -1,4 +1,5 @@
 # repokit
+<!-- cheatsheet: Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup. -->
 
 Set up a GitHub repo through the `gh` CLI — an inferred About description and topics, the workflow labels (issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools), and a full new-repo setup that applies the house settings and scaffolds the baseline files.
 
@@ -51,6 +52,7 @@ The proposal comes as a side-by-side table, and **each field is decided independ
 **Homepage is optional and only ever proposed from a URL the repo already names** — a deployed site, a docs site, a package page. There is no inference to fall back on, so a repo that names none keeps an empty homepage. The repo's own GitHub URL is not a candidate; the About panel shows it already.
 
 ### `labels`
+<!-- cheatsheet: provisions the workflow labels the issue lifecycle expects -->
 
 Provisions the workflow labels so [`issuekit`](./issuekit.md) — and any workflow reading them — has the vocabulary it expects. repokit *creates and reconciles* these; issuekit only *uses* them.
 
@@ -109,6 +111,7 @@ Otherwise each label sorts into **missing** (create), **drifted** (offer to upda
 **repokit provisions the vocabulary; it never applies it.** No mode here puts a label on an issue or a PR. Deciding #42 is `high` is a judgment about the work, which belongs to issuekit; repokit only guarantees the word exists to say it with. That line is what makes this mode safe to re-run against a live tracker.
 
 ### `setup`
+<!-- cheatsheet: brings an existing repo up to convention — settings, baseline files, `about`, `labels` -->
 
 Brings an already-created repo up to convention in one span: repo settings, baseline files, then `about` and `labels` delegated on top with one closing hand-off for the whole run. It **configures, never creates** — `gh repo create` stays with you, and the root preflight stops when there's no GitHub remote. It also never commits: scaffold files land unstaged for [`commitkit`](./commitkit.md) to group.
 

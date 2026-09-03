@@ -55,6 +55,7 @@ You print a lesson, annotate it, and re-read it months later. That earns HTML â€
 ## Modes
 
 ### `status`
+<!-- cheatsheet: the front door â€” where you are with every track you have open -->
 
 The front door. It answers "where am I with all of this," which is the question you actually have when you sit down after two weeks away and can't remember what you'd started.
 

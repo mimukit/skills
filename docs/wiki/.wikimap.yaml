@@ -41,6 +41,14 @@ pages:
     mode: how-to
     documents: [scripts/lib.sh, scripts/link.sh, scripts/unlink.sh]
 
+  # Generated, never authored: scripts/cheatsheet.sh derives every line from the
+  # per-skill pages, and `make lint` diffs the committed page against a fresh
+  # generation. Listed here so a docs audit sweeps it, but the fix for anything
+  # wrong on it is always an edit to a skill page plus `make cheatsheet`.
+  - path: cheatsheet.md
+    mode: reference
+    documents: [docs/wiki/skills/*.md]
+
   # The composition map: how the skills sequence into one loop. It restates skill
   # facts on purpose so a reader gets one map, which is why `make lint` cross-checks
   # the names, the `<kit> <mode>` invocations, and the label vocabulary it quotes.

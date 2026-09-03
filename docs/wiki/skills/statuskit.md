@@ -96,6 +96,7 @@ Reading it costs nothing. The survey already fetches every label on every open i
 **A PR's priority is the highest priority among the issues it closes** — the same path leverage takes through `closingIssuesReferences`, for the same reason: a PR has no importance of its own, only that of the work it retires. Highest rather than average, because merging delivers *all* of them and the most urgent one is what's actually waiting.
 
 ### `critical` is the one thing that outranks finish-first
+<!-- cheatsheet: the one label that outranks the finish-first ranking -->
 
 Every other signal orders *within* a rung, and that restraint is deliberate — it's what stops a clever number from talking you out of finishing what you started. `critical` is the single exception, and the argument is narrow enough to state in a line: **finish-first is a heuristic for what to do when nobody has said what matters, and `critical` is somebody saying it.**
 

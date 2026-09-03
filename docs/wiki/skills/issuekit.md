@@ -109,6 +109,7 @@ It also **guards against duplicates** before creating, because `create` is the w
 The **grill gate** decides which label vocabulary applies. A plan carrying grillkit's `Grilled: YYYY-MM-DD` stamp gets the normal `ready`/`blocked` pair. An ungrilled source gets **`needs-planning` on everything** — which is what keeps afkkit from picking up work a human hasn't grilled.
 
 ### `start`
+<!-- cheatsheet: picks a `ready` issue up, and hands the worktree half to gitkit -->
 
 Pick an issue up. Deliberately thin: the tracker half is issuekit's, the worktree half is [`gitkit`](./gitkit.md)'s, and there's nothing in between.
 
@@ -121,6 +122,7 @@ The gate does not depend on who types the command. It's the *label* that carries
 Refusals name the reason. An issue already `in-progress` isn't a failure — it takes the adopt path, where gitkit hands back the existing worktree and the label is left alone. That's what makes `start` safe to re-run.
 
 ### `close`
+<!-- cheatsheet: closes an issue whose PR merged, and reclaims its workspace -->
 
 The other bookend. The issue's PR merged, so close it out and reclaim its workspace.
 

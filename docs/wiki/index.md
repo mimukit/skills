@@ -7,6 +7,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 | Page | What it covers |
 |------|----------------|
 | [Getting started](./getting-started.md) | Two paths — install from skills.sh and invoke a skill, or clone, link a skill into your agents, edit it live, and lint it |
+| [Cheatsheet](./cheatsheet.md) | Every skill and every mode, one line each — the recall page, generated from the per-skill pages |
 | [The workflow](./workflow.md) | How the skills compose into one loop — every phase, every handoff, and a worked end-to-end day |
 | [Architecture](./architecture.md) | How the repo is put together — the two skill homes, the shell tooling, the gates, and how skills reach people |
 | [Reference](./reference.md) | Every `make` target, environment variable, link-status badge, lint check, and security finding class |
@@ -20,7 +21,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 
 ## The skills
 
-One page per skill — what it does, when to reach for it, how its modes work, and what it hands off to. For how they compose into one loop, read [the workflow](./workflow.md) instead.
+One page per skill — what it does, when to reach for it, how its modes work, and what it hands off to. For a one-line-per-mode recall list, read [the cheatsheet](./cheatsheet.md); for how they compose into one loop, read [the workflow](./workflow.md).
 
 **Git & GitHub**
 [`gitkit`](./skills/gitkit.md) · [`commitkit`](./skills/commitkit.md) · [`prkit`](./skills/prkit.md) · [`mergekit`](./skills/mergekit.md) · [`releasekit`](./skills/releasekit.md) · [`issuekit`](./skills/issuekit.md) · [`repokit`](./skills/repokit.md) · [`orcakit`](./skills/orcakit.md) · [`paseokit`](./skills/paseokit.md)

@@ -37,6 +37,7 @@ Calling them `quick` and `deep` would imply the same job at two efforts. That's 
 ## Modes
 
 ### `task`
+<!-- cheatsheet: sharpens the one-shot instruction you are about to hand a coding agent — the default -->
 
 **The default.** `system` needs a positive signal that the prompt is durable — it ships in an app, runs every request, holds variables something else fills. Everything else, ambiguity included, runs as `task`. That's a default rather than a question because `task` is what almost every ask is, and because the mode is named in the delivery: a wrong branch costs one word to correct, where asking costs an answer before anything has happened.
 
@@ -49,6 +50,7 @@ Then the **five-part contract** — goal · file scope · constraints · done si
 The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. A `worked-example.md` satellite beside the `SKILL.md` carries a worked run end to end, loaded on demand — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row.
 
 ### `system`
+<!-- cheatsheet: sharpens a durable system prompt an application ships -->
 
 **"Codebase-blind" describes the prompt, not the skill.** The prompt this mode produces is codebase-blind *at runtime* — it ships to production and can't reference a repo path. promptkit while authoring reads the calling code freely, and grounding depends on it: the existing prompt, which model, whether tools are attached, whether a schema is already enforced. A prompt that duplicates a schema the API enforces is waste.
 

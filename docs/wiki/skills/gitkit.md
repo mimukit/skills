@@ -145,6 +145,7 @@ Rebasing's real cost is mechanical, not aesthetic: it rewrites SHAs. Once a PR i
 - **`--force-with-lease`, never bare `--force`.**
 
 ### `sync`
+<!-- cheatsheet: fetches, rebases onto the base, resolves each conflict, then force-pushes with lease -->
 
 The one runnable procedure in an otherwise reference-shaped skill: fetch, measure the gap against the base, preview once, rebase, resolve each conflict file by file, run the repo's gate, then `git push --force-with-lease`.
 

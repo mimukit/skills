@@ -16,6 +16,9 @@
 #     modes/*.md carries one
 # On a full run it also checks that every skill has a reader-facing wiki page
 # under docs/wiki/skills/ and that the modes each page documents still exist.
+# On a full run it also regenerates docs/wiki/cheatsheet.md and diffs it against
+# the committed page, so the generated recall page can never drift from the
+# skill pages it derives from.
 # On a full run it also cross-checks the human-facing docs/wiki/workflow.md map
 # against the skills it names — skill names, `<kit> <mode>` invocations, and
 # lifecycle labels must still exist in the source SKILL.md files (error), so the
@@ -580,6 +583,42 @@ check_skill_pages() {
   done
 }
 
+# Is docs/wiki/cheatsheet.md still what the skill pages say it should be?
+#
+# The cheatsheet is generated (scripts/cheatsheet.sh), so nothing on it is
+# authored — a stale page means somebody edited a skill page and didn't
+# regenerate. That's the one rot this file can catch exactly rather than
+# heuristically: regenerate into a temp file and diff. No judgement, no false
+# positives, and the fix is a single command the error names.
+check_cheatsheet() {
+  local gen="$REPO_ROOT/scripts/cheatsheet.sh" page="$REPO_ROOT/docs/wiki/cheatsheet.md" tmp
+  [[ -x "$gen" ]] || return 0
+  if [[ ! -f "$page" ]]; then
+    echo "  ${C_RED}✗${C_RESET} docs/wiki/cheatsheet.md"
+    echo "      ${C_RED}error:${C_RESET} the page is missing — run 'make cheatsheet'"
+    errors=$((errors + 1))
+    return
+  fi
+  tmp="$(mktemp)"
+  if ! "$gen" -o "$tmp" >/dev/null 2>&1; then
+    rm -f "$tmp"
+    echo "  ${C_RED}✗${C_RESET} docs/wiki/cheatsheet.md"
+    echo "      ${C_RED}error:${C_RESET} scripts/cheatsheet.sh failed — run 'make cheatsheet' to see why"
+    errors=$((errors + 1))
+    return
+  fi
+  if diff -q "$page" "$tmp" >/dev/null 2>&1; then
+    rm -f "$tmp"
+    echo "  ${C_GREEN}✓${C_RESET} docs/wiki/cheatsheet.md"
+    return
+  fi
+  echo "  ${C_RED}✗${C_RESET} docs/wiki/cheatsheet.md"
+  echo "      ${C_RED}error:${C_RESET} out of date against docs/wiki/skills/ — run 'make cheatsheet'"
+  diff -u "$page" "$tmp" | sed -n '3,15p' | sed 's/^/        /'
+  rm -f "$tmp"
+  errors=$((errors + 1))
+}
+
 run_all=0
 targets=("$@")
 if [[ ${#targets[@]} -eq 0 ]]; then
@@ -595,6 +634,7 @@ done
 [[ "$run_all" -eq 1 ]] && check_shared_tables
 [[ "$run_all" -eq 1 ]] && check_workflow_doc
 [[ "$run_all" -eq 1 ]] && check_skill_pages
+[[ "$run_all" -eq 1 ]] && check_cheatsheet
 
 echo
 echo "${C_DIM}${errors} error(s), ${warns} warning(s)${C_RESET}"

@@ -11,6 +11,7 @@ Run `make help` to print this list from the `Makefile` itself.
 | `make link` | `name=<skill>` (optional) | Symlinks `skills/<name>/` into every AI tool's skills directory. No `name=` opens a picker. |
 | `make unlink` | `name=<skill>` (optional) | Removes a dev symlink and restores any backup. No `name=` opens a picker restricted to linked skills. |
 | `make list` | — | Prints every skill with its aggregated link status. |
+| `make cheatsheet` | — | Regenerates `docs/wiki/cheatsheet.md` from the pages under `docs/wiki/skills/`. Prints a nudge for any row that runs long. |
 | `make lint` | `name=<skill> …` (optional) | Checks skills against the conventions. Named skills skip the cross-file checks. |
 | `make security` | `name=<skill> …` (optional) | Heuristic security scan. |
 | `make help` | — | Prints the target list. Default goal. |
@@ -108,6 +109,7 @@ Full runs only (skipped when skill names are passed):
 | Every skill is linked from `docs/wiki/index.md` | error |
 | Every skill page `index.md` links exists | error |
 | A commit touching exactly one skill also touched that skill's page | warning |
+| `docs/wiki/cheatsheet.md` matches what `scripts/cheatsheet.sh` generates | error |
 
 The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
 
@@ -116,6 +118,8 @@ A **satellite** is any `.md` in a skill's directory other than `SKILL.md`, most 
 The hand-off check takes a split skill on either terms. A skill with a `modes/` directory passes when the root carries a closing section, or when every one of its `modes/*.md` does, because a per-mode hand-off belongs with the mode body it closes.
 
 The four page-registration checks ask one question of three files — can this page be found on disk, by a docs audit, and by a reader. They enforce **presence only**. Nothing checks *placement*: `index.md` groups skills by theme, and a skill filed under the wrong heading links just as correctly as one filed right.
+
+The cheatsheet check regenerates the page into a temp file and diffs it. Nothing on that page is authored, so a difference always means the same thing: a skill page changed and nobody ran `make cheatsheet`. The error prints the first lines of the diff and names the fix.
 
 The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at one warning per skill touched, nearly all of them correct to ignore.
 

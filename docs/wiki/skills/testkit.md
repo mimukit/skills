@@ -84,6 +84,7 @@ It crowns **exactly one** slice, with runners-up in order. Crowning one is the w
 Two honesty rules carry over from refactorkit. Every run prints a **coverage line** — "ranked 1,240 files, read the top 40 across 3 slices" — because a cap nobody can see reads as completeness. And an audit that finds no meaningful untested surface **writes no file** and says so, because a survey obliged to produce findings will manufacture them.
 
 ### `cover`
+<!-- cheatsheet: writes the tests, standing up a runner first when the project has none -->
 
 Writes the tests. It stands up a runner first when there is none, inheriting the ecosystem's default rather than the most featureful option — a project with no tests has no opinion to honour, so the choice least likely to be relitigated is whatever the language's own docs reach for. One green smoke test lands before anything real, so the harness is proven before forty tests start debugging it.
 

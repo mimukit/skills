@@ -13,6 +13,10 @@ unlink:
 list:
 	@scripts/list.sh
 
+## cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill pages
+cheatsheet:
+	@scripts/cheatsheet.sh
+
 ## lint [name=<skill>]    Check skills against AGENTS.md conventions
 lint:
 	@scripts/lint.sh $(name)
@@ -26,4 +30,4 @@ help:
 	@echo "mimukit/skills — targets:"
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/^## /  /'
 
-.PHONY: link unlink list lint security help
+.PHONY: link unlink list cheatsheet lint security help

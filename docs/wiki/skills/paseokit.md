@@ -69,6 +69,7 @@ Two registry quirks it documents rather than works around:
 ## Modes
 
 ### `list`
+<!-- cheatsheet: reports every workspace with a verdict, and changes nothing -->
 
 Read-only. Changes nothing, asks nothing, and is the right first move whenever state is unclear.
 

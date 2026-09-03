@@ -44,6 +44,7 @@ Classification is by path prefix, which is a heuristic rather than something Orc
 ## Modes
 
 ### `list`
+<!-- cheatsheet: reports every workspace with a verdict, and changes nothing -->
 
 Read-only. Changes nothing, asks nothing, and is the right first move whenever state is unclear.
 
@@ -62,6 +63,7 @@ Every non-main workspace gets joined against the tracker and given a verdict:
 `dirty` rows go first when any exist. That's where work gets lost.
 
 ### `link`
+<!-- cheatsheet: attaches the issue number and a real-state `workspaceStatus` to a workspace card -->
 
 Attach the metadata Orca can't infer, so a card actually says what it's for — the issue number, and a `workspaceStatus` mapped from the *real* state rather than the label alone (no PR and no commits → `todo`; work committed → `in-progress`; PR open → `in-review`; PR merged → `done`).
 
