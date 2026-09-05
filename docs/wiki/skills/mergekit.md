@@ -1,6 +1,6 @@
 # mergekit
 
-Take an open GitHub PR and make it merge-ready on your machine — worktree, sync, project running, review pack — then merge it once you say so.
+Take an open GitHub PR and set it up for review on your machine — worktree, project running, review pack — then merge it once you say so.
 
 **Reach for it when** you review the PRs an agent opened overnight, or your own PR comes back needing changes.
 
@@ -15,7 +15,7 @@ Take an open GitHub PR and make it merge-ready on your machine — worktree, syn
 
 mergekit is the other half of a pull request's life. Something else opened it — you, an agent, a teammate. mergekit is what you run when it's your turn to *judge* it.
 
-It gets the PR into a worktree, syncs it with the base, gets the project running, and prints a **review pack** of everything you need to form an opinion. Then it waits.
+It gets the PR into a worktree, gets the project running, and prints a **review pack** of everything you need to form an opinion. Then it waits.
 
 It forms **no opinion about the code**. Judging the source is [`reviewkit`](./reviewkit.md)'s job; mergekit sets the review up and executes the decision you reach.
 
@@ -52,13 +52,16 @@ It **does not crown a "next" PR**. Ranking work is [`statuskit`](./statuskit.md)
 
 ### `start`
 
-Make a PR merge-ready.
+Prepare the review workspace for a PR.
+<!-- cheatsheet: Prepare the review workspace for a PR: worktree, project running, review pack. -->
+
+**The number is a PR number by default.** `start 34` means PR 34, never issue 34, even when both exist. Starting an *issue* is [`issuekit`](./issuekit.md)'s `start`. The two skills sit next to each other in the loop, and a bare number is the one place they can be confused, so mergekit resolves it one way and says which.
 
 The key step is **adopt first, create only if needed**. A PR's branch very often already has a worktree — it was implemented in one on this same machine. Git allows a branch in exactly one worktree, so creating a second doesn't merely duplicate work, it hard-fails. Re-running `start` is a normal thing a reviewer does and must never error or blow away work in progress.
 
 If an adopted worktree is dirty, mergekit **reports what's uncommitted before doing anything else** — you're standing in someone's live workspace, possibly mid-change, not a scratch checkout.
 
-Then it syncs with the base *before* you read the diff, so you review what will actually land. A PR branch is published, so that sync previews and waits. This is the one place [`gitkit`](./gitkit.md)'s merge exception genuinely fires: the review pack already counts unresolved threads, and a rebase outdates every one of them, so the count goes into the preview.
+**`start` does not sync the branch and pushes nothing.** It measures how far the branch is behind the base, prints the number, and stops. A sync rewrites a published branch and marks every unresolved review thread outdated, so the reviewer who is about to read those threads makes that call, not the skill. You run [`gitkit`](./gitkit.md) `sync` inside the worktree when the drift matters. Only `fix` syncs, because that mode is already pushing to the branch.
 
 The **review pack** assembles everything so you don't go hunting: title, author, URL, body summary, the linked issue and its acceptance criteria, commits and diff shape, QA plan and proof, CI status per check — and **unresolved review threads with `file:line` and comment text**, which is the highest-value part, because it's what you'd otherwise re-derive by hand.
 
@@ -94,11 +97,11 @@ When answering: it replies and resolves each thread it actually fixed, pointing 
 
 mergekit doesn't implement worktrees, base-ref detection, or the rebase rule — [`gitkit`](./gitkit.md) does, and mergekit calls it for all three.
 
-What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a sync happens before a human reads the diff, that a merge needs a confirmation. A worktree path convention or base-ref ladder restated as mergekit's own would be a bug.
+What mergekit owns is the *policy about when*: that a PR is worth pulling down, that a merge needs a confirmation. The sync is not on that list — it is the reviewer's call, made in the worktree. A worktree path convention or base-ref ladder restated as mergekit's own would be a bug.
 
 ## Hands off to
 
-A merge hands straight off to [`issuekit`](./issuekit.md) `close` and then `sync`, which reconcile the tracker. From there: `start` on an issue the merge unblocked, otherwise the next PR waiting on you, otherwise [`statuskit`](./statuskit.md) to re-orient. When a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
+`start` hands off to [`gitkit`](./gitkit.md) `sync` when the branch is behind, run by you inside the worktree. A merge hands straight off to [`issuekit`](./issuekit.md) `close` and then `sync`, which reconcile the tracker. From there: `start` on an issue the merge unblocked, otherwise the next PR waiting on you, otherwise [`statuskit`](./statuskit.md) to re-orient. When a dependent was unblocked *and* another PR is waiting, the PR wins — finishing outranks starting.
 
 ## Install
 
@@ -108,4 +111,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`ada7efe` on 2026-08-30._
+_Verified against `main`@`469bdf5` on 2026-09-05._

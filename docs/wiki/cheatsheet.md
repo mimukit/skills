@@ -16,7 +16,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`ideakit`](#ideakit) | Think an idea through across many sessions: one ideas repo with a folder per idea, a jotpad for the thoughts that have none, one idea open at a time, and nothing written to disk until you ask for it. |
 | [`implementkit`](#implementkit) | Implement a plan, spec, or issue into working code — then stop, gated on the repo's own tests and build. |
 | [`issuekit`](#issuekit) | Own the GitHub issue lifecycle in five modes — file the work, pick it up, land it, keep it in sync as PRs merge, and keep the tracker honest and ranked. |
-| [`mergekit`](#mergekit) | Take an open GitHub PR and make it merge-ready on your machine — worktree, sync, project running, review pack — then merge it once you say so. |
+| [`mergekit`](#mergekit) | Take an open GitHub PR and set it up for review on your machine — worktree, project running, review pack — then merge it once you say so. |
 | [`namekit`](#namekit) | Name a project to a naming convention you already use, then prove the name is free before you commit to it. |
 | [`orcakit`](#orcakit) | Keep the [Orca](https://www.onorca.dev/) desktop app's workspace list honest about the git worktrees your workflow actually creates. |
 | [`paseokit`](#paseokit) | Push the git worktrees your workflow actually creates into [Paseo](https://paseo.sh)'s workspace registry, and reap the finished work — the dead rows, and the worktrees whose PRs merged. |
@@ -136,12 +136,12 @@ Own the GitHub issue lifecycle in five modes — file the work, pick it up, land
 
 ## [`mergekit`](./skills/mergekit.md)
 
-Take an open GitHub PR and make it merge-ready on your machine — worktree, sync, project running, review pack — then merge it once you say so.
+Take an open GitHub PR and set it up for review on your machine — worktree, project running, review pack — then merge it once you say so.
 
 | Mode | What it does |
 |---|---|
 | `list` | the morning dashboard: what's actually waiting on you, in one table |
-| `start` | make a PR merge-ready |
+| `start` | prepare the review workspace for a PR: worktree, project running, review pack. |
 | `close` | merge or fix, depending on which verdict you reached |
 | `fix` | the mirror of `start`, for a PR you authored that came back with review comments, a change request, or red CI |
 
