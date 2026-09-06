@@ -114,6 +114,7 @@ mimukit/skills — targets:
   link [name=<skill>]    Symlink a skill into ~/.claude/skills + ~/.agents/skills (no name → picker)
   unlink [name=<skill>]  Remove a dev symlink (no name → picker of linked skills)
   list                   List all skills with their link status
+  cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill pages
   lint [name=<skill>]    Check skills against AGENTS.md conventions
   security [name=<skill>] Heuristic security scan (local stand-in for skills.sh scanners)
   help                   Show this help
@@ -176,11 +177,12 @@ A clean run looks like this:
   ✓ shared tables (label map · type table)
   ✓ docs/wiki/workflow.md
   ✓ docs/wiki/skills/
+  ✓ docs/wiki/cheatsheet.md
 
 0 error(s), 0 warning(s)
 ```
 
-Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
+Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document, and that [the cheatsheet](./cheatsheet.md) still matches a fresh generation from those pages. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
 
 Then the security scan:
 
@@ -206,4 +208,4 @@ Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new
 
 To understand why the repo is laid out this way, read [Architecture](./architecture.md).
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`9376802` on 2026-09-06._
