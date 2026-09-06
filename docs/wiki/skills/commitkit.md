@@ -109,7 +109,9 @@ Type, mandatory scope, and the required body carry over unchanged. The payload c
 
 ## Hands off to
 
-[`prkit`](./prkit.md), to open a pull request from exactly these commits. The work is already on the remote by then, so the PR is the only step left. When the push was held or skipped, the report crowns the push instead and gives the command, because commits that exist nowhere but your machine are the most useful line in the report.
+It depends on where the branch already is, which is why the push chain ends with a `gh pr view` and the hand-off reads the answer instead of assuming one.
+
+On a branch with no pull request, [`prkit`](./prkit.md) opens one from exactly these commits. On a branch that already has an open pull request, the commits landed on it the moment they pushed, so a second PR is the wrong move and the report crowns the review step instead — [`mergekit`](./mergekit.md) to reply and re-request review. A merged or closed PR means the branch is spent, and the report crowns a fresh branch with [`gitkit`](./gitkit.md). When the push was held or skipped, the push outranks all of it, because commits that exist nowhere but your machine are the most useful line in the report.
 
 It never amends or rewrites history without an explicit ask.
 
@@ -121,4 +123,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`17c5881` on 2026-09-01._
+_Verified against `main`@`6684600` on 2026-09-06._
