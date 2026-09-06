@@ -81,7 +81,7 @@ The shared git layer every other skill borrows — worktree convention and lifec
 |---|---|
 | `clean` | sweeps away the worktrees and branches whose work has landed, on your machine and on `origin` |
 | `rescue` | finds work that looks lost — a bad rebase, a hard reset, a deleted branch, a stash nobody can find — and puts it back |
-| `sync` | fetches, rebases onto the base, resolves each conflict, then force-pushes with lease |
+| `sync` | fetches, catches up with the branch's own remote, rebases onto the base, resolves each conflict, then force-pushes with lease |
 
 ## [`grillkit`](./skills/grillkit.md)
 

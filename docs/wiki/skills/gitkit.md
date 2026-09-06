@@ -145,11 +145,13 @@ Rebasing's real cost is mechanical, not aesthetic: it rewrites SHAs. Once a PR i
 - **`--force-with-lease`, never bare `--force`.**
 
 ### `sync`
-<!-- cheatsheet: fetches, rebases onto the base, resolves each conflict, then force-pushes with lease -->
+<!-- cheatsheet: fetches, catches up with the branch's own remote, rebases onto the base, resolves each conflict, then force-pushes with lease -->
 
-The one runnable procedure in an otherwise reference-shaped skill: fetch, measure the gap against the base, preview once, rebase, resolve each conflict file by file, run the repo's gate, then `git push --force-with-lease`.
+The one runnable procedure in an otherwise reference-shaped skill: fetch, catch the branch up with its own counterpart on `origin`, measure the gap against the base, preview once, rebase, resolve each conflict file by file, run the repo's gate, then `git push --force-with-lease`.
 
-It exists because "rebase onto the base" as a stated policy still left every caller writing the seven steps itself, and the steps are exactly where the mistakes live — pushing a dirty tree, skipping the gate after a conflict resolution, reaching for bare `--force` when the lease is rejected. A conflict resolution is a code change, which is why the gate sits *before* the push rather than after it.
+Syncing has two halves, and the branch's own remote comes first. A commit pushed from another machine, or by a bot on the pull request, lives on `origin/<branch>` and not locally — rebase onto the base without taking it and the closing `--force-with-lease` either rejects or, with a stale lease, drops that commit. `git pull --rebase origin "$BRANCH"` replays the local commits on top of the remote ones, so the branch holds both before the base is touched.
+
+It exists because "rebase onto the base" as a stated policy still left every caller writing the steps itself, and the steps are exactly where the mistakes live — pushing a dirty tree, skipping the gate after a conflict resolution, reaching for bare `--force` when the lease is rejected. A conflict resolution is a code change, which is why the gate sits *before* the push rather than after it.
 
 The lease rejection is the step worth knowing about. It means somebody pushed while you were rebasing, so the sync stops and shows their commits instead of retrying. Retrying past a rejected lease is how the flag's whole purpose gets thrown away.
 
@@ -189,4 +191,4 @@ npx skills add mimukit/skills -s gitkit
 
 Source: [`skills/gitkit/SKILL.md`](../../../skills/gitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`6684600` on 2026-09-06._
