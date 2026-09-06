@@ -154,7 +154,7 @@ Report first, then act — on approval for a close or a comment, straight throug
 
 It fetches `--state all`, because a `Blocked by #N` pointing at an already-closed issue is drift the open-issue list alone cannot see.
 
-The drift it flags: stale · orphaned · **zombie label** (a closed issue still carrying a status) · **stale block** (a `blocked` whose target already closed) · dangling or circular dependencies · unmarked · **ungrilled `ready`** — an issue promoted too early, offered a move back to `needs-planning` so unattended workers skip it until a human grills it.
+The drift it flags: stale · orphaned · **zombie label** (a closed issue still carrying a status) · **stale block** (a `blocked` whose target already closed) · dangling or circular dependencies · unmarked · **ungrilled `ready`** — an issue promoted too early, offered a move back to `needs-planning` so unattended workers skip it until a human grills it · **off-convention title** — an open issue whose title doesn't match the `type(scope): summary` shape. The title check exists because issues filed outside issuekit (a session calling `gh issue create` directly) land with plain sentence-case titles, and someone then renames them by hand. It first checks whether the repo actually uses the convention — when most titles already ignore it, the repo has its own style and the check is skipped, per the repo-convention rule. Renames are proposed as one `old -> new` table with a single OK for the batch, because a title edit is an outward-facing mutation the label exemption doesn't cover.
 
 Three more come from the priority namespace: **unassessed** (no priority label — counted separately from *unmarked*, since a tracker with tidy lifecycle labels and no priorities anywhere is both common and invisible if the report prints one number), **double-ranked** (more than one priority label, which the GitHub UI will happily produce since it applies labels additively — the repair keeps the highest, because over-ranking an issue you're about to look at beats burying one somebody explicitly escalated), and **stale `critical`** (untouched for weeks, which is self-refuting: nobody dropped anything for it, so the tracker is saying out loud that it isn't critical, and left alone it outranks everything downstream forever and trains you to ignore the one level that's supposed to be unignorable).
 
@@ -184,4 +184,4 @@ npx skills add mimukit/skills -s issuekit
 
 Source: [`skills/issuekit/SKILL.md`](../../../skills/issuekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`ada7efe` on 2026-08-30._
+_Verified against `main`@`a8893c7` on 2026-09-06._
