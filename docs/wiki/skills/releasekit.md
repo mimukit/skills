@@ -52,7 +52,9 @@ The detection has a known weakness: a repo that squash-merges the release PR und
 
 The two agree on most repos, which is what makes the difference easy to get wrong. They diverge exactly where it matters: a project maintaining `v1.x` alongside a released `v2.x`. Cutting a `v1.3.1` patch there, "highest semver" would diff against `v2` and produce a changelog full of commits that shipped months ago in a different major line.
 
-Prereleases are skipped at the same resolver, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog — where a user reading the stable release actually expects them.
+Prereleases are skipped at the same resolver, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog — where a user reading the stable release actually expects them. That skip is a separate `--exclude '*-*'` flag rather than a tighter shape filter, because a semver glob ending in `*` reads `-rc.1` as part of the final number and lets every prerelease through.
+
+The shape filter matches **both** tag prefixes, `v1.2.3` and a bare `1.2.3`. A repo that tags without the `v` is as common as one that doesn't, and matching only the prefixed form would make releasekit report no previous release at all on those repos, then rebuild the entire history into one changelog.
 
 ## Why a breaking change on `0.x` bumps the minor
 
