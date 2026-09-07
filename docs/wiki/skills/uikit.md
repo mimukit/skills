@@ -123,7 +123,7 @@ Either way it **degrades loudly** — never claiming a visual check that didn't 
 
 ## Hands off to
 
-No `DESIGN.md` in the project? [`designkit`](./designkit.md) `init` — it derives the system from shipped UI, and there's now shipped UI to derive from. Otherwise [`commitkit`](./commitkit.md); uikit leaves changes unstaged and does not commit.
+No `DESIGN.md` in the project? [`designkit`](./designkit.md) `init` — it derives the system from shipped UI, and there's now shipped UI to derive from. Otherwise [`commitkit`](./commitkit.md); uikit leaves changes unstaged and does not commit. The runner-up either way is a look at the shipped screen with [`verifykit`](./verifykit.md) `show`, or opening the app by hand where it isn't installed.
 
 Either way the hand-off **repeats the design read verbatim**. It's the only durable record of why the UI looks the way it does, and repeating it is what carries it into a PR body when this runs inside a pipeline.
 
@@ -135,4 +135,4 @@ npx skills add mimukit/skills -s uikit
 
 Source: [`skills/uikit/SKILL.md`](../../../skills/uikit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`ada7efe` on 2026-08-30._
+_Verified against `main`@`327a65c` on 2026-09-07._

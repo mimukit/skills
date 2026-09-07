@@ -90,7 +90,7 @@ It stamps on every run, whatever the project's tracker is. Deciding whether this
 
 ## Hands off to
 
-[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, the gate result, and which phases it stamped — then names the next unbuilt phase, or says the plan is fully built, and stops.
+[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, the gate result, and which phases it stamped — then names the next unbuilt phase, or says the plan is fully built, and stops. When the build touched a UI surface, it adds one runner-up: look at it with [`verifykit`](./verifykit.md) `show`, or open the app by hand where it isn't installed.
 
 ## Install
 
@@ -100,4 +100,4 @@ npx skills add mimukit/skills -s implementkit
 
 Source: [`skills/implementkit/SKILL.md`](../../../skills/implementkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb4b4c1` on 2026-08-29._
+_Verified against `main`@`327a65c` on 2026-09-07._
