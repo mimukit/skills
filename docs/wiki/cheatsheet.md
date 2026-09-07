@@ -36,7 +36,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`tutorkit`](#tutorkit) | Teach a topic across many sessions — one learning repo with a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. |
 | [`uikit`](#uikit) | Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. |
 | [`validatekit`](#validatekit) | Pressure-test a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment. |
-| [`verifykit`](#verifykit) | Prove a frontend feature actually works by driving it in a real browser and capturing screenshots plus a short GIF as PR-ready proof. |
+| [`verifykit`](#verifykit) | Show a frontend change in a real browser, or prove it for a PR with screenshots plus a short GIF, or set up the driver and publish path that both need. |
 | [`wikikit`](#wikikit) | Generate and maintain a project's reader-facing documentation in-repo — getting-started, how-to guides, architecture, runbooks — with every command verified against the code. |
 
 ## [`afkkit`](./skills/afkkit.md)
@@ -295,9 +295,13 @@ _No modes — one path._
 
 ## [`verifykit`](./skills/verifykit.md)
 
-Prove a frontend feature actually works by driving it in a real browser and capturing screenshots plus a short GIF as PR-ready proof.
+Show a frontend change in a real browser, or prove it for a PR with screenshots plus a short GIF, or set up the driver and publish path that both need.
 
-_No modes — one path._
+| Mode | What it does |
+|---|---|
+| `show` | screenshot the change and hand the operator a path |
+| `proof` | capture screenshots and a GIF, bundle them, and publish so a PR can embed them |
+| `setup` | ready one machine and one repo for `show` and `proof`, checking each item before installing anything |
 
 ## [`wikikit`](./skills/wikikit.md)
 
