@@ -31,6 +31,12 @@ prkit doesn't re-derive them:
 
 Everything is diffed against `origin/<base>` after a fetch, not a local `<base>` that may be behind.
 
+## Hotfix branches
+
+A branch named `hotfix-<slug>` takes the type `hotfix` in its PR title: `hotfix(scope): restore session cookie on refresh`. The branch name decides the type rather than the severity, so a scan of the PR list separates the urgent patches from ordinary fixes without anyone re-arguing how bad each bug was. Where a repo's PR-title lint validates types against the Conventional Commits set, prkit falls back to `fix(scope):` and says so once.
+
+The body changes shape too. It leads with the symptom a user saw and the trigger, then the fix, and it carries a **Rollback** line naming the revert. A hotfix gets reviewed under time pressure, which is exactly when the undo should already be on the page instead of being worked out during an incident.
+
 ## The sync step
 
 A PR opened from a stale branch either merges outdated code or lands with GitHub's conflicts banner. So before pushing, prkit checks whether the branch is behind and rebases if so.

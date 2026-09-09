@@ -85,6 +85,7 @@ Two consequences fall out: lookup is **by branch, always**, through git rather t
 | Pattern | For |
 |---|---|
 | `issue-<n>-<slug>` | work starting from a tracker issue. Slug from the title — conventional `type(scope):` prefix stripped, kebab-cased, capped around 50 chars on a word boundary |
+| `hotfix-<slug>` | an urgent fix that patches the base branch directly. Slug from the symptom, capped around 40 chars. No number, because a hotfix starts from the symptom rather than the tracker |
 | `pr-<n>-<slug>` | **only** a fork pull request, where no local branch exists yet |
 | anything else | whatever the human or the repo's convention supplies. gitkit doesn't rename it |
 

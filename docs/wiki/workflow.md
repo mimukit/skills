@@ -332,7 +332,7 @@ The label map is a shared contract with `issuekit`: `repokit` writes them, `issu
 [`gitkit`](./skills/gitkit.md) is the single source of truth for four things:
 
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
-- **What a branch is called** — `issue-<n>-<slug>` for tracker work, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
+- **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix that patches the base branch directly, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
 - **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. An unpublished branch rebases straight through; a published one previews the rebase and its `--force-with-lease` together, naming how many review threads it outdates.
 

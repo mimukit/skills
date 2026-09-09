@@ -42,6 +42,7 @@ Type comes from what the diff *does*, not what files it touches:
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
+| `hotfix` | an urgent fix patched straight onto the base branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -49,6 +50,8 @@ Type comes from what the diff *does*, not what files it touches:
 | `build` / `ci` | build system, deps, or pipeline |
 | `style` | formatting/whitespace, no logic |
 | `chore` | routine maintenance that fits nothing above |
+
+**`hotfix` is the one addition to the Conventional Commits set, and the branch decides it.** A commit sitting on a `hotfix-<slug>` branch, cut from the base branch to patch it directly, takes `hotfix`; everything else stays `fix` however urgent it felt. Tying the type to the branch keeps it checkable, where tying it to severity makes every author re-argue the same call. A repo whose tooling validates types against the standard list gets `fix` instead, stated once.
 
 **Scope is mandatory here** — unlike vanilla Conventional Commits, it's never omitted. The module or feature group the diff belongs to becomes the scope: `feat(auth): …`. Genuinely global work falls back to `repo`: `chore(repo): …`.
 

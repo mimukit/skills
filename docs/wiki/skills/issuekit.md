@@ -62,6 +62,8 @@ Two pairs carry the design:
 
 **Type lives in the title, not a label** — issues carry `feat(scope):` per the Conventional-Commits title convention shared with [`commitkit`](./commitkit.md), whose type set it now matches exactly, so the map holds only lifecycle status. A **closed** issue needs no `done` label; the closed state is the signal.
 
+**A hotfix bypasses the tracker, and issuekit says so rather than gating it.** Urgent work that patches the base branch directly starts from the symptom: somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` PR. No mode here stands in that path, and `start` is not on it. An issue filed afterwards for the record takes the `hotfix(scope):` title and lands on `in-review`, never `ready` — `ready` promises work nobody has begun, and this work is already done.
+
 ## The priority labels
 
 The second label namespace, and the one that decides what gets picked up next. Like the lifecycle set, issuekit **uses** these and [`repokit`](./repokit.md) provisions them.
