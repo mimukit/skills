@@ -89,6 +89,8 @@ Two consequences fall out: lookup is **by branch, always**, through git rather t
 | `pr-<n>-<slug>` | **only** a fork pull request, where no local branch exists yet |
 | anything else | whatever the human or the repo's convention supplies. gitkit doesn't rename it |
 
+**A hotfix branch takes a hyphen, never a slash.** `hotfix/restore-session` makes git treat `hotfix` as a directory in the ref namespace, which blocks a plain `hotfix` ref and collides with the hyphen form. It also breaks the branch-name read that [`commitkit`](./commitkit.md) and [`prkit`](./prkit.md) use to pick the `hotfix` type, so the urgent patch silently lands as an ordinary `fix`.
+
 For a same-repo PR there's already a local branch name — using it is the rule. Inventing a `pr-*` name for a branch that exists is how you land on the two-worktrees-one-branch failure.
 
 ## Operations are idempotent
