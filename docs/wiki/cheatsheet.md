@@ -230,6 +230,7 @@ Set up a GitHub repo through the `gh` CLI — About description and topics, the 
 | `about` | infers a description and topics from the repo's own contents, reconciles against what's set, and applies on approval |
 | `labels` | provisions the workflow labels the issue lifecycle expects |
 | `setup` | brings an existing repo up to convention — settings, baseline files, `about`, `labels` |
+| `docs` | renumbers the repo's `docs/` artifacts so a listing reads in creation order |
 
 ## [`researchkit`](./skills/researchkit.md)
 

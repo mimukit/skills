@@ -7,21 +7,21 @@ Set up a GitHub repo through the `gh` CLI — an inferred About description and 
 
 | | |
 |---|---|
-| Modes | [`about`](#about) · [`labels`](#labels) · [`setup`](#setup) |
+| Modes | [`about`](#about) · [`labels`](#labels) · [`setup`](#setup) · [`docs`](#docs) |
 | Tools | `Bash`, `Read`, `Write` |
-| Writes | GitHub repo metadata and settings — description, topics, labels, merge config — plus scaffold files on disk (unstaged) |
+| Writes | GitHub repo metadata and settings — description, topics, labels, merge config — plus scaffold files on disk (unstaged) and `docs/` renames (staged) |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
 ## What it does
 
-Three jobs, one skill, because all three answer "make this repo's GitHub configuration right" — the outward-facing blurb people read, the label vocabulary the issue workflow runs on, and the settings-and-files baseline a new repo starts from.
+Four jobs, one skill, because all four answer "make this repo match convention" — the outward-facing blurb people read, the label vocabulary the issue workflow runs on, the settings-and-files baseline a new repo starts from, and the naming of the artifacts the other kits write into it.
 
-**If no mode is clear, it asks first**, presenting the three modes before touching anything. A vague "set up this repo" routes to `setup`, which subsumes the old "offer `about` then `labels`" answer.
+**If no mode is clear, it asks first**, presenting the modes before touching anything. A vague "set up this repo" routes to `setup`, which subsumes the old "offer `about` then `labels`" answer.
 
 ## Safety stance
 
-A repo's description, topics, and labels are outward-facing state. **Every mutation is previewed and gets an OK before it runs — nothing changes on GitHub unprompted.** Every command is echoed, so the change is auditable and replayable.
+A repo's description, topics, and labels are outward-facing state. **Every mutation is previewed and gets an OK before it runs — nothing changes on GitHub unprompted.** Every command is echoed, so the change is auditable and replayable. `docs` mutates the working tree instead of GitHub and takes the same stance: it previews the renames per directory and refuses to start on a dirty tree.
 
 It's **re-run safe**. Every mode reconciles against what's already there, so a second run on an unchanged repo proposes nothing and mutates nothing.
 
@@ -125,6 +125,25 @@ Brings an already-created repo up to convention in one span: repo settings, base
 
 **The license is a question, never an assumption, in both visibilities.** A public repo gets MIT recommended (text fetched from the GitHub licenses API, never written from memory); a private repo gets a proprietary all-rights-reserved file recommended, because the point is to say the code is proprietary where a reader will find it — with an open license offered as runner-up since private repos often go public later. "No license" stays available, with one line on what it means. The holder name comes from `gh api user`, falling back to `git config user.name`, always visible in the preview.
 
+### `docs`
+<!-- cheatsheet: renumbers the repo's `docs/` artifacts so a listing reads in creation order -->
+
+Renames the repo's `docs/` artifacts to `NNNN-<type>-<slug>-YYYY-MM-DD.md`, assigning each serial from when the artifact was created. A one-time migration per repo, idempotent on a re-run, and the only mode that calls GitHub not at all — it needs git and a clean tree, not `gh` and a remote.
+
+**The problem is that every file browser sorts alphabetically.** The artifact convention already ends every filename in its creation date, which is readable but sorts on the slug: `plan-afkkit-2026-07-24.md` lands above `plan-wikikit-2026-08-06.md` because `a` precedes `w`. In a directory of thirty plans, nothing tells you which one is this week's. A leading serial makes the listing and the creation order the same thing.
+
+**Why a serial and not a leading date.** A date prefix would sort correctly too, and it was the obvious alternative. A serial is shorter to say — "open 34" against "open the plan from the twenty-third" — it is unique within its directory where a date is not, and it matches the numbering the ADRs already carry, so the repo has one convention rather than two that look alike. The trailing date stays either way, so nothing is lost by putting a number in front of it.
+
+**The counter is per directory.** Numbering a new artifact then means listing its own directory for the highest serial, which is the cheap lookup [`domainkit`](./domainkit.md) already does for ADRs. A repo-wide counter would give globally unique numbers, at the cost of scanning every `docs/` subdirectory before each write and a real collision when two skills write in one session.
+
+**An ADR's decision number becomes its serial.** `adr-0007-token-ttl-…` moves to `0007-adr-token-ttl-…` and keeps the seven. The number is re-anchored, never re-derived from a date, because other ADRs cite it by number — a supersession note pointing at ADR-0007 has to keep pointing at the same decision. Gaps stay as gaps for the same reason: a missing number usually means a withdrawn decision whose number is still referenced somewhere.
+
+**Reader-facing documentation is never numbered, and the mode will not offer to.** A serial in front of `docs/wiki/architecture.md` is damage — people link to that page by name and navigate to it by name. The convention is for *artifacts*, which are dated records of one session's work, and the mode sorts the tree into three sets before proposing anything so the line is visible rather than assumed.
+
+**Creation order comes from the filename date first, then git.** The date an authoring skill wrote into the filename is what that skill recorded as creation, and it survives a later `git mv` or a rewritten history that a commit date does not. Git's add time (`--diff-filter=A --follow`) fills in an undated name and breaks ties within a day; a filesystem mtime is the last rung, reachable only for a file git has never seen. The mode names every entry that landed below the first rung, because an ordering derived from mtime is a guess and the user should get to spot-check it.
+
+**The rename is staged, not committed**, so one `git reset --hard` reverts the batch — which is also why the mode refuses to start on a dirty tree. It then greps the whole repo for every old basename and rewrites the references, and reports the ones it cannot fix: an issue body, a PR description, any path a script builds from a pattern rather than spelling out.
+
 ## The shared contract
 
 The label maps are duplicated in [`issuekit`](./issuekit.md) on purpose: each skill must stand alone once installed, so neither can point at a shared source. repokit's descriptions are canonical; issuekit mirrors the same names and colors in execution-oriented wording.
@@ -139,7 +158,7 @@ Nothing else keeps the copies aligned, so this repo's `make lint` diffs them on 
 
 The exception is a fresh `ai-review` label with no listener. Then the next move is a workflow in `.github/workflows/` that subscribes to it, because until one exists the label is inert and nobody downstream can tell.
 
-If only one metadata mode has run, the other is the smaller follow-up. After a `setup` run the first move is [`commitkit`](./commitkit.md), because the scaffold files are sitting unstaged.
+If only one metadata mode has run, the other is the smaller follow-up. After a `setup` run the first move is [`commitkit`](./commitkit.md), because the scaffold files are sitting unstaged. A `docs` run points there too, for a rename-only commit a reviewer can actually read.
 
 ## Install
 
