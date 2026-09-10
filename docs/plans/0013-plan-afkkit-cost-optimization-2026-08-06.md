@@ -232,7 +232,7 @@ If anyone ever funds a re-run: compare against the frozen baseline in [Evidence]
 
 **What changed** — nothing in any `SKILL.md` yet. This plan is the only artifact, now grilled: twelve decisions settled and recorded in [Settled decisions](#settled-decisions), three items resolved to *no change* with the reasoning preserved (tier moves, run-report artifact, validation run).
 
-**Where it landed** — `docs/plans/plan-afkkit-cost-optimization-2026-08-06.md`, stamped `Grilled: 2026-08-06`.
+**Where it landed** — `docs/plans/0013-plan-afkkit-cost-optimization-2026-08-06.md`, stamped `Grilled: 2026-08-06`.
 
 **Next** — implement it as **one PR, by hand**, touching `skills/afkkit/SKILL.md` (most of it), `skills/qakit/SKILL.md` (the destructive-verification rule), and `skills/prkit/SKILL.md` (commit a handed-in path before pushing). P0 first, then P1, then P2. Run `make lint` before committing — it enforces the anchor links and closing-section rules these edits will touch.
 

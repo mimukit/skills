@@ -21,7 +21,7 @@ Success means a project that files no GitHub issues gets a crowned next move fro
 Four facts came out of reading the repo rather than reasoning about it, and two of them reshaped the plan.
 
 - **issuekit already annotates plan phases.** Its write-back step turns `### Phase 2: auth` into `### Phase 2: auth (#41)`. The plan format has an annotation slot, and trackerless projects leave it empty. That slot became the seam this plan builds on.
-- **A hand-maintained completion marker already rotted here.** `docs/plans/plan-mergekit-2026-08-01.md` line 3 still reads `Status: draft, 2026-08-01. Not yet built.` mergekit shipped weeks ago. That killed the option of asking a human to maintain a status line.
+- **A hand-maintained completion marker already rotted here.** `docs/plans/0008-plan-mergekit-2026-08-01.md` line 3 still reads `Status: draft, 2026-08-01. Not yet built.` mergekit shipped weeks ago. That killed the option of asking a human to maintain a status line.
 - **Phase headings are strongly conventional.** Over 100 instances of a `Phase <n>` heading across the 27 plans, though the separator varies between an em dash and a colon. Machine-findable if the match ignores the separator.
 - **implementkit never writes to the plan.** It reads the plan, writes code, runs the gate, and stops. Stamping is a new responsibility, not an extension of one.
 

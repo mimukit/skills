@@ -15,7 +15,7 @@ The attributed shares: implementkit 17%, commitkit 11%, mergekit 9%, grillkit 9%
 
 Investigating those two suggestions turned up a third problem neither of them names, and closed off one of the two suggested remedies entirely. This plan is the result: a **context budget** convention for the collection, the six skill bodies that violate it today, and afkkit's answer to a compaction it cannot trigger.
 
-It is the sequel to [plan-afkkit-cost-optimization-2026-08-06.md](plan-afkkit-cost-optimization-2026-08-06.md), which allocated cost *within a single afkkit run* and produced the model-routing table and the orientation file. That plan optimised what afkkit's subagents pay. This one optimises what every skill costs the session that loaded it, and what survives when the session is summarised.
+It is the sequel to [plan-afkkit-cost-optimization-2026-08-06.md](0013-plan-afkkit-cost-optimization-2026-08-06.md), which allocated cost *within a single afkkit run* and produced the model-routing table and the orientation file. That plan optimised what afkkit's subagents pay. This one optimises what every skill costs the session that loaded it, and what survives when the session is summarised.
 
 ## Evidence
 
@@ -291,6 +291,6 @@ Per Q8. The ordering is load-bearing: **Phase 1 cannot ship alone**, because an 
 
 **What changed** — this plan document, hardened by a two-round grill: eight decisions settled (the split rule and its pre-dispatch carve-out, the fork list, lint thresholds, afkkit's state-file shape, the orientation contract's read-only boundary, commitkit's `effort: medium`, uikit's classification, and the pilot-first sequencing), three defects in the draft fixed (`agent: Explore` would have disabled statuskit's snapshot; forking researchkit would have tripped this plan's own new lint check; `skillkit`'s existing rule forbade the split Phase 2 proposed), and the `hooks: PostCompact` option dropped. No skill, script, or convention has been edited.
 
-**Where it landed** — `docs/plans/plan-context-budget-2026-08-07.md`, stamped `Grilled: 2026-08-07`.
+**Where it landed** — `docs/plans/0018-plan-context-budget-2026-08-07.md`, stamped `Grilled: 2026-08-07`.
 
 **Next** — **issuekit** to file the sequencing above as issues; the stamp means it can file them `ready` rather than `needs-planning`. File them in the Sequencing order, with the afkkit pilot as a hard dependency of the fan-out issues — the pilot decides which lever the other five use, so filing them as parallel-ready would have five agents guessing at a question the pilot exists to answer. Without issuekit, start at Sequencing step 1 by hand: `AGENTS.md` + `skillkit` + the three lint checks, ceiling as `W`.

@@ -2,8 +2,8 @@
 
 **Status:** shipped 2026-08-05 — the SKILL.md rewrite and every doc/config reference landed in one change.
 **Date:** 2026-08-05
-**Supersedes:** [plan-orcakit-deletion-2026-08-02.md](plan-orcakit-deletion-2026-08-02.md)
-**Related:** [plan-gitkit-worktree-convention-2026-08-02.md](plan-gitkit-worktree-convention-2026-08-02.md)
+**Supersedes:** [plan-orcakit-deletion-2026-08-02.md](0010-plan-orcakit-deletion-2026-08-02.md)
+**Related:** [plan-gitkit-worktree-convention-2026-08-02.md](0009-plan-gitkit-worktree-convention-2026-08-02.md)
 
 ## Why the deletion was cancelled
 
@@ -67,7 +67,7 @@ gitkit's "no vendor worktree CLI" rule was amended rather than broken: the prohi
 - `README.md`, `WORKFLOW.md` — the orcakit row and side-kit entry rewritten.
 - `skills.sh.json` — group description reworded; orcakit stays in "Git & GitHub".
 - `scripts/lint.sh` — orcakit dropped from `HANDOFF_EXEMPT`; it now has real hand-offs to enforce.
-- `docs/plans/plan-orcakit-deletion-2026-08-02.md` — marked superseded.
+- `docs/plans/0010-plan-orcakit-deletion-2026-08-02.md` — marked superseded.
 
 ## Known limits
 

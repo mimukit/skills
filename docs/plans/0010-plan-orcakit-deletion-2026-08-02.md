@@ -1,10 +1,10 @@
 # plan: delete orcakit
 
-**Status: superseded 2026-08-05 — the deletion is cancelled.** orcakit was reactivated with a different job: not sequencing the tracker and Orca worktrees (that half really did move to issuekit and gitkit, and stays there), but reconciling Orca's *metadata* layer with the worktrees gitkit creates. See [plan-orcakit-reactivation-2026-08-05.md](plan-orcakit-reactivation-2026-08-05.md). Everything below is the record of the deprecation, which shipped and was correct for what orcakit was at the time; the open checkboxes will not be actioned.
+**Status: superseded 2026-08-05 — the deletion is cancelled.** orcakit was reactivated with a different job: not sequencing the tracker and Orca worktrees (that half really did move to issuekit and gitkit, and stays there), but reconciling Orca's *metadata* layer with the worktrees gitkit creates. See [plan-orcakit-reactivation-2026-08-05.md](0011-plan-orcakit-reactivation-2026-08-05.md). Everything below is the record of the deprecation, which shipped and was correct for what orcakit was at the time; the open checkboxes will not be actioned.
 
 **Original status:** deprecation shipped 2026-08-02 — issuekit's `start` and `close` modes and the afkkit/statuskit rerouting landed with the gitkit caller refactor, and orcakit is now a stub that warns and routes. **No skill, script, or config depends on it**; the only live references left are the README row and its `skills.sh.json` entry, both of which advertise the deprecation on purpose. The deletion itself is still deferred; preconditions 2 and 3 below are unmet.
 **Date:** 2026-08-02
-**Depends on:** [plan-gitkit-worktree-convention-2026-08-02.md](plan-gitkit-worktree-convention-2026-08-02.md)
+**Depends on:** [plan-gitkit-worktree-convention-2026-08-02.md](0009-plan-gitkit-worktree-convention-2026-08-02.md)
 
 **What already landed, and why early.** The gitkit rollout could not reroute afkkit's front door without a `ready` guard to point it at — gitkit has none — so the `start` mode was pulled forward rather than leaving afkkit's safety property unenforced for the duration. orcakit still exists, now as a deprecated wrapper delegating to issuekit and gitkit, with no `orca` CLI calls and no hard-coded `origin/main`.
 
@@ -55,7 +55,7 @@ The split is clean because the seam is real: issuekit answers *"is this issue wo
 - [ ] `README.md` — remove the orcakit row (marked deprecated and pending removal in the meantime).
 - [x] `skills/afkkit/SKILL.md` — all references retargeted to issuekit `start` + gitkit, 2026-08-02.
 - [x] `skills/statuskit/SKILL.md` — the `ready`-issue rung now routes to `issuekit start` + gitkit, 2026-08-02.
-- [ ] `docs/plans/plan-orcakit-2026-07-22.md` — leave in place as history; add a status line pointing at this plan.
+- [ ] `docs/plans/0001-plan-orcakit-2026-07-22.md` — leave in place as history; add a status line pointing at this plan.
 - [ ] `make lint` clean.
 
 ## Open question: orcakit is published
