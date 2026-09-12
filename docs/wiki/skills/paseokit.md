@@ -111,7 +111,7 @@ Two rules carry most of the weight:
 - **Unknown repos** (`sync all` only). It walks `$WORKTREE_ROOT`, resolves each candidate with `git rev-parse --git-common-dir`, and lists repos Paseo has never seen. On an OK it runs `paseo project create <repo>`, which returns the new `prj_…` id directly, then registers the main checkout and the worktrees under that id. Paseo's own worktrees need no special case: they already carry a row and resolve to a known repo, so no hash-directory pattern has to be guessed at.
 - **Tombstones.** An archived row **suppresses re-registration**. Someone archived that workspace deliberately, and silently re-adding it would undo the decluttering they just did — so it gets a verdict of its own and an explicit ask.
 
-One honest limitation: **there is still no `paseo workspace unarchive` in 0.7.0.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
+One honest limitation: **there is still no `paseo workspace unarchive`.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
 
 ### `clean`
 
@@ -157,4 +157,4 @@ npx skills add mimukit/skills -s paseokit
 
 Source: [`skills/paseokit/SKILL.md`](../../../skills/paseokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb54c09` on 2026-08-31, with Paseo CLI 0.7.0 and daemon 0.7.0._
+_Verified against `main`@`fb54c09` on 2026-08-31. `SKILL.md` carries the verified Paseo CLI and daemon version._
