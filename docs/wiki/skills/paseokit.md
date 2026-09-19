@@ -47,7 +47,7 @@ The trade is stated rather than hidden: worktrees appear in Paseo when you run [
 Two facts make the rest of the design possible:
 
 - **`paseo workspace archive` is not registry-only** — it archives every agent the workspace owns, kills every terminal in it, and then tries to delete the backing directory. Only the row is reversible. The delete fires on a worktree Paseo created itself and refuses on one git created, which is why `clean` sorts its candidates by path shape before it queues a single archive, and why the reap still sits behind a preview and one confirmation.
-- **Paseo never notices a deleted directory**, so removing a worktree is still gitkit's job, and the row has to be archived afterward — which is exactly what [`clean`](#clean)'s registry reap is for. `clean` is the one mode that removes anything at all: `sync` only adds, and the disk teardown reaches the filesystem by calling gitkit rather than by growing its own teardown.
+- **Paseo notices a deleted directory only on its own schedule**, so removing a worktree is still gitkit's job, and the row is archived either by the daemon's five-minute pass or, when you want the sidebar clear now, by [`clean`](#clean)'s registry reap. `clean` is the one mode that removes anything at all: `sync` only adds, and the disk teardown reaches the filesystem by calling gitkit rather than by growing its own teardown.
 
 **It never touches the tracker.** It reads issues and pull requests to build a title and judge a verdict; it never closes, labels, or edits. Tracker drift routes to [`issuekit`](./issuekit.md) `close`.
 
@@ -157,4 +157,4 @@ npx skills add mimukit/skills -s paseokit
 
 Source: [`skills/paseokit/SKILL.md`](../../../skills/paseokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`fb54c09` on 2026-08-31. `SKILL.md` carries the verified Paseo CLI and daemon version._
+_Verified against `main`@`634d5d7` on 2026-09-19. `SKILL.md` carries the verified Paseo CLI and daemon version._
