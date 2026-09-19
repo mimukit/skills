@@ -49,11 +49,17 @@ qakit runs those itself and records the outcomes in an **Automated verification*
 
 So as cases are generated, each gets sorted: does confirming this *require a human*, or can a script do it? Only the human-only cases become numbered test cases.
 
+The database is where that seam earns its keep, because a database check could plausibly land on either side. The sort isn't about who owns a terminal — the tester has one too — it's about **what produces the fact**. That a table exists, that an index is there, that the migration applied: all true before anyone touches the app, so qakit confirms them itself and the human never sees them. That clicking Place order wrote one row in `orders` and two in `order_items`: that fact doesn't exist until the tester acts, so the query belongs in their case, under the step that caused it.
+
+Which is why a query inside a step isn't a violation of the manual-only rule. The rule bars a command as a *whole case* — copy this, read that, tick a box. A `$DB_CMD` block under step 3 is the same shape as the `curl` rule that's been there all along: the command doesn't replace the human's judgment, it supplies the evidence for it.
+
 ## The dimensions
 
 Every dimension gets walked, and one that's genuinely irrelevant gets **said to be skipped** in the plan — so the tester knows it was considered, not forgotten:
 
 Happy path · edge and boundary · negative and error handling · regression · security and permissions · data and state · concurrency and timing · compatibility · accessibility · performance · usability.
+
+**Data and state reaches into the database**, whenever the diff touches a migration, a schema file, a model, or a query. That's the one dimension where the screen is an unreliable witness: a create that saves the parent row and silently skips the join row renders exactly like one that worked. So the plan asserts on rows, relations and constraints directly — the table exists after the migration, the create wrote its child rows, the delete cascaded and left no orphan, the unique index actually rejects a duplicate. A diff that touches no data layer skips the database half and says so under *Not covered*, like any other dimension.
 
 Each case is tagged with a tier carrying an emoji, so urgency reads at a glance:
 
@@ -61,14 +67,17 @@ Each case is tagged with a tier carrying an emoji, so urgency reads at a glance:
 - 🟡 **Normal** — a real bug, but not a blocker.
 - 🟢 **Low** — polish or minor-impact edges.
 
+A case carrying a data-integrity checkpoint gets **promoted** to the higher tier rather than having its checkpoint tagged separately. Two reasons: an orphaned row is frequently the most serious thing in a case whose visible behavior is trivial, and a second tier system living inside a case would make the glance table at the top of the plan lie about what it's summarizing.
+
 It doesn't pad. One clear check per behavior beats ten redundant ones, and the count scales to the feature's surface area and risk. What the dimensions produce is a flat pile of candidates; grouping them into scenarios is what decides which of them end up as separate cases.
 
-## Two commands it will never run
+## Three commands it will never run
 
-Both rules have the same shape: **inspect what exists, don't reproduce it.**
+The first two have the same shape: **inspect what exists, don't reproduce it.**
 
 - **Anything that destroys or rebuilds state** — a `*:reset`, a teardown-and-rescaffold, a database drop, a `clean` that wipes a build. That includes the Setup and Reset blocks of the scenarios it just wrote: those are written for the human to run, and qakit describes them without ever performing them. It's writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
 - **A gate a prior step this session already ran green** — the test, build, or lint chain that just passed. Re-running produces the same answer at full price, and it's the most common way this step becomes the most expensive one in a pipeline. It re-runs only if the change under test *is* that gate, or if something modified the tree since.
+- **Any write to the database, and any read from a host it hasn't named.** The write half follows from the first rule. The read half is less obvious and matters more: `DATABASE_URL` in a shell holds whatever the last person exported, and "read-only" is not a sufficient guard, because a `SELECT` against production is still an unauthorized read of customer data. So qakit resolves the host, says it out loud, and connects only to localhost, a loopback address, or a container service the compose file defines. Anything else waits for you to confirm. Decline, and the queries go into the plan for a human to run instead.
 
 ## Every case has the same four parts
 
@@ -122,6 +131,9 @@ This is also why prose paragraphs lose to bullet sublists here. A wall of prose 
 - **Observable, not internal** — what the tester sees or measures, not state they have no way to inspect.
 - **Every command gets its own `sh` block** — never inlined in prose or a table cell, never stacked. The tester copies each one with a single click. Commands that must run together chain with `&&` inside one block.
 - **Every API endpoint gets a runnable `curl`** — method, full URL, every required header, and a concrete JSON body with real sample values. Copy-paste ready, no placeholders to guess at. This is the single biggest speedup in a QA pass: the tester runs the request instead of reconstructing it.
+- **Every database assertion gets a runnable query**, through a `$DB_CMD` that **Environment** defines once. That variable is doing real work: qakit reads `package.json`, the `Gemfile`, the compose file and `DATABASE_URL` to find the client this project actually has, and folds any `docker compose exec` prefix into the same string. A plan that hard-codes `psql` is wrong on every Prisma project and every containerized one, and the tester discovers that on first paste. One variable, and every query block in the plan is identical everywhere.
+
+  Two details decide whether the query proves anything. It **selects the columns the change should have written**, not `count(*)` — a count passes a write that saved the wrong email. And it **queries by an identifier the case itself created**, not a global total, so a row left behind by an earlier pass can't fail a later one. Cleanup still happens, in the scenario's Reset block, written for the human and never run by the agent.
 - **Honest about gaps** — what the plan can't verify goes under *Not covered*, including any dimension deliberately skipped, rather than pretending coverage.
 
 ## The plan shape
@@ -130,7 +142,7 @@ This is also why prose paragraphs lose to bullet sublists here. A wall of prose 
 # QA Plan: <Feature name>
 
 ## Summary                   — what it does, what "working" means
-## Environment               — once for the whole plan: build, base URL, creds, flags, launch
+## Environment               — once for the whole plan: build, base URL, creds, flags, $DB_CMD, launch
 ## Test cases at a glance    — table of TC-N.M, scenario, title, priority
 
 ## Scenario 1 — <starting state>
@@ -175,4 +187,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`6d09df4` on 2026-08-31._
+_Verified against `main`@`92b22a7` on 2026-09-19._
