@@ -141,4 +141,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`7687f62` on 2026-09-02._
+_Verified against `main`@`634d5d7` on 2026-09-19._

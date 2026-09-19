@@ -168,4 +168,4 @@ npx skills add mimukit/skills -s repokit
 
 Source: [`skills/repokit/SKILL.md`](../../../skills/repokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`6d09df4` on 2026-08-31._
+_Verified against `main`@`634d5d7` on 2026-09-19._

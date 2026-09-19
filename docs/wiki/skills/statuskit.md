@@ -296,4 +296,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`1135855` on 2026-08-29._
+_Verified against `main`@`634d5d7` on 2026-09-19._

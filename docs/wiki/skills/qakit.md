@@ -187,4 +187,4 @@ npx skills add mimukit/skills -s qakit
 
 Source: [`skills/qakit/SKILL.md`](../../../skills/qakit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`92b22a7` on 2026-09-19._
+_Verified against `main`@`634d5d7` on 2026-09-19._

@@ -166,4 +166,4 @@ npx skills add mimukit/skills -s tutorkit
 
 Source: [`skills/tutorkit/SKILL.md`](../../../skills/tutorkit/SKILL.md)
 
-_Verified against `main`@`ada7efe` on 2026-08-30._
+_Verified against `main`@`634d5d7` on 2026-09-19._

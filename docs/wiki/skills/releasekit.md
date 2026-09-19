@@ -111,4 +111,4 @@ npx skills add mimukit/skills -s releasekit
 
 Source: [`skills/releasekit/SKILL.md`](../../../skills/releasekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`634d5d7` on 2026-09-19._

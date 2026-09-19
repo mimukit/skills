@@ -194,4 +194,4 @@ npx skills add mimukit/skills -s gitkit
 
 Source: [`skills/gitkit/SKILL.md`](../../../skills/gitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`6684600` on 2026-09-06._
+_Verified against `main`@`634d5d7` on 2026-09-19._
