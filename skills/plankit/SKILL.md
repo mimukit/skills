@@ -1,7 +1,7 @@
 ---
 name: plankit
 description: >-
-  Turn a rough feature or change into a structured plan document (docs/plans/plan-<slug>-YYYY-MM-DD.md) before any code: brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature" or "brainstorm a plan/PRD/spec", the front of the plan → grill → file workflow. It stops at the plan document; it files no issues and writes no code.
+  Turn a rough feature or change into a structured plan document (docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md) before any code: brainstorm the approach, settle the big decisions, and write a plan that can be hardened and turned into issues. Use when the user says "plan this feature" or "brainstorm a plan/PRD/spec", the front of the plan → grill → file workflow. It stops at the plan document; it files no issues and writes no code.
 license: MIT
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 metadata:
@@ -10,7 +10,7 @@ metadata:
 
 # plankit
 
-Turn a rough idea (a feature, a project, a spec, a PRD) into a structured plan document you can act on. plankit is generative: it brainstorms the approach, settles the decisions needed for a coherent draft, and writes a `plan-<slug>-YYYY-MM-DD.md` grounded in the real codebase (not a guess). It is the front of a flow, **plankit drafts → grillkit hardens → issuekit files** where a project tracks work in GitHub Issues, and **plankit drafts → grillkit hardens → implementkit builds** where it doesn't. Either way the plan it writes is the exact input the next step expects. plankit **plans only**: it never writes application code and never creates issues.
+Turn a rough idea (a feature, a project, a spec, a PRD) into a structured plan document you can act on. plankit is generative: it brainstorms the approach, settles the decisions needed for a coherent draft, and writes a `NNNN-plan-<slug>-YYYY-MM-DD.md` grounded in the real codebase (not a guess). It is the front of a flow, **plankit drafts → grillkit hardens → issuekit files** where a project tracks work in GitHub Issues, and **plankit drafts → grillkit hardens → implementkit builds** where it doesn't. Either way the plan it writes is the exact input the next step expects. plankit **plans only**: it never writes application code and never creates issues.
 
 ## When this fires
 
@@ -44,7 +44,7 @@ The failure mode is options that only *look* plural:
 Resolve the structural decisions a coherent draft needs (the architecture, the phases, the scope boundary) one at a time, each with a recommended answer. Then **stop**: deliberately leave the deeper, thin, or still-uncertain spots for grillkit rather than grinding every edge case here. Record those under **Open questions** in the doc so the hardening step has a target.
 
 ### 5. Write the plan document
-Write `docs/plans/plan-<slug>-YYYY-MM-DD.md`, where `<slug>` is a short lowercase kebab-case name for the feature and the suffix is the plan's ISO creation date (`plan-sso-login-2026-07-23.md`). Keep that date stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below, which is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file. For a genuine same-day collision between distinct plans, make the slug more specific; only as a last resort insert a sequence immediately before the date (`plan-sso-login-02-2026-07-23.md`).
+Write `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md`, where `NNNN` is the next four-digit serial in `docs/plans/`, `<slug>` is a short lowercase kebab-case name for the feature, and the suffix is the plan's ISO creation date (`0007-plan-sso-login-2026-07-23.md`). To get the serial, list `docs/plans/`, take the highest leading serial, and add one; start at `0001` when there is none. The serial is per directory and never reused, and it applies in every repo, a fresh one included. Keep the whole name stable on later edits; record an updated date inside the document when useful. Use the [plan-doc format](#plan-doc-format) below, which is the contract grillkit and issuekit both read, so keep the body phase/task-shaped. Create `docs/plans/` if it doesn't exist. If a plan for this work already exists, update it in place rather than writing a second file, and keep its name even when it has no serial.
 
 ### 6. Hand off
 
@@ -108,4 +108,4 @@ They coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase
 - **Fewest honest sections.** Prefer a short, sharp plan over a padded one; drop a section rather than fill it with filler. Scale the doc to the work's real surface area.
 - **Defer the grilling.** Leaving open questions is fine and expected. Draft a coherent plan and let grillkit harden it; don't try to be both.
 - **Follow the repo's conventions.** If the codebase has its own plan/RFC/PRD location or template, follow that and say you did, rather than forcing `docs/plans`.
-- No filesystem or shell (e.g. a browser-based agent)? Then you can't write the file. Instead print the finished plan document as a codeblock and give the user the canonical `plan-<slug>-YYYY-MM-DD.md` filename to save wherever they keep plans.
+- No filesystem or shell (e.g. a browser-based agent)? Then you can't write the file. Instead print the finished plan document as a codeblock and give the user the canonical `NNNN-plan-<slug>-YYYY-MM-DD.md` filename, with `0001` when you can't list their plans, to save wherever they keep plans.

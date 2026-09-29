@@ -8,7 +8,7 @@ Research the credible options for a technical decision and recommend one, ground
 |---|---|
 | Modes | single procedure |
 | Tools | `WebSearch`, `WebFetch`, `Read`, `Grep`, `Glob`, `Write`, `AskUserQuestion` |
-| Writes | inline by default; `docs/research/research-<slug>-YYYY-MM-DD.md` on request |
+| Writes | inline by default; `docs/research/NNNN-research-<slug>-YYYY-MM-DD.md` on request |
 | Visibility | public |
 
 ## What it does

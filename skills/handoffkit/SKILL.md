@@ -69,7 +69,7 @@ Capabilities the next session should reach for, e.g. a commit skill to land the 
 
 ## Output
 
-**Default: save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `handoff-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case subject slug and the handoff's ISO creation date at the end (for example, `handoff-auth-migration-2026-07-13.md`). Keep that date stable if the same handoff is edited, and update the existing file in place. If a genuinely distinct handoff would collide on the same day, make the slug more specific; only as a last resort insert the next available sequence immediately before the date (`handoff-auth-migration-02-2026-07-13.md`). Tell the user the exact path.
+**Default: save a Markdown file.** Write the finished handoff into `docs/handoffs/` in the workspace, creating that directory if it doesn't exist. Name it `NNNN-handoff-<slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case subject slug, and the handoff's ISO creation date at the end (for example, `0005-handoff-auth-migration-2026-07-13.md`). To get the serial `NNNN`, list `docs/handoffs/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Keep the whole name stable if the same handoff is edited, and update the existing file in place. Tell the user the exact path.
 
 **On explicit request: print inline.** When the user explicitly asks for terminal, inline, chat-only, or copy-pastable output, emit the finished handoff as a single Markdown codeblock and do not write a file.
 
@@ -81,6 +81,6 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **What changed.** Nothing in the project itself; the handoff is a new (or updated) document, and say which.
 
-**Where it landed.** Give the exact path (`docs/handoffs/handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
+**Where it landed.** Give the exact path (`docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
 
 **Next.** One move. Start a fresh session pointed at this document, beginning with the handoff's own first next-step. Name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.

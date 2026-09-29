@@ -8,7 +8,7 @@ Chase a symptom to its true cause — reproduce it, shrink it, write falsifiable
 |---|---|
 | Modes | single procedure, no modes — the branches are decided by evidence, not by the request |
 | Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `WebSearch`, `WebFetch`, `AskUserQuestion` |
-| Writes | `docs/debug/debug-<slug>-YYYY-MM-DD.md`, conditionally — durable, committable, never committed by the skill |
+| Writes | `docs/debug/NNNN-debug-<slug>-YYYY-MM-DD.md`, conditionally — durable, committable, never committed by the skill |
 | Visibility | public |
 
 ## The gap it fills

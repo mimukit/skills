@@ -158,7 +158,7 @@ Gather git always; gather GitHub only when `gh` is usable. All commands are read
 - **stale-tracker signal**, one cheap cross-check: how many merged PRs have a linked issue still open. A single count, used only to decide whether "reconcile" ranks. **Never itemize which or why**, because that's issuekit's job.
 
 **plans (filesystem, where the list always runs and the unfiled check needs a tracker):**
-- list canonical `docs/plans/plan-<slug>-YYYY-MM-DD.md` files (or wherever the repo keeps plans, since an `rfcs/`, `specs/`, or documented location takes precedence). The list is free and always runs; it's what the ladder's plan rungs read.
+- list canonical `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md` files, and the older `plan-<slug>-YYYY-MM-DD.md` shape without the serial, (or wherever the repo keeps plans, since an `rfcs/`, `specs/`, or documented location takes precedence). The list is free and always runs; it's what the ladder's plan rungs read.
 - **the unfiled set, computed only when the repo actually tracks work in GitHub issues.** Cross-check each plan against the issue list and keep the ones that never became an issue. Match over **`--state all`**, not the open-issues read the rest of the survey uses: `gh issue list --state all --json number,title --limit 200`, one call, spent only when plan docs exist. A plan that shipped months ago has a *closed* issue, so matching against open issues alone would report every finished plan as neglected, which is the failure mode that makes this panel worth suppressing in the first place.
 - **That same call is [rung 3 of the tracker resolution](#resolving-the-tracker), so it costs nothing extra.** An error (issues disabled on the repo) means no tracker; an empty array means unknown; a non-empty one means a tracker is in use. Only the last of those makes the unfiled comparison meaningful, so on the other two skip it and never report a plan as unfiled. Same when `gh` is unusable at all. Plenty of projects track work in Linear, Jira, a `TODO.md`, or somebody's head; a survey that announces "18 unfiled" on one of them is reporting its own blind spot as a finding, and pointing the user at `issuekit create` for a tracker they deliberately don't use.
 - **Match on the plan's slug and its title, and when the match is uncertain call it filed.** An issue whose title matches the plan's title, or whose body links the plan's path, or whose slug matches, is enough on its own. The asymmetry is deliberate: this panel only ever prints gaps, so a false negative costs one silent line and a false positive sends the user off to file a duplicate of work already tracked.
@@ -298,11 +298,11 @@ Drop any panel with nothing to show (no PRs → no PR line; no `gh` → omit Iss
 
 **Write the file every run.** A terminal dashboard scrolls away and its ranked moves can't be ticked off; the same content on disk reads better and doubles as the run's to-do list. So don't ask permission: write it, then say where it went in one line:
 
-> Saved to `docs/status/status-<repo-slug>-YYYY-MM-DD.md` · scratch file, gitignored, not committed.
+> Saved to `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md` · scratch file, gitignored, not committed.
 
 **Skip only when asked.** "Just print it", "no file", "don't write anything", "screen only", "/statuskit --no-file" all mean honor that for the run and print the dashboard alone. A skip applies to that run only; it isn't a standing preference unless the user says so or the repo's agent-guide file (`CLAUDE.md` or an equivalent) does. Skip silently too when there's no writable filesystem (below).
 
-**Where it goes.** `docs/status/status-<repo-slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project) and the ISO creation date. Create `docs/status/` if it doesn't exist.
+**Where it goes.** `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug (normally the repo name; use a narrower one such as the branch or issue when the snapshot covers a slice of the project), and the ISO creation date. To get the serial `NNNN`, list `docs/status/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Create `docs/status/` if it doesn't exist.
 
 **One file per day, always update, never add.** Before writing, list `docs/status/` and look for a snapshot already carrying **today's date**. If one exists, that's the file: update it in place, keeping its existing name even if this run would have picked a different slug. Only when the directory has nothing dated today do you create a new file. A status file is a point-in-time read, and three of them from one afternoon is how a scratch directory becomes archaeology, and worse, it splits the user's ticked boxes across files that all look current. If today's snapshot genuinely covers a different project in a monorepo, make the slug specific to that project and match on slug + date instead; there is no case where the same project gets two files on the same day, so never fall back to a sequence suffix.
 
@@ -358,7 +358,7 @@ All three tables (unblocked, waiting for review, blocked issues) go into the fil
 
 **It's disposable.** This file is scratch, not a tracked artifact: add `docs/status/` to `.gitignore` before writing the first one (say so in the same line), and leave it uncommitted. Commit it only if the user explicitly asks, and then it's their call, so honor it without arguing. Skip the `.gitignore` edit if the path is already ignored or the repo has no `.gitignore` you should be touching.
 
-**No filesystem?** Print the snapshot as a codeblock with the canonical `docs/status/status-<repo-slug>-YYYY-MM-DD.md` path so the user can save it themselves.
+**No filesystem?** Print the snapshot as a codeblock with the canonical `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md` path, with `0001` when you can't list their snapshots, so the user can save it themselves.
 
 ## Notes
 

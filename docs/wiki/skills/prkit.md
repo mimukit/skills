@@ -49,7 +49,7 @@ A clean rebase doesn't trigger a re-read — replaying commits onto a new base d
 
 ## Proof artifacts embed inline
 
-When a [`verifykit`](./verifykit.md) bundle exists at `docs/verify/verify-<slug>-YYYY-MM-DD/`, prkit splices its ready-made `proof.md` into the body under a **Proof** section.
+When a [`verifykit`](./verifykit.md) bundle exists at `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/`, prkit splices its ready-made `proof.md` into the body under a **Proof** section.
 
 There's no upload work — the images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline. prkit only *reads* the fragment; it never runs the publish itself.
 

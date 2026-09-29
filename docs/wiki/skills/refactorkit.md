@@ -8,7 +8,7 @@ Survey an existing codebase for the structural change worth making — shallow i
 |---|---|
 | Modes | single procedure, optionally scoped (`/refactorkit src/payments`) |
 | Tools | `Bash`, `Read`, `Grep`, `Glob`, `Write`, `Task`, `Agent` |
-| Writes | `docs/refactor/refactor-<slug>-YYYY-MM-DD.md` — durable, committable, never committed by the skill |
+| Writes | `docs/refactor/NNNN-refactor-<slug>-YYYY-MM-DD.md` — durable, committable, never committed by the skill |
 | Visibility | public |
 
 ## The gap it fills

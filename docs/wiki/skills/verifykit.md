@@ -8,7 +8,7 @@ Show a frontend change in a real browser, or prove it for a PR with screenshots 
 |---|---|
 | Modes | `show` · `proof` · `setup` |
 | Tools | `Bash`, `Read`, `Write`, `AskUserQuestion` — the CLI browser driver runs through `Bash`; a browser MCP is the host-supplied fallback |
-| Writes | `show`: screenshots in the system temp directory. `proof`: `docs/verify/verify-<slug>-YYYY-MM-DD/` (gitignored), published to `refs/verify-assets/<slug>`. `setup`: one `.gitignore` line, global installs on confirm |
+| Writes | `show`: screenshots in the system temp directory. `proof`: `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` (gitignored), published to `refs/verify-assets/<slug>`. `setup`: one `.gitignore` line, global installs on confirm |
 | Visibility | public |
 
 ## What it does
@@ -36,7 +36,7 @@ Then the mode file takes over.
 
 Screenshot the change and hand the operator a path.
 
-The operator is present, so a GIF, a bundle, and a publish would all serve a reader who isn't there. `show` writes `NN-<state>.png` files into a `show-<slug>-YYYY-MM-DD/` directory under the system temp directory (falling back to `docs/verify/` only when no temp directory resolves), then prints one line per file: the absolute path and the state it shows. Nothing lands in the repo and no record is written; the reply is the record. It's the default when the verb is ambiguous, because it's cheap and reversible, and escalating to `proof` costs one sentence.
+The operator is present, so a GIF, a bundle, and a publish would all serve a reader who isn't there. `show` writes `NN-<state>.png` files into a `NNNN-show-<slug>-YYYY-MM-DD/` directory under the system temp directory (falling back to `docs/verify/` only when no temp directory resolves), then prints one line per file: the absolute path and the state it shows. Nothing lands in the repo and no record is written; the reply is the record. It's the default when the verb is ambiguous, because it's cheap and reversible, and escalating to `proof` costs one sentence.
 
 ### `proof`
 
@@ -84,7 +84,7 @@ The fragile git plumbing lives in a bundled `verify-assets.sh` beside the skill,
 
 ## The bundle
 
-`docs/verify/verify-<slug>-YYYY-MM-DD/` holds the screenshots, the GIF, and two fixed files:
+`docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` holds the screenshots, the GIF, and two fixed files:
 
 - **`notes.md`** — flows driven, capture backend used, per-step pass/fail, environment, and any auth boundary the run stopped at.
 - **`proof.md`** — the hand-off contract. A ready-to-embed Markdown fragment with the GIF and screenshots at their SHA-pinned raw URLs, captioned per flow. [`prkit`](./prkit.md) reads this and splices it straight into the pull request body, so publishing never runs twice.

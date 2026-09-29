@@ -140,23 +140,25 @@ Severity ranks `safe` < `low` < `med` < `high`. A skill's tier is the maximum ac
 
 ## Documentation artifact naming
 
-`<type>-<slug>-YYYY-MM-DD.md`, using the artifact's **creation** date — the filename stays stable when the file is edited.
+`NNNN-<type>-<slug>-YYYY-MM-DD.md`: a four-digit serial per directory, then the type, the slug, and the artifact's **creation** date. The serial makes a directory listing read in creation order; the date keeps the age readable without opening the file. The whole filename stays stable when the file is edited.
+
+Every kit that writes an artifact states this rule itself, so a fresh repo gets numbered files from the first one. That matters because the rule used to live only in a repo's own `AGENTS.md`, written there by [`repokit`](./skills/repokit.md) `docs`, and a repo that never ran that mode got unnumbered files. Kits that read an artifact back accept the older unnumbered shape too.
 
 | Type | Path | Written by |
 |------|------|------------|
-| Plan | `docs/plans/plan-<slug>-YYYY-MM-DD.md` | `plankit` |
-| Research | `docs/research/research-<slug>-YYYY-MM-DD.md` | `researchkit` |
-| Validation | `docs/validation/validation-<slug>-YYYY-MM-DD.md` | `validatekit` |
-| Refactor proposal | `docs/refactor/refactor-<slug>-YYYY-MM-DD.md` | `refactorkit` |
-| Debug postmortem | `docs/debug/debug-<slug>-YYYY-MM-DD.md` | `debugkit` |
-| QA | `docs/qa/qa-<slug>-YYYY-MM-DD.md` | `qakit` |
-| Review | `docs/reviews/review-<slug>-YYYY-MM-DD.md` | `reviewkit` |
-| Handoff | `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` | `handoffkit` |
-| Prompt | `docs/prompts/prompt-<slug>-YYYY-MM-DD.md` | `promptkit` `system` |
-| ADR | `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` — zero-padded, monotonic | `domainkit` |
-| Verification bundle | `docs/verify/verify-<slug>-YYYY-MM-DD/` — a directory | `verifykit` |
+| Plan | `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md` | `plankit` |
+| Research | `docs/research/NNNN-research-<slug>-YYYY-MM-DD.md` | `researchkit` |
+| Validation | `docs/validation/NNNN-validation-<slug>-YYYY-MM-DD.md` | `validatekit` |
+| Refactor proposal | `docs/refactor/NNNN-refactor-<slug>-YYYY-MM-DD.md` | `refactorkit` |
+| Debug postmortem | `docs/debug/NNNN-debug-<slug>-YYYY-MM-DD.md` | `debugkit` |
+| QA | `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md` | `qakit` |
+| Review | `docs/reviews/NNNN-review-<slug>-YYYY-MM-DD.md` | `reviewkit` |
+| Handoff | `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` | `handoffkit` |
+| Prompt | `docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md` | `promptkit` `system` |
+| ADR | `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` — zero-padded, monotonic | `domainkit` |
+| Verification bundle | `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` — a directory | `verifykit` |
 
-Same subject means update in place, never a second file. On a genuine collision of type, slug, and date, make the slug more specific; only as a last resort insert a sequence immediately before the date.
+Same subject means update in place, never a second file. Two distinct artifacts never collide, because each takes the next serial. An ADR's serial is its decision number. `docs/wiki/` and other reader-facing pages stay unnumbered.
 
 ## Gitignored paths
 

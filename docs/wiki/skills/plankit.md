@@ -8,7 +8,7 @@ Turn a rough feature or change into a structured plan document, before any code.
 |---|---|
 | Modes | single procedure |
 | Tools | `Read`, `Grep`, `Glob`, `Write`, `Edit`, `AskUserQuestion` |
-| Writes | `docs/plans/plan-<slug>-YYYY-MM-DD.md` |
+| Writes | `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md` |
 | Visibility | public |
 
 ## What it does

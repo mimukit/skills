@@ -8,7 +8,7 @@ Survey a project read-only into a one-screen dashboard, then crown one finish-fi
 |---|---|
 | Modes | single procedure |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `Skill` |
-| Writes | `docs/status/status-<slug>-YYYY-MM-DD.md` — gitignored scratch; one tracker-declaration line in an existing agent-guide file, on approval |
+| Writes | `docs/status/NNNN-status-<slug>-YYYY-MM-DD.md` — gitignored scratch; one tracker-declaration line in an existing agent-guide file, on approval |
 | Visibility | public |
 
 ## What it does

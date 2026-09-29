@@ -145,7 +145,7 @@ The evidence table is what stops the verdict being a vibe, because the founder c
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Ask whether they want this written to a file. **Only on yes**, write `docs/validation/validation-<slug>-YYYY-MM-DD.md`, using a short lowercase kebab-case slug from the idea's core noun (ask if none is obvious), and the ISO creation date at the end. Create the directory if needed. Keep that date stable on later edits and update the same file in place; on a genuine same-day collision between distinct ideas, make the slug more specific, and only as a last resort insert a sequence before the date (`validation-invoice-ocr-02-2026-07-31.md`). Put a stamp near the top for downstream provenance:
+Ask whether they want this written to a file. **Only on yes**, write `docs/validation/NNNN-validation-<slug>-YYYY-MM-DD.md`, using the next serial, a short lowercase kebab-case slug from the idea's core noun (ask if none is obvious), and the ISO creation date at the end. To get the serial `NNNN`, list `docs/validation/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Create the directory if needed. Keep the whole name stable on later edits and update the same file in place. Put a stamp near the top for downstream provenance:
 
 ```
 Validation: <Validated | Unproven | Contradicted> · YYYY-MM-DD

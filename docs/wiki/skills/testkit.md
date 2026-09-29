@@ -8,7 +8,7 @@ Retrofit an automated test suite onto a working codebase that has none — rank 
 |---|---|
 | Modes | `audit` · `cover` |
 | Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `AskUserQuestion` |
-| Writes | test files, runner wiring, and one ledger at `docs/tests/testplan-<repo>-YYYY-MM-DD.md` — durable, committable, never committed by the skill |
+| Writes | test files, runner wiring, and one ledger at `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md` — durable, committable, never committed by the skill |
 | Visibility | public |
 
 ## The gap it fills

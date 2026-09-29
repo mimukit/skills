@@ -1,6 +1,6 @@
 ## Mode `proof`: capture and publish evidence for the PR
 
-A PR reader is not present, so the output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Form the bundle name as `verify-<slug>-YYYY-MM-DD`, using the run's ISO creation date at the end. Everything for the run is grouped under it.
+A PR reader is not present, so the output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Form the bundle name as `NNNN-verify-<slug>-YYYY-MM-DD`, using the next serial in `docs/verify/` and the run's ISO creation date at the end. To get the serial, list `docs/verify/`, take the highest leading four-digit serial, and add one; start at `0001` when there is none. The serial is per directory and never reused. Everything for the run is grouped under it.
 
 ### 1. Drive and capture
 
@@ -14,7 +14,7 @@ Cap the frame rate and width so the GIF stays small (a proof GIF is typically a 
 
 ### 2. Write the bundle
 
-Save the captures to `docs/verify/verify-<slug>-YYYY-MM-DD/` (for example, `docs/verify/verify-login-throttle-2026-07-23/`): the screenshots, the GIF, and a fixed `notes.md` recording the flows driven, the capture backend used, per-step pass/fail, the environment, and any auth boundary the run stopped at. Keep the creation date stable when updating the same bundle. For a genuine same-day collision between distinct runs, make the slug more specific; only as a last resort insert a sequence immediately before the date (`verify-login-throttle-02-2026-07-23`). This directory is **ephemeral**, because the assets get published to a hidden git ref (below) rather than committed to the branch, so add `docs/verify/` to `.gitignore`.
+Save the captures to `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` (for example, `docs/verify/0004-verify-login-throttle-2026-07-23/`): the screenshots, the GIF, and a fixed `notes.md` recording the flows driven, the capture backend used, per-step pass/fail, the environment, and any auth boundary the run stopped at. Keep the whole bundle name stable when updating the same bundle. This directory is **ephemeral**, because the assets get published to a hidden git ref (below) rather than committed to the branch, so add `docs/verify/` to `.gitignore`.
 
 ### 3. Publish so a PR can embed the proof
 
@@ -27,7 +27,7 @@ VERIFY_ASSETS="<path-to-this-skill>/verify-assets.sh"
 
 if bash "$VERIFY_ASSETS" check; then
   # publish the bundle; prints the commit SHA to embed
-  SHA=$(bash "$VERIFY_ASSETS" publish <slug> docs/verify/verify-<slug>-YYYY-MM-DD/*)
+  SHA=$(bash "$VERIFY_ASSETS" publish <slug> docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/*)
 
   # resolve the inline-rendering URL for each file
   bash "$VERIFY_ASSETS" url <slug> "$SHA" flow.gif
@@ -39,7 +39,7 @@ fi
 
 The script also offers `list` (show all `refs/verify-assets/*`) and `delete <slug>` (remove a ref after its PR merges). Old refs accumulate on the remote but never in anyone's clone, so prune them with `delete` once a PR merges.
 
-Then write the ready-to-embed proof into the bundle's fixed **`proof.md`** (`docs/verify/verify-<slug>-YYYY-MM-DD/proof.md`), a Markdown fragment embedding the GIF and screenshots by their SHA-pinned raw URLs, captioned per flow. This file is the hand-off contract: the PR step reads it and splices it straight into the pull request body, so it never re-runs the publish. On a private repo (publish skipped), write `proof.md` with the local file paths and a note that they need manual attachment, so the PR step can still surface them.
+Then write the ready-to-embed proof into the bundle's fixed **`proof.md`** (`docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/proof.md`), a Markdown fragment embedding the GIF and screenshots by their SHA-pinned raw URLs, captioned per flow. This file is the hand-off contract: the PR step reads it and splices it straight into the pull request body, so it never re-runs the publish. On a private repo (publish skipped), write `proof.md` with the local file paths and a note that they need manual attachment, so the PR step can still surface them.
 
 ### 4. Hand off
 

@@ -146,11 +146,11 @@ A slug is short, lowercase, kebab-case, and taken from the idea's core noun. **`
 
 ### Artifacts land inside the topic folder
 
-**The artifact root is the topic folder, not the repo root.** A skill that documents a path under `docs/` writes it under `topics/<slug>/docs/` instead, keeping its own subpath and filename convention intact. `docs/plans/plan-sso-2026-07-23.md` becomes `topics/<slug>/docs/plans/plan-sso-2026-07-23.md`.
+**The artifact root is the topic folder, not the repo root.** A skill that documents a path under `docs/` writes it under `topics/<slug>/docs/` instead, keeping its own subpath and filename convention intact. `docs/plans/0001-plan-sso-2026-07-23.md` becomes `topics/<slug>/docs/plans/0001-plan-sso-2026-07-23.md`.
 
 This is a root swap, so it holds for every skill, including one added after this file was written. The repo root has no `docs/` directory and does not gain one.
 
-Filenames follow `<type>-<slug>-YYYY-MM-DD.md`, with the artifact's creation date at the end. Keep that date stable when the file is edited later.
+Filenames follow `NNNN-<type>-<slug>-YYYY-MM-DD.md`, with a four-digit serial in front and the artifact's creation date at the end. The serial counts per directory inside the topic folder: list that directory, take the highest leading serial, and add one, starting at `0001`. Keep the whole name stable when the file is edited later.
 
 ## Saving is a demand, not a default
 

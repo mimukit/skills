@@ -8,7 +8,7 @@ Generate a step-by-step manual QA plan for a feature just implemented, grounded 
 |---|---|
 | Modes | single procedure |
 | Tools | `Read`, `Bash`, `Write` |
-| Writes | `docs/qa/qa-<feature-slug>-YYYY-MM-DD.md` |
+| Writes | `docs/qa/NNNN-qa-<feature-slug>-YYYY-MM-DD.md` |
 | Visibility | public |
 
 ## What it does

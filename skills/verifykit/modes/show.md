@@ -7,9 +7,9 @@ The operator is present, so the output is an image path they can open now. Nothi
 Take the first that resolves:
 
 1. the system temporary directory: `mktemp -d` on POSIX, `%TEMP%` on Windows;
-2. otherwise `docs/verify/show-<slug>-YYYY-MM-DD/` inside the repo, which sits under the `docs/verify/` line that `proof` mode adds to `.gitignore`.
+2. otherwise `docs/verify/` inside the repo, which sits under the `docs/verify/` line that `proof` mode adds to `.gitignore`.
 
-Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Keep the date stable when re-running the same slug on the same day; later captures overwrite by file name.
+Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, prefix it with the next serial, `NNNN-show-<slug>-YYYY-MM-DD/`: list `docs/verify/`, take the highest leading four-digit serial, and add one, starting at `0001`. Keep the name stable when re-running the same slug on the same day; later captures overwrite by file name.
 
 ### 2. Drive and screenshot
 

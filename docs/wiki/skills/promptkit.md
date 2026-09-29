@@ -107,7 +107,7 @@ It's **suppressed when the decisions are already made**: a plan document coverin
 
 ## Where the system prompt lands, and why it's written twice
 
-`system` writes `docs/prompts/prompt-<slug>-YYYY-MM-DD.md` by default, because in that mode the artifact *is* the deliverable. What makes `docs/` defensible rather than merely consistent: the file holds the prompt **and its must-pass contract**, which is genuinely a document, not a source constant.
+`system` writes `docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md` by default, because in that mode the artifact *is* the deliverable. What makes `docs/` defensible rather than merely consistent: the file holds the prompt **and its must-pass contract**, which is genuinely a document, not a source constant.
 
 But the doc lives in `docs/`, the running app loads its prompt from somewhere else, and nothing links them — so six weeks on, the file is authoritative-looking and possibly wrong, which is worse than no file. A pointer-plus-stamp would make the drift *visible*, which beats nothing, but the drift still happens and the reader still has two candidate prompts.
 

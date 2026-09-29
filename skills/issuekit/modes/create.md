@@ -3,7 +3,7 @@
 Turn work into issues. Two inputs: a plan file (the main path) or a plain description (start fresh).
 
 ### 1. Find the input
-- **Plan path:** a `plan-<slug>-YYYY-MM-DD.md`. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (creation date is the filename suffix) → ask which plan.
+- **Plan path:** a `NNNN-plan-<slug>-YYYY-MM-DD.md`, or an older `plan-<slug>-YYYY-MM-DD.md` without the serial. Resolve it by precedence: an explicit path in the prompt → the newest canonical plan under `docs/plans/` (the highest leading serial; for plans without one, the latest creation-date suffix) → ask which plan.
 - **Ad-hoc path:** a plain description with no plan. This is the "start fresh, just file it" case → one well-formed issue.
 
 ### 2. Decompose a plan into a proposed breakdown
@@ -107,7 +107,7 @@ Record the dependency in the same call that labels the issue, so a dependent nev
 Show the label set alongside the issues in the preview. The OK covers filing the issues; the labels themselves ride along without a separate prompt.
 
 ### 5. Write the issue numbers back into the plan
-Once issues exist, annotate the source `plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's creation-date suffix:
+Once issues exist, annotate the source `NNNN-plan-<slug>-YYYY-MM-DD.md` so it stays the source of truth. Add the ref to each phase heading the issue covers, without changing the file's name, serial and creation-date suffix included:
 
 ```markdown
 ### Phase 1: oidc provider (#41)

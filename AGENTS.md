@@ -87,13 +87,16 @@ A skill's closing hand-off is procedural, whatever that skill produces for its r
 
 ## Documentation artifact naming
 
-When a skill creates a durable Markdown artifact under `docs/`, use `<type>-<slug>-YYYY-MM-DD.md`: a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end. Examples: `docs/plans/plan-sso-login-2026-07-23.md`, `docs/research/research-auth-providers-2026-07-23.md`, `docs/qa/qa-login-throttling-2026-07-23.md`, `docs/reviews/review-auth-refactor-2026-07-23.md`, and `docs/handoffs/handoff-auth-migration-2026-07-23.md`.
+When a skill creates a durable Markdown artifact under `docs/`, use `NNNN-<type>-<slug>-YYYY-MM-DD.md`: a four-digit serial, a lowercase type prefix, a short lowercase kebab-case subject slug, and the artifact's ISO creation date at the end. Examples: `docs/plans/0001-plan-sso-login-2026-07-23.md`, `docs/research/0003-research-auth-providers-2026-07-23.md`, `docs/qa/0012-qa-login-throttling-2026-07-23.md`, `docs/reviews/0002-review-auth-refactor-2026-07-23.md`, and `docs/handoffs/0005-handoff-auth-migration-2026-07-23.md`.
 
-- **Creation date, not modification date.** Keep the filename stable when the artifact is edited; record a later update date inside the document if useful.
-- **Same subject means update in place.** Do not create a second file for the same artifact. For genuinely distinct artifacts that would collide on type, slug, and date, make the slug more specific; only as a last resort insert a sequence immediately before the date (`research-auth-providers-02-2026-07-23.md`) so the filename still ends with the date.
-- **ADRs keep their sequence.** Use `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`, with a zero-padded monotonically increasing decision number. The number is the decision order; the date is its creation date.
-- **Bundles put the convention on the directory.** For a multi-file artifact such as visual verification, use `docs/verify/verify-<slug>-YYYY-MM-DD/` and keep structural children such as `notes.md` and `proof.md` fixed inside it.
-- **Existing project convention wins.** A public skill may honor a target repository's established artifact location or naming scheme. Its own documented fallback must follow this convention and inline the rule because public skills cannot depend on this file.
+- **The serial records creation order, per directory.** `NNNN` is zero-padded, monotonic, and never reused. Each directory under `docs/` keeps its own count. To number a new artifact, list its directory, take the highest leading serial, and add one; an empty or missing directory starts at `0001`. The serial is what makes a listing read in creation order, and it is the rule most often lost in a fresh repo, so a writing skill states it inline rather than trusting the repo to document it.
+- **Creation date, not modification date.** Keep the filename, serial included, stable when the artifact is edited; record a later update date inside the document if useful.
+- **Same subject means update in place.** Do not create a second file for the same artifact. Two distinct artifacts never collide, because each takes its own serial; still make the slug specific enough to tell them apart.
+- **An ADR's decision number is its serial.** Use `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`. The number is the authoritative decision order and other ADRs cite it, so it is never re-derived or compacted.
+- **Bundles put the convention on the directory.** For a multi-file artifact such as visual verification, use `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` and keep structural children such as `notes.md` and `proof.md` fixed inside it.
+- **Readers accept both shapes.** A skill that finds an artifact by name matches an optional leading `NNNN-`, so it still sees files written before the serial existed. It orders by the serial when one is present, and by the date suffix otherwise.
+- **Reader-facing pages stay unnumbered.** `docs/wiki/`, how-to guides, runbooks, and any page a person links to by name are documentation, not artifacts.
+- **Existing project convention wins.** A public skill may honor a target repository's established artifact location or naming scheme. Its own documented fallback must follow this convention and inline the rule because public skills cannot depend on this file. repokit's `docs` mode renames a repo's older unnumbered artifacts into this shape.
 
 ## Cross-referencing steps
 

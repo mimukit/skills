@@ -8,7 +8,7 @@ Compact the current conversation into a handoff document another agent or sessio
 |---|---|
 | Modes | single procedure |
 | Tools | `Read`, `Write` |
-| Writes | `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` |
+| Writes | `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
@@ -62,7 +62,7 @@ A handoff is read twice by the same person, in two different states of mind, and
 
 ## Where it lands
 
-Writes `docs/handoffs/handoff-<slug>-YYYY-MM-DD.md` by default, using the creation date — which stays fixed if the handoff is later edited. Prints as a code block instead when you explicitly ask for inline output, or when no writable filesystem exists.
+Writes `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` by default, using the creation date — which stays fixed if the handoff is later edited. Prints as a code block instead when you explicitly ask for inline output, or when no writable filesystem exists.
 
 ## Hands off to
 
