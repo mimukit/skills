@@ -123,6 +123,8 @@ Brings an already-created repo up to convention in one span: repo settings, base
 
 **The scaffold set** is grounded in what the mimukit repos actually share: `LICENSE`, `README.md`, `.gitignore` (stack-matched, skipped when the stack is unknown), `AGENTS.md`, and a `.claude/CLAUDE.md` pointer to it. An existing file is never overwritten. A repo with history runs the identical flow — the diffs just shrink.
 
+**`AGENTS.md` always carries the docs artifact naming rule.** A new file gets it in the skeleton. An existing one gets the section proposed when it has no naming rule, because a repo scaffolded by a project generator arrives with its own `AGENTS.md` and no rule. The kits that write artifacts already add the serial on their own; the section is for an agent that has none of them installed and reads only the repo.
+
 **The license is a question, never an assumption, in both visibilities.** A public repo gets MIT recommended (text fetched from the GitHub licenses API, never written from memory); a private repo gets a proprietary all-rights-reserved file recommended, because the point is to say the code is proprietary where a reader will find it — with an open license offered as runner-up since private repos often go public later. "No license" stays available, with one line on what it means. The holder name comes from `gh api user`, falling back to `git config user.name`, always visible in the preview.
 
 ### `docs`
@@ -130,7 +132,9 @@ Brings an already-created repo up to convention in one span: repo settings, base
 
 Renames the repo's `docs/` artifacts to `NNNN-<type>-<slug>-YYYY-MM-DD.md`, assigning each serial from when the artifact was created. A one-time migration per repo, idempotent on a re-run, and the only mode that calls GitHub not at all — it needs git and a clean tree, not `gh` and a remote.
 
-**The problem is that every file browser sorts alphabetically.** The artifact convention already ends every filename in its creation date, which is readable but sorts on the slug: `plan-afkkit-2026-07-24.md` lands above `plan-wikikit-2026-08-06.md` because `a` precedes `w`. In a directory of thirty plans, nothing tells you which one is this week's. A leading serial makes the listing and the creation order the same thing.
+**The mode exists for trees written before the serial.** Every kit that writes an artifact now adds the serial itself, so a new repo never needs this mode. An older repo holds files in the previous shape, and this mode renames them.
+
+**The problem is that every file browser sorts alphabetically.** The previous convention ended every filename in its creation date, which is readable but sorts on the slug: `plan-afkkit-2026-07-24.md` lands above `plan-wikikit-2026-08-06.md` because `a` precedes `w`. In a directory of thirty plans, nothing tells you which one is this week's. A leading serial makes the listing and the creation order the same thing.
 
 **Why a serial and not a leading date.** A date prefix would sort correctly too, and it was the obvious alternative. A serial is shorter to say — "open 34" against "open the plan from the twenty-third" — it is unique within its directory where a date is not, and it matches the numbering the ADRs already carry, so the repo has one convention rather than two that look alike. The trailing date stays either way, so nothing is lost by putting a number in front of it.
 
