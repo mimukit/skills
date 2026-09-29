@@ -8,7 +8,7 @@ Maintain a project's domain model as a consented byproduct of design work — a 
 |---|---|
 | Modes | single procedure, consent-gated |
 | Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob` |
-| Writes | `CONTEXT.md`, `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` |
+| Writes | `CONTEXT.md`, `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` |
 | Visibility | public |
 
 ## What it does
@@ -86,7 +86,7 @@ proposed | accepted | deprecated | superseded by ADR-NNNN
 
 A single paragraph is already a valid ADR. The three sections are **optional** — included only when they add value.
 
-Files are `adr-NNNN-<slug>-YYYY-MM-DD.md`, zero-padded and sequential. The number is the authoritative decision order; the date is creation. An ADR is **never renamed** because its status changed later.
+Files are `NNNN-adr-<slug>-YYYY-MM-DD.md`, zero-padded and sequential. The number leads so the directory lists in decision order, the same serial every other `docs/` artifact carries; older `adr-NNNN-` files keep their numbers until [`repokit`](./repokit.md) `docs` renames them. The number is the authoritative decision order; the date is creation. An ADR is **never renamed** because its status changed later.
 
 **ADR content is immutable once shipped.** `Status` is the one mutable field, so a later ADR can mark an old record `deprecated` or `superseded by ADR-NNNN`. Parallel branches may claim the same number — the later one gets renumbered during merge.
 

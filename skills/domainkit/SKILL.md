@@ -31,14 +31,14 @@ Every write is **consent-gated**, so detect, offer, then write only on a yes. A 
 A term is being used loosely or inconsistently, or a settled decision clears the three-part ADR bar. In flow, this surfaces mid-grill, mid-plan, or mid-implementation; you don't wait to be called.
 
 ### 2. Locate the existing artifacts
-Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/adr-*.md` and take the highest existing decision number.
+Read the repo-root `CONTEXT.md` if it exists (or `CONTEXT-MAP.md` → the right context file for a multi-context project). If neither exists, create `CONTEXT.md` at the repo root when the first glossary term is accepted. For an ADR, scan `docs/adr/` and take the highest existing decision number, whether the file is `NNNN-adr-*.md` or the older `adr-NNNN-*.md`.
 
 ### 3. Offer
 Show the proposed glossary entry or ADR and ask before writing. Keep the proposal tight enough to accept or redirect at a glance.
 
 ### 4. Write on consent
 - **Glossary.** Add or adjust the term in place. Keep `CONTEXT.md` a *pure glossary*: what terms mean, nothing else. Be opinionated, so when several words compete, pick one canonical term and list the rest under `_Avoid_`.
-- **ADR.** Create `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `adr-0007-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` field is the one mutable exception, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`.
+- **ADR.** Create `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` at the next number, using a short lowercase kebab-case slug and the decision's ISO creation date (for example, `0007-adr-use-postgres-2026-07-23.md`). Minimal by default; add optional sections only when they carry real value. ADR content is **immutable** once shipped; the `Status` field is the one mutable exception, so a later ADR may mark the old record `deprecated` or `superseded by ADR-NNNN`.
 
 ### 5. Defer when unsettled
 If the term or decision isn't actually resolved, don't manufacture certainty. Use grillkit to settle it first when installed, or ask the user to settle it directly, then record the result.
@@ -51,7 +51,7 @@ Keep this short. domainkit usually fires *inside* someone else's work, so a long
 
 **What changed.** One line: the term added or adjusted, or the ADR written with its number and title.
 
-**Where it landed.** Give the exact path (`CONTEXT.md`, or `docs/adr/adr-NNNN-<slug>-YYYY-MM-DD.md`).
+**Where it landed.** Give the exact path (`CONTEXT.md`, or `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`).
 
 **Next.** Normally, *return to what was interrupted*: name the grill, plan, or implementation this fired inside and pick it straight back up. Only when something genuinely follows from the write does it outrank that: a new ADR that supersedes an older one leaves the old record's `Status` stale, so offer that flip; a term that turned out to be contested isn't settled at all, so route to grillkit (when installed) or ask the user to settle it rather than leaving a guess on disk. Invoked directly with nothing to return to? Say what was written and stop, because there is no next step to invent.
 
@@ -80,7 +80,7 @@ _Avoid: <synonym to reject>, <another>_
 
 ## The ADR decision record format
 
-ADRs live in `docs/adr/` and use `adr-NNNN-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `adr-0001-use-postgres-2026-07-23.md`, `adr-0002-adopt-event-log-2026-07-24.md`, … The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it.
+ADRs live in `docs/adr/` and use `NNNN-adr-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `0001-adr-use-postgres-2026-07-23.md`, `0002-adr-adopt-event-log-2026-07-24.md`, … The number leads so a listing reads in decision order, matching the serial every other `docs/` artifact carries. The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. A repo whose ADRs still use the older `adr-NNNN-<slug>-YYYY-MM-DD.md` shape keeps its numbers; write the new ADR in the new shape, and point the user at repokit's `docs` mode (when installed) to rename the older ones. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it.
 
 ```markdown
 # NNNN: <Title>
