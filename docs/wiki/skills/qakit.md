@@ -59,7 +59,7 @@ Every dimension gets walked, and one that's genuinely irrelevant gets **said to 
 
 Happy path · edge and boundary · negative and error handling · regression · security and permissions · data and state · concurrency and timing · compatibility · accessibility · performance · usability.
 
-**Data and state reaches into the database**, whenever the diff touches a migration, a schema file, a model, or a query. That's the one dimension where the screen is an unreliable witness: a create that saves the parent row and silently skips the join row renders exactly like one that worked. So the plan asserts on rows, relations and constraints directly — the table exists after the migration, the create wrote its child rows, the delete cascaded and left no orphan, the unique index actually rejects a duplicate. A diff that touches no data layer skips the database half and says so under *Not covered*, like any other dimension.
+**Data and state reaches into the database**, whenever the diff touches a migration, a schema file, a model, or a query. That's the one dimension where the screen is an unreliable witness: a create that saves the parent row and silently skips the join row renders exactly like one that worked. So the plan asserts on rows, relations and constraints directly — the table exists after the migration, the create wrote its child rows, the delete cascaded and left no orphan, the unique index actually rejects a duplicate. A diff that touches no data layer skips the database half and says so under *Not covered*, like any other dimension. Those database rules sit in a separate `db.md` file that qakit reads only when the diff touches the data layer, so a frontend-only run doesn't carry them.
 
 Each case is tagged with a tier carrying an emoji, so urgency reads at a glance:
 
@@ -71,13 +71,16 @@ A case carrying a data-integrity checkpoint gets **promoted** to the higher tier
 
 It doesn't pad. One clear check per behavior beats ten redundant ones, and the count scales to the feature's surface area and risk. What the dimensions produce is a flat pile of candidates; grouping them into scenarios is what decides which of them end up as separate cases.
 
-## Three commands it will never run
+## What it runs, and what it won't
 
-The first two have the same shape: **inspect what exists, don't reproduce it.**
+qakit writes no test code, but it does run the project's existing test, lint, and build commands. That is not a contradiction: those are checks a machine can confirm, and running them is exactly what keeps them off the human's list. Every command it runs is echoed in **Automated verification**.
 
-- **Anything that destroys or rebuilds state** — a `*:reset`, a teardown-and-rescaffold, a database drop, a `clean` that wipes a build. That includes the Setup and Reset blocks of the scenarios it just wrote: those are written for the human to run, and qakit describes them without ever performing them. It's writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
-- **A gate a prior step this session already ran green** — the test, build, or lint chain that just passed. Re-running produces the same answer at full price, and it's the most common way this step becomes the most expensive one in a pipeline. It re-runs only if the change under test *is* that gate, or if something modified the tree since.
-- **Any write to the database, and any read from a host it hasn't named.** The write half follows from the first rule. The read half is less obvious and matters more: `DATABASE_URL` in a shell holds whatever the last person exported, and "read-only" is not a sufficient guard, because a `SELECT` against production is still an unauthorized read of customer data. So qakit resolves the host, says it out loud, and connects only to localhost, a loopback address, or a container service the compose file defines. Anything else waits for you to confirm. Decline, and the queries go into the plan for a human to run instead.
+Two command rules have the same shape: **inspect what exists, don't reproduce it.**
+
+- **Never: anything that destroys or rebuilds state** — a `*:reset`, a teardown-and-rescaffold, a database drop, a `clean` that wipes a build. That includes the Setup and Reset blocks of the scenarios it just wrote: those are written for the human to run, and qakit describes them without ever performing them. It's writing a plan *about* an environment, not administering one, and a QA agent that resets state can wipe the very build the human was about to test.
+- **Reuse, don't re-run: a gate already recorded green on this exact revision.** Re-running produces the same answer at full price, and it's the most common way this step becomes the most expensive one in a pipeline. "This exact revision" means the recorded result names the same HEAD sha and the same dirty state qakit recorded when it scoped the change. "Earlier this session" is not enough, because the tree can move inside one session. A result with no revision, or a different one, gets re-run.
+
+The database adds one more limit, and it lives in qakit's data-layer file with the other database rules: **no write to the database, and no read from a host it hasn't named.** The write half follows from the first rule. The read half is less obvious and matters more: `DATABASE_URL` in a shell holds whatever the last person exported, and "read-only" is not a sufficient guard, because a `SELECT` against production is still an unauthorized read of customer data. So qakit resolves the host, says it out loud, and connects only to localhost, a loopback address, or a container service the compose file defines. Anything else waits for you to confirm. Decline, and the queries go into the plan for a human to run instead.
 
 ## Every case has the same four parts
 
@@ -167,17 +170,17 @@ The tester works down the file case by case, so the run ends at the bottom. A ve
 
 A signed-off QA plan that doesn't say which commit it covers can't be trusted a week later — but that's an argument for *recording* the build, not for handing the tester an empty table to copy a sha into.
 
-qakit already runs `git log` to scope the plan, so it stamps the date and the exact commit into the header line itself. Tester and date-run are dropped outright: in a solo or agent-assisted workflow the git author and timestamp of the commit that lands the filled-in plan already answer both, and a field that's redundant with git is a field that comes back blank.
+qakit already runs `git log` to scope the plan, so it stamps the date, the exact commit, and whether the tree had uncommitted changes into the header line itself. Tester and date-run are dropped outright: in a solo or agent-assisted workflow the git author and timestamp of the commit that lands the filled-in plan already answer both, and a field that's redundant with git is a field that comes back blank.
 
 What's left at the top is the one thing a machine genuinely can't supply — the human's overall verdict, as three boxes. A run against a different build than the stamp says so in a case's **Notes**.
 
 ## Hands off to
 
-The human, to run the plan in a fresh checkout — scenario by scenario, resetting only between scenarios. qakit reports how many scenarios and manual cases (and how many 🔴 critical) plus the automated result.
+[`prkit`](./prkit.md), with the plan path: "open the PR with prkit and hand it `docs/qa/<file>`", so the PR's test plan links the QA plan instead of restating it. Without prkit, `gh pr create` with the path in the body. qakit reports how many scenarios and manual cases (and how many 🔴 critical) plus the automated result, and the human runs the plan in a fresh checkout, scenario by scenario, resetting only between scenarios.
 
 It never marks a *manual* case as passed — those are yours to execute. The agent only fills the Automated verification section.
 
-If what you actually want is automated tests, qakit says so and stops rather than producing a manual plan for it — that's [`testkit`](./testkit.md)'s job when it's installed.
+If what you actually want is new automated tests, qakit says so and stops rather than producing a manual plan for it. Tests for new work belong to [`implementkit`](./implementkit.md) in TDD mode; [`testkit`](./testkit.md) is for a codebase that has no tests at all.
 
 ## Install
 

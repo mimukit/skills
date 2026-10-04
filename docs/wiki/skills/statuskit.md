@@ -8,7 +8,7 @@ Survey a project read-only into a one-screen dashboard, then crown one finish-fi
 |---|---|
 | Modes | single procedure |
 | Tools | `Bash`, `Read`, `Write`, `Edit`, `Skill` |
-| Writes | `docs/status/NNNN-status-<slug>-YYYY-MM-DD.md` — gitignored scratch; one tracker-declaration line in an existing agent-guide file, on approval |
+| Writes | `docs/status/NNNN-status-<slug>-YYYY-MM-DD.md` — gitignored scratch; one `docs/status/` line in an existing root `.gitignore`; one tracker-declaration line in an existing agent-guide file, on approval |
 | Visibility | public |
 
 ## What it does
@@ -19,7 +19,7 @@ It's a **read-and-advise** tool. It never commits, pushes, closes an issue, edit
 
 Nothing it does reaches a remote, a branch, or a tracker, and that is the point: statuskit is safe to run anytime, as often as you like, to re-orient.
 
-The stance used to be stated as "zero mutation," which was never quite true, because the snapshot was always a write. It is now stated as the boundary that actually holds: two local files, and nothing outward-facing ever. A headline a skill contradicts is worse than a narrower one it keeps.
+The stance used to be stated as "zero mutation," which was never quite true, because the snapshot was always a write. It is now stated as the boundary that actually holds: the local writes listed in one write-rules table (the snapshot, one `.gitignore` line, and a declaration sentence on approval), and nothing outward-facing ever. The `.gitignore` line used to go unlisted, which made the old "two local files" claim false in exactly the way this rewrite was meant to stop. A headline a skill contradicts is worse than a narrower one it keeps.
 
 ## Three panels name names
 
@@ -149,7 +149,7 @@ statuskit is **git-first**: git signals always drive it, GitHub signals enrich i
 | Not a git repo | says so, skips everything git-derived. No repo at all → the move is to start with [`plankit`](./plankit.md) |
 | `gh` missing, unauthenticated, or no remote | drops to the **git-only ladder** — a first-class mode, not an error. Names the actual gap once and carries on |
 | No `docs/plans/` | skips the plans read entirely |
-| A repo that doesn't use GitHub issues | drops the Issues panel and six ladder rungs, ranks unbuilt plan phases instead. See [Not every project uses GitHub Issues](#not-every-project-uses-github-issues) |
+| A repo that doesn't use GitHub issues | drops the Issues panel and seven ladder rungs, ranks unbuilt plan phases instead. See [Not every project uses GitHub Issues](#not-every-project-uses-github-issues) |
 | No shell | prints the commands for you to run, reasons from what you paste back |
 
 ## Not every project uses GitHub Issues
@@ -163,7 +163,9 @@ So the question gets resolved explicitly, first answer wins:
 1. **The prompt.** You said so.
 2. **The repo's agent-guide file.** A sentence like *this project tracks work in Linear, not GitHub Issues*.
 3. **Detection**, off the `gh issue list --state all` call the survey already makes. Issues disabled means no tracker; any issue in any state means a tracker.
-4. **Unknown**, when the array comes back empty.
+4. **Unknown**, when the array comes back empty, or when the call fails for any other reason.
+
+**A failed query is unknown, never "no tracker".** A network or authentication error says nothing about where a team keeps its work, and an earlier version read it as policy. The four readings are now explicit: *present*, *absent*, *unknown*, and *unavailable* (no usable `gh`, which runs the git-only ladder). A failed call is named once on the Issues line, because a retry settles it.
 
 **Unknown is a real answer, not a failure.** It routes like no-tracker, so nothing gets asserted as unfiled and nobody gets told to go file issues, and it says out loud that it couldn't tell. An earlier draft resolved the ambiguity by probing for the `ready` / `blocked` lifecycle labels, on the theory that a repo carrying them has declared the workflow. That got cut: it buys a sharper *sentence* rather than a different *action*, spends a call on a repo state that lasts about a day, and misreads a label set some template provisioned that nobody uses.
 
@@ -185,7 +187,7 @@ Two alternatives lost. A hand-maintained `Status:` line per plan was already in 
 
 ### It can offer to write the answer down
 
-On an unknown reading only, statuskit offers to append one sentence to the agent-guide file so the next run resolves at rung 2. This is the only thing it writes outside its own snapshot, and it is deliberately hemmed in: previewed and approved, never as the crowned move, at most once per run, never in an unattended run, and only into a file that already exists. A repo with no agent-guide file has decided not to have one, and a status check is the wrong tool to change that, so it prints the line for you instead.
+On an empty-array unknown reading only, statuskit offers to append one sentence to the agent-guide file so the next run resolves at rung 2. A failed query does not trigger it, because the fix there is a retry, not a declaration. The offer is deliberately hemmed in: previewed and approved, never as the crowned move, at most once per run, never in an unattended run, and only into a file that already exists. A repo with no agent-guide file has decided not to have one, and a status check is the wrong tool to change that, so it prints the line for you instead. The offer's rules live in a satellite file, `declaration.md`, loaded only when the reading is unknown, because most runs never reach it.
 
 ## The two ladders
 
@@ -204,21 +206,24 @@ On an unknown reading only, statuskit offers to append one sentence to the agent
 
 | # | State | Move |
 |---|-------|------|
-| 0 † | a **workable `critical`** issue — open, unblocked | drop what you're on — [`issuekit`](./issuekit.md) `start`, or resume it |
-| 1 | your PR is red or change-requested | [`mergekit`](./mergekit.md) `fix` |
-| 2 | your PR that nobody is reviewing | self-review — [`mergekit`](./mergekit.md) `<N>`, or request a reviewer |
+| 0 † | a **workable `critical`** issue — open, unblocked | drop what you're on — [`issuekit`](./issuekit.md) `start <N>`, or resume it |
+| 1 | your PR is red or change-requested | [`mergekit`](./mergekit.md) `fix <N>` |
+| 2 | your PR that nobody is reviewing | self-review — [`mergekit`](./mergekit.md) `start <N>`, or request a reviewer |
 | 3 † | in-progress issue whose branch you're on | resume / [`implementkit`](./implementkit.md) |
 | 4 | orphaned work — uncommitted on base, untracked branch, unpushed commits | [`commitkit`](./commitkit.md) / push |
 | 5 | a stash | restore with [`gitkit rescue`](./gitkit.md), or drop |
 | 6 | an unmerged local feature branch | [`gitkit clean`](./gitkit.md) |
 | 7 † | stale-tracker signal fired | [`issuekit`](./issuekit.md) `sync` |
-| 8 † | a `ready` issue to start (highest priority, then `unblocks`) | [`issuekit`](./issuekit.md) `start`, then implement |
+| 8 † | a `ready` issue, or a startable `stacked` one (highest priority, then `unblocks`) | [`issuekit`](./issuekit.md) `start <N>`, then implement |
 | 8b | **no tracker:** the next unbuilt phase of the newest plan | build it — [`implementkit`](./implementkit.md) |
+| 8c † | a `needs-planning` issue | grill it — [`grillkit`](./grillkit.md), then promote it with [`issuekit`](./issuekit.md) `triage` |
 | 9 † | an unlabeled issue needing classification | [`issuekit`](./issuekit.md) `triage` |
 | 10 † | an unassessed backlog — open issues with no priority | rank them — [`issuekit`](./issuekit.md) `triage` |
 | 11 | an unfiled plan *(only when the tracker is in use)*, or no plans at all | [`issuekit`](./issuekit.md) `create` / [`plankit`](./plankit.md) |
 
-**† fires only when a tracker is in use.** Six of the twelve rungs are issue rungs, which is why a project tracking work elsewhere used to fall past all of them and get crowned nothing. The PR and git rungs never depend on it: a branch and a pull request are the same facts whatever the tracker is.
+**† fires only when a tracker is in use.** Seven rungs are issue rungs, which is why a project tracking work elsewhere used to fall past all of them and get crowned nothing. The PR and git rungs never depend on it: a branch and a pull request are the same facts whatever the tracker is.
+
+**A `stacked` issue is crowned like a `ready` one, and a `needs-planning` issue gets its own rung.** Both used to fall to rung 9 as "needs classification", which sent you to tidy an issue that was already classified. A `stacked` issue is startable work on a branch cut from its prerequisite's open PR, so it ranks with `ready`. A `needs-planning` issue is classified but cannot be started by anyone until a human settles its decisions, so its move is a grill, ranked below every startable issue and above classification.
 
 **Rung 0 is numbered zero because it isn't really a rung.** It's the [one documented override](#critical-is-the-one-thing-that-outranks-finish-first) of the finish-first spine, and numbering it inside the sequence would make it look like an ordinary state that merely happens to sort first. It fires rarely, it names what it displaced, and everything below it is the actual ladder. If it's firing on most runs, `critical` has stopped meaning anything and the real move is `issuekit triage`.
 
@@ -250,7 +255,7 @@ One thing sits on statuskit's side of that line despite sounding like issuekit's
 
 A terminal dashboard scrolls away, and its ranked moves can't be ticked off. So the file gets written every run — no permission asked — with one line saying where it went.
 
-It's **disposable**: `docs/status/` goes in `.gitignore` before the first write, and the file stays uncommitted.
+It's **disposable**: `docs/status/` goes in the root `.gitignore` before the first write, and the file stays uncommitted. A repo with no root `.gitignore` does not get one; the snapshot stays untracked and the saved line says so.
 
 **One file per day.** Before writing, statuskit looks for a snapshot already dated today and updates that one in place, keeping its existing name. It only creates a file when there isn't one. A status file is a point-in-time read, and keeping five from one afternoon is how a scratch directory becomes archaeology — worse, it splits your ticked boxes across files that all look current.
 
@@ -268,7 +273,7 @@ Three things the file adds over the printed dashboard:
 
 Each move ends with an invisible `<!-- k: issue-12 -->`, and an update matches on that key and nothing else.
 
-The alternative — matching on the move's text — quietly loses your ticks. A move that survives the survey gets re-ranked and *re-worded*, so `Author debugkit` comes back as `Write the debugkit skill` and the box you ticked at 9am is empty at 2pm. The moves with an issue or PR number were never the hard case; it's the ones without — provision the labels, file the backlog into the tracker — where text is the only handle and where your tick most needs to survive. Keys come from a fixed vocabulary (`issue-12`, `pr-34`, `plan-<slug>`, `branch-…`, `stash-0`, or one fixed slug per ladder rung) so they don't drift the way prose does.
+The alternative — matching on the move's text — quietly loses your ticks. A move that survives the survey gets re-ranked and *re-worded*, so `Author debugkit` comes back as `Write the debugkit skill` and the box you ticked at 9am is empty at 2pm. The moves with an issue or PR number were never the hard case; it's the ones without — provision the labels, file the backlog into the tracker — where text is the only handle and where your tick most needs to survive. Keys come from a fixed vocabulary (`issue-12`, `pr-34`, `plan-<slug>`, `branch-…`, `stash-<sha>`, or one fixed slug per ladder rung) so they don't drift the way prose does. A stash is keyed by its commit SHA rather than its index, because `stash@{0}` names a different entry the moment a new stash is pushed.
 
 The key **never leaves the file** — not into a commit message, a branch name, or an issue body. It's a join key between two versions of one gitignored scratch file, and putting it in permanent history would leave durable artifacts referencing a throwaway one. The linkage that does belong in git already exists: `Closes #12` on the PR, which the survey reads anyway.
 
