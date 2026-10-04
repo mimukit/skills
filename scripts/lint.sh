@@ -3,7 +3,9 @@
 #   - SKILL.md exists with a YAML frontmatter block
 #   - name: field matches the directory name exactly
 #   - name is one lowercase word ending in `kit`
-#   - description front-loads a "Use when" trigger
+#   - description carries a "Use when" trigger within its first 300 characters,
+#     stays under 1,024 characters, and never promises proactive triggering
+#     when disable-model-invocation is set (warn)
 #   - license: is present
 #   - metadata.internal: true|false is declared (visibility marker)
 #   - public skills (internal:false) look portable (no repo-relative links / repo machinery)
@@ -13,7 +15,12 @@
 #   - every relative pointer, root or satellite, resolves inside the directory (error)
 #   - a closing hand-off section exists, so the skill recaps and routes (warn);
 #     a split skill (one with a modes/ directory) passes when the root or every
-#     modes/*.md carries one
+#     modes/*.md carries one; every hand-off names a next move or says there is none (warn)
+#   - allowed-tools matches the body on two greppable points: no Task/Agent
+#     without a dispatch, and a listing tool when the skill numbers NNNN files (warn)
+# On a full run it also checks collection parity: the README skills table, the
+# index.md groups against skills.sh.json, shipped IDEAS.md rows, and dispatches
+# to a skill only the user can invoke.
 # On a full run it also checks that every skill has a reader-facing wiki page
 # under docs/wiki/skills/ and that the modes each page documents still exist.
 # On a full run it also regenerates docs/wiki/cheatsheet.md and diffs it against
@@ -107,9 +114,9 @@ relative_link_targets() {
 }
 
 # Skills exempt from the closing hand-off requirement, by design rather than by
-# oversight: gitkit is the primitives layer other skills call, and states outright
-# that preparing a worktree implies nothing about what to do in it.
-HANDOFF_EXEMPT=" gitkit "
+# oversight. Empty now: gitkit was exempt as the primitives layer, but its sync,
+# clean and rescue branches each carry a hand-off, so it is checked like the rest.
+HANDOFF_EXEMPT=" "
 
 # Skills allowed to declare no `allowed-tools`. Empty on purpose: every skill
 # here now declares its built-in surface, including verifykit, which depends on a
@@ -120,6 +127,11 @@ HANDOFF_EXEMPT=" gitkit "
 # actually does is a read, not a grep — a heuristic for "does this invoke a
 # sibling" would misfire on every skill that routes without invoking.
 TOOLS_EXEMPT=" "
+
+# Public skills whose mention of AGENTS.md is output, not a dependency. repokit
+# scaffolds a target repo's AGENTS.md and checks it for a naming rule; it never
+# reads this repo's file, so the portability grep misfires on it.
+PORTABILITY_EXEMPT=" repokit "
 
 # Does the skill close with a hand-off — a recap of what it did plus the next move?
 # (AGENTS.md § "Closing a skill: the hand-off".) `Hand off` is canonical; the rest
@@ -139,6 +151,35 @@ has_closing_section() {
     # the shape mergekit close uses, counts too
     /^[0-9]+\.[ \t]+\*\*[Hh]and[ -]?off/ { found = 1 }
     END { exit !found }
+  ' "$1"
+}
+
+# The description field as one line: the folded `description: >-` scalar or a
+# plain one, with the indentation joined away and surrounding quotes dropped.
+description_text() {
+  printf '%s\n' "$1" | awk '
+    /^description:/ { f = 1; sub(/^description:[ \t]*/, ""); sub(/^[>|][-+]?[ \t]*$/, ""); if ($0 != "") out = $0; next }
+    f && /^[A-Za-z_-]+:/ { f = 0 }
+    f { sub(/^[ \t]+/, ""); out = (out == "" ? $0 : out " " $0) }
+    END { gsub(/^["'\'']|["'\'']$/, "", out); print out }
+  '
+}
+
+# Does every hand-off section carry a next move? AGENTS.md asks for three beats;
+# a grep cannot judge the first two, but a section that never mentions what
+# comes next (or says plainly that nothing does) has dropped the one beat a
+# reader acts on. Prints one line per hand-off section without it.
+handoff_without_next() {
+  awk '
+    /^```/ || /^~~~/ { infence = !infence; next }
+    infence { next }
+    /^#+[ \t]/ {
+      if (inh && !seen) print hline
+      h = tolower($0); inh = (h ~ /hand[ -]?off/); seen = 0; hline = FNR
+      next
+    }
+    inh && tolower($0) ~ /next|no follow-up|nothing (else )?(to do|comes)|terminal|stop here|no further/ { seen = 1 }
+    END { if (inh && !seen) print hline }
   ' "$1"
 }
 
@@ -177,6 +218,27 @@ check_skill() {
   else
     desc_has="$(printf '%s\n' "$fm" | grep -ci 'use when' || true)"
     [[ "$desc_has" -eq 0 ]] && issues+=("W:description missing 'Use when' trigger")
+
+    # Where the trigger sits and how long the whole field runs. A host that
+    # truncates descriptions keeps the head, so a trigger past the cap can be cut
+    # off, and the Agent Skills spec caps the field at 1,024 characters.
+    local desc desc_len use_at
+    desc="$(description_text "$fm")"
+    desc_len=${#desc}
+    [[ "$desc_len" -gt 1024 ]] \
+      && issues+=("W:description is $desc_len characters — keep it under 1,024 (one trigger per branch)")
+    if [[ "$desc_has" -gt 0 ]]; then
+      use_at="$(awk -v d="$desc" 'BEGIN { print index(tolower(d), "use when") - 1 }')"
+      [[ "$use_at" -gt 300 ]] \
+        && issues+=("W:'Use when' starts at character $use_at — lead with one what-clause, then the trigger, within 300")
+    fi
+
+    # A skill only the user can invoke never fires on its own, so a description
+    # promising proactive triggering describes behaviour the host blocks.
+    if grep -qiE '^disable-model-invocation:[[:space:]]*true' <<<"$fm" \
+      && grep -qi 'proactively' <<<"$desc"; then
+      issues+=("W:description says 'proactively', but disable-model-invocation: true means only the user invokes it")
+    fi
   fi
 
   # license present
@@ -208,7 +270,8 @@ check_skill() {
     if grep -qE '\]\(\.\./' "$file"; then
       issues+=("W:public skill has a repo-relative link (../…) — won't resolve once installed")
     fi
-    if grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
+    if [[ "$PORTABILITY_EXEMPT" != *" $name "* ]] \
+      && grep -qiE '\bmake (lint|link|unlink|list)\b|AGENTS\.md|(^|[^.])scripts/' "$file"; then
       issues+=("W:public skill references repo machinery (make/AGENTS.md/scripts) — keep it self-contained")
     fi
   fi
@@ -248,6 +311,32 @@ check_skill() {
     fi
     [[ "$closing_ok" -eq 1 ]] \
       || issues+=("W:no closing section — end with '## Hand off' (what changed · where it landed · next); a split skill may carry it in every modes/*.md instead")
+  fi
+
+  # every hand-off names the next move, or says there is none
+  local hl
+  for lf in "$file" ${sats[@]+"${sats[@]}"}; do
+    lrel="${lf#"$SKILLS_DIR/$name/"}"
+    while IFS= read -r hl; do
+      [[ -n "$hl" ]] && issues+=("W:$lrel: hand-off at line $hl names no next move — crown one, or say there is no next step")
+    done < <(handoff_without_next "$lf")
+  done
+
+  # Tool surface against the body. Two mismatches a grep can see without
+  # misfiring on skills that route without invoking: a subagent tool declared by
+  # a skill that never dispatches one, and a docs serial (`NNNN`) the skill must
+  # compute with no tool that can list a directory.
+  local tools body
+  tools="$(printf '%s\n' "$fm" | sed -n 's/^allowed-tools:[[:space:]]*//p' | head -1)"
+  body="$(cat "$file" ${sats[@]+"${sats[@]}"} | awk 'NR == 1 && /^---$/ { f = 1; next } f && /^---$/ { f = 0; next } !f')"
+  if [[ -n "$tools" ]]; then
+    if grep -qwE 'Task|Agent' <<<"$tools" \
+      && ! grep -qiE 'subagent|sub-agent|dispatch|parallel agent|`Task`|`Agent`|Agent tool|Task tool' <<<"$body"; then
+      issues+=("W:allowed-tools declares Task/Agent, but the skill never dispatches a subagent")
+    fi
+    if grep -q 'NNNN' <<<"$body" && ! grep -qwE 'Bash|Glob' <<<"$tools"; then
+      issues+=("W:the skill numbers NNNN artifacts but declares neither Bash nor Glob to list the directory")
+    fi
   fi
 
   # reference integrity: intra-doc anchors resolve; no number-based step refs.
@@ -619,6 +708,81 @@ check_cheatsheet() {
   errors=$((errors + 1))
 }
 
+# Collection-level parity the per-skill checks cannot see:
+#   - no skill dispatches to a sibling that sets disable-model-invocation: true;
+#     the host refuses that call, so the sibling must be named for the user to
+#     run instead (warn — the match is a heuristic over hand-off verbs)
+#   - the README skills table lists exactly the skills on disk (error)
+#   - every docs/wiki/index.md group matches the skills.sh.json group of the
+#     same title, member for member (error); order is free on both sides
+#   - no IDEAS.md backlog row names a skill that already shipped (warn)
+check_collection() {
+  local cissues=() cwarns=() name d f
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    f="$SKILLS_DIR/$name/SKILL.md"
+    grep -qiE '^disable-model-invocation:[[:space:]]*true' <(frontmatter "$f") || continue
+    while IFS= read -r d; do
+      [[ -n "$d" ]] && cwarns+=("$d dispatches to $name, which only the user can invoke — tell the user to run it instead")
+    done < <(grep -rnE "\\b$name\\b" "$SKILLS_DIR" --include='*.md' \
+      | grep -v "^$SKILLS_DIR/$name/" \
+      | grep -iE 'invoke|dispatch|`Skill`|Skill tool|hand (it|the [a-z]+) to' \
+      | grep -viE 'cannot|can.t|invocation-only|only the user|user runs|run it yourself|tell the user' \
+      | sed "s|^$REPO_ROOT/||; s|^\\([^:]*:[0-9]*\\):.*|\\1|")
+  done < <(skill_names)
+
+  local readme="$REPO_ROOT/README.md" listed ondisk
+  if [[ -f "$readme" ]]; then
+    listed="$(grep -oE '^\| `[a-z0-9]+kit` \|' "$readme" | sed 's/^| `//; s/` |$//' | sort -u | tr '\n' ' ')"
+    ondisk="$(skill_names | tr '\n' ' ')"
+    [[ "$listed" == "$ondisk" ]] \
+      || cissues+=("README.md skills table differs from skills/ — table: [$listed] disk: [$ondisk]")
+  fi
+
+  local json="$REPO_ROOT/skills.sh.json" diffout
+  if [[ -f "$json" && -f "$WIKI_INDEX" ]] && command -v python3 >/dev/null 2>&1; then
+    diffout="$(python3 - "$json" "$WIKI_INDEX" <<'PY'
+import json, re, sys
+groups = {g["title"]: sorted(g["skills"]) for g in json.load(open(sys.argv[1]))["groupings"]}
+index, cur = {}, None
+for line in open(sys.argv[2]):
+    m = re.match(r"^\*\*(.+)\*\*\s*$", line)
+    if m:
+        cur = m.group(1); index[cur] = []; continue
+    if cur:
+        names = re.findall(r"\]\(\./skills/([a-z0-9-]+)\.md\)", line)
+        if names: index[cur] += names
+        elif line.strip(): cur = None
+for t in sorted(set(groups) | set(index)):
+    if sorted(index.get(t, [])) != groups.get(t, []):
+        print(f"group '{t}': index.md {sorted(index.get(t, []))} vs skills.sh.json {groups.get(t, [])}")
+PY
+)"
+    while IFS= read -r d; do [[ -n "$d" ]] && cissues+=("$d"); done <<<"$diffout"
+  fi
+
+  local ideas="$REPO_ROOT/IDEAS.md" row
+  if [[ -f "$ideas" ]]; then
+    while IFS= read -r row; do
+      skill_exists "$row" && cwarns+=("IDEAS.md still lists '$row', which has shipped — delete the row")
+    done < <(grep -oE '^\| `[a-z0-9]+kit` \|' "$ideas" | sed 's/^| `//; s/` |$//')
+  fi
+
+  if [[ ${#cissues[@]} -eq 0 && ${#cwarns[@]} -eq 0 ]]; then
+    echo "  ${C_GREEN}✓${C_RESET} collection parity (README · index groups · IDEAS · dispatch)"
+    return
+  fi
+  local mark="${C_YELLOW}!${C_RESET}" i
+  [[ ${#cissues[@]} -gt 0 ]] && mark="${C_RED}✗${C_RESET}"
+  echo "  $mark collection parity"
+  for i in "${cissues[@]+"${cissues[@]}"}"; do
+    echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
+  done
+  for i in "${cwarns[@]+"${cwarns[@]}"}"; do
+    echo "      ${C_YELLOW}warn:${C_RESET}  ${i}"; warns=$((warns + 1))
+  done
+}
+
 run_all=0
 targets=("$@")
 if [[ ${#targets[@]} -eq 0 ]]; then
@@ -635,6 +799,7 @@ done
 [[ "$run_all" -eq 1 ]] && check_workflow_doc
 [[ "$run_all" -eq 1 ]] && check_skill_pages
 [[ "$run_all" -eq 1 ]] && check_cheatsheet
+[[ "$run_all" -eq 1 ]] && check_collection
 
 echo
 echo "${C_DIM}${errors} error(s), ${warns} warning(s)${C_RESET}"
