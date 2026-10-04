@@ -138,6 +138,9 @@ pages:
   - path: skills/reviewkit.md
     mode: reference
     documents: [skills/reviewkit/SKILL.md]
+  - path: skills/seokit.md
+    mode: reference
+    documents: [skills/seokit/SKILL.md]
   - path: skills/skillkit.md
     mode: reference
     documents: [skills/skillkit/SKILL.md]

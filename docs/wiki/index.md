@@ -38,6 +38,9 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 **Writing & Docs**
 [`humankit`](./skills/humankit.md) · [`wikikit`](./skills/wikikit.md) · [`designkit`](./skills/designkit.md)
 
+**Search & Visibility**
+[`seokit`](./skills/seokit.md)
+
 **Context & Handoffs**
 [`handoffkit`](./skills/handoffkit.md) · [`domainkit`](./skills/domainkit.md) · [`statuskit`](./skills/statuskit.md)
 

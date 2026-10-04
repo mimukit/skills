@@ -30,6 +30,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`repokit`](#repokit) | Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup. |
 | [`researchkit`](#researchkit) | Research the credible options for a technical decision and recommend one, grounded in primary sources with cited, dated evidence. |
 | [`reviewkit`](#reviewkit) | Review AI-agent-implemented code specifically — four ordered passes, findings ranked by severity and backed by quoted evidence. |
+| [`seokit`](#seokit) | Audit a web page, or crawl a whole site, for SEO and AEO gaps, then write an evidence-backed fix report and a long-term search and AI-visibility plan. |
 | [`skillkit`](#skillkit) | Create a new AI agent skill from scratch (naming, drafting, trigger cases, live testing, publishing), or re-check an existing one after a change. |
 | [`statuskit`](#statuskit) | Survey a project read-only into a one-screen dashboard, then crown one finish-first next move — ranked on declared priority — routed to the kit that does it. |
 | [`testkit`](#testkit) | Retrofit an automated test suite onto a working codebase that has none — rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. |
@@ -244,6 +245,15 @@ _No modes — one path._
 Review AI-agent-implemented code specifically — four ordered passes, findings ranked by severity and backed by quoted evidence.
 
 _No modes — one path._
+
+## [`seokit`](./skills/seokit.md)
+
+Audit a web page, or crawl a whole site, for SEO and AEO gaps, then write an evidence-backed fix report and a long-term search and AI-visibility plan.
+
+| Mode | What it does |
+|---|---|
+| `audit` | examine one page closely, plus the `robots.txt`, sitemap, and `llms.txt` that govern it, with up to five URLs for cross-page checks |
+| `crawl` | examine a whole site broadly, from its sitemap and its links, to find the template bugs and structural gaps a single page cannot show |
 
 ## [`skillkit`](./skills/skillkit.md)
 

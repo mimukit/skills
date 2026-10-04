@@ -17,7 +17,6 @@ Ordered by priority (top = build next).
 | Skill | What it does |
 |-------|--------------|
 | `jobkit` | Draft tailored job-application and interview answers grounded in `resume.md` + `context.md`, saved to markdown for copy-paste (chains into `humankit`) |
-| `seokit` | SEO audit and improvement report, authored from scratch to fit these conventions |
 | `banglakit` | Write natural Bangla/Bengali content with fluent, context-appropriate language and tone |
 | `evalkit` | Measure whether a production LLM app actually works — build a graded eval set from real traffic and failure reports, define task-specific metrics and LLM-judge rubrics, run the suite against prompt/model/RAG changes, and report a pass/regression verdict with per-case evidence so a change ships on numbers rather than vibes (pairs with `promptkit`) |
 

@@ -13,6 +13,11 @@
       "skills": ["humankit", "wikikit", "designkit"]
     },
     {
+      "title": "Search & Visibility",
+      "description": "Find what keeps a site out of search results and AI answers, on the local dev server before it ships or across the live site, and plan the long-term work for both.",
+      "skills": ["seokit"]
+    },
+    {
       "title": "Testing & QA",
       "description": "Review AI-written changes, prove a feature works, plan how to verify what you built, retrofit a real suite onto code that has none, and chase a symptom to its root cause when something breaks.",
       "skills": ["reviewkit", "qakit", "verifykit", "testkit", "debugkit"]
