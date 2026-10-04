@@ -41,8 +41,11 @@ One page per skill — what it does, when to reach for it, how its modes work, a
 **Context & Handoffs**
 [`handoffkit`](./skills/handoffkit.md) · [`domainkit`](./skills/domainkit.md) · [`statuskit`](./skills/statuskit.md)
 
-**Authoring & Automation**
-[`skillkit`](./skills/skillkit.md) · [`promptkit`](./skills/promptkit.md) · [`afkkit`](./skills/afkkit.md)
+**Skill & Prompt Authoring**
+[`skillkit`](./skills/skillkit.md) · [`promptkit`](./skills/promptkit.md)
+
+**Automation & Orchestration**
+[`afkkit`](./skills/afkkit.md)
 
 **Thinking & Learning**
 [`ideakit`](./skills/ideakit.md) · [`tutorkit`](./skills/tutorkit.md)

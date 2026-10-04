@@ -17,6 +17,8 @@ Every kit in the collection that touches tests assumes a suite already exists. [
 
 testkit is the one whose input is **working code that nobody can safely change**. That is a different starting condition from every other build-adjacent kit, and it drives the two rules the skill is really about.
 
+The same words, "write tests for this", can mean either job. When the code is still being built, the request routes to [`implementkit`](./implementkit.md): TDD mode for test-first, tests-after mode for tests right after the build. testkit keeps the retrofit branch, because its failure gate and ranking exist for code that was written without tests and already runs.
+
 ## The failure it exists to prevent
 
 An agent asked to "write tests for this project" reliably produces coverage theater: tests that mirror the implementation line for line, assert that mocks were called, pass on the first run, and pin whatever the code does today — bugs included.
@@ -36,6 +38,12 @@ So testkit manufactures the failure. It breaks the behaviour, runs the test, wat
 **The break must be a semantic mutation, never a deletion.** Deleting the function makes everything fail, including a test that asserts nothing, so it proves the import path resolves and nothing else. That distinction is the difference between a gate and a ritual.
 
 **The gate has no slowness exemption**, which is deliberate. A slow suite is the condition that makes the gate most valuable, so an escape hatch would open in precisely the situation that most tempts an agent through it. The cost is controlled elsewhere instead: the gate runs the narrowest selection the runner supports — the target test plus its file — and full-suite runs happen exactly twice, at the done-gate.
+
+**A red neighbour gets a verdict, not a reflex.** When a mutation turns a second test red, that test either names a behaviour that really depends on the mutated code (valid overlap, kept and recorded) or asserts more than its named behaviour, such as a whole object or a snapshot (over-broad). A testkit-written over-broad test is narrowed and gated again; a pre-existing one is recorded as *over-broad* in the ledger. An earlier rule demanded that every neighbour stay green, which would have flagged two honest tests of the same function as a defect.
+
+## Reverting a mutation never touches your work
+
+Mutations edit tracked source, and the user usually has uncommitted work in the same files. Each mutation is recorded as its own patch against the state just before it, reverted with `patch -R`, and never undone by restoring the file. The `git stash create` snapshot is printed in the hand-off when it exists; on a clean tree, or one with only untracked files, the command prints nothing, so the hand-off says `none` instead of a recovery line for an object that does not exist. Untracked files a mutation touches are copied aside first, because the snapshot never covers them. Done requires every mutated file, the index, and the untracked-file list to match the baseline.
 
 ## Why every test carries a citation
 
@@ -63,7 +71,7 @@ Three things testkit will not do, each of which will feel wrong in the moment.
 
 **It never restructures code to make it testable.** No extracted interface, no injected dependency. Untestable code becomes a *testability blocker* routed to [`refactorkit`](./refactorkit.md), whose untested-coupling pattern is this exact finding with a proposal attached.
 
-**It never touches a pre-existing test.** Mutating source hands testkit a free verdict on every test that was already there, and it uses that verdict for exactly one thing: recording the ones that failed to notice as *unproven* in the ledger. Deleting somebody else's test on evidence from a mutation aimed at something else is a scope the skill has not earned, and it turns a helpful signal into an unrecoverable one. The delete rule stays scoped to tests testkit wrote in that run.
+**It never touches a pre-existing test.** Mutating source hands testkit a free verdict on every test that was already there, and it uses that verdict for exactly one thing: recording the ones that failed to notice as *unproven*, and the ones that failed for a behaviour they do not name as *over-broad*, in the ledger. Deleting somebody else's test on evidence from a mutation aimed at something else is a scope the skill has not earned, and it turns a helpful signal into an unrecoverable one. The delete rule stays scoped to tests testkit wrote in that run.
 
 ## Why the datastore rule is a refusal, not a caution
 

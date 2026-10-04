@@ -1,13 +1,13 @@
 # validatekit
 
-Pressure-test a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment.
+Validate a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment.
 
 **Reach for it when** someone describes a new product idea and wants to know whether to build it.
 
 | | |
 |---|---|
 | Modes | single procedure, staged by evidence level |
-| Tools | `Read`, `Write`, `WebSearch`, `AskUserQuestion`, `Task`, `Agent` |
+| Tools | `Read`, `Write`, `Glob`, `WebSearch`, `AskUserQuestion`, `Task`, `Agent` |
 | Writes | `docs/validation/NNNN-validation-<slug>-YYYY-MM-DD.md` on request only |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
@@ -20,11 +20,11 @@ It's the gate in front of the build. Every planning and shipping tool assumes th
 
 ## The posture
 
-**The default failure mode of an AI asked about someone's idea is encouragement, and encouraging feedback is worthless feedback.** So the skill bans its own hedges outright:
+**The default failure mode of an AI asked about someone's idea is encouragement, and encouraging feedback is worthless feedback.** So the skill requires a position on every answer: a stance plus the evidence that would change it. That rules out the familiar hedges:
 
 > "That's an interesting approach." · "There are many ways to think about this." · "You might want to consider…" · "That could work."
 
-Each dodges a position. Every one gets replaced with a stance plus the evidence that would change it.
+The skill itself states only the target, not this list. A list of phrases to avoid puts those phrases in front of the model, and the worked Do column below does the steering instead.
 
 **Push past the first answer.** The first answer is the pitch — rehearsed, smooth, optimized for the listener. The second is where reality lives.
 
@@ -48,6 +48,8 @@ The verdict grades what *the founder* can produce under questioning. The market 
 
 So a market finding never moves a grade. It can reshape the wedge, redirect the assignment, sharpen a premise, and be the reason the verdict prose is harsh — but the founder can dispute the research without touching the grade, and fix the grade without arguing about the research.
 
+The market scan is done when each thing it looks for (incumbents, how the category is solved, customer behavior, momentum) has a sourced finding or a recorded "looked, found nothing". An absent signal is a finding.
+
 ## The forcing questions
 
 Seven, selected by stage, asked **one at a time** — batching is the fastest way to get four shallow answers.
@@ -62,7 +64,7 @@ Seven, selected by stage, asked **one at a time** — batching is the fastest wa
 | **Q6 Observation and surprise** | have they watched someone use it without helping | "nothing surprised me" — no surprise means no observation |
 | **Q7 Future-fit** | does this get more essential in three years, and why doesn't the incumbent just add it | a tailwind named without a mechanism |
 
-Stage selects the set: pre-product gets Q1–Q4; users-but-no-revenue gets Q4–Q6, because that's a buyer-access failure until proven otherwise; paying customers get Q5–Q7.
+Stage selects the set: pre-product gets Q1–Q4; users-but-no-revenue gets Q1 and Q4–Q6, because that's a buyer-access failure until proven otherwise; paying customers get Q1 and Q5–Q7. Q1 is in every set because the Validated state requires demand reality graded `evidenced`. Without it, a later-stage founder could never reach Validated, however strong the evidence.
 
 On "just tell me if it's good", it pushes back **once**, asks the two highest-value remaining questions, then proceeds — and a verdict from a partial diagnostic says it was partial.
 

@@ -25,7 +25,9 @@ grillkit asks the whole frontier in one numbered round, then waits. A question w
 
 It opens by **reflecting the idea back** before the first question — restating the subject in its own words. That surfaces a misread up front, rather than diverging silently for ten questions.
 
-The grill is done when the frontier is empty.
+The grill is done when the frontier is empty: every decision is settled, or deferred and named as deferred.
+
+The rounds are bounded by the decisions that are actually open. A round never re-asks a settled decision unless a later answer contradicts it. A thin answer gets one follow-up, and a second thin answer marks the decision deferred instead of starting a loop. You can also stop at any round, and what is still open becomes deferred.
 
 ## Always recommend an answer
 
@@ -95,6 +97,8 @@ When a frontier question needs an environmental fact and a sub-agent tool exists
 A hardened plan gets stamped `Grilled: YYYY-MM-DD` directly under the title. That stamp is durable, machine-readable provenance: [`issuekit`](./issuekit.md) reads it and only labels a plan's issues `ready` — safe for unattended work — when it's present, filing ungrilled plans as `needs-planning` instead.
 
 The stamp is provenance rather than a tracker artifact, so it's written identically on a project that files no issues at all. There it clears the plan to be built directly instead of clearing it to be filed.
+
+The stamp vouches for the plan as grilled, not for later edits. A material edit removes it: a changed settled decision, an added, removed, or re-scoped phase, a changed `Done when:` line, or a change to the non-goals or the migration section. [`plankit`](./plankit.md) owns that definition, and grillkit carries the same list so it still works when installed alone. Wording fixes and phase annotations leave the stamp in place.
 
 ## Hands off to
 

@@ -198,7 +198,7 @@ Two orthogonal axes, one label from each. **Lifecycle** answers *can this be wor
 
 Exactly one lifecycle label is active at a time. Two pairs carry most of the meaning:
 
-- **`ready` vs `blocked`** is the *parallel-work* pair. `ready` means specified and independent — safe to take into its own worktree right now. `blocked` means it has an unmet prerequisite that hasn't started. The dependency itself is recorded as a native GitHub issue dependency, with a `Blocked by #N` body line kept as prose for a human reader.
+- **`ready` vs `blocked`** is the *parallel-work* pair. `ready` means specified and independent — safe to take into its own worktree right now. `blocked` means it has an unmet prerequisite that has not started. The dependency itself is recorded as a native GitHub issue dependency, with a `Blocked by #N` body line kept as prose for a human reader.
 - **`blocked` vs `stacked`** splits a wait from stackable work. Once the prerequisite's PR is *open*, the code exists on a branch, so the dependent becomes `stacked` and is worked on a layer cut from that branch rather than waiting for a review. On a solo project this is the difference between working and idling.
 - **`needs-planning` vs `ready`** is the *human-gate* pair. `ready` means specified enough to work unattended.
 

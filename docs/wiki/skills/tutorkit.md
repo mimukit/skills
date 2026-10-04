@@ -7,7 +7,7 @@ Teach a topic across many sessions — one learning repo with a folder per topic
 | | |
 |---|---|
 | Modes | [`status`](#status) · [`explain`](#explain) · [`lesson`](#lesson) · [`drill`](#drill) · [`exam`](#exam) |
-| Tools | `Bash`, `Read`, `Write`, `Edit`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `AskUserQuestion`, `Task`, `Agent` |
+| Tools | `Bash`, `Read`, `Write`, `Edit`, `Grep`, `Glob`, `WebSearch`, `WebFetch`, `AskUserQuestion` |
 | Writes | a learning repo at `~/learning` (`$TUTORKIT_HOME` overrides) — HTML lessons, Markdown state; nothing in `explain` or `status` |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
@@ -38,9 +38,13 @@ So: one git repo, `topics/<slug>/` inside it, initialized on creation. The histo
 
 So the load-bearing rule is: read `INDEX.md`, resolve **exactly one** slug, open **only** `topics/<slug>/`. Never glob across `topics/`. Without that rule the skill gets slower as you learn more, which is precisely the wrong direction for a thing whose job is to accumulate.
 
-`REVIEW.md` is the same trick for due dates — one row per topic (`2026-08-18 · postgres-mvcc · 4 due`), never per cue. Storing the cue text there would duplicate answers that already live in `CUES.md` and let the two drift.
+`REVIEW.md` is the same trick for due dates: one row per topic (`postgres-mvcc · due: 2026-08-18, 2026-08-21, 2026-09-08 · min step: 3d`), never one per cue. The row lists every cue's due date and nothing else about the cue. Storing the cue text there would duplicate answers that already live in `CUES.md` and let the two drift.
 
-**Both files are caches, and a cache with no repair path rots silently.** One hand edit — a folder renamed, a row deleted — and the router misroutes forever with no error. So tutorkit rewrites the affected row whenever it touches a topic, and rebuilds both by scanning `topics/` the moment it finds a folder they don't list.
+**The due count is derived when the row is read, never stored.** An earlier format wrote `4 due` into the row, and that number was true only on the day it was written: a cue that came due the next morning never showed up until some mode happened to open the topic again. Dates don't go stale as time passes, so the count is whatever the dates say today.
+
+**Both files are caches, and a cache with no repair path rots silently.** One hand edit (a folder renamed, a row deleted) and the router misroutes forever with no error. So every mode that opens a topic folder rewrites that topic's rows in both files, and a slug whose folder exists without a row still routes, so `lesson`, `drill`, or `exam` on it writes the missing row.
+
+Repair happens only where a folder is already open. `status` sees drift best, because it reads both routers whole, but rewriting a row needs the topic's `CUES.md`, and opening it would break the one rule `status` exists to prove. So `status` reports each broken row with the move that fixes it and edits nothing. An earlier version told `status` to repair and also to open no folder, which no run could obey.
 
 `drill` gets a bounded exception to the one-folder rule: it resolves its slugs from `REVIEW.md` rather than from the ask, then opens the `CUES.md` of due topics only. Never their lessons, never a glob. Interleaving needs more than one topic in view; it doesn't need more than one file per topic.
 
@@ -63,7 +67,9 @@ It teaches nothing, asks nothing, grades nothing, and writes nothing. What it pr
 
 **The interesting constraint is that it opens no topic folder at all.** A cross-topic dashboard is exactly the read the one-folder rule exists to prevent, so `status` gets its answer entirely from `INDEX.md` and `REVIEW.md`. That's only possible because those two files already carry every column the table prints. It's the cleanest evidence the cache design was right: the mode that reports on thirty topics costs the same as the mode that reports on one.
 
-That constraint did cost one field. Crowning `exam` means knowing a track's cues have all reached `60d`, which used to require reading its `CUES.md`. So `REVIEW.md` rows now carry `min step`, the lowest interval any cue in that topic has reached, and the row reads `2026-08-18 · postgres-mvcc · 4 due · min step: 3d`. It's the minimum rather than an average because the closing gate is *every* cue at `60d`, and one cue at `1d` fails it.
+That constraint did cost one field. Crowning `exam` means knowing a track's cues have all reached `60d`, which used to require reading its `CUES.md`. So `REVIEW.md` rows now carry `min step`, the lowest interval any cue in that topic has reached, and the row reads `postgres-mvcc · due: 2026-08-18, 2026-08-21 · min step: 3d`. It's the minimum rather than an average because the closing gate is *every* cue at `60d`, and one cue at `1d` fails it.
+
+The crown table applies in order and its last row catches every state the others miss, so exactly one move is crowned every time.
 
 **Its ranking rule is retrieve-before-you-add.** Due cues outrank a new lesson, because a cue decays while it waits and a lesson doesn't. Ties go to the most recently touched track, since that's where your model is warmest and re-entry is cheapest.
 
@@ -75,7 +81,9 @@ Two things get surfaced and never crowned, because both are your call rather tha
 
 The fast path, and the reason tutorkit isn't a commitment. "How does Postgres MVCC work" should not open a track.
 
-It writes **nothing** — no folder, no index row, no mission interview. Shortest correct answer first, then the mechanism, then one worked example, then a primary source. It offers a track **once** at the end and takes no for an answer. A second offer would turn the fast path into the thing it exists to avoid.
+It writes **nothing**: no folder, no index row, no mission interview. Shortest correct answer first, then the mechanism, then one worked example, then a primary source. It offers a track **once** at the end and takes no for an answer. A second offer would turn the fast path into the thing it exists to avoid.
+
+Its hand-off is short. A yes to the track offer crowns `lesson` on that topic; a no means there is no next step, and the run says so rather than inventing one. There is no commit to offer, because nothing changed.
 
 **Mode selection resolves on intent, not phrasing.** "Explain how X works" and "teach me X" are weak signals — people say both for both. A question that wants an answer is `explain`; a request that wants to end up knowing the thing is `lesson`. When it's genuinely ambiguous, tutorkit takes the cheap branch: guessing `lesson` costs a mission interview you didn't want, guessing `explain` costs one extra sentence.
 
@@ -152,7 +160,7 @@ Re-pitching would rewrite files you may have printed and annotated. Archiving wo
 
 ## Hands off to
 
-tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `drill` when cues are due, the next `lesson` when the track is mid-flight, `exam` when every cue has reached `60d`. When a track closes as `learned`, there is no next step. [`status`](#status) is that same routing rule made available on demand, so you can ask for the next move without starting a session first.
+tutorkit is largely terminal, and it says so rather than inventing a follow-up. Its crowned next move is usually another tutorkit run, chosen by state: `lesson` after an `explain` whose track offer you took, `drill` when cues are due, the next `lesson` when the track is mid-flight, `exam` when every cue has reached `60d`. When a track closes as `learned`, there is no next step. [`status`](#status) is that same routing rule made available on demand, so you can ask for the next move without starting a session first.
 
 It doesn't route to [`statuskit`](./statuskit.md) and statuskit doesn't route here. They survey different repos, rank on different rules, and neither can read the other's state. A learning ladder and a finish-first ladder share a shape and nothing else.
 

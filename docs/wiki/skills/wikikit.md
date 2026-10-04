@@ -59,6 +59,8 @@ Both halves earn their place — `audit` diffs from the SHA while it's reachable
 
 **A page with no stamp is not stale, it is unverified.** That's how adopted pages are marked: a page wikikit found rather than wrote gets a manifest entry and `adopted: true`, and no stamp. It can see the page and route to it, and has never checked a claim on it. **Adoption is a mapping act, not an authorship claim** over prose a human wrote.
 
+**A stamp is earned by a whole-page check, and it names a commit on the default branch.** Fixing one claim on a page proves nothing about the rest of it, so a partial pass keeps the old stamp and `audit` still sees the page as due. A commit on a feature branch can vanish in a squash-merge, so a page verified on a branch is named as due a stamp after merge rather than stamped with a SHA that will not survive.
+
 ## Modes
 
 ### `init`
@@ -79,7 +81,9 @@ Changed code maps to affected pages through the manifest's globs, and **which pa
 
 **The discipline here is restraint.** A changed flag edits the flag; it does not regenerate the page. A skill that rewrites six pages because one function moved is worse than no skill, because now the PR diff is unreviewable.
 
-Edits land directly. **New pages and deletions are consent-gated** — that split is the whole write-mode policy.
+Edits land directly. **New pages and deletions are consent-gated**, and that split is the whole write-mode policy.
+
+It re-stamps only a page it verified end to end, never an adopted page, and nothing on a feature branch. The report sorts every touched page into re-stamped, kept its old stamp, or due a stamp after merge.
 
 ### `audit`
 
@@ -101,11 +105,13 @@ It installs a workflow mirroring the doc set to the wiki tab. Three properties g
 2. **The page namespace is flat.** `how-to/deploy.md` and `runbooks/deploy.md` both resolve to `/wiki/deploy` and one silently wins, so the workflow flattens path segments into the page name and a collision scan runs before install.
 3. **The wiki must be created by hand, once.** A repo's wiki has no git backend until a first page exists, and no API creates one.
 
+Only Markdown pages reach the wiki, so a relative link to a source file outside the doc set, or to an image, is rewritten to a GitHub URL pinned to the published commit. The wiki never shows a dead link to a file it does not carry, and never holds an asset copy that can drift. The collision scan also lists any relative link that resolves to no file.
+
 Existing wiki content gets a **rescue** offered before anything else — cloned into the repo as adopted pages — and the workflow installs with `dry-run: true`, so the first run is a rehearsal. A destructive force-push should never be something you discover happening.
 
 ## Writing standards
 
-Stated as bans: no restating the code · no documenting the aspirational · no unmixed modes · no ceremonial preamble · every command copy-pasteable and verified · task-shaped how-to titles.
+Document intent and use, not the mechanics · document only what the repo contains · one Diátaxis mode per page · open at the first useful sentence · every command copy-pasteable and verified · task-shaped how-to titles.
 
 For general AI-writing tells, it offers a [`humankit`](./humankit.md) pass rather than re-carrying that list.
 

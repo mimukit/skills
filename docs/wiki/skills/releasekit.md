@@ -44,17 +44,21 @@ A state file would answer it and was rejected: it drifts, it needs gitignoring, 
 
 Instead it reads the repo. **A merged `chore(release): vX.Y.Z` commit on the base with no tag pointing at it means finish; anything else means prepare.** The repo is the state, so there is nothing to keep in sync.
 
-The detection has a known weakness: a repo that squash-merges the release PR under a rewritten title produces no `chore(release):` commit, so *finish* never fires. The mitigation is that the preview names the detected phase on its first line, before anything mutates.
+The detection depends on that subject surviving the merge. A squash merge turns the PR title into the commit subject, so the prepare run titles the release PR `chore(release): vX.Y.Z` itself. A person who rewrites the title before merging still breaks it, and the preview names the detected phase on its first line, before anything mutates, so the miss is visible.
 
-## Why the last tag is the nearest ancestor
+The same reading gives a third phase, **resume**. A release can stop half way: the tag pushed and `gh release create` failed, or the commit made and the tag push failed. The next run sees a `chore(release):` commit whose tag is local only, whose tag has no GitHub release, or (on the direct path) which has no tag at all, and continues that version from the first step that did not land. It never derives a new version, because a second derivation would spend a second number on the same code.
 
-`git describe --tags --abbrev=0`, filtered to the semver shape — not the highest version in the repo.
+## Why the last tag is the highest stable tag in HEAD's history
 
-The two agree on most repos, which is what makes the difference easy to get wrong. They diverge exactly where it matters: a project maintaining `v1.x` alongside a released `v2.x`. Cutting a `v1.3.1` patch there, "highest semver" would diff against `v2` and produce a changelog full of commits that shipped months ago in a different major line.
+The resolver lists tags merged into HEAD, keeps the ones that are exactly `MAJOR.MINOR.PATCH`, and takes the highest by version. It does not take the highest version in the repo.
 
-Prereleases are skipped at the same resolver, so a `v1.3.0-rc.1` tag is passed over and the commits it shipped still appear in the `v1.3.0` changelog — where a user reading the stable release actually expects them. That skip is a separate `--exclude '*-*'` flag rather than a tighter shape filter, because a semver glob ending in `*` reads `-rc.1` as part of the final number and lets every prerelease through.
+The two agree on most repos, which is what makes the difference easy to get wrong. They diverge exactly where it matters: a project maintaining `v1.x` alongside a released `v2.x`. Cutting a `v1.3.1` patch there, "highest semver" would diff against `v2` and produce a changelog full of commits that shipped months ago in a different major line. A `v2` tag is not merged into the `v1` branch, so the lineage filter drops it.
 
-The shape filter matches **both** tag prefixes, `v1.2.3` and a bare `1.2.3`. A repo that tags without the `v` is as common as one that doesn't, and matching only the prefixed form would make releasekit report no previous release at all on those repos, then rebuild the entire history into one changelog.
+An earlier version used `git describe --match` globs. A glob ending in `*` accepts any suffix, so it read `v1.4.0.bak` and the calver tag `2026.08.01` as releases. The anchored regex rejects every suffix, every prerelease, and leading zeros. Prereleases are skipped at the same point, so the commits a `v1.3.0-rc.1` shipped still appear in the `v1.3.0` changelog, where a user reading the stable release expects them.
+
+Two shapes still pass the regex and need a rule. A calver tag without leading zeros, such as `2026.8.1`, is dropped because its major is 1000 or more. A repo with both `v1.2.3` and a bare `1.2.3` style keeps the style most of its tags use, and a tie goes to `v`. The preview lists every tag dropped by either rule, so a wrong guess is visible before anything mutates.
+
+The filter accepts **both** prefixes. A repo that tags without the `v` is as common as one that doesn't, and matching only the prefixed form would make releasekit report no previous release at all on those repos, then rebuild the entire history into one changelog.
 
 ## Why a breaking change on `0.x` bumps the minor
 
@@ -68,7 +72,9 @@ Because the rule surprises people, the preview states it and its arithmetic in w
 
 The original guards checked the working tree, the branch, and the sync — everything about whether the release *describes* the right code, and nothing about whether that code works.
 
-A tag on a red base is the most expensive mistake in the whole procedure, because the version number is spent permanently. It cannot be reused, only superseded, and anyone who resolved it in between gets the broken build. So the check rollup on the base's head is a refusal, with `--allow-red` available for a genuinely flaky required check.
+A tag on a red base is the most expensive mistake in the whole procedure, because the version number is spent permanently. It cannot be reused, only superseded, and anyone who resolved it in between gets the broken build. So the check rollup is a refusal, with `--allow-red` available for a genuinely flaky required check. A pending rollup stops the run too.
+
+The rollup is read for one named SHA, never for "the base's head", because the base can move between the check and the tag. On the finish path the SHA is the merged release commit that gets the tag. On the direct path the release commit is not pushed yet, so CI cannot have run on it; the check covers its parent, and releasekit confirms the base still points there just before the push.
 
 When `gh` is unusable there is no rollup, and releasekit **says the check was skipped**. A missing signal is never allowed to read as green.
 
@@ -77,6 +83,8 @@ When `gh` is unusable there is no rollup, and releasekit **says the check was sk
 Squash-merge repos build commit subjects from PR titles, which frequently are not Conventional Commits. Any repo with history predating the convention has a mixed log. Refusing until every commit parses would make releasekit unusable on both, which is most real repos.
 
 So unparsed commits land under an **Other** changelog section and are counted in the preview — nothing is dropped silently. The floor is that a range where *nothing* parses refuses, because at that point the bump is not derived from anything.
+
+Each type has a fixed home. `feat` goes to Added, `fix` and `hotfix` to Fixed, `perf` and `revert` to Changed. `docs`, `refactor`, `chore`, and the other internal types stay out of the notes and are counted in the preview. `hotfix` is the type commitkit and prkit write for an urgent fix, so it bumps the patch like `fix`.
 
 The same shape governs a range holding only `docs` and `chore`: nothing forces a bump, so releasekit refuses with `--allow-empty` named in the refusal. A patch bump for every CI tweak makes the version meaningless, and a prompt on every no-op range trains people to dismiss it.
 
@@ -97,7 +105,7 @@ Nothing about a release is urgent enough to justify inventing an exemption for t
 
 ## Hands off to
 
-**Usually nowhere.** On the direct path, and on the second half of the release-PR path, releasekit is terminal — the hand-off names the tag and the release URL, says that pushing the tag may have started a publish workflow it does not own or watch, and stops. A terminal skill that invents a follow-up to look useful is worse than one that ends.
+**Usually nowhere.** On the direct path, on the second half of the release-PR path, and on a resume, releasekit is terminal — the hand-off names the tag and the release URL, says that pushing the tag may have started a publish workflow it does not own or watch, and stops. A terminal skill that invents a follow-up to look useful is worse than one that ends.
 
 The exception is the release-PR **prepare** run, which hands to [`mergekit`](./mergekit.md) to review and merge the release PR, degrading to `gh pr merge` when mergekit is not installed — and then back to releasekit to tag.
 

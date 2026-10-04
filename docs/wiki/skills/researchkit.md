@@ -31,11 +31,10 @@ So an unsettleable claim gets surfaced in **Open questions** — "settling this 
 
 `allowed-tools` deliberately withholds shell and file-editing tools, so a host that honors the field *can't* run a spike even if the model talks itself into wanting one. The prose is the real rule; the tool list is the backstop.
 
-## Three things it isn't
+## Two things it isn't
 
 - **Not a neutral note-taker.** It always ends in a recommendation. If only one credible option survives, it degrades to a **cited explainer** of that option rather than dumping opinion-free notes.
 - **Not repo grounding.** Reading *your* codebase to reuse existing patterns is planning work. researchkit investigates the *external* landscape.
-- **Not implementation.** See above.
 
 ## How it works
 
@@ -44,6 +43,12 @@ So an unsettleable claim gets surfaced in **Open questions** — "settling this 
 3. **Investigate against primary sources** — read the authoritative origin for each load-bearing claim. Every source carries its **version and date**, with staleness flagged (a benchmark from an old major, a doc that predates a rewrite).
 4. **Compare** on the constraints that matter, not a generic feature grid.
 5. **Recommend** — pick one, give a one-line why, and state the condition under which you'd pick differently.
+
+Each step ends on a "done when" bound. Enumeration, for example, is done when every option a knowledgeable engineer would weigh is listed and each well-known option left off has a reason. Investigation is done when every load-bearing claim has a dated source or sits in Open questions as unverified.
+
+## When a source needs a refresh
+
+A dated source is only useful if something says when the date is too old. researchkit re-fetches a source when it describes a version older than the current release line, when it predates the latest major release or a rewrite, or when it is more than 12 months old in a fast-moving area. Updating a saved research file re-fetches every load-bearing source in it, because a recommendation that was right in March can be wrong by September. A source with no newer replacement stays in, marked stale with its date.
 
 ## The artifact
 
@@ -59,9 +64,14 @@ So an unsettleable claim gets surfaced in **Open questions** — "settling this 
 ## Evidence (primary sources)
 - <claim> → <source URL> (<version/date>) — ⚠ note if stale
 
+## Provisional comparison (from recall, not verified)
+- <claim> (as of the model's knowledge cutoff)
+
 ## Open questions
-Including any claim that would need a spike — named, not acted on. Those hand off to prototypekit.
+Including any claim that needs a measurement, with what the measurement would show.
 ```
+
+Evidence holds only the claims fetched in this run. A claim from the model's memory goes under Provisional comparison, so you can see which claims a source backs without checking each link. When a load-bearing claim behind the pick is unverified, the recommendation itself is labeled provisional.
 
 Scaled to the decision: a two-way library pick is a short block, an architecture choice earns more.
 
@@ -69,15 +79,15 @@ A recommendation reads "Drizzle — lighter runtime, no codegen; choose Prisma i
 
 ## When there's no web access
 
-It says so plainly, gives a best-effort comparison from knowledge with an explicit staleness warning, and **never fabricates a citation**. A missing source is stated as missing, not invented. Evidence over recall is the whole reason this beats asking a model directly — a recommendation with no traceable evidence is a guess wearing a table.
+It says so plainly, puts its best-effort comparison under the Provisional comparison heading instead of Evidence, and **never fabricates a citation**. A missing source is stated as missing, not invented. Evidence over recall is the whole reason this beats asking a model directly — a recommendation with no traceable evidence is a guess wearing a table.
 
 ## Hands off to
 
-[`plankit`](./plankit.md), to turn the chosen direction into a plan. Leftover uncertainties become the open questions plankit and [`grillkit`](./grillkit.md) pick up.
+One move, crowned. When a load-bearing open question needs a measurement, the move is [`prototypekit`](./prototypekit.md), because the pick waits on that answer. Grilling sharpens a decision someone has already made; it can't settle a claim nobody has watched run.
 
-An open question that needs *evidence* rather than more argument goes to [`prototypekit`](./prototypekit.md) instead. Grilling sharpens a decision someone has already made; it can't settle a claim nobody has watched run.
+Otherwise the move is [`plankit`](./plankit.md), to turn the chosen direction into a plan. Leftover uncertainties become the open questions plankit and [`grillkit`](./grillkit.md) pick up.
 
-It also offers to save the report, but inline is the default — a durable file only when you want one.
+Before that, it asks once whether to save the report. Inline is the default, and a durable file is written only when you want one.
 
 ## Install
 

@@ -8,7 +8,7 @@ The shared git layer every other skill borrows — worktree convention and lifec
 |---|---|
 | Modes | `worktree` · `sync` · `clean` · `rescue` · `stack` |
 | Tools | `Bash`, `Read` |
-| Writes | git worktrees, branches, and stack layers |
+| Writes | git worktrees, branches, stack layers, and the ownership markers on what it created |
 | Visibility | public |
 
 ## What it does
@@ -37,9 +37,11 @@ Sweeps away the worktrees and branches whose work has landed, on your machine an
 
 Two more signals corroborate without settling: a `: gone]` upstream marker is caused by a merge and equally by a human deleting a branch, and `gh pr list --state merged` is authoritative when `gh` is there, which makes the three tests the offline path. The sweep names which one fired per row, so you can disagree with a specific signal rather than with the whole list.
 
-**It confirms per item, never in a batch**, and that's the one place gitkit's confirmation policy differs from `sync`'s. `sync` legitimately takes one confirmation because the rebase and its push are a single decision about a single branch. A sweep's rows are independent, and they're not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt would hide.
+**It confirms per item, never in a batch**, and that's the one place gitkit's confirmation policy differs from `sync`'s. This per-row rule is the collection's single removal rule: [`orcakit`](./orcakit.md) and [`paseokit`](./paseokit.md) cite it for every worktree or branch they remove instead of carrying their own. `sync` legitimately takes one confirmation because the rebase and its push are a single decision about a single branch. A sweep's rows are independent, and they're not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt would hide.
 
-`-d` and never `-D` is the last guard: git itself refuses a branch whose commits aren't in the base, so a wrong verdict fails loudly instead of deleting the work.
+`-d` is the last guard: git itself refuses a branch whose commits aren't in the base, so a wrong verdict fails loudly instead of deleting the work. **A squash merge is the one exception, and it's narrow.** `-d` always refuses a squash-merged branch, for the same ancestry reason the sweep needs three tests, so a `-d`-only rule would leave every squash-merged branch standing forever. gitkit runs `-D` only when `gh` reports the merged pull request *and* that pull request's head SHA equals the local branch tip. The equal SHA is what makes it safe: it proves no commit on the branch sits outside what was merged. A tip that moved after the merge keeps the branch.
+
+**An open issue holds the row.** An `issue-<n>-…` branch whose issue is still open is tracker drift, even when its pull request merged. The sweep names it and routes it to [`issuekit`](./issuekit.md) `close`, which closes the issue and tears the worktree down together, so the tracker and the disk change in one step rather than drifting apart.
 
 **A branch on `origin` gets deleted too, and it's held to a higher bar**, because nothing on the server plays the part `-d` plays locally. A local delete is recoverable from the reflog; a `git push origin --delete` reaches a shared server and everybody else's next fetch. So a remote row needs positive proof it landed — a merged pull request from `gh`, or the patch-id match — where a bare `: gone]` marker is worthless here, since the remote branch is the very thing in question. The base branch, a release branch, and the head of any open pull request are never offered. Neither is the *base* of an open pull request, which is the hold that a stack makes load-bearing: a lower layer is the base of the layer above it, and deleting it closes that PR outright, after which GitHub refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back. And the remote delete asks separately even when the local delete of the same branch was already approved.
 
@@ -61,7 +63,7 @@ $WORKTREE_ROOT/<repo-basename>/<local-branch-name>
 
 `$WORKTREE_ROOT` defaults to `~/worktrees`.
 
-**Slashes flatten to dashes.** Branch `mimukit/6-marketing-site` gets directory `mimukit-6-marketing-site`, not a nested parent. One flat level per repo means `ls` is a complete inventory rather than a tree to walk. The directory name no longer round-trips back to the branch name — which costs nothing, because lookup is always through git.
+**Slashes flatten to dashes.** Branch `mimukit/6-marketing-site` gets directory `mimukit-6-marketing-site`, not a nested parent. The create command does the flattening itself, with `tr / -`, so the rule can't be skipped by a caller that copies the command. One flat level per repo means `ls` is a complete inventory rather than a tree to walk. The directory name no longer round-trips back to the branch name — which costs nothing, because lookup is always through git.
 
 Worktrees live **outside** the repository, never in a `.worktrees/` directory inside it. An in-repo worktree gets swept into docker build contexts, bind mounts, file watchers, and test globs, and every one of those failures shows up far from its cause.
 
@@ -103,11 +105,14 @@ All four are native git, and running one twice is a normal thing to do that must
 
 - **A dirty worktree stops teardown.** It shows exactly what would be lost — uncommitted changes, untracked files, unpushed commits — and lets you decide. It never reaches for `--force` on your behalf.
 - **Never remove a worktree it adopted rather than created.** If it was already there, it's someone else's context.
-- **Never delete a branch it didn't create.** `-d`, not `-D`, so git itself refuses an unmerged branch.
+- **Never delete a branch it didn't create.** `-d`, so git itself refuses an unmerged branch, with the squash exception described under [`clean`](#clean).
+- **One confirmation per removal.** Each worktree and each branch is its own decision.
+
+**Ownership is recorded, not remembered.** "Already there when you arrived" only works inside one session; a sweep a week later can't know which worktrees an earlier run made. So creation writes two markers into git's own storage: a `gitkit-created` file in the worktree's admin directory under `.git/worktrees/`, and a `branch.<name>.gitkitCreated` config key when gitkit made the branch. Git deletes each one along with the thing it marks, so nothing goes stale, and the "no recorded state but git's own" claim still holds. A worktree with no marker, including every one made before the rule existed, reads as adopted and is never removed.
 
 Already gone reports "already gone" and succeeds.
 
-**List** pairs with a staleness signal when you ask to clean up — a branch fully merged into the base is a teardown candidate. Offered, never removed on its own initiative.
+**List** is a plain inventory. Asking to tidy up rather than to look is [`clean`](#clean), which classifies every row before it offers anything.
 
 ## The base ref ladder
 
@@ -174,7 +179,7 @@ Worktrees store **absolute** paths, so a repo bind-mounted at a different path b
 
 ## Hands off to
 
-Nothing, deliberately. gitkit prepares the ground and tears it down — **creating a worktree implies nothing about what to do in it.** It's the one skill in the collection exempt from the closing hand-off requirement, by design rather than oversight.
+Mostly nothing, because gitkit prepares the ground and tears it down, and **creating a worktree implies nothing about what to do in it.** The modes that finish a job still close with a hand-off. `sync` names a review of the diff on the new base, and a re-request of review when threads went outdated. `clean` routes tracker-drift rows to [`issuekit`](./issuekit.md) `close` and otherwise says there is no next step. A workspace tool drops a removed worktree's row by itself, so `clean` sends nothing to [`orcakit`](./orcakit.md) or [`paseokit`](./paseokit.md). `rescue` names the inspection of the rescued branch.
 
 ## Restating a conclusion vs restating the derivation
 

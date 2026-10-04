@@ -33,7 +33,7 @@ refactorkit looks for exactly four things — shallow interface, adapter prevale
 
 The closure is the feature. An open-ended hunt for "problems" is something the base model will happily do without a skill, and it produces the same list every time: the codebase has some duplication, some functions are long, error handling is inconsistent, consider extracting a service. That output is indistinguishable across repos, which is the tell that nothing was actually read. Four named patterns, each reducing to the same underlying question about depth, force every finding to be *about this codebase* or not exist.
 
-**The signals are written as shapes, never as names.** No hunting for `*Mapper`, `*Adapter`, or `*DTO`. Those suffixes are conventions from one or two language communities and are meaningless in a Go, Rust, Elixir, or PHP repo — and worse, a named example is exactly what an agent pattern-matches on instead of reading. So the skill describes the *structure* ("a unit whose members each forward to exactly one member of one other unit") and has the agent derive the repo's own naming conventions first.
+**The signals are written as shapes, never as names.** Suffixes like `*Mapper` or `*DTO` are conventions from one or two language communities and are meaningless in a Go, Rust, Elixir, or PHP repo. Worse, a named example is exactly what an agent pattern-matches on instead of reading, so the skill itself names no suffix at all, not even as a thing to avoid. It describes the *structure* ("a unit whose members each forward to exactly one member of one other unit") and has the agent derive the repo's own naming conventions first.
 
 ## Why the deletion test gates the list
 
@@ -57,7 +57,7 @@ So it stays in the main session, derived from the co-change pairs that the churn
 
 ## Nothing found is a real answer
 
-When no candidate clears the gates, refactorkit says so, names its coverage, and **writes no file**.
+When no candidate clears the gates, refactorkit says so, names its coverage, and **writes no file**. A result where every survivor is `weak` is the same outcome: the weak candidates appear in the terminal table, the verdict is "no candidate worth doing", and no file is written. "Crown exactly one" applies only when a non-weak candidate exists, so the two rules never conflict.
 
 A survey obliged to produce findings will manufacture them, and manufactured architecture advice reads exactly like the genuine article — same vocabulary, same confidence, same shape as something that came from reading the code. The deletion test is only a real gate if "nothing here" is a legal outcome, so it is one.
 
@@ -77,9 +77,9 @@ If such an artifact is already sitting on disk, refactorkit reads it. It just ne
 
 ## Hands off to
 
-[`grillkit`](./grillkit.md), on the crowned candidate. The write-up is already plan-shaped — problem, proposed shape, blast radius — so what it lacks is interrogation rather than drafting, and grilling it is what turns a proposal into something safe to build from. In a repo without the ecosystem the move is the same one stated plainly: interrogate the assumptions, the failure paths, and the blast radius yourself before anybody starts.
+[`plankit`](./plankit.md), on the crowned candidate. A proposal says where to cut and why, but a structural change lands in steps, and each step has to leave the code working. plankit turns the proposal into phases with a check per phase. The plan then goes to [`grillkit`](./grillkit.md) for interrogation and to [`implementkit`](./implementkit.md) for the build. In a repo without the ecosystem, the move is to write that phased plan yourself.
 
-Runners-up: [`domainkit`](./domainkit.md) when the proposal supersedes an existing decision record, and [`implementkit`](./implementkit.md) once the shape is settled. On an empty result it says there is no next move rather than inventing one.
+Runner-up: [`domainkit`](./domainkit.md) when the proposal supersedes an existing decision record. On an empty or all-weak result it says there is no next move rather than inventing one.
 
 ## Install
 

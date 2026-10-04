@@ -25,7 +25,7 @@ The repo itself isn't renamed. `mimukit/skills` is branded by the owner handle, 
 ```
 skills/<name>/SKILL.md          one flat skill per directory (published + dev-linked)
 .agents/skills/<name>/SKILL.md   internal, project-scoped skills, always on in this repo
-scripts/                        bash helpers (link, unlink, list, lint)
+scripts/                        bash helpers (link, unlink, list, lint, security, cheatsheet)
 Makefile                        command surface (run `make help`)
 ```
 
@@ -35,15 +35,15 @@ Makefile                        command surface (run `make help`)
 |-------|--------------|------------|
 | `skillkit` | author a new skill from scratch — conventions, testing, and publishing included | public |
 | `promptkit` | sharpen the prompt before you send it — a one-shot agent instruction grounded in the real repo, or the system prompt your app ships | public |
-| `gitkit` | the shared git layer — worktree convention and lifecycle, base-ref resolution, rebase-vs-merge policy | public |
+| `gitkit` | the shared git layer — worktree convention and lifecycle, base-ref resolution, rebase-vs-merge policy, branch sync, merged-worktree cleanup, lost-work recovery, and stacked branches | public |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |
-| `mergekit` | pull an open PR into a worktree, sync it, set it up for manual review, then merge it on your say-so | public |
+| `mergekit` | pull an open PR into a worktree, set it up for manual review, merge it on your say-so, or service review feedback on a PR you authored | public |
 | `releasekit` | cut a release from the Conventional Commits already in the log — derive the semver bump and changelog, bump the manifest, tag it, publish the GitHub release | public |
 | `issuekit` | create, start, close, sync, and triage GitHub issues across the workflow | public |
-| `repokit` | set a repo's About description + topics, provision the issuekit lifecycle labels, and set up a new repo's settings and baseline files | public |
+| `repokit` | set a repo's About description + topics, provision the issuekit lifecycle labels, set up a new repo's settings and baseline files, and renumber older docs artifacts into the serial naming | public |
 | `orcakit` | reconcile the Orca app's workspace list with your git worktrees — link them to their issues, and clean out the ones whose work merged | public |
-| `paseokit` | push your git worktrees into Paseo's workspace registry and reap the rows whose directories are gone — Paseo discovers nothing on its own | public |
+| `paseokit` | push your git worktrees into Paseo's workspace registry and reap the finished work — duplicate rows, and the worktrees whose PRs merged | public |
 | `designkit` | derive a project's design system from the UI it already ships into a spec-compliant `DESIGN.md`, and keep it true as the code moves | public |
 | `humankit` | strip AI-writing tells from prose | public |
 | `wikikit` | generate and maintain in-repo reader docs — getting-started, how-tos, architecture, runbooks — with every command verified against the code | public |
@@ -64,7 +64,7 @@ Makefile                        command surface (run `make help`)
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 | `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
-| `afkkit` | run a grilled `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
+| `afkkit` | run a groomed `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
 | `tutorkit` | teach a topic across sessions from one learning repo, with lessons pitched at what you know and spaced review that makes it stick | public |
 | `ideakit` | think an idea through across sessions from one ideas repo — a folder per idea, one open at a time, research and validation folded back into its own log | public |
 

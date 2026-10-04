@@ -30,12 +30,12 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`repokit`](#repokit) | Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup. |
 | [`researchkit`](#researchkit) | Research the credible options for a technical decision and recommend one, grounded in primary sources with cited, dated evidence. |
 | [`reviewkit`](#reviewkit) | Review AI-agent-implemented code specifically — four ordered passes, findings ranked by severity and backed by quoted evidence. |
-| [`skillkit`](#skillkit) | Create a new AI agent skill from scratch — naming, drafting, live testing, and publishing included. |
+| [`skillkit`](#skillkit) | Create a new AI agent skill from scratch (naming, drafting, trigger cases, live testing, publishing), or re-check an existing one after a change. |
 | [`statuskit`](#statuskit) | Survey a project read-only into a one-screen dashboard, then crown one finish-first next move — ranked on declared priority — routed to the kit that does it. |
 | [`testkit`](#testkit) | Retrofit an automated test suite onto a working codebase that has none — rank the untested surface, crown a slice, stand up a runner, and write tests that were each watched to fail before they were kept. |
 | [`tutorkit`](#tutorkit) | Teach a topic across many sessions — one learning repo with a folder per topic, lessons pitched at what you already know, and spaced retrieval that makes it stick. |
 | [`uikit`](#uikit) | Build production UI that reads as a deliberate choice for this project rather than an LLM default, and audit shipped UI for the tells that give it away. |
-| [`validatekit`](#validatekit) | Pressure-test a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment. |
+| [`validatekit`](#validatekit) | Validate a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment. |
 | [`verifykit`](#verifykit) | Show a frontend change in a real browser, or prove it for a PR with screenshots plus a short GIF, or set up the driver and publish path that both need. |
 | [`wikikit`](#wikikit) | Generate and maintain a project's reader-facing documentation in-repo — getting-started, how-to guides, architecture, runbooks — with every command verified against the code. |
 
@@ -66,6 +66,7 @@ Derive a project's design system from the UI it already ships and keep it true a
 | `init` | ground it with the engine, naming the rung that matched and the counts found, before proposing anything |
 | `update` | resolve the target — uncommitted changes first, otherwise the branch diff against a base from [`gitkit`](./skills/gitkit.md), never an assumed `main` |
 | `audit` | read-only. Writes nothing, ever |
+| `sync` | write `DESIGN.md`'s tokens into the project's existing token home, on consent |
 
 ## [`domainkit`](./skills/domainkit.md)
 
@@ -113,7 +114,7 @@ Think an idea through across many sessions: one ideas repo with a folder per ide
 | `session` | the mode that thinks, and the only one that discusses |
 | `status` | reports and writes nothing at all |
 | `research` | classifies before it acts, because "research" covers three different asks with three different owners |
-| `validate` | hands a startup or SaaS idea to [`validatekit`](./skills/validatekit.md), takes the verdict inline, and offers the verdict, the wedge, and the assignment as one log entry |
+| `validate` | offers two paths for a startup or SaaS idea: run [`validatekit`](./skills/validatekit.md) yourself, or take a short forcing-question version inline |
 | `close` | records a verdict: `building`, `parked`, or `closed` |
 
 ## [`implementkit`](./skills/implementkit.md)
@@ -129,10 +130,10 @@ Own the GitHub issue lifecycle in five modes — file the work, pick it up, land
 | Mode | What it does |
 |---|---|
 | `create` | turn a plan document or a plain description into well-formed issues |
-| `start` | picks a `ready` issue up, and hands the worktree half to gitkit |
+| `start` | picks a `ready` or `stacked` issue up, and hands the worktree half to gitkit |
 | `close` | closes an issue whose PR merged, and reclaims its workspace |
 | `sync` | reconcile the PR↔issue relationship after the fact |
-| `triage` | report first, then act — on approval for a close or a comment, straight through for a relabel |
+| `triage` | report first, then apply the fixes you approve, labels included |
 
 ## [`mergekit`](./skills/mergekit.md)
 
@@ -246,7 +247,7 @@ _No modes — one path._
 
 ## [`skillkit`](./skills/skillkit.md)
 
-Create a new AI agent skill from scratch — naming, drafting, live testing, and publishing included.
+Create a new AI agent skill from scratch (naming, drafting, trigger cases, live testing, publishing), or re-check an existing one after a change.
 
 _No modes — one path._
 
@@ -290,7 +291,7 @@ Build production UI that reads as a deliberate choice for this project rather th
 
 ## [`validatekit`](./skills/validatekit.md)
 
-Pressure-test a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment.
+Validate a SaaS or startup idea before you build it — forcing questions, an honest verdict graded on evidence you can actually produce, the narrowest wedge, and one real-world assignment.
 
 _No modes — one path._
 

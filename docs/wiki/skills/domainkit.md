@@ -33,9 +33,9 @@ The bias runs toward the high bar. Better to fire on a genuinely conflicting ter
 ## How it works
 
 1. **Detect the moment** — a term used loosely or inconsistently, or a settled decision clearing the ADR bar. This surfaces mid-grill, mid-plan, mid-implementation; it doesn't wait to be called.
-2. **Locate the artifacts** — read the repo-root `CONTEXT.md` (or `CONTEXT-MAP.md` → the right context file). For an ADR, scan `docs/adr/adr-*.md` and take the highest number.
-3. **Offer** the proposed entry, tight enough to accept or redirect at a glance.
-4. **Write on consent.**
+2. **Locate the artifacts** — read the repo-root `CONTEXT.md` (or `CONTEXT-MAP.md` → the right context file). For an ADR, scan `docs/adr/` for the highest number in either filename shape, and list the records the new decision supersedes.
+3. **Offer** the proposed entry, tight enough to accept or redirect at a glance. A superseding ADR and the `Status` flips on the records it replaces go in one offer.
+4. **Write on consent**, then check the result: no two ADR files share a number, and every supersession link points both ways.
 5. **Defer when unsettled** — route to grillkit rather than manufacturing certainty.
 
 ## `CONTEXT.md` — the glossary
@@ -70,12 +70,12 @@ An ADR gets written only when **all three** hold:
 Typical qualifiers: architectural structure, integration approaches between contexts, technology choices with high switching cost, boundary definitions, deliberate deviations from convention, constraints invisible in code, and non-obvious rejections of an alternative.
 
 ```markdown
-# NNNN — <Title>
+# NNNN: <Title>
 
 <1–3 sentences: the context, what was decided, and why.>
 
 ## Status
-proposed | accepted | deprecated | superseded by ADR-NNNN
+proposed | accepted | accepted, supersedes ADR-NNNN | deprecated | superseded by ADR-NNNN
 
 ## Considered Options
 - <rejected alternative worth remembering, and why it lost>
@@ -84,17 +84,17 @@ proposed | accepted | deprecated | superseded by ADR-NNNN
 - <non-obvious downstream effect>
 ```
 
-A single paragraph is already a valid ADR. The three sections are **optional** — included only when they add value.
+A title, one paragraph, and `Status` make a complete ADR. `Status` is **required**, because supersession has to flip it, and a record with no `Status` would leave the flip with nothing to edit. `Considered Options` and `Consequences` are **optional**, included only when they add value.
 
 Files are `NNNN-adr-<slug>-YYYY-MM-DD.md`, zero-padded and sequential. The number leads so the directory lists in decision order, the same serial every other `docs/` artifact carries; older `adr-NNNN-` files keep their numbers until [`repokit`](./repokit.md) `docs` renames them. The number is the authoritative decision order; the date is creation. An ADR is **never renamed** because its status changed later.
 
-**ADR content is immutable once shipped.** `Status` is the one mutable field, so a later ADR can mark an old record `deprecated` or `superseded by ADR-NNNN`. Parallel branches may claim the same number — the later one gets renumbered during merge.
+**ADR content is immutable once shipped.** `Status` is the one mutable section, so a later ADR can mark an old record `deprecated` or `superseded by ADR-NNNN`; an older record written without a `Status` gets one added for the flip. The new record and the flips are one consented update, so the links can never point one way only. domainkit re-lists `docs/adr/` just before writing and takes the next free number if another file claimed its own. Parallel branches may still claim the same number, and the later one gets renumbered during merge, along with any `Status` line that names it.
 
 ## Hands off to
 
 Normally, back to whatever it interrupted. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption — it names the grill, plan, or implementation it fired inside and hands straight back.
 
-Two things outrank that: a new ADR superseding an older one leaves the old `Status` stale, so it offers that flip; a term that turned out contested isn't settled at all, so it routes to [`grillkit`](./grillkit.md).
+Two things outrank that: a supersession flip the user declined leaves the old `Status` stale, so it names that record; a term that turned out contested isn't settled at all, so it routes to [`grillkit`](./grillkit.md).
 
 ## Install
 

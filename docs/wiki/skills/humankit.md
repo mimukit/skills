@@ -2,7 +2,7 @@
 
 Strip the tells of AI-generated writing from prose so it reads like a person wrote it.
 
-**Reach for it when** a draft sounds like ChatGPT — or when you want a diagnosis of *why* it does, without a rewrite.
+**Reach for it when** a draft sounds like ChatGPT, or when you want a diagnosis of *why* it does, without a rewrite.
 
 | | |
 |---|---|
@@ -15,21 +15,21 @@ Strip the tells of AI-generated writing from prose so it reads like a person wro
 
 The job is not to delete flagged words. It's to rewrite prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register.
 
-Every claim in the original survives. Its *shape* doesn't — dull stretches get compressed, interesting ones get room, paragraphs merge and split freely. Uniform structure is itself a tell, so mirroring the original's paragraph count preserves the exact thing you came to remove. When coverage and structure pull against each other, coverage wins: a five-paragraph source may land in four, but it never becomes a summary.
+Every claim in the original survives. Its *shape* doesn't: dull stretches get compressed, interesting ones get room, paragraphs merge and split freely. Uniform structure is itself a tell, so mirroring the original's paragraph count preserves the exact thing you came to remove. When coverage and structure pull against each other, coverage wins: a five-paragraph source may land in four, but it never becomes a summary.
 
 ## The rule that governs the rest
 
 **Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user.
 
-This is the failure mode the rest of the skill invites. Told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all — where the source offers nothing specific, cut to the plain version and leave it plain.
+This is the failure mode the rest of the skill invites. Told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all. Where the source offers nothing specific, cut to the plain version and leave it plain.
 
-Opinions, reactions, and mixed feelings are voice rather than fact, so those can be added where the register allows. A factual claim added to make prose feel human is a defect, even when it reads better than the vague original it replaced.
+Opinions, reactions, and mixed feelings are voice rather than fact, so those can be added where the register allows, as long as the author's position stays where it was. A factual claim added to make prose feel human is a defect, even when it reads better than the vague original it replaced.
 
 Fiction is the exception, where inventing detail is the job.
 
 ## What it is not
 
-Copy-editing to make writing read well — not a way to disguise machine-written work as human where honesty is required. Academic submissions, disclosure-bound writing, attributed work: edit for the reader, not to game an automated check.
+Copy-editing to make writing read well. It is not a way to disguise machine-written work as human where honesty is required. Academic submissions, disclosure-bound writing, attributed work: edit for the reader, not to game an automated check.
 
 ## Who reads it, and what that rules out
 
@@ -37,7 +37,7 @@ humankit fires on prose a person reads. An agent instruction file is not that, a
 
 Take a `SKILL.md`, an agent instruction file such as `CLAUDE.md` or an `AGENTS`-style guide, a system prompt, a rules file. A metaphor noun the document defines and reuses anchors a region of behavior in one token. Mechanical boldface is what marks the load-bearing rule among twenty that aren't. A formula repeated verbatim is the thing that makes the behavior repeat. All three are humankit tells, and the last one is the exact opposite of what "vary the rhythm" asks for. Strip them and the file reads better to a person while steering the model worse.
 
-So those files get named as out of scope and routed instead — a prompt to [`promptkit`](./promptkit.md), a skill to [`skillkit`](./skillkit.md). promptkit has carried the mirror of this rule since it shipped: never run an em-dash rule or an AI-vocabulary list against a prompt, where scaffolding and repetition are features. The guard now sits on both sides, which matters because only one of the two skills can actually cause the damage.
+So those files get named as out of scope and routed instead: a prompt to [`promptkit`](./promptkit.md), a skill to [`skillkit`](./skillkit.md). promptkit has carried the mirror of this rule since it shipped: never run an em-dash rule or an AI-vocabulary list against a prompt, where scaffolding and repetition are features. The guard now sits on both sides, which matters because only one of the two skills can actually cause the damage.
 
 Procedural text gets the softer version. A runbook, a QA checklist, a handoff: those take the subtraction and skip the voice half. Uniform short sentences are the correct register there, so [Removing tells is half the job](#removing-tells-is-half-the-job) would rewrite them into something worse than it found.
 
@@ -55,11 +55,11 @@ They matter in **clusters**, not isolation. One em dash or one "however" proves 
 | **AI vocabulary** | *delve, crucial, pivotal, underscore, showcase, tapestry, intricate, foster, leverage, seamless, robust, realm* |
 | **Abstract metaphor nouns** | *substrate, wedge, vector, nexus, scaffolding, flywheel, north star, ratchet, gold-plating* |
 | **Elevated synonyms** | *utilize* → *use*; *facilitate* → *help*; *prior to* → *before* |
-| **Copula avoidance** | *serves as, functions as, represents, features* — prefer "X is Y" |
+| **Copula avoidance** | *serves as, functions as, represents, features*; prefer "X is Y" |
 | **Passive voice and propped-up verbs** | *queries are validated* → *the compiler validates queries*; *runs quickly* → *is fast* |
 | **Rule of three** | *innovation, inspiration, and industry insights* |
 | **Synonym cycling** | *protagonist, main character, central figure, hero* in one passage |
-| **False ranges** | *from onboarding to enterprise security* — no shared scale |
+| **False ranges** | *from onboarding to enterprise security*, with no shared scale |
 | **Negative parallelism** | *Not only… but also…*, *It's not just X, it's Y*, clipped tails like *…, no guessing* |
 | **Filler and hedging** | *in order to* → *to*; *due to the fact that* → *because*; *could potentially possibly* → *may* |
 | **Signposting and chatbot residue** | *Let's dive in*, *I hope this helps*, *Certainly!*, *You're absolutely right!* |
@@ -72,18 +72,20 @@ The metaphor-noun entry is scoped deliberately: the test is *use*, not the word.
 
 ## Two cut tests
 
-The catalog names patterns. These judge the sentence that trips none of them and still reads as machine-written, and both end in a deletion:
+The catalog names patterns. These judge the sentence that trips none of them and still reads as machine-written, and both end in a deletion or a plain restatement:
 
 - **Does it name a mechanism, or a feeling?** *SQL you can read* describes a sensation the reader is supposed to have. *A column rename fails the build* names what happens. If a sentence can't be restated as a concrete instruction, fact, or number, it goes.
 - **Could it appear unchanged in another project's docs?** Then it says nothing about this one.
 
 The first test is where the never-invent-facts rule bites hardest. Asked to replace a feeling with a mechanism, inventing the mechanism is the obvious move and the wrong one. When the source supplies none, cutting is the only option on the table.
 
+The tests cut only a sentence that carries no claim. A sentence that fails a test but holds a fact, an instruction, or a stated position from the source gets rewritten as that claim in plain words. Without that line the tests would fight the promise that every claim survives, and a summary would sneak in through the cut tests.
+
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes** and uses **no en dashes as sentence punctuation**. Replacements, in rough order of preference: a period, comma, parentheses, or a restructured sentence. A colon qualifies only where it introduces a list or an example — swapping an em dash for a mid-sentence colon trades one tell for another.
+The finished rewrite contains **no em dashes** and uses **no en dashes as sentence punctuation**. Replacements, in rough order of preference: a period, comma, parentheses, or a restructured sentence. A colon qualifies only where it introduces a list or an example, because swapping an em dash for a mid-sentence colon trades one tell for another.
 
-Legitimate numeric and date ranges survive as hyphens or "to" (`1914-1918`, `pp. 10 to 12`). Spaced em dashes and double hyphens used the same way get caught too. Before delivering, the draft is searched for both marks — any remaining em dash means the rewrite isn't done.
+Legitimate numeric and date ranges survive as hyphens or "to" (`1914-1918`, `pp. 10 to 12`). Spaced em dashes and double hyphens used the same way get caught too. Before delivering, the draft is searched for both marks. Any remaining em dash means the rewrite isn't done.
 
 **One exception overrides it:** a user-supplied writing sample that uses em dashes. Then the mark is matched to the sample's frequency rather than banned. Matching the author beats scrubbing the tell, and a sample outranks every style rule here.
 
@@ -96,13 +98,17 @@ Clean human writing trips several of these on its own, and gutting legitimate pr
 - Bland or dry prose without the *specific* tells. Dry is not the same as AI.
 - Quoted text, titles, proper names, or a phrase being discussed rather than used.
 
-Hard-to-fake specifics, mixed or unresolved feelings, era-bound slang, genuine asides and self-corrections, real variety in sentence length — those are a person's fingerprints. Lean toward leaving them alone.
+Hard-to-fake specifics, mixed or unresolved feelings, era-bound slang, genuine asides and self-corrections, real variety in sentence length: those are a person's fingerprints. Lean toward leaving them alone.
 
 ## Removing tells is half the job
 
 Strip every tell and put nothing back and the result is sterile, which is its own signature. That failure mode is why the skill carries a positive half: take a position instead of weighing pros and cons at equal length, vary the rhythm, let structure be uneven, use *I* where the register allows, and permit mixed feelings.
 
-This is the part that looks like it contradicts the never-invent-facts rule, and doesn't. Opinion, reaction, and unresolved feeling are voice, so they can be added. A name, number, date, or claim is fact, so it can't. Encyclopedic, technical, legal, and reference writing are the exception in the other direction: there, plain and neutral already *is* the human voice, and adding personality would be the error.
+This is the part that looks like it contradicts the never-invent-facts rule, and doesn't. Opinion, reaction, and unresolved feeling are voice, so they can be added. A name, number, date, or claim is fact, so it can't.
+
+Voice has one limit of its own. An added reaction may not move the author's position, stronger, softer, or reversed, and it may not imply an experience the source never reports (*when I tried it*). A rewrite that changes what the author concludes has invented a fact about the author, even if every sentence in it is an opinion. Where the voice would move the position, humankit keeps the plain version and flags the spot.
+
+Encyclopedic, technical, legal, and reference writing are the exception in the other direction: there, plain and neutral already *is* the human voice, and adding personality would be the error.
 
 ## How you reach it changes what you get
 
@@ -110,20 +116,20 @@ This is the part that looks like it contradicts the never-invent-facts rule, and
 |---|---|
 | Text in the conversation | the full loop: final rewrite, a "what still read as AI" note, and a one-line change summary |
 | A file path | rewrite written back; code blocks, frontmatter, tables, and link targets untouched. Reports a summary and the path, not the prose |
-| Another skill or agent | the final text alone. No draft, no audit bullets, no ceremony — the caller wants prose |
+| Another skill or agent | the final text alone. No draft, no audit bullets, no ceremony, because the caller wants prose |
 
 Asked only for a review, it reports the located tells with line references and skips the rewrite entirely.
 
 ## How it works
 
 1. Mark every instance of the tells, then run the two cut tests over what survives.
-2. Write a **draft rewrite** — vary sentence length, prefer concrete detail and plain constructions, hold the register and coverage, give it voice.
-3. Ask three blunt questions: *what still reads as AI-generated?*, *does this state any fact not in the source?*, and *has the de-slopping left it sterile?*
-4. Revise into a **final rewrite** fixing all three, carrying no em or en dashes.
+2. Write a **draft rewrite**. Vary sentence length, prefer concrete detail and plain constructions, hold the register and coverage, and give it voice.
+3. Ask four blunt questions: *what still reads as AI-generated?*, *does this state any fact not in the source?*, *does any added reaction move the author's position?*, and *has the de-slopping left it sterile?*
+4. Revise into a **final rewrite** fixing all four, carrying no em or en dashes.
 
 ## Hands off to
 
-Nothing, usually. A rewritten file in a repo is uncommitted prose, so [`commitkit`](./commitkit.md) is the move. A review rather than a rewrite hands back to you — apply the tells you want, then re-run. Text from the chat routes nowhere: the draft is yours to paste back.
+Nothing, usually. A rewritten file in a repo is uncommitted prose, so [`commitkit`](./commitkit.md) is the move. A review rather than a rewrite hands back to you: apply the tells you want, then re-run. Text from the chat routes nowhere: the draft is yours to paste back.
 
 ## Reference
 

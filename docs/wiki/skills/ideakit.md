@@ -42,7 +42,7 @@ That reasoning holds for the sessions worth keeping and gets the common case bac
 
 So the gate inverted. The discussion is the deliverable, and a file is what you ask for when the discussion earned one. The mechanism matters more than the rule: the agent **composes the entry anyway**, prints it under the path it would land at, and then asks. An offer with the draft attached is nearly free to accept. An offer that asks "want me to save this?" with nothing to look at gets declined because judging it costs more than skipping it.
 
-Two modes are exempt, and they are exempt for the same reason. `capture` and `close` have the file as their entire output, so the ask you made is the write. Prompting there asks you to confirm what you just requested.
+Four modes are exempt, and they are exempt for the same reason. `jot`, `promote`, `capture`, and `close` have the file as their entire output, so the ask you made is the write. Prompting there asks you to confirm what you just requested.
 
 The router row goes through the gate with everything else, rather than repairing itself quietly. `INDEX.md` carries a summary and an open question, which are thinking and not bookkeeping, so the row travels with the entry that changed it. A session you didn't save didn't touch the idea, and `Last touched` should say so.
 
@@ -70,9 +70,13 @@ A folder is a commitment. It costs a permanent slug, an `IDEA.md`, a log, and a 
 
 The jotpad charges nothing. Say "jot this down" and the thought lands as a block in that day's file with an id and a one-line row. No subject requirement, no relevance test against the ideas you already have, no naming decision on the night it arrives.
 
-What makes it more than a scratch file is that promotion is earned rather than judged. A jot you come back to gets another block under the same id, and the router's `Entries` cell counts the returns. At three, [`status`](#status) crowns `promote` on it. So you never decide on the first night whether a thought deserves a folder. Coming back twice is the decision, and your own behaviour makes it instead of a guess.
+What makes it more than a scratch file is that promotion is earned rather than judged. A jot you come back to gets another block under the same id, and the router's `Entries` cell counts the days you returned on, so three captures in one evening still count once. At three days, [`status`](#status) crowns `promote` on it. So you never decide on the first night whether a thought deserves a folder. Coming back twice is the decision, and your own behaviour makes it instead of a guess.
 
-Both costs are stated rather than hidden. A dated file holds unrelated jots side by side, so reading one thread carries its neighbours into the window. That is exactly the contamination the [one-folder guard](#why-one-folder-per-session) exists to stop, and it is accepted here because the pad holds loose thoughts by construction and `promote` is the way out of it. The second cost is that a block is never edited after the day it lands. Every state change goes to the router instead, which is what keeps a thought's arrival date true and why a promoted jot leaves its text where it was.
+Both costs are stated rather than hidden. A dated file holds unrelated jots side by side, so reading one thread carries its neighbours into the window. That is exactly the contamination the [one-folder guard](#why-one-folder-per-session) exists to stop, and it is accepted here because the pad holds loose thoughts by construction and `promote` is the way out of it. The second cost is that a dated file is append-only: a block is never edited once written, and new blocks only ever go into today's file. Every state change goes to the router instead, which is what keeps a thought's arrival date true and why a promoted jot leaves its text where it was.
+
+## Why every write puts the record first
+
+A save touches several files, and a run can stop between any two of them. ideakit fixes the order instead of pretending the write is atomic: the record first (`NOTES.md`, or the jot's dated block), the caches after (`IDEA.md`, the router rows). A stopped run then always leaves the record ahead of its caches, never behind, and every cache can be rebuilt from the record. An `IDEA.md` that disagrees with the log gets rewritten from it by the next mode that opens the folder; a folder with no router row shows up in `status` as unregistered; a jot block with no row gets its row from the next `jot` run, which reads today's file before it allocates an id so the orphan's id is never handed out twice.
 
 ## Why `IDEA.md` splits in two
 
@@ -90,7 +94,7 @@ Records a loose thought and stops. It proposes no slug, creates no folder, and d
 
 It reads the two routers and nothing else: the jot router, to see whether this is a thought you have had before, and the idea router, because that table is bounded and cheap to check. **When the thought plainly belongs to an idea you already have, it says so in one line and writes the jot anyway.** Routing on the way in is the friction the pad exists to remove, and [`promote`](#promote) can move it later without losing anything.
 
-A jot that matches one you already have gets a fresh block under the same id, and its row gains today's date. That accumulation is the whole promotion signal.
+A jot that matches one you already have gets a fresh block under the same id, and its row gains today's date. A second capture on the same day adds the block but not the date. That accumulation of days is the whole promotion signal, and the run that adds the third day crowns `promote` in its own hand-off rather than waiting for a `status` run.
 
 ### `promote`
 
@@ -130,6 +134,8 @@ Reports and writes nothing at all. It has two scopes, which is why there's no se
 
 **Cross-idea, it opens no topic folder and no dated jot file**, getting everything from the two routers and a directory listing. The pad gets one line under the table: how many jots are live, and which ones have three or more entries. Then it crowns one move, and the ranking rule is the interesting part: **the crown goes to the coldest active idea carrying an open question, not the warmest.**
 
+The crown rows apply in order, and the last one matches anything, so a state no rule anticipated (a `building` idea with nothing open next to a few young jots, say) still gets exactly one move rather than none.
+
 Ranking on recency was the first draft, and it produced a crown that just restated row one of a table already sorted by recency. Inverting it makes the crown carry information. Cold plus an open question means you stopped mid-thought, which is the recoverable case; cold with nothing open means you drifted off, which isn't. And it's precisely the row a recency sort buries.
 
 There's no stale marker. A tag most rows would wear within a year is a verdict on a repo whose entire premise is that ideas sit. It prints the age instead — `untouched 94 days` — and lets you judge.
@@ -146,7 +152,9 @@ The answer arrives inline whichever branch runs. Keeping it as a file is a separ
 
 ### `validate`
 
-Hands a startup or SaaS idea to [`validatekit`](./validatekit.md), takes the verdict inline, and offers the verdict, the wedge, and the assignment as one log entry.
+Offers two paths for a startup or SaaS idea: run [`validatekit`](./validatekit.md) yourself, or take a short forcing-question version inline. Either way it offers the verdict, the wedge, and the assignment as one log entry.
+
+validatekit is invocation-only, so the model cannot start it. ideakit gives you the exact line to type, `/validatekit` with the absolute path of the idea's `IDEA.md`, and picks the fold-back up when you bring the verdict back. An earlier version dispatched to validatekit directly, and on a host that honors the invocation flag that call either failed or quietly fell through to the short version.
 
 It **honors validatekit's side-project off-ramp** rather than routing around it. That off-ramp fires often here, because most ideas in a personal ideas repo are not businesses, and "this is a side project, not a company" is a real answer worth offering to write down rather than an obstacle to a verdict.
 
@@ -160,7 +168,7 @@ It was called `archive` first. The status flip is a one-line edit; the substance
 
 ## Why the dispatch is owned end to end
 
-Both dispatch modes drive the sibling skill rather than suggesting it, and there are three concrete reasons, each one a thing that breaks otherwise.
+`research` drives its sibling skill rather than suggesting it, and `validate` would too if validatekit allowed it; since it doesn't, you start validatekit and ideakit owns everything after the answer. There are three concrete reasons for owning the dispatch end to end, each one a thing that breaks otherwise.
 
 The sibling writes to the wrong root. [`validatekit`](./validatekit.md) documents `docs/validation/` with no deference to a host convention, so left alone it writes into whatever directory you're standing in. When you keep the answer, ideakit writes the file itself at the absolute path under `topics/<slug>/docs/`, rather than re-running the sibling and hoping it lands right.
 
@@ -185,7 +193,7 @@ What you keep goes into the idea's own `NOTES.md` as a dated entry naming the qu
 
 ## Hands off to
 
-Mostly to itself, chosen by state: `promote` when a jot has come back three times, another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`status`](#status) is that routing rule made available on demand. A run that writes a jot hands off to nothing, which is the point of the mode.
+Mostly to itself, chosen by state, first matching rule wins: `promote` when a run just gave a jot its third day, another `session` on the question you stopped at, `research` when the block is an external fact, `validate` when the idea is a business with no verdict, `close` when nothing is open. [`status`](#status) is that routing rule made available on demand. Any other run that writes a jot hands off to nothing, which is the point of the mode.
 
 It leaves the repo when an idea is settled enough to shape work. Then the next move is [`plankit`](./plankit.md) in the project repo, not here — and the idea's folder stays put either way.
 

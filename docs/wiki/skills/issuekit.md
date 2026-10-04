@@ -25,13 +25,15 @@ The skill is split for context economy: `SKILL.md` carries the routing, the safe
 
 Creating, closing, and editing issues are outward-facing mutations. **Every one is previewed and gets an OK before it runs.** It never merges PRs.
 
-**Label writes are the exemption, in every mode and for every caller.** Adding or removing a label on an issue or a PR runs unprompted, whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did, and it covers both namespaces — lifecycle and priority.
+**Label writes are the exemption in `create`, `start`, `close`, and `sync`, for every caller.** Adding or removing a label on an issue or a PR runs unprompted, whether you typed the command yourself or an unattended orchestrator like [`afkkit`](./afkkit.md) did, and it covers both namespaces — lifecycle and priority.
 
 The reasoning is the asymmetry between the two failure modes. A label is cheap, visible on the issue, and undone with one `gh issue edit`, so a wrong one costs a correction. A prompt on every label write costs attention on every run, and a declined write costs something worse: a tracker that describes merged work as in review, or an issue sitting in a worktree while it still advertises itself as `ready` for someone else to pick up. Prompting protects the cheap failure and invites the expensive one.
 
-What keeps that honest is the report rather than the prompt. Every label write is named in the preview it rides with and again in the hand-off, so the change is auditable after the fact. Priority is the case where this matters most: `triage` still prints its whole ranking as one table, because you are deciding what beats what and a table is the only shape that shows the comparison — but the table informs you rather than gating the write.
+What keeps that honest is the report rather than the prompt. Every label write is named in the preview it rides with and again in the hand-off, so the change is auditable after the fact.
 
-**Nothing outside the label namespaces widens.** `create` previews the issues it files, `close` previews the close and the worktree teardown, `sync` previews each pairing, and `triage` previews every close and comment.
+**`triage` is the one mode outside the exemption.** The argument above rests on a label recording work that already happened, and a triage label records nothing of the kind: a classification, a rank, or a promotion is a judgment the report proposes. So `triage` reports first and applies every fix, labels included, on your approval. A targeted request such as "set the priority on #42" is its own approval.
+
+**Nothing outside the label namespaces widens.** `create` previews the issues it files, `close` previews the close and the worktree teardown, `sync` previews each pairing, and `triage` previews every fix.
 
 ## The lifecycle labels
 
@@ -42,7 +44,7 @@ issuekit **uses** these labels and never creates them. Provisioning is [`repokit
 | `triage` | filed, not yet assessed |
 | `needs-planning` | a human plan/grill session is still owed |
 | `ready` | specified and **independent** — safe to take into its own worktree now |
-| `blocked` | has an unmet prerequisite that hasn't started |
+| `blocked` | has an unmet prerequisite that has not started |
 | `stacked` | its prerequisite has an open PR, so it's workable now on a branch stacked on that one |
 | `in-progress` | actively being worked |
 | `in-review` | a PR is open |
@@ -54,11 +56,13 @@ Two pairs carry the design:
 
 **`blocked` vs `stacked` splits a real wait from stackable work, and that split is why the label exists.** A prerequisite nobody has started is a genuine wait. A prerequisite that's *built, pushed, and sitting in an open PR* is not: the code exists on a branch, so the dependent can be worked right now on a layer cut from it, with its PR targeting that branch instead of trunk. Collapsing the two is what makes a solo project idle, because the author ends up waiting on a review only they can do.
 
-`stacked` is **stored rather than computed**, which buys the same `gh issue list --label stacked` fan-out `ready` has and costs the usual price of a stored fact: it can go stale. So it never gates anything by itself. `start` re-checks the prerequisite's PR live before cutting a branch, and refuses when it's merged, closed, or missing — because a layer cut from a deleted branch fails much later and far from its cause. The label finds the work; the live check decides.
+`stacked` is **stored rather than computed**, which buys the same `gh issue list --label stacked` fan-out `ready` has and costs the usual price of a stored fact: it can go stale. So it never gates anything by itself. `start` re-checks every prerequisite's PRs live before cutting a branch, searching all states rather than open ones only, because the refusal has to tell merged, closed, and missing apart. A search hit is not a link either: a PR counts only when GitHub resolved it as closing the prerequisite, or, on a stack layer whose resolved field is still empty, when its body says so. A failed query is unknown, and `start` refuses rather than reading it as "no PR". The cost is lopsided: a refusal costs one command, and a layer cut from a deleted branch fails much later and far from its cause. The label finds the work; the live check decides.
+
+**One transition rule sets every dependent's label.** `sync`, `close`, `start`, and `triage` all recompute a dependent from **all** of its open prerequisites, never from the one that just moved. If C waits on A and B, A merging leaves C `blocked` while B has not started; a promotion that looked only at A would advertise C as ready too early. When every open prerequisite has an open PR, C stacks only if those PRs form one chain, because a layer has one parent branch. PRs on separate branches get reported with each candidate parent named, and the skill never picks one silently.
 
 **Dependencies are recorded natively.** `gh issue edit --add-blocked-by` writes GitHub's own edge and `--json blockedBy` reads it back as structured data, which is what [`statuskit`](./statuskit.md) was already reading and nothing was writing. The `Blocked by #N` body line stays, as prose for a human — it is not the store, and the native edge wins when they disagree. The flags need `gh` 2.94.0, and below that the skill writes the line alone and says the edge was skipped rather than refusing to work.
 
-**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**. An issue earns it only once a grill settled its decisions.
+**`needs-planning` vs `ready` is the human-gate pair.** `ready` means specified enough to work **unattended**. An issue earns it only once a grill settled its decisions. The way back from `needs-planning` is `triage`'s promotion, on your word: it looks for a `Grilled:` stamp on the issue or its linked plan, asks when there is none, and then sets `ready`, `stacked`, or `blocked` by the transition rule. Without it, an issue `create` filed ungrilled, or one afkkit escalated, would stay stuck until someone changed the label by hand.
 
 **Type lives in the title, not a label** — issues carry `feat(scope):` per the Conventional-Commits title convention shared with [`commitkit`](./commitkit.md), whose type set it now matches exactly, so the map holds only lifecycle status. A **closed** issue needs no `done` label; the closed state is the signal.
 
@@ -111,13 +115,13 @@ It also **guards against duplicates** before creating, because `create` is the w
 The **grill gate** decides which label vocabulary applies. A plan carrying grillkit's `Grilled: YYYY-MM-DD` stamp gets the normal `ready`/`blocked` pair. An ungrilled source gets **`needs-planning` on everything** — which is what keeps afkkit from picking up work a human hasn't grilled.
 
 ### `start`
-<!-- cheatsheet: picks a `ready` issue up, and hands the worktree half to gitkit -->
+<!-- cheatsheet: picks a `ready` or `stacked` issue up, and hands the worktree half to gitkit -->
 
 Pick an issue up. Deliberately thin: the tracker half is issuekit's, the worktree half is [`gitkit`](./gitkit.md)'s, and there's nothing in between.
 
-**Never start an issue that isn't labeled `ready`.** This one guard carries more weight than its size suggests, and it's the reason `start` lives here rather than in a worktree skill.
+**Never start an issue that isn't labeled `ready` or `stacked`.** This one guard carries more weight than its size suggests, and it's the reason `start` lives here rather than in a worktree skill.
 
-An issue reaches `ready` only two ways: a human grilled its decisions settled, or `sync` promoted it when its prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free.**
+An issue reaches `ready` only two ways: a human said a grill settled its decisions, or `sync` or `close` promoted it when its last prerequisite landed. So refusing everything else enforces **both the dependency graph and the human-grill gate for free.** A `stacked` issue passed the same grill on its way to `blocked`, so it passes too, and then earns the live prerequisite check described above; it is cut from its parent's branch instead of the base ref.
 
 The gate does not depend on who types the command. It's the *label* that carries the human's judgment, earned upstream at the grill, and nothing calling `start` can award it. So it refuses on the label alone — **never softened because the caller sounds confident, names a plan, or says it's fine.**
 
@@ -134,13 +138,15 @@ That precondition is the whole reason `close` is safe to run on a name you half-
 
 The preview names **every** effect, including routine ones: unblocking a dependent changes what someone else picks up next, and removing a worktree deletes a directory they may have a terminal sitting in. The label moves are named there but need no OK of their own, per the exemption above.
 
-Teardown goes to gitkit, whose rules aren't overridden: **a dirty worktree stops the removal**, because a merged PR does not guarantee an empty worktree — scratch files, a stashed experiment, an unpushed follow-up all live there and none are in the PR.
+**Dependents are found through GitHub's native edge, not the body text**, because the edge is the store and the `Blocked by #N` line is only prose. Each one moves by the transition rule, which covers the `stacked` dependents prkit flagged when the PR opened as well as the `blocked` ones: both go to `ready` only when nothing else they wait on is still open. A branch is kept, not deleted, while an open PR still targets it, because a layer in work is labeled `in-progress` or `in-review` and a label check would miss it.
+
+Teardown goes to gitkit, whose rules aren't overridden: **a dirty worktree stops the removal**, because a merged PR does not guarantee an empty worktree — scratch files, a stashed experiment, an unpushed follow-up all live there and none are in the PR. gitkit also removes only the worktrees and branches it marked as its own creations, so a worktree made before that marker existed is reported as adopted and kept.
 
 ### `sync`
 
 Reconcile the PR↔issue relationship after the fact.
 
-It **deliberately does not write the forward `Closes #N` link onto a fresh PR** — that's [`prkit`](./prkit.md)'s job at open time. sync earns its place only where the automatic chain *broke*: a merged PR whose issue never closed, a missing link on an existing PR, and the dependency payoff — when a blocker closes, finding what it was holding up and swapping `blocked` → `ready`.
+It **deliberately does not write the forward `Closes #N` link onto a fresh PR** — that's [`prkit`](./prkit.md)'s job at open time. sync earns its place only where the automatic chain *broke*: a merged PR whose issue never closed, a missing link on an existing PR, and the dependency payoff — when a blocker closes, finding what it was holding up and recomputing each dependent by the transition rule.
 
 **A merged PR whose body carries `Closes #N` while `closingIssuesReferences` is empty is the stack signature**, and it is the case this mode exists to repair. The obvious cause of an unclosed issue is a missing keyword, and for a long time that was the only one sync looked for. It isn't the only one: GitHub honours a closing keyword only on a PR targeting the **default branch**, so every stack layer above the bottom ships a correct keyword that resolves to nothing. The link normally registers by itself once the layer below merges and GitHub retargets the PR, and when that doesn't happen the issue sits open behind a body that reads perfectly. So sync reads the body and the resolved field *together*: a keyword is not evidence of a link, and an empty field is not evidence of a missing keyword.
 
@@ -152,7 +158,7 @@ Its hand-off prints the **actionable set** — every open issue that's `in-progr
 
 ### `triage`
 
-Report first, then act — on approval for a close or a comment, straight through for a relabel. **It never mutates the tracker beyond the fixes its own report named.**
+Report first, then apply the fixes you approve, labels included. **It never mutates the tracker beyond the fixes its own report named.**
 
 It fetches `--state all`, because a `Blocked by #N` pointing at an already-closed issue is drift the open-issue list alone cannot see.
 
@@ -162,7 +168,9 @@ Three more come from the priority namespace: **unassessed** (no priority label �
 
 **Ranking a backlog is proposed as one table, not one question per issue.** Priority is comparative by nature — you're deciding what beats what — and a table is the only shape that shows the comparison you're actually making. Asked one at a time, twenty issues become twenty context-free judgments and every one comes back `medium`, which is the same as not ranking at all. The proposal aims for a *distribution* (`critical` empty or nearly so, `high` a handful, a long `medium`/`low` tail), because a backlog where most things are `high` carries no priority information: the label stops discriminating and every consumer silently falls back to the tiebreak underneath.
 
-**The table informs you; it doesn't gate the write.** issuekit prints the ranking and applies it, then says any row is one `gh issue edit` away from a correction. Priority is a claim about what matters and only you can make it, so the table exists to show you the claim it made — not to hold the tracker unranked until you answer.
+**The table is the approval.** Priority is a claim about what matters and only you can make it, so issuekit prints the ranking and applies the rows you approve, strike, or rewrite. An earlier version applied the table first and invited corrections after, which left the tracker carrying a ranking nobody had agreed to.
+
+It also owns the **`needs-planning → ready` promotion** described above, which is the only path back from the human gate.
 
 triage only classifies. The fixes it can't make itself route to a sibling mode.
 
@@ -176,7 +184,7 @@ triage only classifies. The fixes it can't make itself route to a sibling mode.
 
 ## Hands off to
 
-By mode and by what came back. `create` with `ready` issues → `start` on the highest-priority one, breaking a tie on whichever frees the most other work. `create` with everything `needs-planning` → [`grillkit`](./grillkit.md), because nothing is workable unattended yet. `start` → the worktree and [`implementkit`](./implementkit.md), or [`afkkit`](./afkkit.md) for an unattended run. `close` → whatever this close unblocked, unless **the worktree survived dirty**, which outranks everything, because unlanded work in a stale worktree is what gets lost.
+By mode and by what came back. `create` with `ready` issues → `start` on the highest-priority one, breaking a tie on whichever frees the most other work. `create` with everything `needs-planning` → [`grillkit`](./grillkit.md), then `triage`'s promotion for each issue, because nothing is workable unattended yet. `start` → the worktree and [`implementkit`](./implementkit.md), or [`afkkit`](./afkkit.md) for an unattended run. `close` → the highest-priority issue this close unblocked, or the highest-priority `ready` one, unless **the worktree survived dirty**, which outranks everything, because unlanded work in a stale worktree is what gets lost.
 
 ## Install
 

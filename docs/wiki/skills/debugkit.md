@@ -19,7 +19,7 @@ debugkit is the only one whose input is a **symptom** — something misbehaved, 
 
 ## Why it never applies the fix
 
-debugkit changes the repo freely to learn and reverts every one of those changes. The deliverable is a cause, a failing reproduction, and a fix *described*.
+debugkit changes the repo freely to learn and reverts every one of those changes. The deliverable is a cause, a failing reproduction, and a fix *described*. The reproduction is the one write that stays: on a proven cause it is left on disk as a red, unstaged test, because it is the input the fix round starts from, and reverting it would throw away the only executable proof of the bug.
 
 The reason isn't caution. A skill that finds the cause and also lands the cure has already committed to an answer by the time it writes the report — so what you read is a rationalization of an edit that already happened, not a diagnosis you could disagree with. Splitting them puts a moment in between where the reasoning has to stand on its own.
 
@@ -67,19 +67,23 @@ The stop condition follows the same shape: stop when you can no longer write a n
 
 A test failing one run in twenty cannot be toggled on and off, so `Isolate` is required to force determinism first — pin the seed, serialize the concurrency, freeze the clock.
 
-When that genuinely fails, the toggle takes a statistical form: N runs each way, both failure rates reported. The rule that makes this a fallback rather than a loophole is that **N is declared before running, never after**. The loophole was never statistics — it was running until the numbers looked convincing.
+When that genuinely fails, the toggle takes a statistical form: three arms of N runs (cause present, removed, restored), every failure rate reported. The rule that makes this a fallback rather than a loophole is that **N is declared before running, never after**. The loophole was never statistics — it was running until the numbers looked convincing.
+
+The form also has a bar. N is at least 20, the removed arm shows zero failures, and the other two arms each show at least five. At a 25% failure rate, 20 clean runs happen by chance about 0.3% of the time, so a clean removed arm carries weight; a 1-in-20 bug with N of 20 does not, and the run reports **reproduced, not explained** with the rates and the larger N that would settle it. Without a bar, "the failure rate went down" would pass as proof, which is the correlation the on/off test exists to reject.
 
 ## `patch -R`, never `git checkout --`
 
 The probe ledger is the only place in the skill where a bug could destroy somebody's work, because the user usually *does* have uncommitted changes when they ask you to debug something.
 
-Each probe is snapshotted outside the working tree before the edit and recorded as its own patch, so it is cleanly separated from whatever the user had already changed in the same file. Reverting reverse-applies that patch. **`git checkout -- <path>` is banned without exception** — it restores the file to `HEAD` and takes the user's edits with it, and it is the move an agent reaches for by reflex.
+Each probe's files are copied outside the working tree just before that probe and recorded as its own patch, so it is cleanly separated from whatever the user had already changed and from every earlier probe. An earlier version copied a file once, before its first edit, and diffed every later probe against that copy; each patch then held all the probes before it, and reverse-applying them in turn reverted the early ones twice or failed. Reverting reverse-applies that patch. **`git checkout -- <path>` is banned without exception** — it restores the file to `HEAD` and takes the user's edits with it, and it is the move an agent reaches for by reflex.
 
 The ban has no exceptions on purpose, including for files that looked clean at baseline. A prohibition you have to reason about is one you will talk yourself out of at the wrong moment.
 
 The recipe specifies `patch -R` rather than `git apply -R` for a concrete reason found while testing the skill: `git apply` resolves the paths in the patch header against the repository root, and a patch generated from an out-of-tree snapshot carries paths that don't resolve, so it fails outright with `invalid path`. `patch -R` applies against the file you name and ignores the header.
 
 A `git stash create` snapshot is taken before the first probe as a net. It writes an unreferenced commit and touches no ref, no file, and no index — and because an unreferenced object is invisible without `git fsck`, the skill prints its SHA and recovery command in every hand-off. A net nobody can find isn't one.
+
+The net has holes, and the skill names them. On a clean tree, or one with only untracked files, `git stash create` prints nothing, so the hand-off says `none` instead of a recovery line for an object that does not exist. The snapshot never covers untracked files, so a probe that can touch one copies it into the ledger first. Cleanup then checks three things against the baseline: the content of every edited file, the index, and the untracked-file list.
 
 ## Bisecting happens somewhere else entirely
 
@@ -111,7 +115,7 @@ An earlier version keyed the file on how many hypotheses were tested, which desc
 
 ## Hands off to
 
-[`implementkit`](./implementkit.md), on a proven cause only. The diagnosis arrives as a *fix round* — a finding naming what's wrong and where — which implementkit accepts as passing its thin-input bar by construction, so the failing reproduction becomes its red test with no translation step. Without the ecosystem the move is the same one stated plainly: write the fix and make the reproduction pass.
+[`implementkit`](./implementkit.md), on a proven cause only. The diagnosis arrives as a *fix round* whose input is the reproduction test. implementkit runs it red first, keeps it, and shows it green at its done-gate, so the proof of the bug becomes the proof of the fix with no translation step. Without the ecosystem the move is the same one stated plainly: write the fix, keep the test, and watch it pass.
 
 The other two outcomes hand back to **the user**, deliberately, with no build step named. A feature request bounces to [`plankit`](./plankit.md) at the intake bar, before the ritual starts.
 

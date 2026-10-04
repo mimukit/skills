@@ -1,14 +1,14 @@
 # skillkit
 
-Create a new AI agent skill from scratch — naming, drafting, live testing, and publishing included.
+Create a new AI agent skill from scratch (naming, drafting, trigger cases, live testing, publishing), or re-check an existing one after a change.
 
 **Reach for it when** you want to author a skill and don't want to re-derive the conventions each time.
 
 | | |
 |---|---|
-| Modes | single procedure, driven one step at a time |
+| Modes | creation procedure, driven one step at a time, plus a maintenance check for an existing skill |
 | Tools | `Read`, `Edit`, `Write`, `Bash`, `AskUserQuestion`, `WebSearch`, `WebFetch` |
-| Writes | `skills/<name>/SKILL.md` in the host collection's layout |
+| Writes | `skills/<name>/SKILL.md` in the host collection's layout, its trigger cases (`evals/triggers.md` when the collection has no other place), and the collection's listing and docs surfaces |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
@@ -26,10 +26,16 @@ It drives one step at a time and won't jump ahead to drafting before intent, vis
 2. **Visibility** — internal or public. This changes the rules for everything downstream.
 3. **Provenance** — original, or your version of an upstream skill. Either way it's authored here; the answer just informs how much to lean on the upstream for structure.
 4. **Propose names** — 3–5 candidates with one recommended.
-5. **Draft** from the frontmatter template, applying the quality bar.
+5. **Draft** from the frontmatter template, applying the quality bar, and write the **trigger cases**: per branch, prompts that should fire the skill and near-misses that should not.
 6. **Review loop** — iterate until you explicitly approve. It won't proceed to testing on an unsigned-off draft.
-7. **Live test.**
-8. **Hand off** after running the collection's lint and updating its listing surfaces.
+7. **Live test**, running every trigger case.
+8. **Hand off** after updating the collection's listing and docs surfaces and running its lint.
+
+For a skill that already exists and has just changed, it skips the creation steps and runs a short **maintenance check**: re-run the trigger cases, match the description's triggers to the skill's branches, update the docs surfaces the change touched, and run lint.
+
+## Why trigger cases are a file
+
+A description is the only thing that decides whether a skill fires, and it gets edited long after the skill was written. Phrasings tried once in a live test leave nothing behind, so the next edit to the description is tested against memory. A short file of should-fire and should-not-fire prompts per branch turns routing into something you can re-run after every edit, and the near-misses catch the edit that makes the skill steal a neighbor's requests.
 
 ## Does it earn a skill, or is it a mode?
 
@@ -67,7 +73,7 @@ The difference between a skill that triggers and reads well and one that doesn't
 - **Front-load the leading word.** The first words of `name` and `description` do the invocation work. It pays twice when the word is one the model already knows — `commit`, `review`, `slop`, `ledger` — because a pretrained word anchors a region of behavior for free, where a coined one charges definition tokens for the same anchor.
 - **"Use when" trigger** — phrased slightly pushy to fight undertriggering, naming the phrasings that should fire it. Then **one trigger per branch, not per synonym**: cover every mode and collapse the phrasings that rename a single one. See below for why the two halves don't contradict each other.
 - **Skills are for what the model can't already do.** If the guidance is obvious, it won't trigger no matter how you word it.
-- **Stay lean; disclose by branch.** Prefer one `SKILL.md`. Inline what every branch needs, push into a satellite file what only some branches reach, and keep a concept's definition, rules, and caveats under one heading rather than scattered.
+- **Stay lean; disclose by branch.** A straight-through skill stays one `SKILL.md`; a skill whose modes are skipped branches splits into a routing root plus `modes/<mode>.md`, one file per mode. Inline what every branch needs, push into a satellite file what only some branches reach, and keep a concept's definition, rules, and caveats under one heading rather than scattered.
 - **Every step ends on a completion criterion** — see below.
 - **Prompt the positive.** A prohibition drags the forbidden behavior into context and makes it *more* available, not less, so state the target behavior instead. A ban earns its place only as a hard guardrail you can't phrase positively, and even then it gets a positive target beside it.
 - **Intent over incantation** — the most nuanced rule here. A skill says *what to accomplish and why* and lets the agent work out the invocation. An exact command gets pinned **only** when it's a stable public contract (`git commit`, `gh pr create`, `jq`), and even then made self-correcting. Never hardcode volatile syntax, and never encode a tool's *internal* behavior — output-format parsing, help-text scraping — as if it were contract. The failure mode runs both ways: brittle syntax that breaks loudly, or over-abstraction that taxes every run quietly.
@@ -104,7 +110,7 @@ The clause about holding one term per concept is scoped to a **single document**
 
 ## Conventions it carries
 
-Because a public skill can't link back to a conventions file, skillkit inlines the rules it needs: the frontmatter template, the **information hierarchy** (steps, in-file reference, disclosed reference, and the branch test that decides which rung a piece sits on), **completion criteria** as described above, **no hard wrapping** (one continuous line per paragraph; only code fences, tables, and frontmatter keep their line structure), the prose register described above, documentation artifact naming (`<type>-<slug>-YYYY-MM-DD.md`, creation date, stable on edit), **never cross-referencing a step by number** (a bare number binds to position, so reordering silently misdirects it — link the heading anchor instead), and the closing hand-off shape.
+Because a public skill can't link back to a conventions file, skillkit inlines the rules it needs: the frontmatter template, the **information hierarchy** (steps, in-file reference, disclosed reference, and the branch test that decides which rung a piece sits on), **completion criteria** as described above, **no hard wrapping** (one continuous line per paragraph; only code fences, tables, and frontmatter keep their line structure), the prose register described above, documentation artifact naming (`NNNN-<type>-<slug>-YYYY-MM-DD.md`: a per-directory serial, creation date, stable on edit), **never cross-referencing a step by number** (a bare number binds to position, so reordering silently misdirects it — link the heading anchor instead), and the closing hand-off shape.
 
 ## Live testing
 
@@ -112,7 +118,7 @@ skillkit **doesn't install the skill itself** — it hands you the commands.
 
 If the collection provides dev-link tooling, it points you at that; otherwise, symlink or copy the directory into your agent's skills dir. Then test in a **fresh session**, because the skill list loads at startup and a running session won't see it.
 
-The suggested trial: fire it with several varied, realistic phrasings that *should* trigger it, plus a near-miss or two that should *not* — which guards against overtriggering — then confirm the run follows the drafted procedure end to end and produces what the skill promises.
+The suggested trial: run every prompt in the trigger cases file, one fresh session each. The should-fire prompts catch undertriggering and the near-misses catch overtriggering. Then confirm the run follows the drafted procedure end to end and produces what the skill promises.
 
 The trial is also where a **no-op** gets settled. A no-op is a line the model already obeys by default, so it pays context to say nothing — and whether a given line qualifies is a fact about the model, not about how the sentence reads. Two people who disagree about a no-op are disagreeing about the default. Delete the suspect line, run the same phrasing again, and keep it only if the behavior changed.
 
@@ -120,7 +126,7 @@ The trial is also where a **no-op** gets settled. A no-op is a line the model al
 
 A commit. skillkit suggests a conventional message (`feat(<name>): add <name> skill`) for you to run and **never commits automatically** — that's your call.
 
-Before closing it finishes the mechanical tail: runs the collection's lint, and updates whatever lists its skills (a README table, and `skills.sh.json` when the repo has one).
+Before closing it finishes the mechanical tail, for each surface the repo has: the README table, `skills.sh.json`, the skill's reader page with its doc-map entry and index link, and a regenerated cheatsheet. Then it runs the collection's lint. In this repo that means `docs/wiki/skills/<name>.md`, `docs/wiki/.wikimap.yaml`, `docs/wiki/index.md`, and `make cheatsheet`, which is what keeps a new skill from failing lint on its first run.
 
 ## Install
 

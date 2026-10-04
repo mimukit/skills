@@ -35,6 +35,8 @@ plankit asks enough to draft something coherent and records the thin spots as **
 4. **Converge** — settle the structural decisions a coherent draft needs, then deliberately stop.
 5. **Write the document.**
 
+Each step ends on a "done when" bound, such as "the architecture, the phase list, and the scope boundary each have a settled answer". A step with no bound ends when the agent feels finished, and that is where plans get thin in one run and padded in the next.
+
 ## Options that are actually plural
 
 Step 3 has a specific failure mode, and plankit names it directly: options that only *look* like a choice.
@@ -63,6 +65,13 @@ The problem, why it matters now, and the outcome that means success.
 ## Approach
 The chosen approach and what it reuses, then the body as phases/milestones/tasks.
 
+### Phase 1: <name>
+<the tasks>
+Done when: <an observable a reviewer can check>
+
+## Migration and rollback
+Only when the plan changes stored data.
+
 ## Open questions
 Thin spots, written as targets for grillkit.
 
@@ -72,7 +81,13 @@ Explicit scope boundaries.
 
 This is a contract, not a suggestion — grillkit and issuekit both read it. The body stays phase/task-shaped so issuekit can decompose it into issues.
 
+Every phase ends on a `Done when:` line that names something a person or a test can check, such as a command and its output. "Auth works" is an intent, and a phase built to an intent has no finish line that two people agree on. The line gives [`implementkit`](./implementkit.md) a finish line to check a phase against.
+
+The **Migration and rollback** section appears only when the plan changes a schema, a persisted format, or existing records. Those are the changes that cannot be undone by reverting code, so the plan states how the data moves and how it moves back. A plan that touches no stored data leaves the section out.
+
 A hardened plan carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when a plan survives a session, and issuekit reads it as the gate for filing issues as `ready`. plankit never writes the stamp itself — a fresh draft is ungrilled by definition.
+
+The stamp covers the plan as it was grilled. A **material** edit deletes it: a changed settled decision, an added, removed, or re-scoped phase, a changed `Done when:` line, or a change to the non-goals or the migration section. Whoever makes the edit removes the line, plankit included when it updates a plan in place. Without that rule, issuekit would file a rewritten plan as `ready` on the strength of a grill that never saw the rewrite. Wording fixes, phase annotations, and new open questions leave the stamp alone.
 
 ### The phase-heading annotation slot
 

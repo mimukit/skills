@@ -7,7 +7,7 @@ Compact the current conversation into a handoff document another agent or sessio
 | | |
 |---|---|
 | Modes | single procedure |
-| Tools | `Read`, `Write` |
+| Tools | `Read`, `Write`, `Glob`, `Bash` |
 | Writes | `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
@@ -38,9 +38,11 @@ You can pass a focus argument (`/handoffkit finishing the migration`), which bec
 
 ## The document shape
 
-Eight sections, each dropped rather than padded when genuinely empty:
+Nine sections, each dropped rather than padded when genuinely empty:
 
-**Goal** · **Current state** · **Next steps** · **Key files & artifacts** · **Decisions & constraints** · **Open questions / blockers** · **How to run / verify** · **Suggested skills**
+**Goal** · **Workspace** · **Current state** · **Next steps** · **Key files & artifacts** · **Decisions & constraints** · **Open questions / blockers** · **How to run / verify** · **Suggested skills**
+
+**Workspace** is required whenever the task involves code: the worktree path, branch, HEAD SHA, unpushed commits, and dirty state, all read from git in the run itself. A handoff that says "continue the migration" without them sends the next agent to guess which checkout and which revision it means, and a guess against the wrong worktree is the failure that costs the most. **Current state** names every check that has not run or is failing, so a half-verified change does not read as a finished one.
 
 The last one names capabilities **by function**, not by tool — "a commit skill to land the work" rather than `commitkit`. The next session may be a different agent in a different environment with none of this collection installed.
 
@@ -55,10 +57,11 @@ A handoff is read twice by the same person, in two different states of mind, and
 ## How it works
 
 1. **Reread the session** for the goal, current state, decisions, and loose ends.
-2. **Separate carry-over from reference** — does this live only in the chat, or is it already an artifact?
-3. **Draft** in the shape above, slanted toward the focus argument if given. A new agent should read it in a minute and act.
-4. **Redact** secrets and PII.
-5. **Save or print.**
+2. **Read the workspace** from git when the task involves code. `Bash` is declared for these read-only queries, and `Glob` lists `docs/handoffs/` for the next serial.
+3. **Separate carry-over from reference** — does this live only in the chat, or is it already an artifact?
+4. **Draft** in the shape above, slanted toward the focus argument if given. The draft is done when every sentence carries something no linked artifact holds and the first next step is one action the next agent can run without reading further.
+5. **Redact** secrets and PII.
+6. **Save or print.**
 
 ## Where it lands
 

@@ -28,6 +28,7 @@ mergekit is the **one skill permitted to merge a pull request** — a deliberate
 That permission is earned by a single hard precondition: **a human confirms that specific PR, every time.** Without the confirmation, mergekit has no more authority than any other skill.
 
 - **Never a batch.** "Merge them all" is not a confirmation for any individual PR.
+- **Bound to the reviewed head.** The confirmation names the head SHA you reviewed, and the merge call carries `--match-head-commit` with that SHA, so GitHub itself refuses the merge when someone pushed after your review. Just before the merge, mergekit also rereads the PR and stops when it's closed, a draft, unmergeable, or pointed at a different base. Without the binding, "yes, merge #34" would approve whatever #34 happens to contain a minute later.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, a passing local gate — all *inputs to your decision*, none of them the decision. A perfectly green PR still waits.
 - **Never default-yes.** No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges.
@@ -65,13 +66,15 @@ If an adopted worktree is dirty, mergekit **reports what's uncommitted before do
 
 The **review pack** assembles everything so you don't go hunting: title, author, URL, body summary, the linked issue and its acceptance criteria, commits and diff shape, QA plan and proof, CI status per check — and **unresolved review threads with `file:line` and comment text**, which is the highest-value part, because it's what you'd otherwise re-derive by hand.
 
+"Project running" means observed, not assumed: the setup step is done when the app answers on its port, or, for a CLI or library, when the project's own check passes. A setup that can't start reports the command and its output instead. The pack also records the head SHA you're reviewing, which is the commit `close` later binds the merge to.
+
 It **names what's missing**. "No QA plan in this repo's conventional location" is information; printing nothing where one would go is not.
 
 ### `close`
 
 Merge or fix, depending on which verdict you reached.
 
-**Merge path** — confirm, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), merge with a fixed subject, then hand the landing to [`issuekit`](./issuekit.md) — `close` first, then `sync`.
+**Merge path** — confirm the PR at its reviewed head SHA, approve when possible (GitHub doesn't permit approving your own PR, so a self-authored one skips it and says why), recheck the PR, merge with a fixed subject and `--match-head-commit`, then hand the landing to [`issuekit`](./issuekit.md) — `close` first, then `sync`.
 
 issuekit's `close` takes the one issue the PR closes: closing it, ticking a parent checklist, unblocking dependents, and reclaiming the worktree are one action owned in one place. After a cascade it runs **once per merged layer**, bottom-up, since the cascade landed several PRs and each retires its own issue and worktree — closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk. `sync` runs straight after it, **even when there was no issue to close**, because a merge shakes things loose that mergekit cannot see from where it stands — a second issue the PR body closed, a link the PR never carried, a parent still un-ticked, a dependent left `blocked` on a prerequisite that just landed. mergekit sees one PR; `sync` reads the whole tracker. Both preview the close and the teardown, so the pair costs a confirmation rather than a surprise. Their **label writes run without a prompt**, as every label write in mergekit does: a label is cheap, visible, and reversible with one command, and a refusal leaves the tracker lying about merged work. A sweep that finds nothing still gets reported — a clean tracker and an unexamined one look identical otherwise.
 
@@ -93,7 +96,7 @@ Nothing to service (no unresolved threads, green CI) means it says so and stops.
 
 The `ask` verdict is the pressure valve, and it has two rules worth knowing. Uncertain items are batched into **one round** — a compact table with a recommended verdict per item — rather than a thread-by-thread interrogation. And **when in doubt it asks rather than declines**, because a silent decline is the expensive failure: the reviewer believes the point was considered and never finds out otherwise. Red CI is exempt from all of this — a failing check is a fact about the branch, not an opinion about the code.
 
-When answering: it replies and resolves each thread it actually fixed, pointing at the commit. **It never resolves a thread it didn't fix.** A declined thread gets a reply naming what it conflicts with and **stays open**, so the reviewer can overrule — declining is a position you state, not a thread you drop. And it never merges; servicing feedback earns a fresh review, not a landing.
+When answering: it replies and resolves each thread it actually fixed, pointing at the commit. **It resolves exactly the threads a pushed commit fixed.** A declined thread gets a reply naming what it conflicts with and **stays open**, so the reviewer can overrule — declining is a position you state, not a thread you drop. And it never merges; servicing feedback earns a fresh review, not a landing.
 
 ## What gitkit owns
 

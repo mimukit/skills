@@ -40,7 +40,11 @@ The pool stays wide for a different reason now. Twelve candidates feed four or f
 
 RDAP, npm, and the GitHub API are exact-match lookups against real registries. They are cheap, they are unambiguous, and they miss the thing that actually hurts: a product with your name that never registered the `.com` you wanted, or a live trademark.
 
-A web search catches that, and it is fuzzy enough that running it per candidate returns noise for every short common root. namekit runs exactly one, on the crowned name, after the probes clear it. That is the single point where the answer changes a decision, and a hit re-crowns the next free name.
+A web search catches that, and it is fuzzy enough that running it per candidate returns noise for every short common root. namekit runs one, on the crowned name, after the probes clear it. That is the single point where the answer changes a decision. A hit re-crowns the next free name, and the new crown gets its own search, because a replacement that skipped the search is exactly the unchecked name the search exists to catch.
+
+## Why a failed probe is not a free name
+
+The probes read "not found" as free, so anything that looks like "not found" has to be the real thing. For the GitHub check, `gh api` exits 1 on any failure: a 404, but also a network error or a rate limit, and it exits 4 when authentication is missing. Only exit 0 means taken, and only a failure that reports `HTTP 404` means free. Everything else is **unknown**, and so is a registry status other than 200 or 404. An unknown is retried once, then reported as unknown with its reason. It neither removes a name nor clears it, because a name crowned on a failed lookup can turn out to be someone's org.
 
 ## Modes
 

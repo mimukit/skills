@@ -8,7 +8,7 @@ Run a groomed `ready` GitHub issue through the whole build span unattended: work
 |---|---|
 | Modes | one issue, or [`all`](#batch-mode-all) |
 | Tools | `Bash`, `Read`, `Task`, `Agent`, `Skill` |
-| Writes | commits, a QA plan, a PR; issue labels; a git-excluded `.afkkit/` run directory |
+| Writes | commits (pushed once, at the PR step), a QA plan, a PR; issue labels; a git-excluded `.afkkit/` run directory |
 | Visibility | public |
 
 ## What it does
@@ -26,10 +26,13 @@ It's the autonomous sibling of [`statuskit`](./statuskit.md): statuskit tells a 
 | | |
 |---|---|
 | **Input** | an issue number, or `all` |
-| **Success** | an open PR carrying documented assumptions, what the acceptance checks confirmed, unresolved nits as known follow-ups, and a pointer to a committed QA plan; issue at `in-review` |
+| **Authorization** | naming the issue, or the one OK on an `all` queue, authorizes the worktree, commits on the issue's own branch, one push of that branch, and its PR through prkit; nothing else |
+| **Success** | an open PR carrying the documented assumptions as text, what the acceptance checks confirmed, unresolved nits as known follow-ups, and a pointer to a committed QA plan; issue at `in-review` |
 | **Blocked** | **no PR.** Worktree and commits intact, a comment naming the precise stuck-state, the issue labeled for whoever picks it up, and in a batch the next issue starts |
 
-**afkkit never publishes half-broken work.**
+**afkkit never publishes half-broken work.** Every commit before the PR step uses [`commitkit`](./commitkit.md)'s `no-push`, so the branch reaches `origin` only when [`prkit`](./prkit.md) opens the PR. An escalated run leaves its commits on disk and nothing on the remote.
+
+**Why the authorization is stated at entry.** prkit previews PR creation and its QA-plan commit, and afkkit escalates any preview it cannot answer. Without a stated scope, the normal successful run would stop at its last step. So the user's request is the answer, and afkkit hands it to every dispatch; prkit accepts it as the OK for exactly the actions it names. The list is closed: a force-push, a rebase of a published branch, a push to another branch, or a merge still needs a person, so the run escalates on it.
 
 ## The safety property is the label, not who types the command
 
@@ -60,10 +63,13 @@ So everything lands in `.afkkit/` at the worktree root, excluded from git as a d
 | File | Written by | Read by |
 |------|-----------|---------|
 | `orientation.md` | spec gate | every later step |
-| `assumptions.md` | spec gate | fix-and-finish (PR body) |
+| `assumptions.md` | spec gate | fix-and-finish (copied into the PR body as text) |
 | `checks.md` | spec gate | verify-and-review, fix-and-finish |
-| `verified.md` | verify-and-review, refreshed by fix-and-finish | fix-and-finish (QA plan) |
+| `verified.md` | verify-and-review, refreshed by fix-and-finish; each result names its revision | fix-and-finish (QA plan) |
 | `findings.md` | verify-and-review | fix-and-finish |
+| `progress.md` | implement and fix-and-finish, one line per landed step | a resumed run |
+
+The PR body never points into `.afkkit/`, because a reviewer on GitHub cannot open a git-excluded file. The assumptions travel as text under an **Assumptions** heading.
 
 Each file carries **facts with sources, never conclusions**: not "the auth flow is fine" but "`src/auth/session.ts:40` sets the cookie `maxAge` from `SESSION_TTL`".
 
@@ -88,10 +94,16 @@ Cost tracks **context size × turns**, not token volume, so the way to make a st
 
 1. **Start the issue**: issuekit `start`, sharing one dispatch with the spec gate. On a refusal the agent returns issuekit's reason verbatim and never begins the gate; the conductor verifies the returned worktree, branch, and label in one batched shell call.
 2. **Spec gate**: the same agent classifies gaps between what the issue specifies and what building it requires, writes `orientation.md`, `assumptions.md`, and `checks.md`, and returns the issue's phases grouped into dispatch groups. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed, logged to `assumptions.md`.
-3. **Implement**: implementkit, one dispatch per phase group, each committing through commitkit before it returns. Every step after this one runs once, over the whole branch diff.
+3. **Implement**: implementkit, one dispatch per phase group, each committing through commitkit with `no-push` before it returns and logging the commit to `progress.md`. Every step after this one runs once, over the whole branch diff.
 4. **Verify and review**: one dispatch on the independent model runs the gate's check list, probes up to six adjacent behaviors, writes `verified.md`, then invokes reviewkit on the full branch diff and writes `findings.md` with stable blocker and nit IDs. It runs code but edits nothing, never rebuilds, and records the exact server start and stop commands it used. Code that doesn't run at all escalates before any review is paid for.
-5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, re-runs the checks its changes touch, refreshes `verified.md`, commits, then writes the QA plan through qakit (pure transcription, nothing re-run) and opens the PR through prkit, which commits the QA doc, pushes, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
+5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, re-runs the checks its changes touch, refreshes `verified.md`, commits, then writes the QA plan through qakit (transcription; qakit re-runs only results recorded against an older revision) and opens the PR through prkit under the run's authorization, which commits the QA doc, pushes the branch for the first time, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
 6. **Hand off**: the outcome line, the worktree path, and one crowned next move. Per-step metrics print only when the invocation asks for them ("afkkit 42 with metrics").
+
+## Resuming an interrupted run
+
+Adopting an existing worktree says nothing about which steps already passed, so a re-run reads the state before it dispatches anything. An open PR on the branch means the run stopped after PR creation, and only the `in-review` advance is left. The branch on `origin` with no PR means it stopped after the push, so it goes straight to the PR. Unpushed commits are matched against `progress.md`, where each implement group, the fix commit, and the QA plan leave one line, and the run resumes at the first step with no line. A commit named there but missing from the branch, a remote branch that disagrees with the local one, or uncommitted changes nobody recorded all escalate, because afkkit cannot tell whose work they are.
+
+Because nothing is pushed before the PR step, the remote state alone separates "finished" from "not yet published", which is what makes this table short.
 
 ## Why verify and review share one dispatch
 
@@ -109,7 +121,7 @@ The one policy afkkit owns. Whenever a step can't proceed, it escalates rather t
 
 **It verifies a "pre-existing" claim before accepting it.** A step reporting a gate as red-but-already-broken is asking to be excused from the one check standing between an unattended run and a shipped regression. The conductor re-runs that command against the **base branch** first: green base means the failure belongs to this branch and escalates; red base means the claim holds, and any acceptance criterion that cannot be met from repo state goes into the PR body explicitly.
 
-**A step that needs consent, with nobody to ask, escalates.** The only exemptions are label writes the owning skills already run unprompted for every caller: [`issuekit`](./issuekit.md) `start`'s `ready → in-progress` flip and [`prkit`](./prkit.md)'s advance to `in-review`. afkkit never widens one.
+**A step that needs consent, with nobody to ask, escalates.** Two things run without a prompt: the actions the entry authorization names, and label writes the owning skills already run unprompted for every caller: [`issuekit`](./issuekit.md) `start`'s `ready → in-progress` flip and [`prkit`](./prkit.md)'s advance to `in-review`. afkkit never widens one.
 
 Then escalation always means the same five things: **no PR**, **keep the work**, **comment the stuck-state**, **set the label by cause** (a missing decision flips to `needs-planning`; a stuck execution keeps `in-progress`), and **continue the batch**.
 
@@ -129,7 +141,7 @@ Each issue's payloads are dropped once it terminates, so a batch working its ten
 
 ## Hands off to
 
-By outcome. **Opened** → [`mergekit`](./mergekit.md) `start`, which pulls the PR into the worktree it was built in. **Escalated to `needs-planning`** → [`grillkit`](./grillkit.md) on the open questions, then re-run. **Escalated still `in-progress`** → pick it up in the existing worktree by hand.
+By outcome. **Opened** → [`mergekit`](./mergekit.md) `start`, which pulls the PR into the worktree it was built in. **Escalated to `needs-planning`** → [`grillkit`](./grillkit.md) on the open questions, then [`issuekit`](./issuekit.md) `triage` to promote the issue back to `ready` on your word, then re-run. **Escalated still `in-progress`** → pick it up in the existing worktree by hand.
 
 Nobody watched the run, so the report is the handover, and it always names the worktree path, because on an escalation those commits are real work sitting on disk.
 

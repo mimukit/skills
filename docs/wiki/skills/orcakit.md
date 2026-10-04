@@ -36,10 +36,10 @@ Everything turns on this distinction:
 
 | Kind | Where it lives | Created by | How it goes away |
 |---|---|---|---|
-| **git-native** | `$WORKTREE_ROOT/<repo>/<branch>` | gitkit, issuekit `start`, or a human | **git removes it**; Orca drops the entry on its own |
+| **git-native** | `$WORKTREE_ROOT/<repo>/<branch>` | gitkit or issuekit `start` | **git removes it**; Orca drops the entry on its own |
 | **Orca-native** | `~/orca/workspaces/<repo>/<name>` | `orca worktree create` | **`orca worktree rm`**, so hooks and terminals are handled |
 
-Classification is by path prefix, which is a heuristic rather than something Orca records — so it's a *reason to confirm before deleting*, never a thing to act on silently. [`align`](#align) exists to collapse the two locations and retire the guesswork.
+Classification checks [`gitkit`](./gitkit.md)'s ownership marker first and the path prefix second. The prefix is a heuristic rather than something Orca records, and [`align`](#align) makes it useless on purpose: once both kinds live under one root, a path says nothing about who made the checkout. The marker is a file gitkit writes into the worktree's git admin directory when it creates one, so it survives `align` and still separates the two kinds. A worktree with neither signal is **unknown kind**, and `clean` skips it rather than guessing which removal path is safe. That includes a worktree made by hand, which gitkit's rule treats as someone else's anyway.
 
 ## Modes
 
@@ -78,7 +78,7 @@ A branch naming no issue is skipped and counted. It never invents links from slu
 
 ### `clean`
 
-Reclaim workspaces whose work already landed. Every removal is irreversible, so the shape is fixed: **gather, qualify, preview everything at once, take one confirm, then remove.**
+Reclaim workspaces whose work already landed. Every removal is irreversible, so the shape is fixed: **gather, qualify, preview everything at once, confirm each row, recheck it, then remove it.**
 
 A candidate needs its work **provably merged with the tracker already agreeing** — a merged PR, and either no issue in the branch name or an issue already closed. A branch merged into the base with no PR is weaker evidence, so it gets its own section in the preview rather than being bundled in.
 
@@ -88,13 +88,17 @@ Hard skips, each appearing in the preview with its reason so nothing vanishes si
 
 **A merged PR does not imply an empty worktree.** Scratch files, a stashed experiment, a follow-up commit that never got pushed — none are in the PR, all live there.
 
+**Each removal takes its own confirmation**, because gitkit owns the one removal rule in the collection and orcakit cites it rather than keeping a looser one of its own. A batch yes would hide the difference between a row proven by a merged PR and a row proven only by branch ancestry. Without gitkit installed, the fallback answer is the same: one question per row, and `-d`.
+
+**It rechecks activity just before each removal.** The preview and the answer can sit minutes apart, and the user may have opened the workspace in between. A moved `lastActivityAt`, a new live terminal, or a tree that got dirty skips that row.
+
 Removal goes by kind. git-native hands to gitkit's teardown and then **stops** — calling `orca worktree rm` too just errors on a path that's already gone. Orca-native uses `orca worktree rm --run-hooks`, the one place orcakit runs a vendor command that also performs the git removal, because Orca created that checkout and its `rm` sequences the hook and terminals that git knows nothing about.
 
 **Never `--force`.** Every removal is already gated on a clean tree and a merged PR; if git refuses anyway, that refusal is information.
 
 ### `align`
 
-Stop Orca creating worktrees somewhere gitkit will never look. Two roots means every sweep has to classify by path forever.
+Stop Orca creating worktrees somewhere gitkit will never look. Two roots split your worktrees across two places. Once they share one, `clean` tells the kinds apart by gitkit's marker instead of by path.
 
 It **verifies rather than assumes**: the setups listing doesn't echo the base path back, and whether Orca appends the repo name is undocumented. So it confirms empirically with a throwaway worktree, reads the resulting path, and removes it in the same breath. A declined or failed check gets reported as "set but not verified" — never a convergence it didn't observe.
 
@@ -116,7 +120,7 @@ Whatever the sweep surfaced: anything skipped as **dirty** outranks everything, 
 
 orcakit is **machine-local and always optional**. No Orca means no-op, and nothing else in the workflow may depend on it — gitkit, issuekit, and the rest never call it, because they'd break on every machine without the app. It's a janitor you run, not a link in a chain.
 
-[`paseokit`](./paseokit.md) is the sibling that does the same job for [Paseo](https://paseo.sh), against the opposite problem: Paseo discovers nothing and prunes nothing, so it pushes rows in rather than tidying rows it found. Both are optional, and **neither ever calls the other**.
+[`paseokit`](./paseokit.md) is the sibling that does the same job for [Paseo](https://paseo.sh), against the opposite problem: Paseo discovers nothing, and prunes only rows whose directory is gone, so paseokit pushes rows in rather than tidying rows it found. Both are optional, and **neither ever calls the other**.
 
 ## Install
 

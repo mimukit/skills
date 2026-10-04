@@ -44,7 +44,7 @@ Rung 1 or 2 with a rung 3 palette is the single most damaging thing this skill c
 
 ```
 Design read — surface: product · audience: internal ops staff · rung: 2 (shipped components)
-· signature: the save affordance — rows commit on change and confirm in place, no page-level Save
+· signature: the dirty state — each changed row shows its old value struck through until Save
 · density: compact
 ```
 
@@ -54,11 +54,13 @@ Design read — surface: product · audience: internal ops staff · rung: 2 (shi
 
 **One element per surface. Exactly one.** The thing a person would describe if asked what the screen was like. Everything around it stays quiet — spend your boldness in one place.
 
+**The signature works inside settled behavior.** Whatever the plan, issue, or request specifies — a Save action, a confirm step, a flow order — ships as specified. The signature lives in what the spec leaves open. Without that bound, the search for a memorable element quietly rewrites the product: an autosave that replaces a requested Save button is a behavior change nobody asked for, dressed up as design. An idea like that goes in the hand-off as a suggestion.
+
 This is deliberately *not* framed as "take a creative risk." Asked to be bold, a model retrieves what boldness looks like, and what it retrieves is the **average** of every bold thing it has seen — which today means warm cream with a high-contrast serif and terracotta accent, or near-black with a single acid-green accent, or a broadsheet layout with hairline rules and zero radius. All three are legitimate for *some* brief. None are a choice when they appear regardless of subject.
 
 "Name the one thing this screen is remembered by" has no average to regress toward. It's also the only version that survives a pre-flight, which can check that exactly one signature exists and that its materials are legal at the declared rung — but cannot check whether a risk was taken.
 
-Worked example, rung 2 settings page: the default output is a card with label-left/toggle-right rows and "Save changes" bottom-right. Correct and forgettable. The signature is *there is no Save button* — each row commits on change and confirms in place with inline undo. Zero new tokens, and the risk is real, because a slow network now has to be handled honestly.
+Worked example, rung 2 settings page whose spec names a Save action: the default output is a card with label-left/toggle-right rows and "Save changes" bottom-right. Correct and forgettable. The signature is *the dirty state* — each changed row shows its old value struck through beside the new one, and the Save bar counts the pending changes. Zero new tokens, and Save still works exactly as specified.
 
 **The design read never blocks.** It's a declaration, not an interview. An unclear subject gets inferred from what the repo shows, and the inference gets *stated* — wrong-but-stated beats correct-but-hung, because uikit runs inside unattended pipelines where nothing is there to answer.
 
@@ -126,6 +128,8 @@ Either way it **degrades loudly** — never claiming a visual check that didn't 
 No `DESIGN.md` in the project? [`designkit`](./designkit.md) `init` — it derives the system from shipped UI, and there's now shipped UI to derive from. Otherwise [`commitkit`](./commitkit.md); uikit leaves changes unstaged and does not commit. The runner-up either way is a look at the shipped screen with [`verifykit`](./verifykit.md) `show`, or opening the app by hand where it isn't installed.
 
 Either way the hand-off **repeats the design read verbatim**. It's the only durable record of why the UI looks the way it does, and repeating it is what carries it into a PR body when this runs inside a pipeline.
+
+When another build skill runs uikit as a step ([`implementkit`](./implementkit.md), [`afkkit`](./afkkit.md)), uikit skips its own hand-off. It returns the design read, the changed paths, and the pre-flight result to the caller, which owns the next move. Two hand-offs in one run would name two competing next moves.
 
 ## Install
 

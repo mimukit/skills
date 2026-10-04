@@ -6,9 +6,9 @@ Create git commits with Conventional Commits messages derived from the actual di
 
 | | |
 |---|---|
-| Modes | main procedure (commit or draft-only) · draft mode (headless, message only) |
+| Modes | main procedure (commit) · message-only route (read-only) · draft mode (headless, message only) |
 | Tools | `Bash`, `Read` |
-| Writes | git commits, pushed to `origin` by default |
+| Writes | git commits, pushed to `origin` unless the user or a caller says `no-push`; nothing on the message-only route |
 | Visibility | public |
 
 ## What it does
@@ -80,6 +80,12 @@ Grouping is by **what the change accomplishes**, not by file type or directory. 
 
 Groups are ordered so dependencies land first. A file with hunks from multiple groups gets staged interactively rather than assigned wholesale.
 
+### The index is not trusted
+
+`git add` only adds to the index; it never removes. So a file you staged before the run would ride into whichever commit came first, whatever group it belonged to. commitkit records the staged set before it groups anything, places every pre-staged path in a group or in a keep-staged set, and checks before each commit that the index holds exactly that group's paths.
+
+When other staged paths are in the way, it parks them: it saves their staged hunks as a patch, unstages them, commits the group, and applies the patch back to the index. A patch keeps hunk-level staging, so a file you staged half of comes back half staged. The shorter `git commit -- <paths>` was rejected because it commits the working-tree copy of each path and would pull your unstaged hunks into the commit.
+
 ## The push
 
 commitkit **pushes by default** once the commits exist, as the last link in the same chained call. The reasoning is an asymmetry: a commit that lives only on one disk is one lost machine away from gone, while a fast-forward push publishes work that a revert can undo. The old default protected against the cheap failure and left the expensive one open.
@@ -88,7 +94,7 @@ The gate is the shape of the push, not the name of the branch. It pushes when th
 
 It holds and asks when the remote rejects the push, when there is no `origin`, or when the branch tracks some other remote. A rejected push means the branch moved on the remote, and commitkit will not reach for `--force-with-lease` to get past it — rewriting a published branch belongs to [`gitkit`](./gitkit.md) and [`prkit`](./prkit.md), which take a confirmation for it.
 
-Opt out per run by saying so: "commit, don't push", "don't publish yet", or asking for a message only. The report then says the commits are local and names the push command.
+Opt out per run by saying `no-push`: "commit only, do not push", "commit, don't push", "don't publish yet". The report then says the commits are local and names the push command. A calling skill uses the same switch: [`afkkit`](./afkkit.md) commits each phase with `no-push` and publishes the branch once, when [`prkit`](./prkit.md) opens the PR, so an unattended run never leaves half-finished work on `origin`. When a caller passed `no-push`, the hand-off returns to that caller instead of crowning the push.
 
 ## When it pauses
 
@@ -97,6 +103,10 @@ Delegated committing means it stages files itself without asking. It only stops 
 It never runs `git add -A` blindly across unrelated concerns. If nothing has changed at all, it stops and says so.
 
 If a commit fails — a pre-commit hook rejects it — the `&&` chain stops at that group, later groups stay uncommitted, and the hook output gets surfaced. It never retries blindly or reaches for `--no-verify` unless told to.
+
+## The message-only route
+
+Asking for a message in a live session ("draft a commit message") takes a separate read-only route. It reads the staged diff, or the whole working-tree change when nothing is staged, writes the message, prints it, and stops. It runs only read commands, and it proves that: it hashes the commit, the staged diff, and the refs before and after, and the two records must match. The route exists because the older wording said "do everything except the final commit", which still staged files and pushed.
 
 ## Draft mode
 

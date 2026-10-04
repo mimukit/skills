@@ -63,13 +63,17 @@ Three mechanisms keep the code from surviving its usefulness, and the ordering b
 
 **The exclude entry is registered before the first file exists**, and it goes in the repo's *private* exclude rather than the tracked `.gitignore`. A tracked ignore edit is itself an uncommitted change that commit and review tooling would pick up — the skill would leave a diff behind while claiming it left nothing. The path is resolved with `git rev-parse --git-path info/exclude` rather than hardcoded, because in a linked worktree `.git` is a file and the literal path doesn't exist.
 
-**Deletion is confirmed per file**, and only for files created in that session. This isn't ceremony: an excluded file is untracked, so git cannot recover it — the delete is final in a way most deletes aren't. A park onto a throwaway branch is offered first, off by default. Anything you keep is reported by absolute path with its exclude line left in place, which is what keeps a leftover local-only and findable instead of quietly commit-able.
+**Deletion is confirmed per file**, and only for files created in that session. This isn't ceremony: an excluded file is untracked, so git cannot recover it — the delete is final in a way most deletes aren't. Anything you keep is reported by absolute path with its exclude line left in place, which is what keeps a leftover local-only and findable instead of quietly commit-able.
+
+**The exclude lines it removes are only the ones it added.** It records which patterns it appended. If `*.prototype.*` was already in the exclude file, somebody else put it there, possibly for an earlier prototype that is still on disk, so disposal leaves it.
+
+**The park commits only the prototype files.** A park onto a throwaway branch is offered first, off by default. The skill records what you had staged before it starts, and the commit names its paths after `--`, so your own staged work stays staged and stays out of the park branch. A plain `git commit` on the new branch would carry that work along with it.
 
 ## The verdict
 
 Four lines — question, built, showed, answer. **Built** is written straight from the scope box, naming the cases driven and transitions covered, and that specificity is what makes the answer durable without keeping the code. It's what someone needs six weeks later when the decision gets relitigated.
 
-It lands in whatever asked the question. For a plan document that means **striking the open question and adding a row to the settled-decisions section** — prototypekit's one edit to a tracked file, deliberate, and only ever to a file you named. Leaving an answered question under "Open questions" would misrepresent the plan's state to everything downstream that reads it.
+It lands in whatever asked the question. For a plan document that means **striking the open question and adding a row to the settled-decisions section** — prototypekit's one edit to a tracked file, deliberate, and only ever to a file you named. A new settled decision is a material edit, so a `Grilled:` line on that plan is removed in the same edit, and the plan goes back to [`grillkit`](./grillkit.md) before anyone files or builds it. Leaving an answered question under "Open questions" would misrepresent the plan's state to everything downstream that reads it.
 
 **When the prototype answers a *different* question than the one asked, it reports and stops.** Chasing the new question mid-run is the exact drift the scope box exists to catch, wearing a justification — and you may not want it chased at all. The one carve-out: a finding that *invalidates the premise* of the asked question is itself the answer.
 

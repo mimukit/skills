@@ -39,7 +39,7 @@ Two failure modes get explicit guards:
 
 **`git diff` does not show untracked files.** A brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. Untracked source files are listed and read **in full, no exceptions** — only genuinely generated files (lockfiles, build output, vendored deps) get skipped, and even those get spot-checked for hand edits.
 
-**A wrong base silently yields an empty diff or half the repo's history**, and both look like a real review target. So the base comes from gitkit rather than an assumption, and the range is validated as non-empty before anything is judged.
+**A wrong base silently yields an empty diff or half the repo's history**, and both look like a real review target. So the base comes from gitkit rather than an assumption. Without gitkit it falls back to the remote default branch (`origin/HEAD`), then `main` or `master`, and says which one it used. The change is validated as non-empty before anything is judged, and untracked files count, so a change made only of new files is still reviewed rather than stopped as an empty diff.
 
 The diff is read **once**. The four passes are four questions asked of one reading, not four readings.
 
@@ -100,9 +100,13 @@ An empty report on a clean diff is the honest outcome. It never invents findings
 
 ## Hands off to
 
-[`implementkit`](./implementkit.md) as a **fix round** — the findings name the defects, so there's no design to invent, and implementkit applies them directly. Or fix by hand and re-run.
+The verdict picks the next move:
 
-reviewkit never applies its own fixes; that's your call.
+- **`ready`** → [`qakit`](./qakit.md) writes the manual QA plan when it is installed; otherwise [`commitkit`](./commitkit.md) or a plain `git commit`. A clean review is the point where hand-testing earns its time.
+- **`ready-with-fixes`** or **`needs-work`** → [`implementkit`](./implementkit.md) as a **fix round**. The findings name the defects, so there's no design to invent, and implementkit applies them directly. Or fix by hand and re-run.
+- **blocked on outside review** → the named reviewer or check, before anything else.
+
+reviewkit never applies its own fixes and never launches the next kit; that's your call.
 
 ## Install
 

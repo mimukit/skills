@@ -6,14 +6,22 @@ Draft and open a GitHub pull request from your branch — title, summary, and te
 
 | | |
 |---|---|
-| Modes | single procedure; open or draft-only |
+| Modes | single procedure (open or update) · read-only draft route |
 | Tools | `Bash`, `Read`, `Write`, `Skill` |
-| Writes | a pull request via `gh`; pushes the branch |
+| Writes | a pull request via `gh`; pushes the branch; commits a handed-in QA plan; issue lifecycle labels |
 | Visibility | public |
 
 ## What it does
 
 prkit turns the commits on the current branch into a clean pull request: a title in the repo's commit style, a body explaining *what changed and why*, and a test plan — all inferred from the real diff. Creation goes through the [`gh` CLI](https://cli.github.com), reusing the repo's PR template when one exists.
+
+## The draft route writes nothing
+
+Asking for the title and body only ("draft the PR description") takes a separate read-only route. It skips `git fetch`, reads the remote base tip with `git ls-remote` instead, writes the title and body, prints them, and stops. It hashes the commit, the staged diff, and the refs before and after, and the records must match. The route exists because the older wording said "do everything except `gh pr create`", which still rebased, committed, pushed, edited an existing PR, and relabelled issues.
+
+## Preview, and who can answer it
+
+prkit previews creating or editing the PR, committing a handed-in path, and a force-push after a sync. A caller that carries the user's recorded authorization answers that preview for the actions the authorization names. [`afkkit`](./afkkit.md) is the reason: the user's unattended request authorizes the commits on the issue's branch, the push, and the PR, so a run that reaches the PR step finishes instead of stopping at a prompt nobody can answer. The authorization does not stretch. A force-push, a push to another branch, or a merge still previews, and an unattended caller escalates it.
 
 ## It reads the commits, not the diff — when it can
 
@@ -53,7 +61,13 @@ When a [`verifykit`](./verifykit.md) bundle exists at `docs/verify/NNNN-verify-<
 
 There's no upload work — the images are already published to a hidden `refs/verify-assets/*` ref with SHA-pinned raw URLs that render inline. prkit only *reads* the fragment; it never runs the publish itself.
 
+**A bundle must show the branch head.** verifykit opens `notes.md` with the `commit:` it captured and a `dirty:` flag. prkit embeds the bundle only when it reads `dirty: no` and the code is unchanged since that commit; a later commit that touches only `docs/qa/` or `docs/verify/` is allowed, because the QA plan and the bundle itself are committed after the capture. Anything else is stale: a newer filename does not prove the screenshots show the code under review. A stale bundle is skipped and named in the hand-off.
+
 No bundle means no Proof section and prkit works exactly as it otherwise would. A bundle whose `proof.md` points at local paths — verifykit couldn't publish, typically a private repo — gets a note listing those paths for manual attachment rather than embedded dead links.
+
+## It commits the QA plan it is handed
+
+[`qakit`](./qakit.md) writes the manual QA plan under `docs/qa/` and hands its path on, directly or through [`afkkit`](./afkkit.md). prkit commits that one path before the push with a pathspec commit (`git commit -- <path>`), then checks that the commit holds exactly that path. Anything else you had staged stays staged and out of the commit; work nobody named is pointed out, never swept in.
 
 ## Update, don't duplicate
 
@@ -71,7 +85,9 @@ The transition itself stays narrow. It covers exactly two starting states, `in-p
 
 ## Unblocking what the PR makes stackable
 
-Opening a PR is the exact moment every issue waiting on *this* one becomes workable, because the code now exists on a branch even though nothing has merged. Those dependents move `blocked` → `stacked` and can be built immediately on layers cut from this branch.
+Opening a PR is the exact moment an issue waiting on *this* one can become workable, because the code now exists on a branch even though nothing has merged. Such a dependent moves `blocked` → `stacked` and can be built immediately on a layer cut from this branch.
+
+**Every prerequisite has to permit it, not just this one.** If issue C waits on A and B, opening A's PR must not advertise C while B has no PR. A dependent flips only when each other prerequisite is closed or already sits on a branch this one contains. When a second prerequisite has its own open PR on a separate branch, C would need two stack parents; a layer has one, so prkit leaves C `blocked` and reports both PRs instead of picking one.
 
 **This runs without asking too**, under the same label exemption, but it is reported in one line because the issue being relabelled is a **different** one — not the issue you named, and now advertised as ready to pick up. Nothing about the sequencing is hidden from you; if the stack call is wrong, one `gh issue edit` puts the label back, and [`issuekit`](./issuekit.md) `sync` is the sweep that repairs it later. A draft PR skips the step entirely, because a draft isn't something to build on.
 
@@ -96,6 +112,8 @@ After creating a layer PR, prkit queries `closingIssuesReferences` and **reports
 ## Hands off to
 
 [`mergekit`](./mergekit.md), which pulls the PR down into a worktree for local review and QA. The PR now waits on review, so the next move is on the reviewer's side.
+
+A dependent that just moved to `stacked` outranks that: it is work you can start right now while review happens, so the hand-off offers [`issuekit`](./issuekit.md) `start` on the highest-priority one.
 
 Small follow-ups — adding a reviewer, a label, marking a draft ready — get offered rather than auto-run. prkit never merges, closes, or force-pushes without an explicit ask.
 

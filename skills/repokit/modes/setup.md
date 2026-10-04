@@ -24,7 +24,7 @@ gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
 | `--enable-wiki` | false | Proposed off; wikikit `publish` is opt-in and enabling later is one click. Flippable in this preview. |
 | `--enable-projects` | false | Nothing in this collection reads a project board. |
 | `--enable-issues` | true | The issue tracker is the workflow's substrate. |
-| `--allow-update-branch` | true | Puts the "Update branch" button on a PR behind its base, the sync mergekit runs. |
+| `--allow-update-branch` | false | The button merges the base into the PR branch by default, and gitkit syncs a branch by rebase. No skill here uses it. |
 | `--enable-auto-merge` | true | Lets `gh pr merge --auto` land an approved PR once checks pass, so a merge waits on CI instead of on you. No skill here uses it: mergekit merges on your word and afkkit stops at an open PR. |
 | `--enable-secret-scanning` | true | GitHub reports a credential committed to the repo. |
 | `--enable-secret-scanning-push-protection` | true | GitHub blocks the push that carries a credential, so nothing to revoke. |
@@ -40,7 +40,7 @@ The default branch is report-only: state it when it isn't `main` and change noth
 Apply only the selected rows, in one echoed command built from those flags:
 
 ```sh
-gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
+gh repo edit --enable-merge-commit --enable-squash-merge=false --enable-rebase-merge=false --delete-branch-on-merge --enable-issues --enable-wiki=false --enable-projects=false --allow-update-branch=false --enable-auto-merge --enable-secret-scanning --enable-secret-scanning-push-protection
 ```
 
 When the command fails, re-run it without the rejected flag rather than dropping the whole batch, and report which row GitHub refused. This step is done when every row in the map is either applied, deliberately left unselected by the user, refused by GitHub with that refusal reported, or already matching.
