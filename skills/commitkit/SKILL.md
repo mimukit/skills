@@ -1,7 +1,7 @@
 ---
 name: commitkit
 description: >-
-  Create a git commit with a Conventional Commits message derived from the actual diff, then push it to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", or wants a well-formed commit message written for staged work, even if they don't spell out the format.
+  Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", runs "/commitkit all" to commit every change in the tree, or wants a well-formed commit message written for staged work, even if they don't spell out the format.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -16,14 +16,27 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group).
 
-This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage the right files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step.
+This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step.
+
+## Scope
+
+A run commits **this session's changes**, not every change in the tree. One branch or worktree often carries several fixes at once, made by other agents or in other sessions, and a run leaves that work exactly as it found it. Resolve the scope before you group anything, taking the first rule that matches:
+
+1. **`all`** (`/commitkit all`, "commit everything", "commit all changes"). The scope is every change in the tree.
+2. **A named scope** ("commit the auth fix", a list of paths). The scope is the changes that match it.
+3. **The session set.** The scope is every path you created, edited, deleted, or renamed in this session, by any tool. It includes the files a command you ran changed as part of the work, such as a lockfile from a dependency install or the output of a code generator.
+4. **No session set**, because the session is fresh or the work has left your context. Stop, list the changed paths, and ask which to commit. Name `/commitkit all` as the way to take everything.
+
+**A path outside the scope is out of bounds.** Record those paths as the **out-of-scope list**. Never stage one, commit it, restore it, or discard it. A path another session staged stays staged, through the keep-staged set in [Group the work into multiple commits](#4-group-the-work-into-multiple-commits).
+
+**A session path can hold hunks you did not write**, when another session edited the same file. When its stat shows more change than you made, or you know another session works in that file, read its diff. Commit only your own hunks, staged as a patch the way a mixed file is in [Commit each group](#5-commit-each-group). When the hunks overlap and cannot be split, stop and ask.
 
 ## Message-only route
 
 A user in a live session wants the message, not the commit. This route reads and prints. The index, the refs, and the remote stay exactly as they were.
 
 1. Record the opening state in one call: `git status --short && git rev-parse HEAD && git diff --cached --binary | git hash-object --stdin && git for-each-ref | git hash-object --stdin`. `hash-object` without `-w` writes nothing.
-2. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the whole working-tree change, so read `git diff HEAD`. The read limits in [Read the state](#1-read-the-state) apply.
+2. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. The read limits in [Read the state](#1-read-the-state) apply.
 3. Apply [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message). Write one message for the subject. When the subject plainly spans several concerns, write one message per group and name each group's paths.
 4. Print each message in a code block.
 
@@ -35,7 +48,7 @@ The only git commands on this route are reads: `status`, `diff`, `log`, `rev-par
 
 **Entry condition, and both halves must hold**: the caller names draft mode, and the staged diff arrives in the prompt itself inside `<staged-diff>` tags with no tools available to you. A git tool such as a lazygit custom command drives this mode. It inlines this file, appends the diff and any supporting context, captures your stdout, and writes that text straight into its commit panel. Every word you emit that is not the commit message corrupts the commit.
 
-Draft mode replaces [Read the state](#1-read-the-state), [Group the work into multiple commits](#4-group-the-work-into-multiple-commits), [Commit each group](#5-commit-each-group), and [Hand off](#6-hand-off). [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message) apply unchanged, so the scope stays mandatory and the body stays required.
+Draft mode replaces [Scope](#scope), [Read the state](#1-read-the-state), [Group the work into multiple commits](#4-group-the-work-into-multiple-commits), [Commit each group](#5-commit-each-group), and [Hand off](#6-hand-off). [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message) apply unchanged, so the scope stays mandatory and the body stays required.
 
 - **Write exactly one commit message for the whole staged set.** The multiple-commits default does not apply here, because the caller owns the staging and you cannot restage anything.
 - **Emit the raw message and nothing else**: the subject line, one blank line, then the body. No preamble, no code fence, no summary table, no hand-off, no next move, no `Co-authored-by`, no tool advertising. The first character of your output is the first character of the subject.
@@ -61,7 +74,7 @@ git status --short && git diff --stat HEAD && git diff --cached --no-renames --n
 **Then decide how much diff you actually need, by asking who wrote these changes.**
 
 - **You did, in this same context** (the typical coding-session hand-off). You already know what the change does and, more importantly, *why*, and the why is the part a diff can't tell you: the approach you rejected, the test that caught a bug mid-way, the file you deliberately left alone. Group from the stat and write the body from what you know. Read a diff only for files you didn't touch yourself, or where you genuinely can't recall what landed.
-- **You didn't.** You were dispatched as a subagent, the session is fresh, the changes are the user's own edits, or the work happened far enough back that it's no longer in context. Then the diff is your only source, but take it group by group, never wholesale. Sketch the groups from the stat first, then read each group's diff with `git diff HEAD -- <paths>` and stop once that group's type, scope, and effect are clear. A pathless `git diff HEAD` pulls the whole session's changes into context at once; the per-group read caps each read at the group you're actually writing about.
+- **You didn't.** The scope is `all` or a named scope that reaches past your own edits, you were dispatched as a subagent, or the work happened far enough back that it's no longer in context. Then the diff is your only source, but take it group by group, never wholesale. Sketch the groups from the stat first, then read each group's diff with `git diff HEAD -- <paths>` and stop once that group's type, scope, and effect are clear. A pathless `git diff HEAD` pulls the whole session's changes into context at once; the per-group read caps each read at the group you're actually writing about.
 
 When in doubt, read. A vague commit message costs more than the tokens it saved. But re-reading code you wrote minutes ago buys nothing: the stat already tells you which files moved, and you already know what you did to them.
 
@@ -70,9 +83,9 @@ When in doubt, read. A vague commit message costs more than the tokens it saved.
 - When the user has **delegated committing** (the typical coding-session "commit" / "commit my changes"), you are free to stage the files you need yourself, so `git add` the paths for each logical group as you commit it. You don't have to ask first; grouping and staging is your job here.
 - Only pause to ask when intent is genuinely ambiguous, e.g. the tree holds half-finished work, secrets, changes you suspect the user didn't mean to commit, or a file is partially staged and staging its whole path would include deliberately unstaged hunks. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
 - If the user asked for a single specific commit, respect that and don't auto-split.
-- If **nothing has changed at all**, stop and say so.
+- If **the scope holds no change**, stop and say so. Name the out-of-scope changes when the tree has some.
 
-**Done when** you hold the changed-path list, the recorded staged set with its partially staged paths marked, and the answer to who wrote the changes.
+**Done when** you hold the resolved [Scope](#scope) with its path list, the changed-path list, the recorded staged set with its partially staged paths marked, and the answer to who wrote the changes.
 
 ### 2. Decide type and scope from the diff
 Pick the `type` from what the diff *does*, not what files it touches:
@@ -128,9 +141,9 @@ Group by *what the change accomplishes*, not by file type or directory. Keep a f
 
 Order the groups so dependencies land first (e.g. a shared helper before the feature that uses it). When a file contains hunks from multiple groups, plan to stage it interactively rather than assigning the whole path to one group.
 
-**Place every path in the recorded staged set.** After a bare "commit", each pre-staged path joins the group it belongs to. When the user narrowed the request ("commit the auth fix"), a pre-staged path outside that scope joins no group and stays staged after the run. List those paths as the **keep-staged set**.
+**Place every path in the recorded staged set.** A pre-staged path inside the [Scope](#scope) joins the group it belongs to. A pre-staged path outside the scope joins no group and stays staged after the run. List those paths as the **keep-staged set**.
 
-**Done when** every changed path sits in exactly one group or on a stated skip list, and every recorded staged path sits in a group or in the keep-staged set.
+**Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, and every recorded staged path sits in a group or in the keep-staged set.
 
 ### 5. Commit each group
 With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
@@ -182,7 +195,7 @@ Interactive staging of a mixed file (see [Group the work into multiple commits](
 
 When the user delegated the commit ("commit", "commit my changes"), just do this for every group, with no per-commit confirmation. A request for a message only never reaches this step; it ends on the [Message-only route](#message-only-route). If a commit fails (e.g. a pre-commit hook rejects it), the `&&` chain stops at the failing group and later groups stay uncommitted, so surface the hook output, fix or ask, then resume the chain from that group. Don't retry blindly or bypass hooks with `--no-verify` unless told to.
 
-**Done when** each commit's file list in `git log --stat` equals its group's paths, the staged set left after the run equals the keep-staged set, and the push either ran or has a recorded reason to hold.
+**Done when** each commit's file list in `git log --stat` equals its group's paths, the staged set left after the run equals the keep-staged set, every out-of-scope path shows the same `git status --short` line as at the start, and the push either ran or has a recorded reason to hold.
 
 ### 6. Hand off
 
@@ -197,7 +210,7 @@ Close with what changed, where it landed, and the next move.
 | 1 | `feat(auth): add token refresh retry` | `auth/token.ts`, `auth/token.test.ts` |
 | 2 | `chore(repo): bump ci node version` | `.github/workflows/ci.yml` |
 
-List each commit's changed/created files in the last column. You already know them, since they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped, left for the user, or kept staged on purpose), note it under the table.
+List each commit's changed/created files in the last column. You already know them, since they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped, left for the user, or kept staged on purpose), note it under the table. Name the out-of-scope paths in one line, so the user sees which changes the run left for another session or for `/commitkit all`.
 
 **Where it landed.** Report the branch the commits sit on, and say whether the push happened. The `git status -sb` at the end of the commit chain prints the branch and its upstream in one line; report from that output rather than running it again. When the push did not happen, say so and name the reason, because commits that exist nowhere but this machine are the most useful line in the report.
 

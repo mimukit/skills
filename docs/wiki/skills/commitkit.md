@@ -6,7 +6,7 @@ Create git commits with Conventional Commits messages derived from the actual di
 
 | | |
 |---|---|
-| Modes | main procedure (commit) · message-only route (read-only) · draft mode (headless, message only) |
+| Modes | main procedure (commit this session's changes, or everything with `all`) · message-only route (read-only) · draft mode (headless, message only) |
 | Tools | `Bash`, `Read` |
 | Writes | git commits, pushed to `origin` unless the user or a caller says `no-push`; nothing on the message-only route |
 | Visibility | public |
@@ -17,7 +17,15 @@ commitkit turns the current changes into one or more clean commits with [Convent
 
 **Multiple commits is the default**, not the exception. A session that touched three concerns produces three commits, each with its own scope — not one catch-all.
 
-It's built for AI coding sessions where you hand off with a bare "commit". In that mode it works autonomously: staging the right files, grouping the work into as many commits as it deserves, committing them, pushing them, and reporting a table — without stopping to ask at each step.
+It's built for AI coding sessions where you hand off with a bare "commit". In that mode it works autonomously: staging the session's files, grouping the work into as many commits as it deserves, committing them, pushing them, and reporting a table — without stopping to ask at each step.
+
+## It commits this session's work, unless you say `all`
+
+A bare "commit" takes only the changes made in the current session: every file the agent created, edited, deleted, or renamed, plus whatever a command it ran changed as part of the work, like a lockfile. `/commitkit all` takes every change in the tree, and naming a scope ("commit the auth fix") takes just that.
+
+The reason is how the work actually happens. One fix branch, or `main` itself, often carries several small fixes at once, each driven by a different agent in a different session. A commit that swept the whole tree would bundle someone else's half-done fix into this one, under this one's message. So everything outside the scope is left exactly as it was: not staged, not committed, not restored. A path another session staged stays staged, parked aside and put back around each commit. The report names the paths it left alone, so you can see the run noticed them.
+
+Two edges. When another session edited the same file, the agent commits only the hunks it wrote, and asks when they overlap too closely to split. And a fresh session has no session set at all, so instead of guessing it lists the changed paths and asks which to commit, with `all` as the one-word answer for everything.
 
 ## It reads the stat, not the diff — when it can
 
@@ -100,13 +108,13 @@ Opt out per run by saying `no-push`: "commit only, do not push", "commit, don't 
 
 Delegated committing means it stages files itself without asking. It only stops when intent is genuinely ambiguous: half-finished work in the tree, secrets, changes you probably didn't mean to commit, or a partially staged file where staging the whole path would sweep in deliberately unstaged hunks.
 
-It never runs `git add -A` blindly across unrelated concerns. If nothing has changed at all, it stops and says so.
+It never runs `git add -A` blindly across unrelated concerns. If nothing in scope has changed, it stops and says so.
 
 If a commit fails — a pre-commit hook rejects it — the `&&` chain stops at that group, later groups stay uncommitted, and the hook output gets surfaced. It never retries blindly or reaches for `--no-verify` unless told to.
 
 ## The message-only route
 
-Asking for a message in a live session ("draft a commit message") takes a separate read-only route. It reads the staged diff, or the whole working-tree change when nothing is staged, writes the message, prints it, and stops. It runs only read commands, and it proves that: it hashes the commit, the staged diff, and the refs before and after, and the two records must match. The route exists because the older wording said "do everything except the final commit", which still staged files and pushed.
+Asking for a message in a live session ("draft a commit message") takes a separate read-only route. It reads the staged diff, or the session's changes when nothing is staged (the whole tree under `all`), writes the message, prints it, and stops. It runs only read commands, and it proves that: it hashes the commit, the staged diff, and the refs before and after, and the two records must match. The route exists because the older wording said "do everything except the final commit", which still staged files and pushed.
 
 ## Draft mode
 
