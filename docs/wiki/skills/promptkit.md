@@ -8,7 +8,7 @@ Sharpen the prompt before you send it — the one-shot instruction you're about 
 |---|---|
 | Modes | [`task`](#task) (default) · [`system`](#system) |
 | Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob`, `AskUserQuestion` |
-| Writes | nothing in `task`; `docs/prompts/…` in `system`, plus the prompt string on confirmation |
+| Writes | nothing in `task` or on a review-only run; `docs/prompts/…` in `system`, plus the prompt string on confirmation |
 | Triggering | **explicit only** — model invocation is disabled |
 | Visibility | public |
 
@@ -36,6 +36,8 @@ Calling them `quick` and `deep` would imply the same job at two efforts. That's 
 
 ## Modes
 
+Each mode's procedure lives in its own satellite, `modes/task.md` and `modes/system.md`, under a routing root. The two procedures share almost nothing and every run takes exactly one, so a `system` run never pays for the `task` steps.
+
 ### `task`
 <!-- cheatsheet: sharpens the one-shot instruction you are about to hand a coding agent — the default -->
 
@@ -47,7 +49,9 @@ The receiver is **an agent with filesystem access in this repo** — a fresh ses
 
 Then the **five-part contract** — goal · file scope · constraints · done signal · stop condition. Five rather than seven, because a checklist nobody completes is worse than a short one they do. The done signal is a concrete check (a command, a test, an observable state), never "when it works".
 
-The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. A `worked-example.md` satellite beside the `SKILL.md` carries a worked run end to end, loaded on demand — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row.
+Before delivery it scans the prompt for `[`, `<`, `{{`, and `TODO`, and sorts every hit. A literal (code, a type like `Array<T>`, a Markdown link, a path) stays. A placeholder, text standing in for a value nobody filled in, means the prompt isn't finished. A scan that flagged every bracket would fail any prompt that quotes code, so the test is whether the receiver acts on those exact characters or has to guess what goes there.
+
+The output is the prompt in a fenced block **first**, then the ledger. You scroll past nothing to reach the thing you came for. A `worked-example.md` satellite beside the `SKILL.md` carries a worked run end to end, loaded on demand — a four-word bug report becoming a five-part prompt, with the ledger that shows every vague phrase getting a row. The example puts the context first and the ask last, the layout the contract asks for, so the receiver reads the ask just before it acts.
 
 ### `system`
 <!-- cheatsheet: sharpens a durable system prompt an application ships -->
@@ -57,6 +61,8 @@ The output is the prompt in a fenced block **first**, then the ledger. You scrol
 Then the **six-part contract** — role and scope · response shape · out-of-scope behavior · missing-input behavior · injection posture · variable contract. The last four are the ones people skip and the ones that cause production incidents, so they're mandatory parts rather than a best-practices list.
 
 And a **must-pass table**: concrete inputs paired with the behavior each must produce, with three failure classes mandatory — missing input, out-of-scope request, injection attempt. No harness, no scoring, no metrics, no A/B versioning. A table you read in ten seconds gets run; a framework you have to wire up doesn't.
+
+Its own bracket scan sorts hits three ways: a declared variable stays, a literal stays, and anything else is an unfinished placeholder to write or declare.
 
 ## The resolution ledger
 
@@ -81,7 +87,7 @@ promptkit may return **"this is fine, send it"** with the input unchanged.
 
 This is named as a first-class outcome because the alternative is the failure every rewrite skill has: changing something to justify having been invoked. It's gated on the three mechanical checks the run already performed, not on a feeling — **every contract part present · no placeholder surviving the bracket scan · no catalog entry firing**. Pass all three and the ledger prints what the prompt already had instead of what changed.
 
-Distinct from the **review-only** path, which you ask for. That one returns a diagnosis and no rewrite, and runs inside both modes rather than being a third one.
+Distinct from the **review-only** path, which you ask for. That one returns a diagnosis and no rewrite, and runs inside both modes rather than being a third one. **It writes nothing in either mode**, `system` included: no `docs/prompts/` file and no source write, because a request for an opinion is not a request for an artifact.
 
 ## The prompt-slop catalog
 
@@ -115,7 +121,7 @@ So **the drift gets killed at the source**: promptkit writes the prompt into the
 
 That moves the safety boundary from *never writes application source* to **never implements the behavior the prompt describes** — which is the line that was actually load-bearing all along; "touches no file under `src/`" was only ever a proxy for it. Writing unprompted on detection isn't a sane default for a prompt-sharpening skill, and a refusal is honored without argument. When it **can't identify** the prompt's home it says so and stops at the doc — no guessed path, no new prompt module.
 
-`task` writes nothing, ever. The artifact is a prompt you're about to paste into the session you're already in, and a file would be a detour on the way to the clipboard.
+`task` writes nothing, ever, and neither does a review-only run in `system`. The artifact is a prompt you're about to paste into the session you're already in, and a file would be a detour on the way to the clipboard.
 
 ## Model shape, never model versions
 

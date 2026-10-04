@@ -18,7 +18,7 @@ Paseo shows one workspace per checkout and hangs agents off each one. The worktr
 
 **Paseo registers nothing on its own.** A worktree that `git worktree add` created is invisible until something registers it, and there is no discovery setting to turn on.
 
-**It does prune one thing on its own, since 0.7.** A reconciliation pass runs at daemon start and every five minutes, and archives any active row whose directory has gone. It stops there — no duplicate collapsing, no verdict on whether the work landed, nothing touched while the directory still exists.
+**It does prune one thing on its own.** A reconciliation pass runs at daemon start and every five minutes, and archives any active row whose directory has gone. It stops there — no duplicate collapsing, no verdict on whether the work landed, nothing touched while the directory still exists.
 
 So the sidebar still drifts from the disk two ways at once — real work that never appears, and finished work that never leaves. paseokit owns that reconciliation, split by direction: [`sync`](#sync) adds what is missing, [`clean`](#clean) removes what is finished. Scoped to the project you run it from, machine-wide on request, and running either twice changes nothing the second time.
 
@@ -29,7 +29,7 @@ This is the whole reason paseokit is a separate skill from [`orcakit`](./orcakit
 | | Orca | Paseo |
 |---|---|---|
 | Finds worktrees git made | **yes**, on its own | **no**, ever |
-| Drops rows for deleted worktrees | **yes**, within seconds | **yes**, since 0.7, within five minutes |
+| Drops rows for deleted worktrees | **yes**, within seconds | **yes**, within five minutes |
 | So the skill's job is | enrich what's already there, then clean up | push rows in, and reap them back out |
 
 The two tools have opposite models, so a shared adapter behind one skill would be most of the skill. They stay independent siblings, both installed, and **neither ever calls the other**.
@@ -53,7 +53,7 @@ Two facts make the rest of the design possible:
 
 ## The seam it depends on
 
-Worth knowing before you trust it against a newer Paseo, because this is the part most likely to break.
+Worth knowing before you trust it against a newer Paseo, because this is the part most likely to break. `SKILL.md` keeps every version-dependent fact in one list, its **version seam**, verified against Paseo 0.8.0, and the rest of the skill cites that list rather than naming a version itself. A Paseo upgrade then means re-checking one list, not hunting for scattered "since 0.7" notes that each go stale on their own.
 
 `paseo workspace ls --json` is a **thin projection** — `workspaceId`, `project`, `name`, `isolation`, `cwd`, active rows only. It answers one question (is a live row pointing at this path) and nothing else. Everything the modes actually decide on — `branch`, `title`, `createdAt`, `archivedAt`, `projectId` — lives in `~/.paseo/projects/workspaces.json` and `projects.json`.
 
@@ -63,7 +63,7 @@ An unreadable or unexpectedly-shaped file degrades every writing mode to read-on
 
 Two registry quirks it documents rather than works around:
 
-- **`isPaseoOwnedWorktree` stopped lying in 0.7** — it now runs the same hash-directory test the delete runs, and every reconciliation pass refreshes it, so the flag forecasts whether an archive reaches the disk. paseokit reads it and still checks the path shape beside it, because a stored value is only as fresh as the last pass.
+- **`isPaseoOwnedWorktree` forecasts the delete** — it runs the same hash-directory test the delete runs, and every reconciliation pass refreshes it, so the flag forecasts whether an archive reaches the disk. paseokit reads it and still checks the path shape beside it, because a stored value is only as fresh as the last pass.
 - **`workspace create` is not idempotent** — two identical calls on one path silently make two rows. Every existence check before a registration is load-bearing, and it has to count archived rows too, or the tombstone rule below fails silently.
 
 ## Modes
@@ -87,7 +87,7 @@ It joins `git worktree list --porcelain` per project, `paseo workspace ls --json
 | `stray project` | a project whose `rootPath` is a worktree, not a main checkout | reported; `paseo project delete` removes it, behind a confirmation |
 | `reapable` | pull request merged, issue closed, tree clean | [`clean`](#clean) |
 
-`busy` rows go first when any exist. Those are the rows where an action would interrupt live work. An `orphaned` row is a timing artifact on 0.7 rather than a job: the skill reports it and says when the daemon's own pass will take it, and queues it for archive only when you ask to clear the sidebar now.
+`busy` rows go first when any exist. Those are the rows where an action would interrupt live work. An `orphaned` row is a timing artifact rather than a job: the skill reports it and says when the daemon's own pass will take it, and queues it for archive only when you ask to clear the sidebar now.
 
 A **stray project** has a clear signature — its `projectKey` matches a real project's while its `rootPath` sits under `$WORKTREE_ROOT`. That is what a registration without `--project` produces, and it is the failure paseokit works hardest to avoid. `paseo project delete` makes it recoverable, but the fix deletes every workspace under the project and therefore sits behind `clean`'s confirmation, listing those workspaces first.
 
@@ -111,27 +111,29 @@ Two rules carry most of the weight:
 - **Unknown repos** (`sync all` only). It walks `$WORKTREE_ROOT`, resolves each candidate with `git rev-parse --git-common-dir`, and lists repos Paseo has never seen. On an OK it runs `paseo project create <repo>`, which returns the new `prj_…` id directly, then registers the main checkout and the worktrees under that id. Paseo's own worktrees need no special case: they already carry a row and resolve to a known repo, so no hash-directory pattern has to be guessed at.
 - **Tombstones.** An archived row **suppresses re-registration**. Someone archived that workspace deliberately, and silently re-adding it would undo the decluttering they just did — so it gets a verdict of its own and an explicit ask.
 
-One honest limitation: **there is still no `paseo workspace unarchive`.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
+One honest limitation: **there is no `paseo workspace unarchive`.** "Restoring" a tombstone creates a fresh row for the same path, so the archived row stays and the restored workspace gets a new id. The skill says so when it does it rather than reporting a resurrection.
 
 ### `clean`
 
-The removing mode, and the only one — every archive and every delete in the skill lives here, in two halves. The **registry reap** collapses `duplicate` sets, and archives an `orphaned` row when you ask for it before the daemon's own pass gets there: registry-only and reversible, since an archived row can be restored. The **worktree teardown** removes the whole local footprint of work that already landed: the agent sessions in the worktree, the directory, the local branch, and the registry row. It takes the same two scopes as `sync`, picked by the same words. Neither half runs before the preview: both candidate sets are collected first, shown as one list, and gated on a single confirmation.
+The removing mode, and the only one — every archive and every delete in the skill lives here, in two halves. The **registry reap** collapses `duplicate` sets, and archives an `orphaned` row when you ask for it before the daemon's own pass gets there: registry-only and reversible, since an archived row can be restored. The **worktree teardown** removes the whole local footprint of work that already landed: the agent sessions in the worktree, the directory, the local branch, and the registry row. It takes the same two scopes as `sync`, picked by the same words. Neither half runs before the preview: both candidate sets are collected first and shown as one list.
 
-**A merged pull request is the teardown's precondition, and nothing substitutes for it.** `gh pr list --head <branch> --state merged` is the test; a closed-unmerged PR fails it and a suggestive branch name means nothing. Three more gates follow: a clean tree, no unpushed commit, and no live agent. Because the merge is the whole basis for the delete, a missing or unauthenticated `gh` stops the teardown outright instead of degrading it — the one place in paseokit where that happens. The registry reap still goes to the preview, since it proves nothing against the tracker.
+**A merged pull request is the teardown's precondition, and nothing substitutes for it.** `gh pr list --head <branch> --state merged` is the test; a closed-unmerged PR fails it and a suggestive branch name means nothing. More gates follow: a clean tree, no unpushed commit, no live agent, a closed issue, and [`gitkit`](./gitkit.md)'s ownership marker on the worktree. Because the merge is the whole basis for the delete, a missing or unauthenticated `gh` stops the teardown outright instead of degrading it — the one place in paseokit where that happens. The registry reap still goes to the preview, since it proves nothing against the tracker.
 
-**One preview, one confirmation.** The table has an archive section (workspace id, title, reason) and a delete section (branch, merged PR, path, workspace id, and the sessions that go with it), and the ask covers exactly that listed set. Rejected worktrees are printed underneath with their reason, since "why is this one still here" is the next question every time. An empty list ends the mode without asking anything.
+**One preview, then a confirmation per delete.** The table has an archive section (workspace id, title, reason) and a delete section (branch, merged PR, path, workspace id, and the sessions that go with it). The archive section takes one answer, because every row in it is registry-only and on the screen. Each delete row takes its own, because gitkit owns the collection's one removal rule and it treats each worktree as a separate decision. One answer for a list of deletes would hide the differences between the rows, which is why gitkit refuses a batch yes for removals and mergekit refuses one for merges. Rejected worktrees are printed underneath with their reason, since "why is this one still here" is the next question every time. An empty list ends the mode without asking anything.
 
-**The teardown order is fixed**: stop the sessions, remove the worktree through gitkit, delete the branch with the safe `-d` (a squash merge that refuses gets its own ask before `-D`), then archive the row. Each step strands the next if it runs late. A failure stops that candidate, reports the step, and moves to the next one; nothing is unwound.
+**Every queued row is re-read just before it is acted on.** A duplicate set can change between the preview and the call: the daemon's pass, another session, or the user can archive or move the row paseokit meant to keep. Archiving the rest of the set then would leave no active row for a live path, so a changed set is skipped and reported instead. A teardown candidate gets the same recheck for a new agent, a dirty tree, or a new unpushed commit.
 
-An open issue does not block the clean. The code is on the base branch either way, so the local copy is redundant, and the drift routes to [`issuekit`](./issuekit.md) `close` in the hand-off rather than being fixed here.
+**The teardown order is fixed**: stop the sessions, remove the worktree through gitkit, delete the branch through gitkit, then archive the row. gitkit deletes with `-d`, and uses `-D` only for a squash merge whose merged PR head matches the branch tip. Each step strands the next if it runs late. A failure stops that candidate, reports the step, and moves to the next one; nothing is unwound.
+
+**An open issue holds the worktree.** That's tracker drift, and [`issuekit`](./issuekit.md) `close` closes the issue and tears the worktree down in one pass. It's the same candidate test [`orcakit`](./orcakit.md) and gitkit apply, so the three tools agree on which worktrees are finished.
 
 ### `align`
 
 One-time configuration, per machine. It touches no workspace at all.
 
-It compares `worktrees.root` in `~/.paseo/config.json` against `$WORKTREE_ROOT`, because two roots in play means every sweep classifies by path forever. Aligning them **only affects worktrees Paseo creates itself** — existing ones are untouched, and git stores absolute paths, so nothing moves. It says that out loud, because "aligned" reads like "migrated" and it isn't.
+It compares `worktrees.root` in `~/.paseo/config.json` against `$WORKTREE_ROOT`, because two roots in play split the worktrees across two places. Aligning them **only affects worktrees Paseo creates itself** — existing ones are untouched, and git stores absolute paths, so nothing moves. It says that out loud, because "aligned" reads like "migrated" and it isn't.
 
-It also surfaces `daemon.autoArchiveAfterMerge`, which lets Paseo archive a workspace itself when its change request merges. In 0.7 that switch carries its own gates — merged PR, clean tree, nothing ahead of origin, Paseo-created worktree — so it is a fair native shortcut for the Paseo-created half of [`clean`](#clean)'s reaping, and the skill presents the choice rather than a recommendation. What it still skips is the preview and the confirmation, and it stops the agents and kills the terminals without asking. It reaches no gitkit worktree at all, since those fail the ownership test.
+It also surfaces `daemon.autoArchiveAfterMerge`, which lets Paseo archive a workspace itself when its change request merges. That switch carries its own gates — merged PR, clean tree, nothing ahead of origin, Paseo-created worktree — so it is a fair native shortcut for the Paseo-created half of [`clean`](#clean)'s reaping, and the skill presents the choice rather than a recommendation. What it still skips is the preview and the confirmation, and it stops the agents and kills the terminals without asking. It reaches no gitkit worktree at all, since those fail the ownership test.
 
 ## Preflight
 
