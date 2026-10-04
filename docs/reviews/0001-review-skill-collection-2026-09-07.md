@@ -268,6 +268,6 @@ Keep the collection's existing strengths. Preserve explicit empty results, separ
 
 This review adds one report. It changes no skill, script, wiki page, or remote state.
 
-The report is `docs/reviews/review-skill-collection-2026-09-07.md`.
+The report is `docs/reviews/0001-review-skill-collection-2026-09-07.md`.
 
 Start with F1 and F2 in prkit and commitkit. Use `implementkit` to apply those findings, or make the focused edits directly.
