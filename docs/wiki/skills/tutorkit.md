@@ -141,7 +141,7 @@ One schedule rule is easier to reason about than two, and the `partial` grade al
 
 Linking the installed path would break every lesson you've ever written the moment the skill moves or is uninstalled. Generating the CSS per install would make lessons render differently on every machine. Copying once means a later skill update ships a new default for new repos and leaves existing lessons rendering the way they were written.
 
-It's the second satellite file in the collection, after [`verifykit`](./verifykit.md)'s `verify-assets.sh`, and it resolves the same way: find the installed skill directory, because cwd is your project, not the skill's.
+It resolves the way every bundled asset in the collection does, [`verifykit`](./verifykit.md)'s `verify-assets.sh` included: find the installed skill directory, because cwd is your project, not the skill's.
 
 ## Why old lessons are never rewritten
 
@@ -174,4 +174,4 @@ npx skills add mimukit/skills -s tutorkit
 
 Source: [`skills/tutorkit/SKILL.md`](../../../skills/tutorkit/SKILL.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

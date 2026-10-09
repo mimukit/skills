@@ -1,6 +1,6 @@
 # commitkit
 
-Create git commits with Conventional Commits messages derived from the actual diff.
+Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin.
 
 **Reach for it when** a coding session wraps and you want the work committed — grouped properly, with messages written from what changed rather than guessed.
 
@@ -144,4 +144,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

@@ -143,4 +143,4 @@ npx skills add mimukit/skills -s humankit
 
 Source: [`skills/humankit/SKILL.md`](../../../skills/humankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

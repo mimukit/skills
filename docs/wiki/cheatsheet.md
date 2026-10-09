@@ -5,7 +5,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | Skill | What it does |
 |---|---|
 | [`afkkit`](#afkkit) | Run a groomed `ready` GitHub issue through the whole build span unattended: worktree, implement, commit, verify-and-review, fix, QA plan, and open PR. |
-| [`commitkit`](#commitkit) | Create git commits with Conventional Commits messages derived from the actual diff. |
+| [`commitkit`](#commitkit) | Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. |
 | [`debugkit`](#debugkit) | Chase a symptom to its true cause — reproduce it, shrink it, write falsifiable hypotheses, and prove the cause by toggling the symptom on and off — then hand over a failing reproduction instead of a fix. |
 | [`designkit`](#designkit) | Derive a project's design system from the UI it already ships and keep it true as the code moves — a spec-compliant `DESIGN.md`, validated by the official linter. |
 | [`domainkit`](#domainkit) | Maintain a project's domain model as a consented byproduct of design work — a `CONTEXT.md` glossary and `docs/adr/` decision records. |
@@ -27,7 +27,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`qakit`](#qakit) | Generate a step-by-step manual QA plan for a feature just implemented, grounded in the actual code changes. |
 | [`refactorkit`](#refactorkit) | Survey an existing codebase for the structural change worth making — shallow interfaces, adapter sprawl, poor locality, untested coupling — rank the candidates, crown one, and write it up as a reviewable proposal. |
 | [`releasekit`](#releasekit) | Cut a release from the Conventional Commits a repo already writes — derive the semver bump and a changelog from the commit range, bump the manifest, tag it, and publish a GitHub release, all behind a mandatory preview. |
-| [`repokit`](#repokit) | Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup. |
+| [`repokit`](#repokit) | Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, a full new-repo setup, and a `docs/` renumbering. |
 | [`researchkit`](#researchkit) | Research the credible options for a technical decision and recommend one, grounded in primary sources with cited, dated evidence. |
 | [`reviewkit`](#reviewkit) | Review AI-agent-implemented code specifically — four ordered passes, findings ranked by severity and backed by quoted evidence. |
 | [`seokit`](#seokit) | Audit a web page, or crawl a whole site, for SEO and AEO gaps, then write an evidence-backed fix report and a long-term search and AI-visibility plan. |
@@ -48,7 +48,7 @@ _No modes — one path._
 
 ## [`commitkit`](./skills/commitkit.md)
 
-Create git commits with Conventional Commits messages derived from the actual diff.
+Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin.
 
 _No modes — one path._
 
@@ -225,7 +225,7 @@ _No modes — one path._
 
 ## [`repokit`](./skills/repokit.md)
 
-Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup.
+Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, a full new-repo setup, and a `docs/` renumbering.
 
 | Mode | What it does |
 |---|---|

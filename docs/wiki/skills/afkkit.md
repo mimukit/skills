@@ -96,7 +96,7 @@ Cost tracks **context size × turns**, not token volume, so the way to make a st
 2. **Spec gate**: the same agent classifies gaps between what the issue specifies and what building it requires, writes `orientation.md`, `assumptions.md`, and `checks.md`, and returns the issue's phases grouped into dispatch groups. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed, logged to `assumptions.md`.
 3. **Implement**: implementkit, one dispatch per phase group, each committing through commitkit with `no-push` before it returns and logging the commit to `progress.md`. Every step after this one runs once, over the whole branch diff.
 4. **Verify and review**: one dispatch on the independent model runs the gate's check list, probes up to six adjacent behaviors, writes `verified.md`, then invokes reviewkit on the full branch diff and writes `findings.md` with stable blocker and nit IDs. It runs code but edits nothing, never rebuilds, and records the exact server start and stop commands it used. Code that doesn't run at all escalates before any review is paid for.
-5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, re-runs the checks its changes touch, refreshes `verified.md`, commits, then writes the QA plan through qakit (transcription; qakit re-runs only results recorded against an older revision) and opens the PR through prkit under the run's authorization, which commits the QA doc, pushes the branch for the first time, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
+5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, commits, then re-runs the checks its changes touch and refreshes `verified.md`, so each result names a clean revision, then writes the QA plan through qakit (transcription; qakit re-runs only results recorded against an older revision) and opens the PR through prkit under the run's authorization, which commits the QA doc, pushes the branch for the first time, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
 6. **Hand off**: the outcome line, the worktree path, and one crowned next move. Per-step metrics print only when the invocation asks for them ("afkkit 42 with metrics").
 
 ## Resuming an interrupted run
@@ -153,4 +153,4 @@ npx skills add mimukit/skills -s afkkit
 
 Source: [`skills/afkkit/SKILL.md`](../../../skills/afkkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

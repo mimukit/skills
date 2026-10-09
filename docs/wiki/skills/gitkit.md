@@ -43,7 +43,7 @@ Two more signals corroborate without settling: a `: gone]` upstream marker is ca
 
 **An open issue holds the row.** An `issue-<n>-…` branch whose issue is still open is tracker drift, even when its pull request merged. The sweep names it and routes it to [`issuekit`](./issuekit.md) `close`, which closes the issue and tears the worktree down together, so the tracker and the disk change in one step rather than drifting apart.
 
-**A branch on `origin` gets deleted too, and it's held to a higher bar**, because nothing on the server plays the part `-d` plays locally. A local delete is recoverable from the reflog; a `git push origin --delete` reaches a shared server and everybody else's next fetch. So a remote row needs positive proof it landed — a merged pull request from `gh`, or the patch-id match — where a bare `: gone]` marker is worthless here, since the remote branch is the very thing in question. The base branch, a release branch, and the head of any open pull request are never offered. Neither is the *base* of an open pull request, which is the hold that a stack makes load-bearing: a lower layer is the base of the layer above it, and deleting it closes that PR outright, after which GitHub refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back. And the remote delete asks separately even when the local delete of the same branch was already approved.
+**A branch on `origin` gets deleted too, and it's held to a higher bar**, because nothing on the server plays the part `-d` plays locally. A local delete is recoverable from the reflog; a `git push origin --delete` reaches a shared server and everybody else's next fetch. So a remote row needs positive proof it landed — a merged pull request from `gh` whose `headRefOid` equals `origin/<branch>`, or the patch-id match. A remote tip that moved after the merge holds commits the merge never saw, and a bare `: gone]` marker is worthless here, since the remote branch is the very thing in question. The base branch, a release branch, and the head of any open pull request are never offered. Neither is the *base* of an open pull request, which is the hold that a stack makes load-bearing: a lower layer is the base of the layer above it, and deleting it closes that PR outright, after which GitHub refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back. And the remote delete asks separately even when the local delete of the same branch was already approved.
 
 ### `rescue`
 
@@ -101,11 +101,11 @@ All four are native git, and running one twice is a normal thing to do that must
 
 **Create — or adopt.** Always look first. If a worktree already exists for the branch, it's adopted: report the path and stop. Never a second one, never an error. Creation always fetches first, because branching off a stale base is silent and only surfaces as conflicts later.
 
-**Remove.** Three rules, each guarding a real way to lose work:
+**Remove.** Four rules, each guarding a real way to lose work:
 
 - **A dirty worktree stops teardown.** It shows exactly what would be lost — uncommitted changes, untracked files, unpushed commits — and lets you decide. It never reaches for `--force` on your behalf.
-- **Never remove a worktree it adopted rather than created.** If it was already there, it's someone else's context.
-- **Never delete a branch it didn't create.** `-d`, so git itself refuses an unmerged branch, with the squash exception described under [`clean`](#clean).
+- **Remove only a worktree whose marker says gitkit created it.** One without the marker was adopted, and it's someone else's context.
+- **Delete only a branch whose `gitkitCreated` key is set.** `-d`, so git itself refuses an unmerged branch, with the squash exception described under [`clean`](#clean).
 - **One confirmation per removal.** Each worktree and each branch is its own decision.
 
 **Ownership is recorded, not remembered.** "Already there when you arrived" only works inside one session; a sweep a week later can't know which worktrees an earlier run made. So creation writes two markers into git's own storage: a `gitkit-created` file in the worktree's admin directory under `.git/worktrees/`, and a `branch.<name>.gitkitCreated` config key when gitkit made the branch. Git deletes each one along with the thing it marks, so nothing goes stale, and the "no recorded state but git's own" claim still holds. A worktree with no marker, including every one made before the rule existed, reads as adopted and is never removed.
@@ -199,4 +199,4 @@ npx skills add mimukit/skills -s gitkit
 
 Source: [`skills/gitkit/SKILL.md`](../../../skills/gitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

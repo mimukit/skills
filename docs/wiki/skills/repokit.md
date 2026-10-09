@@ -1,7 +1,7 @@
 # repokit
-<!-- cheatsheet: Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, and a full new-repo setup. -->
+<!-- cheatsheet: Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, a full new-repo setup, and a `docs/` renumbering. -->
 
-Set up a GitHub repo through the `gh` CLI — an inferred About description and topics, the workflow labels (issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools), and a full new-repo setup that applies the house settings and scaffolds the baseline files.
+Set up a GitHub repo through the `gh` CLI — an inferred About description and topics, the workflow labels (issue lifecycle, priority, and an `ai-review` trigger for AI PR review tools), a full new-repo setup that applies the house settings and scaffolds the baseline files, and a renumbering of the repo's `docs/` artifacts into creation order.
 
 **Reach for it when** a repo's About panel is empty, its label vocabulary is missing, or a freshly created repo needs bringing up to convention in one pass.
 
@@ -172,4 +172,4 @@ npx skills add mimukit/skills -s repokit
 
 Source: [`skills/repokit/SKILL.md`](../../../skills/repokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

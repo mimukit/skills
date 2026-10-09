@@ -54,13 +54,13 @@ Every SEO tool prints a number out of a hundred, and none of them can say what t
 
 Examine one page closely, plus the `robots.txt`, sitemap, and `llms.txt` that govern it, with up to five URLs for cross-page checks.
 
-Given no URL ("check SEO before I deploy"), it looks for the running local server on the port the project's scripts use. On a public URL it adds what only exists there: the host redirects, one probe per AI crawler to see whether a WAF turns it away, PageSpeed field data, and a comparison with the two pages that outrank it for the main query. A second run on the same page adds a "since last audit" section, so "did my fixes land" needs no separate mode.
+Given no URL ("check SEO before I deploy"), it looks for the running local server on the port the project's scripts use. On a public URL it adds what only exists there: the host redirects, one probe per AI crawler to see whether a WAF turns it away, PageSpeed field data, and a comparison with the two pages that outrank it for the main query. Every run writes a new report rather than updating the last one, so the history stays intact, and a second run on the same page adds a "since last audit" section, so "did my fixes land" needs no separate mode.
 
 ### `crawl`
 
 Examine a whole site broadly, from its sitemap and its links, to find the template bugs and structural gaps a single page cannot show.
 
-It fetches up to 100 pages by default, taking turns across site sections so ninety blog posts cannot crowd out everything else, and runs the mechanical checks on every page and the full catalog on one sample per section. Six site-level checks come out of that: duplicate titles and descriptions, sitemap URLs nothing links to, linked pages missing from the sitemap, pages buried more than three clicks deep, and clusters of pages pointing their canonical at one target.
+It fetches up to 100 pages by default, taking turns across site sections so ninety blog posts cannot crowd out everything else, and runs the mechanical checks on every page and the full catalog on one sample per section, five samples at most. Six site-level checks come out of that: duplicate titles and descriptions, sitemap URLs nothing links to, linked pages missing from the sitemap, pages buried more than three clicks deep, and clusters of pages pointing their canonical at one target.
 
 On a public site it identifies itself as `seokit/1.0`, obeys `robots.txt`, and waits a second between requests, because it may be crawling a site you do not own. On your local server it goes as fast as the server answers and reads `robots.txt` without obeying it, since a staging `Disallow: /` would otherwise stop the audit of your own build.
 
@@ -68,9 +68,11 @@ On a public site it identifies itself as `seokit/1.0`, obeys `robots.txt`, and w
 
 The skill ships a small Node script, `bin/extract.mjs`, with no dependencies. It fetches pages and reports what is on them as JSON, and judges nothing; the verdicts stay with the agent and the catalog. It exists because an agent reading a hundred HTML files by hand gives different answers every run, and because some facts are easy to get wrong by eye: `robots.txt` matching follows longest-rule-wins, and dev servers announce themselves only in their script tags.
 
+The script needs Node 18 or later. Without Node, `audit` falls back to reading the HTML with `curl` and says so in the report's coverage line, and `crawl` stops, because a hundred pages read by hand is the variance the script exists to remove. When a page is a client-rendered app shell and no browser is available, seokit offers a one-time Chromium install through `npx playwright install chromium` rather than guessing at what JavaScript would render. PageSpeed field data uses `PAGESPEED_API_KEY` when it is set, or a key you paste for the run, and the key is never written to disk.
+
 ## Hands off to
 
-[`implementkit`](./implementkit.md) to apply the fixes when the run happened inside the site's repository, or a developer otherwise. [`issuekit`](./issuekit.md) to file each finding as an issue, or `gh issue create` without it. After a local audit, the next run is the same page on the preview or production URL, which clears the checks that could not run locally.
+[`implementkit`](./implementkit.md) to apply the fixes when the run happened inside the site's repository, or a developer otherwise. [`issuekit`](./issuekit.md) to file each finding as an issue, or `gh issue create` without it. After a local audit, the next run is the same page on the preview or production URL, which clears the checks that could not run locally. After a `crawl`, the runner-up is an `audit` of the worst sample page, for the content and competitor verdicts the crawl skips.
 
 ## Install
 
@@ -80,4 +82,4 @@ npx skills add mimukit/skills -s seokit
 
 Source: [`skills/seokit/SKILL.md`](../../../skills/seokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`b3af94f` on 2026-10-04._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

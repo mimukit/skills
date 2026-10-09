@@ -36,7 +36,7 @@ Then the mode file takes over.
 
 Screenshot the change and hand the operator a path.
 
-The operator is present, so a GIF, a bundle, and a publish would all serve a reader who isn't there. `show` writes `NN-<state>.png` files into a `NNNN-show-<slug>-YYYY-MM-DD/` directory under the system temp directory (falling back to `docs/verify/` only when no temp directory resolves), then prints one line per file: the absolute path and the state it shows. With the temp directory, nothing lands in the repo and no record is written; the reply is the record. The fallback does write into the working tree, so the hand-off says so and says whether git shows the files as untracked. It's the default when the verb is ambiguous, because it's cheap and reversible, and escalating to `proof` costs one sentence.
+The operator is present, so a GIF, a bundle, and a publish would all serve a reader who isn't there. `show` writes `NN-<state>.png` files into a `show-<slug>-YYYY-MM-DD/` directory under the system temp directory (falling back to `docs/verify/` only when no temp directory resolves, where the directory takes the next serial as `NNNN-show-<slug>-YYYY-MM-DD/`), then prints one line per file: the absolute path and the state it shows. With the temp directory, nothing lands in the repo and no record is written; the reply is the record. The fallback does write into the working tree, so the hand-off says so and says whether git shows the files as untracked. It's the default when the verb is ambiguous, because it's cheap and reversible, and escalating to `proof` costs one sentence.
 
 ### `proof`
 
@@ -105,4 +105,4 @@ npx skills add mimukit/skills -s verifykit
 
 Source: [`skills/verifykit/SKILL.md`](../../../skills/verifykit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

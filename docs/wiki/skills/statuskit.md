@@ -50,7 +50,7 @@ So it comes off `reviewRequests` and `latestReviews` instead, with three outcome
 | Signal | Column reads | Ranks? |
 |---|---|---|
 | you're a requested reviewer | `yours` | surfaced |
-| someone else is requested, or a non-author already reviewed | `theirs — @name` | surfaced — genuinely out of your hands |
+| someone else is requested, or a non-author already reviewed | `theirs: @name` | surfaced — genuinely out of your hands |
 | neither | `nobody reviewing → yours` | **crowned** — rung 2 |
 
 Naming the reviewer in the middle case is what makes it checkable; an unattributed *theirs* is indistinguishable from the bug it replaces. And there's no "solo mode" anywhere — the third row fires just as usefully on a team repo where you opened a PR and forgot to request anyone.
@@ -301,4 +301,4 @@ npx skills add mimukit/skills -s statuskit
 
 Source: [`skills/statuskit/SKILL.md`](../../../skills/statuskit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._

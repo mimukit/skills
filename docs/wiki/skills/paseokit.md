@@ -159,4 +159,4 @@ npx skills add mimukit/skills -s paseokit
 
 Source: [`skills/paseokit/SKILL.md`](../../../skills/paseokit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19. `SKILL.md` carries the verified Paseo CLI and daemon version._
+_Verified against `main`@`4e88ae7` on 2026-10-09. `SKILL.md` carries the verified Paseo CLI and daemon version._

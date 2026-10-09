@@ -138,7 +138,7 @@ For the same reason it delivers **one prompt, never one per model family.** A Ge
 - **Not the task executor.** It writes the prompt, never the code the prompt describes.
 - **Not the skill author.** A `SKILL.md` is a prompt, and it belongs to [`skillkit`](./skillkit.md) exclusively — including improving one that already exists. `skillkit` in turn never sharpens a prompt.
 - **Not prose editing.** [`humankit`](./humankit.md) has the same shape — a catalog of tells, a rewrite, a review-only path — and the **opposite goal**: it removes structure that reads as machine-made because a human is reading. promptkit *adds* structure because a machine is reading. The exclusion runs both ways now: humankit declines a prompt or a skill file and routes it here, rather than stripping the scaffolding that makes it work.
-- **Not a status pass.** [`statuskit`](./statuskit.md) reads project state and crowns one move from a nine-rung ladder. promptkit reads **one sentence**; its note is a footnote on a delivered artifact, never a dashboard.
+- **Not a status pass.** [`statuskit`](./statuskit.md) reads project state and crowns one move from a ranked ladder. promptkit reads **one sentence**; its note is a footnote on a delivered artifact, never a dashboard.
 - **Not the interrogator.** `task` asks at most three questions and never blocks; `system` gets one capture round. Both ask in closed lists with labeled options — answerable as `1b, 2a`, and every list carries an option that hands the call back, because a question with no escape hatch is a block wearing a different hat. Neither is an interview; that's [`grillkit`](./grillkit.md).
 - **Not an eval framework.** Must-pass cases are a table you read, not a harness that runs.
 - **Not a prompt library.** One prompt for one job, not a catalog of reusable templates.
@@ -158,4 +158,4 @@ npx skills add mimukit/skills -s promptkit
 
 Source: [`skills/promptkit/SKILL.md`](../../../skills/promptkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._
