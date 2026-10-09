@@ -22,9 +22,9 @@ namekit splits them and runs them in that order. It mines roots from four separa
 
 The owner's projects are `codealoy`, `growaloy`, and `saasaloy`. The suffix is the point: it makes three unrelated products read as one portfolio, and it removes the hardest part of naming, which is the shape.
 
-So namekit is a convention engine rather than a name generator. It resolves your convention from what you say, from names you cite, or from your own repos when you point at them, and it generates against that. There is no config file and no environment variable, on purpose. A convention stored in a dotfile goes stale the day you change your mind, while a convention read from the names you already shipped cannot.
+So namekit is a convention engine rather than a name generator. It resolves your convention from what you say, from names you cite, or from your own repos when you point at them, and it generates against that. Those three are the only sources it reads, so there is nothing to configure. A convention stored in a dotfile goes stale the day you change your mind, while a convention read from the names you already shipped cannot.
 
-It does not teach the `kit` convention that this collection's own skills use. [`skillkit`](./skillkit.md) owns that rule and states it inline, so namekit points at nothing and repeats nothing.
+The convention it works to is always the one it resolved for this run, stated back to you in the output, so a wrong read costs one correcting line. That includes the `kit` suffix this collection's own skills use: namekit carries no built-in house style, and [`skillkit`](./skillkit.md) is where that rule lives.
 
 ## Why the names come before the probes
 
@@ -80,4 +80,4 @@ npx skills add mimukit/skills -s namekit
 
 Source: [`skills/namekit/SKILL.md`](../../../skills/namekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`d2e9d3b` on 2026-08-24._
+_Verified against `main`@`425d932` on 2026-10-09._
