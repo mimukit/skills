@@ -43,11 +43,12 @@ Because the confirmation needs a human in front of it, **mergekit must never be 
 
 The morning dashboard: what's actually waiting on you, in one table.
 
-Three facts matter more than anything `gh pr list` returns, so they get gathered per PR:
+Four facts matter more than anything `gh pr list` returns, so they get gathered per PR:
 
 - **Unresolved review threads.** REST doesn't expose thread resolution state at all — only GraphQL does. A PR with a bot review sitting unanswered is not ready for your time.
 - **Behind the base branch.** A PR that's behind is one you'd be reviewing in a state that will never exist.
 - **A QA plan and proof.** Absence is a fact worth printing, not a silence.
+- **Stack position.** A PR based on another feature branch is a layer: its diff is only its own slice, and merging it merges everything below. Stacks print together, bottom layer first, because that is merge order.
 
 It **does not crown a "next" PR**. Ranking work is [`statuskit`](./statuskit.md)'s job, and a reviewer's queue is theirs to order.
 
@@ -116,4 +117,4 @@ npx skills add mimukit/skills -s mergekit
 
 Source: [`skills/mergekit/SKILL.md`](../../../skills/mergekit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`634d5d7` on 2026-09-19._
+_Verified against `main`@`4e88ae7` on 2026-10-09._
