@@ -1,6 +1,6 @@
 # Add a new skill
 
-Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating five other files, most of which lint can't check for you.
+Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating five other files. Lint now checks most of them, but not all.
 
 Prefer to have this driven for you? `skillkit` runs the whole path, from naming through testing. This page is what it does by hand.
 
@@ -44,7 +44,7 @@ metadata:
 
 Two fields do more work than they look like they do.
 
-**`description` is a routing rule, not a title.** Agents and skills.sh decide whether to activate a skill primarily from this field, so it must front-load an explicit English "Use when …" trigger. That's what makes a branded name like `humankit` findable by someone who only knows they want to remove AI-isms.
+**`description` is a routing rule, not a title.** Agents and skills.sh decide whether to activate a skill primarily from this field, so it must front-load an explicit English "Use when …" trigger. Lead with one what-clause, start the trigger within the first 300 characters, and keep the whole field under 1,024, the Agent Skills limit; lint warns on both. That's what makes a branded name like `humankit` findable by someone who only knows they want to remove AI-isms.
 
 Spend it on **one trigger per branch, not per synonym**. Every description in the collection loads on every turn, and what that budget buys is coverage of the distinct cases the skill handles, usually one per mode. Rephrasing the same case three ways buys nothing. Dropping a case buys silence, and lint can't see a skill that never fires — so cut synonyms, never coverage.
 
@@ -124,23 +124,21 @@ Then register the page in the doc map, [`docs/wiki/.wikimap.yaml`](../.wikimap.y
 
 The map is what tells a later docs audit the page exists and which source it tracks. An unregistered page is the quietest failure in this repo — it renders, it's linked, the gate is green, and the only symptom is that no audit ever sweeps it. It was missed on three skills in a row before lint started checking it, which it now does as an **error** in both directions.
 
-## 8. Update the five files lint won't fully catch
+## 8. Update the five collection files
 
-This is the step that gets missed.
+This is the step that gets missed. A full `make lint` now catches four of the five, so the gate tells you what you forgot. The workflow map is the one it can't.
 
 | File | Change |
 |------|--------|
-| `README.md` | Add a row to the skills table with a one-line description and its visibility. |
-| `skills.sh.json` | Add the skill to the best-fitting group's `skills` array. Never list `internal: true` skills. Create a new group only if none fits — a skill left out of every group falls into "Other skills". |
+| `README.md` | Add a row to the skills table with a one-line description and its visibility. Lint errors when the table and `skills/` disagree. |
+| `skills.sh.json` | Add the skill to the best-fitting group's `skills` array. Never list `internal: true` skills. Create a new group only if none fits — a skill left out of every group falls into "Other skills". Lint errors when a group here and the `index.md` group of the same title disagree. |
 | [`docs/wiki/workflow.md`](../workflow.md) | Add it to the loop phase it belongs to, or to the side kits if it isn't part of the loop. |
-| [`docs/wiki/index.md`](../index.md) | Add it to the right group under *The skills*. Lint errors if the link is missing entirely, but **cannot check the group** — see below. |
-| [`IDEAS.md`](../../../IDEAS.md) | If the skill was on the backlog, **delete its row.** Nothing lives in both `IDEAS.md` and the README table. |
+| [`docs/wiki/index.md`](../index.md) | Add it to the group under *The skills* that matches its `skills.sh.json` group. Lint errors if the link is missing or the group members differ. |
+| [`IDEAS.md`](../../../IDEAS.md) | If the skill was on the backlog, **delete its row.** Nothing lives in both `IDEAS.md` and the README table. Lint warns on a row for a shipped skill. |
 
-Lint catches the workflow map only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. `README.md`, `skills.sh.json`, and `IDEAS.md` are on the [pre-push checklist](../../../PUBLISHING.md#pre-push-checklist) instead.
+Lint catches the workflow map only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. That row is yours to remember.
 
-**The `index.md` row used to be the dangerous one, and half of it still is.** Lint now errors when a skill has no link on the index at all, which closes the failure that bit three times running: `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` each repeated it. Every one of those runs passed a clean gate, because a page that exists but that nothing links to looks identical to a finished one.
-
-What lint still cannot judge is **placement**. The index groups skills by theme, and a skill dropped under the wrong heading links exactly as correctly as one filed right. So a green run means the page is reachable, never that it's filed sensibly — that half remains yours.
+**The `index.md` row used to be the dangerous one.** `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` each repeated it. Every one of those runs passed a clean gate, because a page that exists but that nothing links to looks identical to a finished one. Lint now errors on a missing link, and it checks placement too: each index group must hold the same skills as the `skills.sh.json` group of the same title. Filing the skill in the JSON first and copying that group to the index is the shortest path to a green run.
 
 `skills.sh.json` affects only how the directory page groups things. It changes nothing about how the CLI installs skills.
 

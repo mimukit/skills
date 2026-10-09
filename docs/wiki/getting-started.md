@@ -134,7 +134,7 @@ Each skill gets a badge showing whether the repo copy is what's currently live i
   humankit         ■ real
   ...
 
-34 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
+35 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
 ```
 
 `■ real` means a non-symlink install is sitting there — typically one you installed from skills.sh. `○ unlinked` means the skill exists only in this repo and isn't active anywhere. Either way, the repo copy is *not* what your agent is reading yet. [Reference](./reference.md#link-status-badges) has the full badge table.
@@ -178,11 +178,12 @@ A clean run looks like this:
   ✓ docs/wiki/workflow.md
   ✓ docs/wiki/skills/
   ✓ docs/wiki/cheatsheet.md
+  ✓ collection parity (README · index groups · IDEAS · dispatch)
 
 0 error(s), 0 warning(s)
 ```
 
-Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document, and that [the cheatsheet](./cheatsheet.md) still matches a fresh generation from those pages. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
+Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document, that [the cheatsheet](./cheatsheet.md) still matches a fresh generation from those pages, and that the README skills table and the index groups still match the skills on disk and `skills.sh.json`. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
 
 Then the security scan:
 
@@ -204,7 +205,7 @@ This removes the symlink and restores anything that was backed up, so your publi
 
 ### Next
 
-Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there's a reader-facing page to write and five more files to update beyond the skill itself, and lint only catches two of them.
+Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there's a reader-facing page to write and five more files to update beyond the skill itself, and lint catches most of them, but not the workflow map.
 
 To understand why the repo is laid out this way, read [Architecture](./architecture.md).
 
