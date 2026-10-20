@@ -8,7 +8,7 @@ Interrogate any idea, plan, or design — a round of unblocked decisions at a ti
 |---|---|
 | Modes | single procedure, run in rounds |
 | Tools | `Bash`, `Read`, `Grep`, `Glob`, `Write`, `Edit`, `AskUserQuestion`, `Task`, `Agent`, `Skill` |
-| Writes | folds decisions back into the source plan file, stamped `Grilled: YYYY-MM-DD` |
+| Writes | folds decisions back into the source plan file, stamped `Grilled: YYYY-MM-DD`; after one confirmation, commits and pushes it and updates the issue body and label |
 | Visibility | public |
 
 ## What it does
@@ -41,15 +41,32 @@ Every question states the option grillkit would pick, and why. A naked question 
 
 It pushes hardest on unstated assumptions, hand-waved edge cases, error and failure paths, scope boundaries, and anything described vaguely. A thin answer gets followed up next round rather than left standing.
 
+## Ask what needs you, default the rest
+
+Across about a thousand grill answers, the recommendation was taken as written 70% of the time, and in one project 78%. The answers people actually wrote themselves clustered on domain questions: payment versus subscription, what a module is called, what is in scope. A grill that asks every decision the same way spends most of the user's attention confirming picks they were always going to take.
+
+So each round sorts its frontier. A decision is **asked** when it is a domain or product call, a matter of taste, hard to reverse (a data model, a public API, a migration, a cost), or when grillkit's own recommendation is weak. Outward actions are always asked, because they are permissions. Everything else is a **default**: one row in a table at the top of the round, with the pick and a one-line reason, settled unless you change it by number.
+
+The sort is the agent's judgment, which is why it is never hidden. Every default is printed with its reason, the recap marks each decision as asked or defaulted, and an override is treated exactly like an asked answer, follow-up and deferral rules included. When the sort is unclear, the decision is asked.
+
 ## The shape of a round
 
 A grill is only as good as your ability to answer it fast. Dense paragraphs with choices buried mid-sentence make a good question unanswerable.
 
 ```
-### Round 2 — 3 open decisions
+### Round 2 — 5 open decisions, 2 asked, 2 defaulted
 Blocked behind this round: storage format, migration path.
 
-❓ **Q4 — Where does the doc map live?**
+**Defaults.** Taken unless you change one by number.
+
+| # | Decision | Default | Why |
+|---|---|---|---|
+| Q4 | Page file names | (a) kebab-case from the title | matches existing docs |
+| Q5 | Link style | (a) relative Markdown links | renders everywhere |
+
+---
+
+❓ **Q6 — Where does the doc map live?**
 Stakes: `update` needs a code-path → page lookup without reading every page.
 
 - **(a) Per-page colocated metadata** — can't drift, one grep pass, invisible in every renderer
@@ -60,10 +77,10 @@ Stakes: `update` needs a code-path → page lookup without reading every page.
 
 ---
 
-⏳ **Q6 — Which renderer serves these pages?** — waiting on a sub-agent checking
+⏳ **Q8 — Which renderer serves these pages?** — waiting on a sub-agent checking
 the repo for a docs generator. It gates the frontmatter decision, so it lands next round.
 
-Reply `4a 5b`, or "go with your picks" to take both.
+Reply `6a 7b`, change a default with its number (`5b`), or "go with your picks".
 ```
 
 The rules that produce it:
@@ -75,11 +92,14 @@ The rules that produce it:
 - **Number continuously across rounds.** Restarting at Q1 makes "Q2" ambiguous the moment anyone refers back.
 - **Code spans are for literals only.** Code-spanning ordinary prose turns the round into rainbow noise and hides the spans that are real references.
 - **Show what's pending.** A blocked question is listed with `⏳` and what it's waiting on. A visible branch that goes unasked reads as forgotten.
+- **Defaults come first, as one table** — the number, the pick, and a reason that fits in a cell. No stakes line and no option list, because the point is that you can skim past them.
 - **Head the round and close it** — a progress signal, and the reply format.
 
 ## The picker mirrors the round
 
 With `AskUserQuestion` available, a round runs **hybrid**: the full text round first — stakes, trade-offs, recommendation — then the tool for the picks alone. You click instead of retyping letters, and the reasoning still gets read.
+
+Only the asked questions go to the widget. Defaults stay in the table, where overriding one costs a number in your reply.
 
 The widget is a *second view* of the round you just read, not a fresh presentation. Same questions in the same order, same options in the same order. Reorder either and the letters stop meaning anything: you read the case for `(c)`, click the third option, and get something else.
 
@@ -106,9 +126,19 @@ The stamp is provenance rather than a tracker artifact, so it's written identica
 
 The stamp vouches for the plan as grilled, not for later edits. A material edit removes it: a changed settled decision, an added, removed, or re-scoped phase, a changed `Done when:` line, or a change to the non-goals or the migration section. [`plankit`](./plankit.md) owns that definition, and grillkit carries the same list so it still works when installed alone. Wording fixes and phase annotations leave the stamp in place.
 
+## One confirmation to publish
+
+Almost every grill used to end with the same typed request: commit the plan file, push it, update the issue body and labels. That request appeared 13 times in one project's sessions alone. It is the same four chores every time, so grillkit now offers them as one previewed action.
+
+The preview lists what applies and nothing else: the paths and commit subject, the push target, what changes in the issue body, and the label move. You answer once (publish everything, commit only, or skip), and it runs them through [`commitkit`](./commitkit.md) and [`issuekit`](./issuekit.md), or plain `git` and `gh` when those aren't installed.
+
+The order is fixed, and the label goes last. `ready` is the signal [`afkkit`](./afkkit.md) and other unattended workers look for, so the label must not move before the plan it points to is on the remote. For the same reason the promotion only happens when the plan carries its `Grilled:` stamp and no decision is deferred.
+
+A refused push stops everything after it. A protected branch or a non-fast-forward is reported with the plain fix, the issue is left untouched, and nothing is force-pushed or turned into an unrequested pull request.
+
 ## Hands off to
 
-Whatever the stamp unlocks on this project, because that is the whole point of finishing a grill. Where work is tracked in GitHub Issues, that's [`issuekit`](./issuekit.md): the hardened plan is ready to become issues. Where it's tracked in Linear, a file, or nowhere, the same stamp clears the plan to be built, so it names [`implementkit`](./implementkit.md) and the first phase instead.
+Whatever the stamp unlocks on this project, because that is the whole point of finishing a grill. When the publish step just moved an existing issue to `ready`, that's [`afkkit`](./afkkit.md) on the issue, or [`issuekit`](./issuekit.md) `start` to build it attended. Where work is tracked in GitHub Issues, that's [`issuekit`](./issuekit.md): the hardened plan is ready to become issues. Where it's tracked in Linear, a file, or nowhere, the same stamp clears the plan to be built, so it names [`implementkit`](./implementkit.md) and the first phase instead.
 
 It doesn't assume the first case. A project living on GitHub may still run its backlog elsewhere, and the prompt or the repo's agent-guide file is what says which.
 
