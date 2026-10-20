@@ -7,7 +7,7 @@ Build production UI that reads as a deliberate choice for this project rather th
 | | |
 |---|---|
 | Modes | [`build`](#build) · [`audit`](#audit) |
-| Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob`, `Bash`, `AskUserQuestion` |
+| Tools | `Read`, `Write`, `Edit`, `Grep`, `Glob`, `Bash`, `AskUserQuestion`, `Task`, `Agent` |
 | Writes | components and pages, left unstaged |
 | Visibility | public |
 
@@ -113,13 +113,19 @@ The v3→v4 renames are the reason to check the version first. Every one is a va
 
 On shadcn: `className` adjusts layout, not appearance — restyling internals from outside means the variant should have been extended. Semantic tokens only, no manual `dark:` overrides (a token that needs one was the wrong token), no manual `z-index` on overlays, `cn()` for conditional classes rather than string concatenation.
 
+## Mockups
+
+A mockup is an HTML page built for a person to compare or approve before the real build. The page lives in a file, gets previewed at most once, and gets shown to the user once. Fixes are batched into one pass over the file.
+
+The rule exists because each send of a mockup costs its full length. In one measured session the same 32k-character page went out three times with almost no change between sends. A large mockup goes to a subagent, which returns only the path, so the page never sits in the build's context. That is why `Task` and `Agent` are in the tool list.
+
 ## Self-critique
 
 The **written pre-flight always runs** — it's the one that fires in headless CI and locked-down VMs. It checks the catalog filtered to the surface, the full accessibility floor, the two signature checks, and a **remove-one-accessory pass**: look at what you built and take one thing away. There's nearly always one decoration that doesn't serve the brief, and it's nearly always easier to see at the end than at the start.
 
 It's a critique, not a gate. uikit is **not a gate** at all — taste isn't pass/fail, and a build that can fail for it fails on something unfalsifiable.
 
-The **pixel pass is opt-in**, on an explicit ask, using only what's already present. It **never installs a browser, never starts a dev server it wasn't told to start, never seeds data.**
+The **pixel pass is opt-in**, on an explicit ask, using only what's already present. It reads facts with an evaluate call first and takes a snapshot with no image by default, keeping the image for the visual judgment itself. It **never installs a browser, never starts a dev server it wasn't told to start, never seeds data.**
 
 Either way it **degrades loudly** — never claiming a visual check that didn't happen, because a UI reported as verified when nothing looked at it is worse than one reported as unverified.
 
