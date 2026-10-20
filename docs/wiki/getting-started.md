@@ -71,7 +71,7 @@ This prints the skill as a ready-to-paste prompt and writes nothing to disk. Use
 
 Install `statuskit` and ask it. It surveys the project read-only — working tree, issues, open PRs, unfiled plans — and crowns a single next move, routed to the kit that does it. It's the intended entry point when you sit down and aren't sure.
 
-Otherwise: [the workflow guide](./workflow.md) maps how the skills compose into one loop (**decide → plan → file → build → ship → land**), and [the skill pages](./index.md#the-skills) cover each one on its own — what it does, when it fires, how its modes work, what it hands off to.
+Otherwise: [the workflow guide](./workflow.md) maps how the skills compose into one loop (**decide → plan → file → build → ship → land**), and [the cheatsheet](./cheatsheet.md) gives each skill in one line, linked to its `SKILL.md`.
 
 ### Update, list, remove
 
@@ -114,7 +114,7 @@ mimukit/skills — targets:
   link [name=<skill>]    Symlink a skill into ~/.claude/skills + ~/.agents/skills (no name → picker)
   unlink [name=<skill>]  Remove a dev symlink (no name → picker of linked skills)
   list                   List all skills with their link status
-  cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill pages
+  cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill descriptions
   lint [name=<skill>]    Check skills against AGENTS.md conventions
   security [name=<skill>] Heuristic security scan (local stand-in for skills.sh scanners)
   help                   Show this help
@@ -176,14 +176,13 @@ A clean run looks like this:
   ...
   ✓ shared tables (label map · type table)
   ✓ docs/wiki/workflow.md
-  ✓ docs/wiki/skills/
   ✓ docs/wiki/cheatsheet.md
-  ✓ collection parity (README · index groups · IDEAS · dispatch)
+  ✓ collection parity (README · index · IDEAS · dispatch)
 
 0 error(s), 0 warning(s)
 ```
 
-Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, and that [the per-skill pages](./index.md#the-skills) still line up one-to-one with the skills they document, that [the cheatsheet](./cheatsheet.md) still matches a fresh generation from those pages, and that the README skills table and the index groups still match the skills on disk and `skills.sh.json`. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
+Lint checks each skill's frontmatter and cross-references, then — on a full run only — verifies the two tables that are deliberately duplicated across skills still agree, that [the workflow map](./workflow.md) doesn't name a skill or mode that no longer exists, that [the cheatsheet](./cheatsheet.md) still matches a fresh generation from the skill descriptions, and that the README skills table, the index links, and the index groups still match the skills on disk and `skills.sh.json`. Errors fail the run; warnings don't. Scope it to one skill with `make lint name=commitkit`, which skips those cross-file checks.
 
 Then the security scan:
 

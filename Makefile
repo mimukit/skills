@@ -13,7 +13,7 @@ unlink:
 list:
 	@scripts/list.sh
 
-## cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill pages
+## cheatsheet             Regenerate docs/wiki/cheatsheet.md from the skill descriptions
 cheatsheet:
 	@scripts/cheatsheet.sh
 

@@ -21,11 +21,9 @@
 # On a full run it also checks collection parity: the README skills table, the
 # index.md groups against skills.sh.json, shipped IDEAS.md rows, and dispatches
 # to a skill only the user can invoke.
-# On a full run it also checks that every skill has a reader-facing wiki page
-# under docs/wiki/skills/ and that the modes each page documents still exist.
 # On a full run it also regenerates docs/wiki/cheatsheet.md and diffs it against
 # the committed page, so the generated recall page can never drift from the
-# skill pages it derives from.
+# skill descriptions it derives from.
 # On a full run it also cross-checks the human-facing docs/wiki/workflow.md map
 # against the skills it names — skill names, `<kit> <mode>` invocations, and
 # lifecycle labels must still exist in the source SKILL.md files (error), so the
@@ -38,11 +36,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 errors=0
 warns=0
-
-# Extract the top YAML frontmatter block (between the first two `---` lines).
-frontmatter() {
-  awk 'NR==1 && $0!="---"{exit} NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$1"
-}
 
 # Verify reference integrity within a SKILL.md. Builds the set of GitHub heading
 # anchors (matching github-slugger: lowercase, drop punctuation, spaces→hyphens,
@@ -152,17 +145,6 @@ has_closing_section() {
     /^[0-9]+\.[ \t]+\*\*[Hh]and[ -]?off/ { found = 1 }
     END { exit !found }
   ' "$1"
-}
-
-# The description field as one line: the folded `description: >-` scalar or a
-# plain one, with the indentation joined away and surrounding quotes dropped.
-description_text() {
-  printf '%s\n' "$1" | awk '
-    /^description:/ { f = 1; sub(/^description:[ \t]*/, ""); sub(/^[>|][-+]?[ \t]*$/, ""); if ($0 != "") out = $0; next }
-    f && /^[A-Za-z_-]+:/ { f = 0 }
-    f { sub(/^[ \t]+/, ""); out = (out == "" ? $0 : out " " $0) }
-    END { gsub(/^["'\'']|["'\'']$/, "", out); print out }
-  '
 }
 
 # Does every hand-off section carry a next move? AGENTS.md asks for three beats;
@@ -517,165 +499,12 @@ check_workflow_doc() {
   done
 }
 
-# Cross-check the per-skill wiki pages against the skills they document. Each
-# skill has a reader-facing page under docs/wiki/skills/ that duplicates skill
-# facts on purpose — a reader gets one page per skill without reading SKILL.md —
-# so nothing else keeps it honest. Guard the two ways it rots:
-#   A. every skill has a page, and every page documents a real skill
-#   B. every `### `mode`` heading on a page names a mode that skill defines
-#   D. every skill is registered in docs/wiki/.wikimap.yaml, and every skill the
-#      map names is real
-#   E. every skill is linked from docs/wiki/index.md, and every skill the index
-#      links is real
-# (B) mirrors check_workflow_doc's mode check: modes in this collection are
-# written backticked, so a mode a page documents should appear inside a code
-# span in its own SKILL.md. A page whose mode headings aren't backticked (a
-# skill whose modes genuinely aren't, like implementkit's) is simply not checked
-# — the heading style is the opt-in. Full runs only.
-#
-# (D) is the one a human can't catch by reading. A page missing from the doc map
-# looks complete from every angle — it renders, it's linked, `make lint` was
-# green — and the only symptom is that later docs audits never sweep it, which
-# surfaces months later as a page nobody noticed had gone stale. It was missed on
-# three consecutive skills before this check existed.
-#
-# (E) guards the same shape one layer out: a page that exists but that no reader
-# can navigate to. refactorkit shipped unreachable for eight days, and debugkit
-# and tutorkit each repeated it — every one of those runs passed a clean gate,
-# because (A) only proves the file is on disk. Presence in the index is all this
-# checks; **placement is not enforceable** — index.md groups skills by theme, and
-# a skill dropped into the wrong group links just as correctly as a right one.
-# So a green run still means "reachable", never "filed correctly".
-SKILL_PAGES_DIR="$REPO_ROOT/docs/wiki/skills"
-WIKIMAP="$REPO_ROOT/docs/wiki/.wikimap.yaml"
 WIKI_INDEX="$REPO_ROOT/docs/wiki/index.md"
 
-# The skill names the doc map registers a page for, one per line.
-# Matches `  - path: skills/<name>.md`; the map's non-skill pages don't match.
-wikimap_skill_names() {
-  [[ -f "$WIKIMAP" ]] || return 0
-  sed -n 's|^[[:space:]]*-[[:space:]]*path:[[:space:]]*skills/\([a-z0-9-]\{1,\}\)\.md[[:space:]]*$|\1|p' \
-    "$WIKIMAP" | sort -u
-}
-
-# The skill names index.md links a page for, one per line. Matches the whole
-# file rather than the "The skills" section: a link anywhere on the page makes
-# the skill reachable, which is the property being checked.
-index_skill_names() {
-  [[ -f "$WIKI_INDEX" ]] || return 0
-  grep -oE '\]\(\./skills/[a-z0-9-]+\.md\)' "$WIKI_INDEX" \
-    | sed 's|^](\./skills/||; s|\.md)$||' | sort -u
-}
-
-# Did a *single-skill* change land without its wiki page? (warning)
-#
-# The habit here is to commit a skill and its page together, and it holds: 16 of
-# the last 18 skill-touching commits did exactly that. The two that didn't are
-# the two shapes worth telling apart — a repo-wide prose sweep that moved 21
-# skills at once, where AGENTS.md says a page edit genuinely isn't owed, and a
-# single-skill change that simply forgot its page, which is the real miss.
-#
-# So the check is scoped to commits touching exactly one skill. A prose sweep is
-# then exempt *by construction* rather than by a suppression list somebody has to
-# maintain — which is what keeps this from opening at 22 warnings with 21 of them
-# correct to ignore, the state in which a warning gets muted and stops working.
-#
-# Compares commit dates, not the page's stamped SHA: the scoping already removes
-# the noise that would have justified parsing stamps, and a date needs no parsing.
-page_left_behind() {
-  local name="$1" sdate pdate sha touched
-  sdate="$(git -C "$REPO_ROOT" log -1 --format=%cd --date=short -- "skills/$name/" 2>/dev/null || true)"
-  pdate="$(git -C "$REPO_ROOT" log -1 --format=%cd --date=short -- "docs/wiki/skills/$name.md" 2>/dev/null || true)"
-  # Either side never committed (a brand-new skill or page) → nothing to compare.
-  [[ -n "$sdate" && -n "$pdate" ]] || return 1
-  [[ "$sdate" > "$pdate" ]] || return 1
-  sha="$(git -C "$REPO_ROOT" log -1 --format=%H -- "skills/$name/" 2>/dev/null || true)"
-  [[ -n "$sha" ]] || return 1
-  touched="$(git -C "$REPO_ROOT" show --format= --name-only "$sha" 2>/dev/null \
-    | sed -n 's#^skills/\([^/]*\)/.*#\1#p' | sort -u | wc -l | tr -d '[:space:]')"
-  [[ "$touched" == "1" ]]
-}
-
-check_skill_pages() {
-  [[ -d "$SKILL_PAGES_DIR" ]] || return 0
-  local pissues=() pwarns=() name page mode mapped indexed
-
-  # Space-padded so a `*" $name "*` match can't hit a substring of another name.
-  mapped=" $(wikimap_skill_names | tr '\n' ' ')"
-  indexed=" $(index_skill_names | tr '\n' ' ')"
-
-  # A1. every skill has a page — plus D1 (registered in the map) and E1 (linked
-  # from the index). All three are the same question asked of three files: can
-  # this page be found — on disk, by an audit, and by a reader.
-  while IFS= read -r name; do
-    [[ -z "$name" ]] && continue
-    [[ -f "$SKILL_PAGES_DIR/$name.md" ]] \
-      || pissues+=("skills/$name has no wiki page — add docs/wiki/skills/$name.md")
-    if [[ -f "$WIKIMAP" && "$mapped" != *" $name "* ]]; then
-      pissues+=("skills/$name is missing from docs/wiki/.wikimap.yaml — add a 'skills/$name.md' page entry so docs audits sweep it")
-    fi
-    if [[ -f "$WIKI_INDEX" && "$indexed" != *" $name "* ]]; then
-      pissues+=("skills/$name is unreachable from docs/wiki/index.md — link it under 'The skills' as [\`$name\`](./skills/$name.md)")
-    fi
-  done < <(skill_names)
-
-  # D2. every skill page the doc map names is real
-  while IFS= read -r name; do
-    [[ -z "$name" ]] && continue
-    skill_exists "$name" \
-      || pissues+=("docs/wiki/.wikimap.yaml maps skills/$name.md, but skills/$name/SKILL.md is missing")
-  done < <(wikimap_skill_names)
-
-  # E2. every skill page the index links is real
-  while IFS= read -r name; do
-    [[ -z "$name" ]] && continue
-    skill_exists "$name" \
-      || pissues+=("docs/wiki/index.md links skills/$name.md, but skills/$name/SKILL.md is missing")
-  done < <(index_skill_names)
-
-  for page in "$SKILL_PAGES_DIR"/*.md; do
-    [[ -f "$page" ]] || continue
-    name="$(basename "$page" .md)"
-
-    # A2. every page documents a real skill
-    if ! skill_exists "$name"; then
-      pissues+=("docs/wiki/skills/$name.md documents no skill (skills/$name/SKILL.md is missing)")
-      continue
-    fi
-
-    # B. every backticked mode heading names a mode the skill actually defines
-    while IFS= read -r mode; do
-      [[ -z "$mode" ]] && continue
-      skill_backtick_has_word "$name" "$mode" \
-        || pissues+=("docs/wiki/skills/$name.md documents mode '$mode', but skills/$name/SKILL.md defines no such mode")
-    done < <(grep -oE '^### `[a-z][a-z0-9-]*`' "$page" | sed 's/^### `//; s/`$//' | sort -u)
-
-    # C. a single-skill change that left its page behind
-    if page_left_behind "$name"; then
-      pwarns+=("skills/$name changed after docs/wiki/skills/$name.md — re-read the page, then re-stamp it")
-    fi
-  done
-
-  if [[ ${#pissues[@]} -eq 0 && ${#pwarns[@]} -eq 0 ]]; then
-    echo "  ${C_GREEN}✓${C_RESET} docs/wiki/skills/"
-    return
-  fi
-  local mark="${C_YELLOW}!${C_RESET}"
-  [[ ${#pissues[@]} -gt 0 ]] && mark="${C_RED}✗${C_RESET}"
-  echo "  $mark docs/wiki/skills/"
-  local i
-  for i in "${pissues[@]+"${pissues[@]}"}"; do
-    echo "      ${C_RED}error:${C_RESET} ${i}"; errors=$((errors + 1))
-  done
-  for i in "${pwarns[@]+"${pwarns[@]}"}"; do
-    echo "      ${C_YELLOW}warn:${C_RESET}  ${i}"; warns=$((warns + 1))
-  done
-}
-
-# Is docs/wiki/cheatsheet.md still what the skill pages say it should be?
+# Is docs/wiki/cheatsheet.md still what the skill descriptions say it should be?
 #
 # The cheatsheet is generated (scripts/cheatsheet.sh), so nothing on it is
-# authored — a stale page means somebody edited a skill page and didn't
+# authored — a stale page means somebody edited a skill description and didn't
 # regenerate. That's the one rot this file can catch exactly rather than
 # heuristically: regenerate into a temp file and diff. No judgement, no false
 # positives, and the fix is a single command the error names.
@@ -702,7 +531,7 @@ check_cheatsheet() {
     return
   fi
   echo "  ${C_RED}✗${C_RESET} docs/wiki/cheatsheet.md"
-  echo "      ${C_RED}error:${C_RESET} out of date against docs/wiki/skills/ — run 'make cheatsheet'"
+  echo "      ${C_RED}error:${C_RESET} out of date against the skill descriptions — run 'make cheatsheet'"
   diff -u "$page" "$tmp" | sed -n '3,15p' | sed 's/^/        /'
   rm -f "$tmp"
   errors=$((errors + 1))
@@ -713,6 +542,8 @@ check_cheatsheet() {
 #     the host refuses that call, so the sibling must be named for the user to
 #     run instead (warn — the match is a heuristic over hand-off verbs)
 #   - the README skills table lists exactly the skills on disk (error)
+#   - docs/wiki/index.md links exactly the skills on disk (error), so a new
+#     skill is never unreachable from the docs a reader navigates
 #   - every docs/wiki/index.md group matches the skills.sh.json group of the
 #     same title, member for member (error); order is free on both sides
 #   - no IDEAS.md backlog row names a skill that already shipped (warn)
@@ -739,6 +570,14 @@ check_collection() {
       || cissues+=("README.md skills table differs from skills/ — table: [$listed] disk: [$ondisk]")
   fi
 
+  if [[ -f "$WIKI_INDEX" ]]; then
+    listed="$(grep -oE '\]\(\.\./\.\./skills/[a-z0-9-]+/SKILL\.md\)' "$WIKI_INDEX" \
+      | sed 's|^](\.\./\.\./skills/||; s|/SKILL\.md)$||' | sort -u | tr '\n' ' ')"
+    ondisk="$(skill_names | tr '\n' ' ')"
+    [[ "$listed" == "$ondisk" ]] \
+      || cissues+=("docs/wiki/index.md skill links differ from skills/ — index: [$listed] disk: [$ondisk]")
+  fi
+
   local json="$REPO_ROOT/skills.sh.json" diffout
   if [[ -f "$json" && -f "$WIKI_INDEX" ]] && command -v python3 >/dev/null 2>&1; then
     diffout="$(python3 - "$json" "$WIKI_INDEX" <<'PY'
@@ -750,7 +589,7 @@ for line in open(sys.argv[2]):
     if m:
         cur = m.group(1); index[cur] = []; continue
     if cur:
-        names = re.findall(r"\]\(\./skills/([a-z0-9-]+)\.md\)", line)
+        names = re.findall(r"\]\(\.\./\.\./skills/([a-z0-9-]+)/SKILL\.md\)", line)
         if names: index[cur] += names
         elif line.strip(): cur = None
 for t in sorted(set(groups) | set(index)):
@@ -769,7 +608,7 @@ PY
   fi
 
   if [[ ${#cissues[@]} -eq 0 && ${#cwarns[@]} -eq 0 ]]; then
-    echo "  ${C_GREEN}✓${C_RESET} collection parity (README · index groups · IDEAS · dispatch)"
+    echo "  ${C_GREEN}✓${C_RESET} collection parity (README · index · IDEAS · dispatch)"
     return
   fi
   local mark="${C_YELLOW}!${C_RESET}" i
@@ -797,7 +636,6 @@ done
 # Cross-file checks only on a full run — a single-skill lint stays scoped.
 [[ "$run_all" -eq 1 ]] && check_shared_tables
 [[ "$run_all" -eq 1 ]] && check_workflow_doc
-[[ "$run_all" -eq 1 ]] && check_skill_pages
 [[ "$run_all" -eq 1 ]] && check_cheatsheet
 [[ "$run_all" -eq 1 ]] && check_collection
 

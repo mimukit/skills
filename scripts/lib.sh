@@ -46,6 +46,22 @@ skill_names() {
 
 skill_exists() { [[ -f "$SKILLS_DIR/$1/SKILL.md" ]]; }
 
+# Extract the top YAML frontmatter block (between the first two `---` lines).
+frontmatter() {
+  awk 'NR==1 && $0!="---"{exit} NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$1"
+}
+
+# The description field as one line: the folded `description: >-` scalar or a
+# plain one, with the indentation joined away and surrounding quotes dropped.
+description_text() {
+  printf '%s\n' "$1" | awk '
+    /^description:/ { f = 1; sub(/^description:[ \t]*/, ""); sub(/^[>|][-+]?[ \t]*$/, ""); if ($0 != "") out = $0; next }
+    f && /^[A-Za-z_-]+:/ { f = 0 }
+    f { sub(/^[ \t]+/, ""); out = (out == "" ? $0 : out " " $0) }
+    END { gsub(/^["'\'']|["'\'']$/, "", out); print out }
+  '
+}
+
 # Classify what's at <dest-root>/<name> (dest-root defaults to CLAUDE_SKILLS):
 #   linked    — symlink pointing at our copy (a dev link we own)
 #   foreign   — symlink pointing somewhere else

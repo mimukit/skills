@@ -41,13 +41,13 @@ pages:
     mode: how-to
     documents: [scripts/lib.sh, scripts/link.sh, scripts/unlink.sh]
 
-  # Generated, never authored: scripts/cheatsheet.sh derives every line from the
-  # per-skill pages, and `make lint` diffs the committed page against a fresh
+  # Generated, never authored: scripts/cheatsheet.sh derives every line from a
+  # skill's description, and `make lint` diffs the committed page against a fresh
   # generation. Listed here so a docs audit sweeps it, but the fix for anything
-  # wrong on it is always an edit to a skill page plus `make cheatsheet`.
+  # wrong on it is always an edit to a SKILL.md plus `make cheatsheet`.
   - path: cheatsheet.md
     mode: reference
-    documents: [docs/wiki/skills/*.md]
+    documents: [skills/*/SKILL.md]
 
   # The composition map: how the skills sequence into one loop. It restates skill
   # facts on purpose so a reader gets one map, which is why `make lint` cross-checks
@@ -55,113 +55,3 @@ pages:
   - path: workflow.md
     mode: explanation
     documents: [skills/*/SKILL.md]
-
-  # One page per skill, reader-facing. Each documents its own SKILL.md;
-  # `make lint` enforces page-per-skill in both directions and mode parity, and
-  # errors on a skill missing from this list — an unregistered page is invisible
-  # to every audit, so nothing else would ever notice it.
-  - path: skills/afkkit.md
-    mode: reference
-    documents: [skills/afkkit/SKILL.md]
-  - path: skills/commitkit.md
-    mode: reference
-    documents: [skills/commitkit/SKILL.md]
-  - path: skills/debugkit.md
-    mode: reference
-    documents: [skills/debugkit/SKILL.md]
-  - path: skills/designkit.md
-    mode: reference
-    documents: [skills/designkit/SKILL.md]
-  - path: skills/domainkit.md
-    mode: reference
-    documents: [skills/domainkit/SKILL.md]
-  - path: skills/gitkit.md
-    mode: reference
-    documents: [skills/gitkit/SKILL.md]
-  - path: skills/grillkit.md
-    mode: reference
-    documents: [skills/grillkit/SKILL.md]
-  - path: skills/handoffkit.md
-    mode: reference
-    documents: [skills/handoffkit/SKILL.md]
-  - path: skills/humankit.md
-    mode: reference
-    documents: [skills/humankit/SKILL.md]
-  - path: skills/ideakit.md
-    mode: reference
-    documents: [skills/ideakit/SKILL.md]
-  - path: skills/implementkit.md
-    mode: reference
-    documents: [skills/implementkit/SKILL.md]
-  - path: skills/issuekit.md
-    mode: reference
-    documents: [skills/issuekit/SKILL.md]
-  - path: skills/mergekit.md
-    mode: reference
-    documents: [skills/mergekit/SKILL.md]
-  - path: skills/orcakit.md
-    mode: reference
-    documents: [skills/orcakit/SKILL.md]
-  - path: skills/namekit.md
-    mode: reference
-    documents: [skills/namekit/SKILL.md]
-  - path: skills/paseokit.md
-    mode: reference
-    documents: [skills/paseokit/SKILL.md]
-  - path: skills/plankit.md
-    mode: reference
-    documents: [skills/plankit/SKILL.md]
-  - path: skills/prkit.md
-    mode: reference
-    documents: [skills/prkit/SKILL.md]
-  - path: skills/promptkit.md
-    mode: reference
-    documents: [skills/promptkit/SKILL.md]
-  - path: skills/prototypekit.md
-    mode: reference
-    documents: [skills/prototypekit/SKILL.md]
-  - path: skills/qakit.md
-    mode: reference
-    documents: [skills/qakit/SKILL.md]
-  - path: skills/refactorkit.md
-    mode: reference
-    documents: [skills/refactorkit/SKILL.md]
-  - path: skills/releasekit.md
-    mode: reference
-    documents: [skills/releasekit/SKILL.md]
-  - path: skills/repokit.md
-    mode: reference
-    documents: [skills/repokit/SKILL.md]
-  - path: skills/researchkit.md
-    mode: reference
-    documents: [skills/researchkit/SKILL.md]
-  - path: skills/reviewkit.md
-    mode: reference
-    documents: [skills/reviewkit/SKILL.md]
-  - path: skills/seokit.md
-    mode: reference
-    documents: [skills/seokit/SKILL.md]
-  - path: skills/skillkit.md
-    mode: reference
-    documents: [skills/skillkit/SKILL.md]
-  - path: skills/statuskit.md
-    mode: reference
-    documents: [skills/statuskit/SKILL.md]
-  - path: skills/testkit.md
-    mode: reference
-    documents: [skills/testkit/SKILL.md]
-  - path: skills/tutorkit.md
-    mode: reference
-    documents: [skills/tutorkit/SKILL.md]
-  - path: skills/uikit.md
-    mode: reference
-    documents: [skills/uikit/SKILL.md]
-  - path: skills/validatekit.md
-    mode: reference
-    documents: [skills/validatekit/SKILL.md]
-  - path: skills/verifykit.md
-    mode: reference
-    documents: [skills/verifykit/SKILL.md]
-  - path: skills/wikikit.md
-    mode: reference
-    documents: [skills/wikikit/SKILL.md]

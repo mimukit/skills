@@ -4,7 +4,7 @@ How these skills fit together day to day. Every skill here is usable on its own,
 
 Depth on any single skill lives on [its own page](./index.md#the-skills). What this page covers is the seams: what each phase takes in, what it produces, and what has to be true before the next one starts.
 
-If you only remember one thing: **[`statuskit`](./skills/statuskit.md) tells you which of these to run next.** Start there when you sit down and aren't sure.
+If you only remember one thing: **[`statuskit`](../../skills/statuskit/SKILL.md) tells you which of these to run next.** Start there when you sit down and aren't sure.
 
 ## The loop at a glance
 
@@ -95,11 +95,11 @@ flowchart TD
 
 Read either one top to bottom. A solid arrow (`──▶`, `▼`) is a step — the next kit you run, or the thing this one produces. A dotted arrow (`┄┄▶`) is a layer being called rather than a step you take, and [The layers underneath](#the-layers-underneath) is where those live. `statuskit` sits above the loop rather than in it: read-only, launches nothing, and its whole job is telling you which row to jump to, so it can point at any of them.
 
-Several kits stay off the map entirely, and for three different reasons. [`repokit`](./skills/repokit.md) runs *before* the loop, once per repo, provisioning the label vocabulary everything downstream reads. [`afkkit`](./skills/afkkit.md) runs the whole START → SHIP span unattended, so it replaces a stretch of the map rather than adding to it. Everything else is invoked on demand and enters from wherever you already are — those are [the side kits](#the-side-kits). Two are worth singling out. `promptkit` runs before you invoke anything at all, so a box for it would imply a step that doesn't exist. `debugkit` enters from a *symptom* rather than from a phase, which is why nothing on the map points at it — you arrive there because something broke, not because you finished the row above.
+Several kits stay off the map entirely, and for three different reasons. [`repokit`](../../skills/repokit/SKILL.md) runs *before* the loop, once per repo, provisioning the label vocabulary everything downstream reads. [`afkkit`](../../skills/afkkit/SKILL.md) runs the whole START → SHIP span unattended, so it replaces a stretch of the map rather than adding to it. Everything else is invoked on demand and enters from wherever you already are — those are [the side kits](#the-side-kits). Two are worth singling out. `promptkit` runs before you invoke anything at all, so a box for it would imply a step that doesn't exist. `debugkit` enters from a *symptom* rather than from a phase, which is why nothing on the map points at it — you arrive there because something broke, not because you finished the row above.
 
 ## Orientation: start with statuskit
 
-[`statuskit`](./skills/statuskit.md) is a read-only sweep of the working tree, open issues and their priority labels, open PRs, and unfiled plans. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you, and each run is a fresh read — no cache, always re-derived from git and GitHub. By default it also saves the dashboard as a gitignored scratch snapshot under `docs/status/`; add "just print it" to skip the file.
+[`statuskit`](../../skills/statuskit/SKILL.md) is a read-only sweep of the working tree, open issues and their priority labels, open PRs, and unfiled plans. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you, and each run is a fresh read — no cache, always re-derived from git and GitHub. By default it also saves the dashboard as a gitignored scratch snapshot under `docs/status/`; add "just print it" to skip the file.
 
 Its ladder, when `gh` is available:
 
@@ -128,11 +128,11 @@ Without `gh` it falls back to a six-rung git-only ladder over the same shape: un
 
 ## Phase 1 — Decide
 
-All three are entry points. The one kit upstream of them is [`ideakit`](./skills/ideakit.md), which dispatches an idea's research and validation questions into `researchkit` and `validatekit` from its own ideas repo; otherwise nothing hands off *into* them, and they hand off forward into planning. They split by what kind of answer you're short of: `validatekit` for whether the thing should exist, `researchkit` for which option to pick, `prototypekit` for anything only building will settle.
+All three are entry points. The one kit upstream of them is [`ideakit`](../../skills/ideakit/SKILL.md), which dispatches an idea's research and validation questions into `researchkit` and `validatekit` from its own ideas repo; otherwise nothing hands off *into* them, and they hand off forward into planning. They split by what kind of answer you're short of: `validatekit` for whether the thing should exist, `researchkit` for which option to pick, `prototypekit` for anything only building will settle.
 
 ### validatekit — should this exist at all?
 
-[`validatekit`](./skills/validatekit.md) is for a product or business idea, not a technical change. It asks a handful of forcing questions one at a time, picks the question set by stage (pre-product / has users, not paying / has paying customers), and grades the evidence you can actually produce into one of three verdicts:
+[`validatekit`](../../skills/validatekit/SKILL.md) is for a product or business idea, not a technical change. It asks a handful of forcing questions one at a time, picks the question set by stage (pre-product / has users, not paying / has paying customers), and grades the evidence you can actually produce into one of three verdicts:
 
 - **Validated** → go to `plankit` and turn the wedge into a plan.
 - **Unproven** → go run the real-world assignment it gives you. Come back after, not before.
@@ -142,13 +142,13 @@ Chat output is the deliverable. It writes `docs/validation/NNNN-validation-<slug
 
 ### researchkit — which option do we pick?
 
-[`researchkit`](./skills/researchkit.md) is for a technical decision with more than one credible answer: a library, a framework, a service, an architecture. It reads primary sources, cites and dates the evidence, and recommends one. Prints inline by default; writes `docs/research/NNNN-research-<slug>-YYYY-MM-DD.md` only when you ask.
+[`researchkit`](../../skills/researchkit/SKILL.md) is for a technical decision with more than one credible answer: a library, a framework, a service, an architecture. It reads primary sources, cites and dates the evidence, and recommends one. Prints inline by default; writes `docs/research/NNNN-research-<slug>-YYYY-MM-DD.md` only when you ask.
 
 It does not build to find out, and it does not read your codebase for reuse patterns — that's planning work. Leftover uncertainties become the open questions `plankit` and `grillkit` pick up, and any of them that needs a spike goes to `prototypekit`.
 
 ### prototypekit — does it hold up, and which shape?
 
-[`prototypekit`](./skills/prototypekit.md) takes the decisions reading can't settle. `researchkit` refuses to build and says so; this is where the cases it refuses land, along with anything where the design is unsettled *because nobody has seen it work*. It gates hard on a stated question — no question, no prototype, and "build me a demo" bounces — then routes to one of two branches:
+[`prototypekit`](../../skills/prototypekit/SKILL.md) takes the decisions reading can't settle. `researchkit` refuses to build and says so; this is where the cases it refuses land, along with anything where the design is unsettled *because nobody has seen it work*. It gates hard on a stated question — no question, no prototype, and "build me a demo" bounces — then routes to one of two branches:
 
 - **`logic`** — a state model, a reducer, a flow, or a feasibility question. Imports the real code when it exists, invents a self-contained file when it doesn't, and renders either as something a human clicks through or as a script that prints a number.
 - **`ui`** — three structurally different mocks on one route, switchable by a URL param, each naming the axis it diverges on. A winner is evidence, not a starting point: `uikit` builds it for real, from scratch.
@@ -163,13 +163,13 @@ The flow is **plankit drafts → grillkit hardens → issuekit files**, and on a
 
 ### plankit — draft the plan
 
-[`plankit`](./skills/plankit.md) takes a rough idea through capture → ground (reads the actual repo) → diverge → converge → write → hand off, and produces `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md` with a fixed shape: Context, Design decisions (settled), Approach, Open questions, Non-goals. Keep the body phase- and task-shaped, because `issuekit` slices issues out of it.
+[`plankit`](../../skills/plankit/SKILL.md) takes a rough idea through capture → ground (reads the actual repo) → diverge → converge → write → hand off, and produces `docs/plans/NNNN-plan-<slug>-YYYY-MM-DD.md` with a fixed shape: Context, Design decisions (settled), Approach, Open questions, Non-goals. Keep the body phase- and task-shaped, because `issuekit` slices issues out of it.
 
 It writes no code and files no issues. It also isn't the interrogator — it drafts, then hands to `grillkit`.
 
 ### grillkit — harden it
 
-[`grillkit`](./skills/grillkit.md) pressure-tests a round of unblocked decisions at a time, each with a recommended answer, until you and it share the same picture. Started from a plan file, it folds the settled decisions back into that same file by default and stamps it:
+[`grillkit`](../../skills/grillkit/SKILL.md) pressure-tests a round of unblocked decisions at a time, each with a recommended answer, until you and it share the same picture. Started from a plan file, it folds the settled decisions back into that same file by default and stamps it:
 
 ```
 Grilled: YYYY-MM-DD
@@ -181,7 +181,7 @@ Started from anything else — a concept, an architecture, a PR — it recaps an
 
 ## Phase 3 — File and start
 
-[`issuekit`](./skills/issuekit.md) owns the whole tracker lifecycle in five modes. If the mode isn't clear from your ask, it asks first. Every mutation is previewed before it runs, except label writes in `create`, `start`, `close`, and `sync`, and it never merges PRs.
+[`issuekit`](../../skills/issuekit/SKILL.md) owns the whole tracker lifecycle in five modes. If the mode isn't clear from your ask, it asks first. Every mutation is previewed before it runs, except label writes in `create`, `start`, `close`, and `sync`, and it never merges PRs.
 
 | Mode | What it does |
 |---|---|
@@ -215,7 +215,7 @@ Priority is a four-step scale — `critical`, `high`, `medium`, `low` — and **
 
 ### implementkit — write the code
 
-[`implementkit`](./skills/implementkit.md) wants an explicit input: a plan file, an issue (`#42`), or a spec in the prompt. It won't go hunting for one. It picks its build mode by precedence, taking the first tier that answers:
+[`implementkit`](../../skills/implementkit/SKILL.md) wants an explicit input: a plan file, an issue (`#42`), or a spec in the prompt. It won't go hunting for one. It picks its build mode by precedence, taking the first tier that answers:
 
 1. **Your prompt** — an explicit "do this TDD" always wins.
 2. **Agent instructions** — `CLAUDE.md` or equivalent.
@@ -228,7 +228,7 @@ It leaves everything **unstaged** and commits nothing. An underspecified input g
 
 ### uikit — make the UI half look chosen
 
-[`uikit`](./skills/uikit.md) is not a step of its own: `implementkit` delegates to it when the work includes a visual surface, so it rides in on the same invocation and keeps no gate of its own. It exists because nothing else in the loop looks at the screen — `reviewkit` reads source, `verifykit` photographs without judging, and `designkit` explicitly refuses to generate.
+[`uikit`](../../skills/uikit/SKILL.md) is not a step of its own: `implementkit` delegates to it when the work includes a visual surface, so it rides in on the same invocation and keeps no gate of its own. It exists because nothing else in the loop looks at the screen — `reviewkit` reads source, `verifykit` photographs without judging, and `designkit` explicitly refuses to generate.
 
 It works off a precedence ladder — `DESIGN.md`, then the shipped components, then the product's own subject matter, then stack defaults — so taste gets spent only where nothing else constrains the choice. Before writing anything it declares a **design read** in five words: surface, audience, rung, signature, density. That line is the only durable record of why the UI looks the way it does, and it travels through the hand-off into the PR body.
 
@@ -236,7 +236,7 @@ It works off a precedence ladder — `DESIGN.md`, then the shipped components, t
 
 ### commitkit — land it in git
 
-[`commitkit`](./skills/commitkit.md) commits **this session's changes** with Conventional Commits messages written from the actual diff. A worktree often carries other agents' work too, so a run touches only the paths the session created, edited, or removed, and leaves every other change exactly as it found it; `commitkit all` takes the whole tree. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the session's files, groups the work, commits, pushes to `origin` when the push is a fast-forward, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files.
+[`commitkit`](../../skills/commitkit/SKILL.md) commits **this session's changes** with Conventional Commits messages written from the actual diff. A worktree often carries other agents' work too, so a run touches only the paths the session created, edited, or removed, and leaves every other change exactly as it found it; `commitkit all` takes the whole tree. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the session's files, groups the work, commits, pushes to `origin` when the push is a fast-forward, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files.
 
 The message shape, with a mandatory scope (fallback `repo`) and a required body:
 
@@ -253,7 +253,7 @@ It pushes unless you or a calling skill say `no-push`, never force-pushes, and n
 
 ### reviewkit — check the agent's work
 
-[`reviewkit`](./skills/reviewkit.md) makes four ordered passes over the diff: convention-fit, agent-slop signatures, requirement-completeness, then correctness. It targets uncommitted work first, then the branch diff against the base from `gitkit`. Findings are ranked by severity with quoted evidence — 🔴 Blocker, 🟡 Should-fix, 🟢 Nit — and the verdict falls out mechanically: **needs-work** with any blocker, **ready-with-fixes** with any should-fix, **ready** with only nits.
+[`reviewkit`](../../skills/reviewkit/SKILL.md) makes four ordered passes over the diff: convention-fit, agent-slop signatures, requirement-completeness, then correctness. It targets uncommitted work first, then the branch diff against the base from `gitkit`. Findings are ranked by severity with quoted evidence — 🔴 Blocker, 🟡 Should-fix, 🟢 Nit — and the verdict falls out mechanically: **needs-work** with any blocker, **ready-with-fixes** with any should-fix, **ready** with only nits.
 
 It needs the change's stated intent to run the completeness pass; without one it skips that pass rather than inventing a spec. It never edits source and never applies fixes — you take the findings back to an implement step or fix by hand and re-run. Optional report at `docs/reviews/NNNN-review-<slug>-YYYY-MM-DD.md`, offered but never saved unprompted.
 
@@ -261,12 +261,12 @@ It needs the change's stated intent to run the completeness pass; without one it
 
 Two different jobs, often both:
 
-- **[`verifykit`](./skills/verifykit.md)** drives the feature in a real browser, in three modes. `show` takes screenshots for you to look at now and publishes nothing. `proof` captures screenshots plus a short GIF into `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/`. `setup` installs the browser driver and readies the publish path. The proof bundle's `proof.md` is a hand-off contract: `prkit` reads it and splices it straight into the PR's Proof section. Add `docs/verify/` to `.gitignore` — the assets publish to a hidden git ref instead, so a normal clone never fetches them. Frontend changes only, and it degrades honestly: no browser automation available means a manual capture recipe, not faked proof.
-- **[`qakit`](./skills/qakit.md)** writes a manual test plan for a human to run, grounded in the diff, at `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md`. It walks eleven dimensions (happy path, edges, negative, regression, security, data, concurrency, compatibility, accessibility, performance, UX), tags each case by priority, and splits the work honestly: it runs the automated checks itself and records the real output, and leaves only genuine human-judgment steps in the manual list. It won't mark a manual case passed on your behalf.
+- **[`verifykit`](../../skills/verifykit/SKILL.md)** drives the feature in a real browser, in three modes. `show` takes screenshots for you to look at now and publishes nothing. `proof` captures screenshots plus a short GIF into `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/`. `setup` installs the browser driver and readies the publish path. The proof bundle's `proof.md` is a hand-off contract: `prkit` reads it and splices it straight into the PR's Proof section. Add `docs/verify/` to `.gitignore` — the assets publish to a hidden git ref instead, so a normal clone never fetches them. Frontend changes only, and it degrades honestly: no browser automation available means a manual capture recipe, not faked proof.
+- **[`qakit`](../../skills/qakit/SKILL.md)** writes a manual test plan for a human to run, grounded in the diff, at `docs/qa/NNNN-qa-<slug>-YYYY-MM-DD.md`. It walks eleven dimensions (happy path, edges, negative, regression, security, data, concurrency, compatibility, accessibility, performance, UX), tags each case by priority, and splits the work honestly: it runs the automated checks itself and records the real output, and leaves only genuine human-judgment steps in the manual list. It won't mark a manual case passed on your behalf.
 
 ### wikikit — keep the reader docs true
 
-`wikikit update` is the docs half of the same change. It resolves the working tree first and the branch diff otherwise, maps the changed paths to affected pages through a per-set manifest at `<doc home>/.wikimap.yaml`, and **states which pages it will touch and which it is deliberately leaving alone before it edits anything**. Edits to existing pages go straight in; new pages and deletions are consent-gated. Every page it writes carries a stamp — `` _Verified against `main`@`a1b2c3d` on 2026-08-06._ `` — which is what makes the audit cheap later. This page is one of them; [`wikikit`](./skills/wikikit.md) has the other three modes.
+`wikikit update` is the docs half of the same change. It resolves the working tree first and the branch diff otherwise, maps the changed paths to affected pages through a per-set manifest at `<doc home>/.wikimap.yaml`, and **states which pages it will touch and which it is deliberately leaving alone before it edits anything**. Edits to existing pages go straight in; new pages and deletions are consent-gated. Every page it writes carries a stamp — `` _Verified against `main`@`a1b2c3d` on 2026-08-06._ `` — which is what makes the audit cheap later. This page is one of them; [`wikikit`](../../skills/wikikit/SKILL.md) has the other three modes.
 
 The rule underneath all of them: **a feature it cannot find in code does not get documented.** Commands come from the real manifest, and a fixed allowlist of side-effect-free probes (`--help`, `--version`, `make -n`, script listings) runs after one consent ask. It never installs, builds, migrates, or deploys to check a claim.
 
@@ -274,7 +274,7 @@ The rule underneath all of them: **a feature it cannot find in code does not get
 
 ### prkit — open the PR
 
-[`prkit`](./skills/prkit.md) writes the title, summary, and test plan from the real commits and diff, fills in the repo's PR template exactly when one exists, embeds `verifykit`'s `proof.md` when a bundle is present, pushes, and opens the PR with `gh`. It writes the forward `Closes #N` link at open time, and flips the linked issue `in-progress` → `in-review`.
+[`prkit`](../../skills/prkit/SKILL.md) writes the title, summary, and test plan from the real commits and diff, fills in the repo's PR template exactly when one exists, embeds `verifykit`'s `proof.md` when a bundle is present, pushes, and opens the PR with `gh`. It writes the forward `Closes #N` link at open time, and flips the linked issue `in-progress` → `in-review`.
 
 That flip has exactly two legal starting states — `in-progress` and `ready`, and both swap the old label for `in-review` (from `ready`, it also says the issue arrived unstarted). Any other lifecycle label is drift rather than a transition, so it stops and reports instead of guessing.
 
@@ -284,7 +284,7 @@ At PR-open time the sync rule resolves to **rebase** onto the base, and force-pu
 
 ### mergekit — review it locally and merge
 
-[`mergekit`](./skills/mergekit.md) has four modes:
+[`mergekit`](../../skills/mergekit/SKILL.md) has four modes:
 
 - **`mergekit list`** — what's waiting on you, most-ready first, drafts and other people's PRs marked. It deliberately does not crown a "next" PR.
 - **`mergekit start`** — pulls the PR into a worktree, sets the project up, and prints a review pack: PR metadata, the linked issue and its acceptance criteria, the commit log and diffstat, the QA plan and proof artifacts, unresolved review threads with `file:line`, CI status, and — explicitly — what's *missing*. It never syncs or pushes: it reports how far the branch is behind, and you run `gitkit sync` in the worktree if that matters. It ends with the worktree path and the one command that starts the app.
@@ -305,7 +305,7 @@ If the tracker has drifted more broadly — several merged PRs whose issues are 
 
 ### releasekit — turn merged work into a version
 
-[`releasekit`](./skills/releasekit.md) is the end of the line, and the only step here that runs **per release rather than per issue** — several trips around the loop usually land before you cut one. It reads back the tax `commitkit` collects on every commit: the type, the scope, and the `!` marker are exactly the inputs a semver bump and a changelog are computed from. It resolves the range since the last release tag, derives the version, renders one Keep a Changelog section, bumps the manifest, tags it, and publishes the GitHub release.
+[`releasekit`](../../skills/releasekit/SKILL.md) is the end of the line, and the only step here that runs **per release rather than per issue** — several trips around the loop usually land before you cut one. It reads back the tax `commitkit` collects on every commit: the type, the scope, and the `!` marker are exactly the inputs a semver bump and a changelog are computed from. It resolves the range since the last release tag, derives the version, renders one Keep a Changelog section, bumps the manifest, tags it, and publishes the GitHub release.
 
 It has no modes — one procedure with two exits. `releasekit preview` stops after the preview having mutated nothing; a bare `releasekit` waits at that same preview for your confirmation. That gate has no exemption, which is why it sits outside `afkkit`'s span: a version number is spent permanently, so a run with nobody to answer stops rather than assuming a yes.
 
@@ -321,7 +321,7 @@ Three kits the phases call into rather than sit beside. You rarely invoke them b
 
 ### repokit — provision the ground first
 
-Run [`repokit`](./skills/repokit.md) once per repo, before the loop:
+Run [`repokit`](../../skills/repokit/SKILL.md) once per repo, before the loop:
 
 - `repokit labels` — creates and reconciles fifteen labels: the ten lifecycle states and the four priority steps that `issuekit` reads, plus the `ai-review` automation label that asks a repo's AI review tooling to look at a PR, each with its canonical name, color, and description. Re-run safe: missing ones get created, drifted ones get offered an update, matching ones are left alone, and your own non-canonical labels are never touched.
 - `repokit about` — infers a one-line About description and topics from the repo's own contents.
@@ -332,7 +332,7 @@ The lifecycle and priority maps are a shared contract with `issuekit`: `repokit`
 
 ### gitkit — the git layer
 
-[`gitkit`](./skills/gitkit.md) is the single source of truth for four things:
+[`gitkit`](../../skills/gitkit/SKILL.md) is the single source of truth for four things:
 
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
 - **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix that patches the base branch directly, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
@@ -345,7 +345,7 @@ Invoke it directly for housekeeping: "spin up a worktree for this", "where's the
 
 ### domainkit — scribe the model
 
-[`domainkit`](./skills/domainkit.md) runs the other way from `gitkit`: planning settles something, and this writes it down. Invoke it when a plan or a grill round settles a domain term or a hard-to-reverse trade-off. It maintains two artifacts and asks before writing either:
+[`domainkit`](../../skills/domainkit/SKILL.md) runs the other way from `gitkit`: planning settles something, and this writes it down. Invoke it when a plan or a grill round settles a domain term or a hard-to-reverse trade-off. It maintains two artifacts and asks before writing either:
 
 - `CONTEXT.md` at the repo root — the glossary of the ubiquitous language.
 - `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` — decision records, zero-padded and sequential.
@@ -354,7 +354,7 @@ The ADR bar is three-part: hard to reverse, surprising without context, and a ge
 
 ## Unattended: afkkit
 
-[`afkkit`](./skills/afkkit.md) runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** the steps: start the issue, spec gate, implement (committing through `commitkit` with `no-push` at every phase boundary), QA plan, one acceptance check, fix, open the PR, hand off. It owns exactly one thing the others don't: the escalation policy. Think of it as the autonomous sibling of `statuskit`: `statuskit` tells you what to do next, `afkkit` does the next several things and stops where a human is genuinely required.
+[`afkkit`](../../skills/afkkit/SKILL.md) runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** the steps: start the issue, spec gate, implement (committing through `commitkit` with `no-push` at every phase boundary), QA plan, one acceptance check, fix, open the PR, hand off. It owns exactly one thing the others don't: the escalation policy. Think of it as the autonomous sibling of `statuskit`: `statuskit` tells you what to do next, `afkkit` does the next several things and stops where a human is genuinely required.
 
 **It runs in one warm session.** The whole issue, from start to PR, stays in the session you invoke it in, so no step rediscovers what an earlier one read. That shape came from the history: the old one-subagent-per-step conductor took about 87 minutes on its one recorded run, and the same chain pasted by hand into one session took a median of 21. The run makes one dispatch of its own, the acceptance check, which gets a fresh context on purpose: a reviewer that shares the builder's transcript shares its blind spots. A batch gives each issue its own agent.
 
@@ -368,20 +368,20 @@ The span **starts** at a `ready` issue and **ends** at an open PR. It does not p
 
 Invoked on demand, from wherever you already are. None of them is a step in the loop, and none is reached by finishing the row above.
 
-- **[`debugkit`](./skills/debugkit.md)** — the one kit whose input is a *symptom* rather than intent. Reproduce, isolate, hypothesize, prove, report, behind two gates that do the real work: **no reproduction, no diagnosis**, and the **on/off test** — you have the cause only when you can make the symptom appear and disappear by toggling it. It **diagnoses and never fixes**, reverting every probe it made, and hands a proven cause to `implementkit` as a failing reproduction.
-- **[`testkit`](./skills/testkit.md)** — the one kit whose input is *working code nobody can safely change*. Every other test-adjacent kit assumes a suite already exists: `implementkit` covers only new work, `qakit` writes plans a human runs, `debugkit` produces exactly one failing test as a reproduction. `testkit audit` ranks the untested surface and crowns one slice into a ledger at `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md`; `testkit cover` stands up a runner if there is none and writes the tests. Its real rule is the **failure gate** — a test is kept only after it was watched to fail, so the suite is one that would catch a regression rather than a directory of green checkmarks. It never fixes the code and never restructures it; a contradiction routes to `debugkit`, a testability blocker to `refactorkit`.
-- **[`refactorkit`](./skills/refactorkit.md)** — surveys a codebase you already have for the structural change worth making, and crowns one. It looks for a closed set of four frictions and gates every candidate on two questions: does removing it *concentrate* complexity rather than relocate it, and can the behavior be tested through the new interface alone. It **proposes and never edits** — `Edit` isn't in its tool set — and the crowned candidate goes to `plankit` to become a phased plan, then to a grilling.
-- **[`designkit`](./skills/designkit.md)** — the design-system counterpart to `wikikit`, keeping a second in-repo contract true to the code. It writes `DESIGN.md` at the repo root, in the open Google Labs format that pairs machine-readable tokens with the rationale in prose, because that's where DESIGN.md-aware tools look. **Every token must be a value that already appears in your codebase**: clustering forty near-identical greys into a scale is derivation, picking a nicer neighboring hex is invention. It **generates no UI** — that's `uikit`, which reads `DESIGN.md` and never writes it.
-- **[`promptkit`](./skills/promptkit.md)** — sharpens the prompt before you send it. `promptkit task` grounds a one-shot agent instruction against the real tree — *"the auth file"* becomes a path, *"make sure tests pass"* becomes the repo's actual command — and prints a resolution ledger naming what didn't resolve. `promptkit system` authors the durable prompt an application ships, landing at `docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md`. **Advisory only**: handed "add auth" it writes a prompt about auth, never the auth.
-- **[`handoffkit`](./skills/handoffkit.md)** — compacts the session into `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` for a cold pickup: goal, state, next steps, key files, decisions, blockers, how to verify. It links to specs and plans by path rather than pasting them. You must invoke it explicitly; auto-triggering is disabled in its frontmatter so a compaction never fires mid-work.
-- **[`humankit`](./skills/humankit.md)** — strips AI-writing tells from prose. Rewrites by default; ask for a diagnosis only and it just reports the tells. Give it a sample of your own writing and it matches your patterns instead of a generic "good writing" default — a sample outranks every style rule it carries.
-- **[`skillkit`](./skills/skillkit.md)** — authors a new skill in this collection from scratch: naming, drafting, live testing, publishing. It hands you a commit message rather than committing. [Add a new skill](./how-to/add-a-new-skill.md) is the same path by hand.
-- **[`orcakit`](./skills/orcakit.md)** — reconciles the [Orca](https://www.onorca.dev/) desktop app's workspace list with the git worktrees the rest of the loop creates: `list` surveys read-only, `link` fills in the cards `gitkit` left blank, `clean` removes the workspaces whose PR merged and issue closed, `align` points Orca's worktree base path at `$WORKTREE_ROOT`. **Machine-local and optional** — no Orca means it no-ops, and nothing else calls it, which is what keeps the rest of the loop identical on a headless box.
-- **[`paseokit`](./skills/paseokit.md)** — the same reconciliation for [Paseo](https://paseo.sh), against the opposite problem. Orca discovers worktrees on its own and knows nothing about them, so `orcakit` enriches and cleans up; Paseo discovers nothing and prunes only rows whose directory is gone, so `paseokit` pushes rows in and reaps them back out. `list` surveys read-only, `sync` only adds (it registers, retitles, and restores rows), `clean` archives dead and duplicate rows and tears down worktrees whose PR merged, and `align` points Paseo's worktree root at `$WORKTREE_ROOT`. `clean` previews every archive and delete first, then confirms the archives as one set and each delete on its own, because `paseo workspace archive` can delete the worktree directory. The teardown itself runs through `gitkit`. **Machine-local and optional**, on the same terms as `orcakit`, and the two never call each other.
-- **[`ideakit`](./skills/ideakit.md)** — the loop's upstream. It keeps one ideas repo at `~/ideas`, a folder per idea plus a jotpad for the thoughts that have none, and thinks about exactly one idea at a time across sessions. Eight modes run from `jot` to `close`; `session` is the one that thinks, and nothing lands on disk until you ask, because the discussion is the deliverable. It dispatches an idea's research and validation questions to `researchkit` and `validatekit`, folds the answers you keep back into that idea's own log, and an idea settled enough to shape work leaves through `plankit` in the project repo, which is where it joins the map above.
-- **[`namekit`](./skills/namekit.md)** — names a project to a naming convention you already use, then proves the name free before you commit to it. `generate` interviews, resolves the convention, and shows a ranked shortlist of twelve; you pick two or three and only those get probed against the domain, npm, and GitHub namespaces. `check` probes names you already have. It names the thing and stops: no logo, no tagline, and it never registers anything. A free name routes to `repokit` for the new repo's metadata, and a name that came out of an idea session routes the decision back into `ideakit`'s log.
-- **[`tutorkit`](./skills/tutorkit.md)** — the only kit that targets the person rather than the repo. Every other skill assumes you already know the thing and makes you faster at it; this one is for ending up knowing it. State lives in a separate learning repo at `~/learning`, so it writes nothing into the project you're working in. Two devices carry it: **predict before you explain**, because a wrong prediction names the broken mental model that's blocking the correct one, and an **explain-back gate** that keeps a lesson open until you restate the concept yourself. It doesn't route into the loop; the only sideways moves are to `researchkit` when the question turns out to be a tool decision, and to `prototypekit` when the honest answer is to go build the thing.
-- **[`seokit`](./skills/seokit.md)** — the one kit whose input is a URL rather than the repo. `audit` checks one page, `crawl` sweeps a site, and both write a dated report to `docs/seo/NNNN-seo-<slug>-YYYY-MM-DD.md` with every finding backed by evidence from the fetched page. It targets a local server inside the site's repository first, so a gap gets caught before deploy instead of after the next crawl, and it stops to offer a production build when the URL turns out to be a hot-reload dev server. Each run writes a new report and the next one diffs against it, which is how it answers "did my fixes land". It reports and plans; the fixes route to `implementkit`.
+- **[`debugkit`](../../skills/debugkit/SKILL.md)** — the one kit whose input is a *symptom* rather than intent. Reproduce, isolate, hypothesize, prove, report, behind two gates that do the real work: **no reproduction, no diagnosis**, and the **on/off test** — you have the cause only when you can make the symptom appear and disappear by toggling it. It **diagnoses and never fixes**, reverting every probe it made, and hands a proven cause to `implementkit` as a failing reproduction.
+- **[`testkit`](../../skills/testkit/SKILL.md)** — the one kit whose input is *working code nobody can safely change*. Every other test-adjacent kit assumes a suite already exists: `implementkit` covers only new work, `qakit` writes plans a human runs, `debugkit` produces exactly one failing test as a reproduction. `testkit audit` ranks the untested surface and crowns one slice into a ledger at `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md`; `testkit cover` stands up a runner if there is none and writes the tests. Its real rule is the **failure gate** — a test is kept only after it was watched to fail, so the suite is one that would catch a regression rather than a directory of green checkmarks. It never fixes the code and never restructures it; a contradiction routes to `debugkit`, a testability blocker to `refactorkit`.
+- **[`refactorkit`](../../skills/refactorkit/SKILL.md)** — surveys a codebase you already have for the structural change worth making, and crowns one. It looks for a closed set of four frictions and gates every candidate on two questions: does removing it *concentrate* complexity rather than relocate it, and can the behavior be tested through the new interface alone. It **proposes and never edits** — `Edit` isn't in its tool set — and the crowned candidate goes to `plankit` to become a phased plan, then to a grilling.
+- **[`designkit`](../../skills/designkit/SKILL.md)** — the design-system counterpart to `wikikit`, keeping a second in-repo contract true to the code. It writes `DESIGN.md` at the repo root, in the open Google Labs format that pairs machine-readable tokens with the rationale in prose, because that's where DESIGN.md-aware tools look. **Every token must be a value that already appears in your codebase**: clustering forty near-identical greys into a scale is derivation, picking a nicer neighboring hex is invention. It **generates no UI** — that's `uikit`, which reads `DESIGN.md` and never writes it.
+- **[`promptkit`](../../skills/promptkit/SKILL.md)** — sharpens the prompt before you send it. `promptkit task` grounds a one-shot agent instruction against the real tree — *"the auth file"* becomes a path, *"make sure tests pass"* becomes the repo's actual command — and prints a resolution ledger naming what didn't resolve. `promptkit system` authors the durable prompt an application ships, landing at `docs/prompts/NNNN-prompt-<slug>-YYYY-MM-DD.md`. **Advisory only**: handed "add auth" it writes a prompt about auth, never the auth.
+- **[`handoffkit`](../../skills/handoffkit/SKILL.md)** — compacts the session into `docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md` for a cold pickup: goal, state, next steps, key files, decisions, blockers, how to verify. It links to specs and plans by path rather than pasting them. You must invoke it explicitly; auto-triggering is disabled in its frontmatter so a compaction never fires mid-work.
+- **[`humankit`](../../skills/humankit/SKILL.md)** — strips AI-writing tells from prose. Rewrites by default; ask for a diagnosis only and it just reports the tells. Give it a sample of your own writing and it matches your patterns instead of a generic "good writing" default — a sample outranks every style rule it carries.
+- **[`skillkit`](../../skills/skillkit/SKILL.md)** — authors a new skill in this collection from scratch: naming, drafting, live testing, publishing. It hands you a commit message rather than committing. [Add a new skill](./how-to/add-a-new-skill.md) is the same path by hand.
+- **[`orcakit`](../../skills/orcakit/SKILL.md)** — reconciles the [Orca](https://www.onorca.dev/) desktop app's workspace list with the git worktrees the rest of the loop creates: `list` surveys read-only, `link` fills in the cards `gitkit` left blank, `clean` removes the workspaces whose PR merged and issue closed, `align` points Orca's worktree base path at `$WORKTREE_ROOT`. **Machine-local and optional** — no Orca means it no-ops, and nothing else calls it, which is what keeps the rest of the loop identical on a headless box.
+- **[`paseokit`](../../skills/paseokit/SKILL.md)** — the same reconciliation for [Paseo](https://paseo.sh), against the opposite problem. Orca discovers worktrees on its own and knows nothing about them, so `orcakit` enriches and cleans up; Paseo discovers nothing and prunes only rows whose directory is gone, so `paseokit` pushes rows in and reaps them back out. `list` surveys read-only, `sync` only adds (it registers, retitles, and restores rows), `clean` archives dead and duplicate rows and tears down worktrees whose PR merged, and `align` points Paseo's worktree root at `$WORKTREE_ROOT`. `clean` previews every archive and delete first, then confirms the archives as one set and each delete on its own, because `paseo workspace archive` can delete the worktree directory. The teardown itself runs through `gitkit`. **Machine-local and optional**, on the same terms as `orcakit`, and the two never call each other.
+- **[`ideakit`](../../skills/ideakit/SKILL.md)** — the loop's upstream. It keeps one ideas repo at `~/ideas`, a folder per idea plus a jotpad for the thoughts that have none, and thinks about exactly one idea at a time across sessions. Eight modes run from `jot` to `close`; `session` is the one that thinks, and nothing lands on disk until you ask, because the discussion is the deliverable. It dispatches an idea's research and validation questions to `researchkit` and `validatekit`, folds the answers you keep back into that idea's own log, and an idea settled enough to shape work leaves through `plankit` in the project repo, which is where it joins the map above.
+- **[`namekit`](../../skills/namekit/SKILL.md)** — names a project to a naming convention you already use, then proves the name free before you commit to it. `generate` interviews, resolves the convention, and shows a ranked shortlist of twelve; you pick two or three and only those get probed against the domain, npm, and GitHub namespaces. `check` probes names you already have. It names the thing and stops: no logo, no tagline, and it never registers anything. A free name routes to `repokit` for the new repo's metadata, and a name that came out of an idea session routes the decision back into `ideakit`'s log.
+- **[`tutorkit`](../../skills/tutorkit/SKILL.md)** — the only kit that targets the person rather than the repo. Every other skill assumes you already know the thing and makes you faster at it; this one is for ending up knowing it. State lives in a separate learning repo at `~/learning`, so it writes nothing into the project you're working in. Two devices carry it: **predict before you explain**, because a wrong prediction names the broken mental model that's blocking the correct one, and an **explain-back gate** that keeps a lesson open until you restate the concept yourself. It doesn't route into the loop; the only sideways moves are to `researchkit` when the question turns out to be a tool decision, and to `prototypekit` when the honest answer is to go build the thing.
+- **[`seokit`](../../skills/seokit/SKILL.md)** — the one kit whose input is a URL rather than the repo. `audit` checks one page, `crawl` sweeps a site, and both write a dated report to `docs/seo/NNNN-seo-<slug>-YYYY-MM-DD.md` with every finding backed by evidence from the fetched page. It targets a local server inside the site's repository first, so a gap gets caught before deploy instead of after the next crawl, and it stops to offer a production build when the URL turns out to be a hot-reload dev server. Each run writes a new report and the next one diffs against it, which is how it answers "did my fixes land". It reports and plans; the fixes route to `implementkit`.
 
 ## Three traps worth internalizing
 

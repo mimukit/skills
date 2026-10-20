@@ -1,6 +1,6 @@
 # Add a new skill
 
-Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating up to seven other files. Lint now checks most of them, but not all.
+Adding a skill means creating one directory — but shipping one means updating up to six other files. Lint now checks most of them, but not all.
 
 Prefer to have this driven for you? `skillkit` runs the whole path, from naming through testing. This page is what it does by hand.
 
@@ -96,41 +96,15 @@ make link name=<name>
 
 The skill is now readable by every AI tool on the machine. Invoke it, edit, save, invoke again — no build, no reload. `make unlink name=<name>` puts things back.
 
-## 7. Write its reader-facing page
-
-```
-docs/wiki/skills/<name>.md
-```
-
-This one is a lint **error** if you skip it, so the gate will stop you — but it's worth understanding why it exists rather than treating it as a box to tick. `SKILL.md` is written for the agent that runs the skill. The page is written for the person deciding whether to reach for it. Different audience, different document: the page is not a summary of `SKILL.md` and shouldn't read like one.
-
-Copy the shape from any existing page — [`commitkit`](../skills/commitkit.md) is a short one:
-
-- Open with the one-line description, then a bold **"Reach for it when"** trigger, then a summary table of modes, tools, what it writes, and visibility.
-- Write each mode as `` ### `mode` `` — a backticked `h3` under `## Modes`. Lint diffs those headings against the modes `SKILL.md` actually defines, so a renamed mode breaks here instead of leaving a page that lies. A skill whose modes genuinely aren't backticked opts out by using a plain heading.
-- Name the next kit under **Hands off to**, linking siblings in the form `` [`prkit`](./prkit.md) `` — page-relative, since every skill page sits in the same directory.
-- **Explain the why, not the what.** The page earns its place on the reasoning behind a load-bearing rule. Restating the procedure step by step is what `SKILL.md` already does better.
-- End with the install command, a link to the skill's own `skills/<name>/SKILL.md`, and the provenance stamp: `` _Verified against `main`@`<sha>` on YYYY-MM-DD._ `` Only stamp what you actually read — moving a stamp forward asserts somebody verified the page, and a stamp bumped as a formality is worse than a stale one.
-
-Every later change to the skill obliges a page edit in the same commit. Lint warns when a commit touching exactly one skill lands without its page.
-
-Then register the page in the doc map, [`docs/wiki/.wikimap.yaml`](../.wikimap.yaml), beside the other skill entries:
-
-```yaml
-  - path: skills/<name>.md
-    mode: reference
-    documents: [skills/<name>/SKILL.md]
-```
-
-The map is what tells a later docs audit the page exists and which source it tracks. An unregistered page is the quietest failure in this repo — it renders, it's linked, the gate is green, and the only symptom is that no audit ever sweeps it. It was missed on three skills in a row before lint started checking it, which it now does as an **error** in both directions.
-
-Then regenerate the cheatsheet, and run it again after any later page edit:
+## 7. Regenerate the cheatsheet
 
 ```sh
 make cheatsheet
 ```
 
-[`docs/wiki/cheatsheet.md`](../cheatsheet.md) is built from the skill pages. A full `make lint` rebuilds it in a temp file and errors when the committed copy differs.
+[`docs/wiki/cheatsheet.md`](../cheatsheet.md) holds one row per skill, built from the what-clause of each `description`. Run it again after any later description change. A full `make lint` rebuilds it in a temp file and errors when the committed copy differs.
+
+There is no per-skill reader page to write. `SKILL.md` is the one source, and an agent answers questions about a skill by reading it.
 
 ## 8. Update the five collection files
 
@@ -146,7 +120,7 @@ This is the step that gets missed. A full `make lint` now catches four of the fi
 
 Lint catches the workflow map only partially — it verifies that skills and modes the map *names* still exist, not that a new skill was added to it. That row is yours to remember.
 
-**The `index.md` row used to be the dangerous one.** `refactorkit` shipped with a correct page that was missing from `index.md` for eight days, and `debugkit` and `tutorkit` each repeated it. Every one of those runs passed a clean gate, because a page that exists but that nothing links to looks identical to a finished one. Lint now errors on a missing link, and it checks placement too: each index group must hold the same skills as the `skills.sh.json` group of the same title. Filing the skill in the JSON first and copying that group to the index is the shortest path to a green run.
+**The `index.md` row used to be the dangerous one.** `refactorkit` shipped missing from `index.md` for eight days, and `debugkit` and `tutorkit` each repeated it. Every one of those runs passed a clean gate, because nothing checked the link. Lint now errors on a missing link, and it checks placement too: each index group must hold the same skills as the `skills.sh.json` group of the same title. Filing the skill in the JSON first and copying that group to the index is the shortest path to a green run.
 
 `skills.sh.json` affects only how the directory page groups things. It changes nothing about how the CLI installs skills.
 

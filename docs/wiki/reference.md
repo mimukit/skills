@@ -11,7 +11,7 @@ Run `make help` to print this list from the `Makefile` itself.
 | `make link` | `name=<skill>` (optional) | Symlinks `skills/<name>/` into every AI tool's skills directory. No `name=` opens a picker. |
 | `make unlink` | `name=<skill>` (optional) | Removes a dev symlink and restores any backup. No `name=` opens a picker restricted to linked skills. |
 | `make list` | — | Prints every skill with its aggregated link status. |
-| `make cheatsheet` | — | Regenerates `docs/wiki/cheatsheet.md` from the pages under `docs/wiki/skills/`. Prints a nudge for any row that runs long. |
+| `make cheatsheet` | — | Regenerates `docs/wiki/cheatsheet.md` from the what-clause of each skill's `description`. |
 | `make lint` | `name=<skill> …` (optional) | Checks skills against the conventions. Named skills skip the cross-file checks. |
 | `make security` | `name=<skill> …` (optional) | Heuristic security scan. |
 | `make help` | — | Prints the target list. Default goal. |
@@ -107,16 +107,9 @@ Full runs only (skipped when skill names are passed):
 | Every skill named in the workflow map exists | error |
 | Every `<kit> <mode>` in the workflow map names a real mode | error |
 | Every lifecycle label in the workflow map's vocabulary section still exists in `issuekit` | error |
-| Every skill has a page at `docs/wiki/skills/<name>.md` | error |
-| Every page in `docs/wiki/skills/` documents a real skill | error |
-| Every `` ### `mode` `` heading on a skill page names a mode that `SKILL.md` defines | error |
-| Every skill has a page entry in `docs/wiki/.wikimap.yaml` | error |
-| Every skill page `.wikimap.yaml` registers exists | error |
-| Every skill is linked from `docs/wiki/index.md` | error |
-| Every skill page `index.md` links exists | error |
-| A commit touching exactly one skill also touched that skill's page | warning |
 | `docs/wiki/cheatsheet.md` matches what `scripts/cheatsheet.sh` generates | error |
 | The `README.md` skills table lists exactly the skills on disk | error |
+| The `docs/wiki/index.md` skill links name exactly the skills on disk | error |
 | Every `index.md` group matches the `skills.sh.json` group of the same title, member for member | error |
 | No `IDEAS.md` backlog row names a skill that already shipped | warning |
 | No skill dispatches to a sibling marked `disable-model-invocation: true` | warning |
@@ -127,13 +120,11 @@ A **satellite** is any `.md` in a skill's directory other than `SKILL.md`, most 
 
 The hand-off check takes a split skill on either terms. A skill with a `modes/` directory passes when the root carries a closing section, or when every one of its `modes/*.md` does, because a per-mode hand-off belongs with the mode body it closes.
 
-The four page-registration checks ask one question of three files — can this page be found on disk, by a docs audit, and by a reader. They enforce **presence only**. *Placement* is the job of the group check: each bold group heading on `index.md` must name a `skills.sh.json` group, with the same members in any order. The JSON is the one place the grouping is already written down, so the check compares the two copies rather than judging the theme.
+The index-link check enforces **presence only**. *Placement* is the job of the group check: each bold group heading on `index.md` must name a `skills.sh.json` group, with the same members in any order. The JSON is the one place the grouping is already written down, so the check compares the two copies rather than judging the theme.
 
-The cheatsheet check regenerates the page into a temp file and diffs it. Nothing on that page is authored, so a difference always means the same thing: a skill page changed and nobody ran `make cheatsheet`. The error prints the first lines of the diff and names the fix.
+The cheatsheet check regenerates the page into a temp file and diffs it. Nothing on that page is authored, so a difference always means the same thing: a skill description changed and nobody ran `make cheatsheet`. The error prints the first lines of the diff and names the fix.
 
 The dispatch warning is a heuristic. It looks for a sibling's name near a hand-off verb such as "invoke" or "dispatch", and skips lines that already tell the user to run the skill. A user-only skill is refused by the host when another skill calls it, so the fix is to name it for the user instead.
-
-The page-lag warning compares commit dates rather than stamped SHAs, and is scoped to commits that changed exactly one skill. A repo-wide prose sweep touches many skills at once and genuinely owes no page edit, so the scoping is what keeps the check from opening at one warning per skill touched, nearly all of them correct to ignore.
 
 ## Security finding classes
 
@@ -154,7 +145,7 @@ Severity ranks `safe` < `low` < `med` < `high`. A skill's tier is the maximum ac
 
 `NNNN-<type>-<slug>-YYYY-MM-DD.md`: a four-digit serial per directory, then the type, the slug, and the artifact's **creation** date. The serial makes a directory listing read in creation order; the date keeps the age readable without opening the file. The whole filename stays stable when the file is edited.
 
-Every kit that writes an artifact states this rule itself, so a fresh repo gets numbered files from the first one. That matters because the rule used to live only in a repo's own `AGENTS.md`, written there by [`repokit`](./skills/repokit.md) `docs`, and a repo that never ran that mode got unnumbered files. Kits that read an artifact back accept the older unnumbered shape too.
+Every kit that writes an artifact states this rule itself, so a fresh repo gets numbered files from the first one. That matters because the rule used to live only in a repo's own `AGENTS.md`, written there by [`repokit`](../../skills/repokit/SKILL.md) `docs`, and a repo that never ran that mode got unnumbered files. Kits that read an artifact back accept the older unnumbered shape too.
 
 | Type | Path | Written by |
 |------|------|------------|

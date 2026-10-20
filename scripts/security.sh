@@ -43,11 +43,6 @@ tier_badge() {
 worst_tier="safe"          # highest tier seen across all skills
 scanned=0
 
-# The top YAML frontmatter block (between the first two `---` lines).
-frontmatter() {
-  awk 'NR==1 && $0!="---"{exit} NR==1{next} /^---[[:space:]]*$/{exit} {print}' "$1"
-}
-
 # case-insensitive, extended-regex match helpers — return 0 if the pattern hits.
 hits()  { grep -qiE "$2" "$1"; }              # $1 = file path
 shits() { printf '%s' "$1" | grep -qiE "$2"; } # $1 = string (e.g. the body)

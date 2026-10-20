@@ -65,8 +65,8 @@ First finish the mechanical tail. Update every surface the collection uses to li
 
 - the README skills table;
 - a `skills.sh.json` directory-grouping file (public skills only);
-- a per-skill reader page (for example `docs/wiki/skills/<name>.md`), plus its entry in the doc map (`docs/wiki/.wikimap.yaml`) and its link in the docs index (`docs/wiki/index.md`);
-- a generated cheatsheet: run the collection's command for it (for example `make cheatsheet`) after the page exists.
+- the skill's link in the docs index (for example `docs/wiki/index.md`);
+- a generated cheatsheet: run the collection's command for it (for example `make cheatsheet`).
 
 Then run the collection's skill lint if it has one, fix errors, and address warnings. Without one, self-check against the [Conventions](#conventions), **Quality bar**, and, for public skills, **Portability**. Done when every surface the repo has is updated and lint reports no errors. Then close:
 
@@ -82,7 +82,7 @@ For a skill that already exists and has just changed. Run each check, then close
 
 1. **Re-run the trigger cases.** Run every case in the skill's trigger cases file in a fresh session; when the skill has none yet, write them first, as in [Draft](#5-draft). Done when every case has a result and every mismatch is fixed or reported.
 2. **Check the description against the branches.** Every mode or branch has one trigger, and no trigger names a branch the skill no longer has. Done when each branch maps to one trigger.
-3. **Update the docs surfaces** from [Hand off](#8-hand-off) that the change touched: the reader page for a new mode, a changed description, tool list, visibility, or hand-off target, then the cheatsheet. Done when a reader of the page alone would not be wrong.
+3. **Update the docs surfaces** from [Hand off](#8-hand-off) that the change touched: regenerate the cheatsheet after a changed description, and update the README row and docs index after a changed visibility or rename. Done when every surface the change touched is updated.
 4. **Run the collection's lint.** Done when it reports no errors.
 
 ## Conventions
