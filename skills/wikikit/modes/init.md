@@ -12,7 +12,7 @@ Pages found under rung 2 get manifest entries with `documents:` globs, `adopted:
 
 ### 3. Propose the map
 
-Consent-gated, and this is the gate that matters. Show the page list with a one-line scope each, which entries are newly authored versus adopted, and **what wikikit could not determine from code**. The user accepts, trims, or redirects before a single file is written. The step is done when the user has answered for every proposed page.
+Consent-gated, and this is the gate that matters. Show the page list with a one-line scope each, which entries are newly authored versus adopted, and **what wikikit could not determine from code**. Propose an index page, not a page per item, for any set of self-documenting sources, per **No mirror pages** in [The page vocabulary](../SKILL.md#the-page-vocabulary). The user accepts, trims, or redirects before a single file is written. The step is done when the user has answered for every proposed page.
 
 ### 4. Write the accepted pages
 

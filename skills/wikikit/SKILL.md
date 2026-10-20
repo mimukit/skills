@@ -104,10 +104,11 @@ pages:
 
 Diátaxis governs internally and stays out of the reader's face, because the four modes are the rule that keeps doc types unmixed, not jargon to print on the page. A how-to must not drift into explanation; an architecture page must not turn into a tutorial.
 
-Two boundaries the vocabulary encodes:
+Three boundaries the vocabulary encodes:
 
 - **`CONTRIBUTING.md` is linked, never written.** Dev-environment setup and release steps are in the repo and verify like any other how-to. PR etiquette, a code of conduct, and review norms are a social contract that exists nowhere in code, so writing them would break the grounding rule on the repo's most visible contributor page. `index.md` links the file if it exists.
 - **`reference.md` covers declared surface only**, meaning things declared in a single place and re-verifiable in a single grep: CLI commands, flags, env vars, config keys. Library symbols and hand-maintained HTTP endpoint tables are refused and routed to a generator. This narrow exception exists so a CLI with twenty flags and no docs tooling gets something rather than nothing.
+- **No mirror pages.** A mirror page restates one source file that already documents itself: one page per skill, plugin, module, command, or package, each copying its own `README`, `SKILL.md`, or doc comment. Every edit to the source then owes a second edit, and the copy drifts while it looks maintained. Cover such a series with **one index page** that names each item in a line and links its source, generated from the source's own metadata when the repo has a script for it. A page earns its place by saying what no single source file says: how parts connect, how to do a task across them, what to do when it breaks. Write a mirror series only when the user asks for it after hearing this cost, and record the choice in the manifest entry's comment.
 
 ### The provenance stamp
 
