@@ -7,7 +7,7 @@ Implement a plan, spec, or issue into working code — then stop, gated on the r
 | | |
 |---|---|
 | Modes | straight-through, tests-after, or TDD, resolved by precedence |
-| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `Skill` |
+| Tools | `Bash`, `Read`, `Grep`, `Glob`, `Edit`, `Write`, `Task`, `Agent`, `Skill` |
 | Writes | application code, and a `(built …)` stamp on the phases it finished — unstaged, never committed |
 | Visibility | public |
 
@@ -80,6 +80,24 @@ If the gate fails, implementkit fixes its own output and re-runs, **bounded to r
 
 While building, it also typechecks and runs the single affected test file as each slice lands, so breakage surfaces where it's cheap. The full suite is saved for the gate.
 
+## A long build runs as a conductor
+
+When the scope holds more than one heavy phase, or one mechanical bulk phase such as a vendored port or a large lint sweep, the main thread stops building. It dispatches one subagent per phase group and keeps only each short result, while the notes and logs go to a file.
+
+The reason is billing. Every tool call re-bills the whole context, so a phase built inline makes every later phase more expensive. One six-phase run built four phases in its main thread and grew to several hundred thousand tokens of context, while the phases it did delegate came back in a few thousand characters each.
+
+The brief is where delegation pays or fails. In that same run, each subagent re-read the same shared files because its brief named the task but not the APIs it would call. So the brief carries the paths, the signatures of the shared APIs, the resolved mode, the acceptance items, and the gate commands. [`afkkit`](./afkkit.md) owns the full conductor rules; on a host with no subagent tool, the groups build inline in order.
+
+## Tool rules
+
+A short section of rules, each written against a retry that a long build repeats:
+
+- **Gates run once, into a log.** One run gives both the exit code and the messages. Running `pnpm lint` a second time just to get a pass signal doubles the slowest command in the run.
+- **Edit for exact changes; a script formats what it writes.** A codemod or `sed -i` that leaves a format failure behind is found only at the gate, and then costs a format pass and another gate run.
+- **Commands that run in zsh and bash alike.** zsh does not split an unquoted variable and stops on a glob that matches nothing, so `for f in $files` and an unquoted `--include=*.tsx` fail there and work in bash.
+- **Dev servers by PID.** A package-manager wrapper can exit while its child keeps the port, so the skill checks the port, not the wrapper, and stops every process it started before the hand-off.
+- **Browser checks read facts first.** An evaluate call returns a few hundred characters; a snapshot with an image costs far more. Images are kept for visual decisions.
+
 ## Visual surfaces delegate
 
 When the work includes UI and [`uikit`](./uikit.md) is installed, implementkit applies it to those files rather than writing them blind — uikit carries the project's design constraint and runs its own visual pre-flight. Without it, the UI is written directly. Everything else is unchanged: the input contract, the resolved mode, and the done-gate, which remains the only gate. uikit returns without a hand-off of its own, so implementkit's report is the only one the user reads.
@@ -104,7 +122,7 @@ It stamps on every run, whatever the project's tracker is. Deciding whether this
 
 ## Hands off to
 
-[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, the gate result, each acceptance item with its evidence, any plan warnings, and which phases it stamped — then names the next unbuilt phase, or says the plan is fully built, and stops.
+[`commitkit`](./commitkit.md) to group and commit the unstaged work. implementkit reports the mode used and which precedence tier decided it, the files touched, the gate result, each acceptance item with its evidence, any plan warnings, which phases it stamped, the phase groups a subagent built, and the processes it stopped — then names the next unbuilt phase, or says the plan is fully built, and stops.
 
 The first runner-up is [`reviewkit`](./reviewkit.md): review the agent's work before committing it. Without that line, the attended path from build to commit skipped review entirely, and the skill built to check agent output was reached only from memory. When the build touched a UI surface, a second runner-up follows: look at it with [`verifykit`](./verifykit.md) `show`, or open the app by hand where it isn't installed.
 
