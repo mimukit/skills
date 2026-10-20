@@ -122,4 +122,4 @@ npx skills add mimukit/skills -s plankit
 
 Source: [`skills/plankit/SKILL.md`](../../../skills/plankit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`4e88ae7` on 2026-10-09._
+_Verified against `main`@`827b320` on 2026-10-20._
