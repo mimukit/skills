@@ -66,6 +66,7 @@ The problem, why it matters now, and the outcome that means success.
 The chosen approach and what it reuses, then the body as phases/milestones/tasks.
 
 ### Phase 1: <name>
+Attended: <only when the phase needs a person>
 <the tasks>
 Done when: <an observable a reviewer can check>
 
@@ -82,6 +83,10 @@ Explicit scope boundaries.
 This is a contract, not a suggestion — grillkit and issuekit both read it. The body stays phase/task-shaped so issuekit can decompose it into issues.
 
 Every phase ends on a `Done when:` line that names something a person or a test can check, such as a command and its output. "Auth works" is an intent, and a phase built to an intent has no finish line that two people agree on. The line gives [`implementkit`](./implementkit.md) a finish line to check a phase against.
+
+**A phase that needs a person carries an `Attended:` line**, naming the design pick, approval, or outward action it waits on, and attended phases come before the phases an unattended run can take. A build that meets a human stop in the middle waits there; one measured run waited 19 minutes on a design pick and 43 on a test-runner question. Front-loading the human work lets the rest run with nobody at the keyboard, and the line lets [`afkkit`](./afkkit.md) refuse the issue before it builds anything.
+
+**A phase that asks for a new kind of test names its runner and approach** in the design decisions, for the same reason: the build should not have to stop and ask.
 
 The **Migration and rollback** section appears only when the plan changes a schema, a persisted format, or existing records. Those are the changes that cannot be undone by reverting code, so the plan states how the data moves and how it moves back. A plan that touches no stored data leaves the section out.
 
