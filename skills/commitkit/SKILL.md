@@ -186,7 +186,7 @@ The patch holds the exact staged hunks, so a partially staged file comes back pa
 
 The `gh pr view` tail tells the hand-off whether this branch already has a pull request. It costs nothing extra, because it rides the same call. An empty result or a `gh` failure means no pull request, and that is a normal outcome rather than an error.
 
-**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way.
+**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way, because many solo repos commit straight to the base branch and a prompt there would fire on every run.
 
 Hold the push and ask in these cases:
 

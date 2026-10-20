@@ -115,7 +115,7 @@ The reading is one of four states, and every tracker-dependent rule in this file
 
 *No tracker* below means absent or unknown. **A query error is never absent.** Name the failed call once on the Issues line and route like no tracker; a retry, not a declaration, settles it. The same holds when the prompt or the guide says present and the issue query fails: the policy is known, the data is not, so the issue rungs skip and the failed call is named.
 
-**Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. An empty-array unknown is the only ambiguous policy state. When it fires and a user is there to answer → read [declaration.md](declaration.md), then follow it.
+**Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. An empty-array unknown is the only ambiguous policy state. Leave it unknown rather than probe for lifecycle labels: a template may have provisioned labels nobody uses, and the probe changes the wording, not the move. When it fires and a user is there to answer → read [declaration.md](declaration.md), then follow it.
 
 **Only statuskit resolves this.** It is the skill that must, because it crowns exactly one move. Every other skill either carries the one-line conclusion (issuekit, afkkit) or names both destinations without resolving anything (plankit, grillkit, implementkit). Keeping the derivation in one place is what stops four skills drifting into four slightly different answers.
 

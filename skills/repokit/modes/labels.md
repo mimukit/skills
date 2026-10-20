@@ -44,6 +44,8 @@ Colors are 6-hex, no leading `#`.
 
 **No priority label means *unassessed*, not *medium*.** The absence is a real state and downstream skills read it as one; it's how `triage` finds issues nobody has ranked yet. Never provision a default, and never treat a missing label as an implied middle.
 
+**Priority is a label, not a GitHub Projects field.** Reading `projectItems` needs an OAuth scope that `gh auth login` does not grant by default, and without it the whole JSON query fails. A board field also exists only for issues somebody added to a board.
+
 **Four levels is the ceiling, and it's already generous.** The point of a priority scale is a backlog someone can order in their head; every level past the fourth is one more place for the same issue to plausibly sit, which is how a scale turns into a coin flip. If the user asks for a fifth, say what it costs before adding it.
 
 ## The canonical automation set
