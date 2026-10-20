@@ -19,6 +19,10 @@ The human gates stay where judgment lives: planning and grilling happen before (
 
 afkkit adds **no** worktree, tracker, or PR behavior of its own. It **sequences** companion kits and owns exactly one thing they don't: the **escalation policy** that decides, at every step, whether to keep going or stop cleanly.
 
+You run it from the main checkout, in the session you already have open. One command starts the issue, gets the worktree, and dispatches every step into it, so there is no second session to open in the worktree and no four-step build prompt to retype. A host that can attach a new conversation to a worktree, such as T3 Code, may show the run there, but the skill does not need one.
+
+When the issue starts, afkkit also reports how many feature PRs you already have open, through [`issuekit`](./issuekit.md)'s open-PR check. An unattended run never stops on that count; at 3 or more the hand-off says so, and an `all` queue shows the count above the queue before its one OK.
+
 It's the autonomous sibling of [`statuskit`](./statuskit.md): statuskit tells a human what to do next; afkkit does the next several things itself and stops where a human is genuinely required.
 
 ## The contract
@@ -27,7 +31,7 @@ It's the autonomous sibling of [`statuskit`](./statuskit.md): statuskit tells a 
 |---|---|
 | **Input** | an issue number, or `all` |
 | **Authorization** | naming the issue, or the one OK on an `all` queue, authorizes the worktree, commits on the issue's own branch, one push of that branch, and its PR through prkit; nothing else |
-| **Success** | an open PR carrying the documented assumptions as text, what the acceptance checks confirmed, unresolved nits as known follow-ups, and a pointer to a committed QA plan; issue at `in-review` |
+| **Success** | an open PR that opens with the documented assumptions as text, what the acceptance checks confirmed, unresolved nits as known follow-ups, and a pointer to a committed QA plan; issue at `in-review` |
 | **Blocked** | **no PR.** Worktree and commits intact, a comment naming the precise stuck-state, the issue labeled for whoever picks it up, and in a batch the next issue starts |
 
 **afkkit never publishes half-broken work.** Every commit before the PR step uses [`commitkit`](./commitkit.md)'s `no-push`, so the branch reaches `origin` only when [`prkit`](./prkit.md) opens the PR. An escalated run leaves its commits on disk and nothing on the remote.
@@ -71,7 +75,7 @@ So everything lands in `.afkkit/` at the worktree root, excluded from git as a d
 | `findings.md` | verify-and-review | fix-and-finish |
 | `progress.md` | implement and fix-and-finish, one line per landed step | a resumed run |
 
-The PR body never points into `.afkkit/`, because a reviewer on GitHub cannot open a git-excluded file. The assumptions travel as text under an **Assumptions** heading.
+The PR body never points into `.afkkit/`, because a reviewer on GitHub cannot open a git-excluded file. The assumptions travel as text under an **Assumptions** heading, and that heading comes first in the body, above the summary. They are the decisions the run took on your behalf, so they are what a reviewer must check before reading anything else, and a list at the bottom of a long body is the part that gets skipped.
 
 Each file carries **facts with sources, never conclusions**: not "the auth flow is fine" but "`src/auth/session.ts:40` sets the cookie `maxAge` from `SESSION_TTL`".
 
@@ -83,7 +87,7 @@ A run that reaches a design pick or an unapproved outward action in the middle s
 
 ## Why the spec gate writes the acceptance checks
 
-`checks.md` holds one entry per acceptance criterion: the observable that confirms it, a provisional command, and whether an agent can confirm it or only a human can.
+`checks.md` holds one entry per acceptance criterion: the observable that confirms it, a provisional command, and whether an agent can confirm it or only a human can. The flag follows qakit's test: if a script can assert the pass condition, the check is the agent's. With a browser driver on the box, that includes most of what a page shows, so the manual cases that reach the PR are the ones that need taste.
 
 The gate writes it for one reason that matters more than the cost saving: **it runs before any code exists.** A check list written afterwards tests what the code does. A check list written from the issue tests what the issue asked for. That's a test-first property the pipeline gets for free from a step it was already paying for, and it's why the command is deliberately provisional: the gate writes the observable precisely and the command approximately.
 
@@ -101,7 +105,7 @@ Cost tracks **context size × turns**, not token volume, so the way to make a st
 1. **Start the issue**: issuekit `start`, sharing one dispatch with the spec gate. On a refusal the agent returns issuekit's reason verbatim and never begins the gate; the conductor verifies the returned worktree, branch, and label in one batched shell call.
 2. **Spec gate**: the same agent classifies gaps between what the issue specifies and what building it requires, writes `orientation.md`, `assumptions.md`, and `checks.md`, and returns the issue's phases grouped into dispatch groups. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Attended work** escalates the same way: a phase marked `Attended:`, a design pick or mockup approval, or an outward action the authorization does not cover. **Missing mechanics only** proceed, logged to `assumptions.md`.
 3. **Implement**: implementkit, one dispatch per phase group, each committing through commitkit with `no-push` before it returns and logging the commit to `progress.md`. Every step after this one runs once, over the whole branch diff.
-4. **Verify and review**: one dispatch on the independent model runs the gate's check list, probes up to six adjacent behaviors, writes `verified.md`, then invokes reviewkit on the full branch diff and writes `findings.md` with stable blocker and nit IDs. It runs code but edits nothing, never rebuilds, and records the exact server start and stop commands it used. Code that doesn't run at all escalates before any review is paid for.
+4. **Verify and review**: one dispatch on the independent model runs the gate's check list, probes up to six adjacent behaviors, writes `verified.md` with the screenshot paths of every screen a human must judge, then invokes reviewkit on the full branch diff and writes `findings.md` with stable blocker and nit IDs. It runs code but edits nothing, never rebuilds, and records the exact server start and stop commands it used. Code that doesn't run at all escalates before any review is paid for.
 5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, commits, then re-runs the checks its changes touch and refreshes `verified.md`, so each result names a clean revision, then writes the QA plan through qakit (transcription; qakit re-runs only results recorded against an older revision) and opens the PR through prkit under the run's authorization, which commits the QA doc, pushes the branch for the first time, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
 6. **Hand off**: the outcome line, the worktree path, and one crowned next move. Per-step metrics print only when the invocation asks for them ("afkkit 42 with metrics").
 
