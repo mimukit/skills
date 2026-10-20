@@ -1,6 +1,6 @@
 # Add a new skill
 
-Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating five other files. Lint now checks most of them, but not all.
+Adding a skill means creating one directory — but shipping one means writing a reader-facing page for it and updating up to seven other files. Lint now checks most of them, but not all.
 
 Prefer to have this driven for you? `skillkit` runs the whole path, from naming through testing. This page is what it does by hand.
 
@@ -26,7 +26,7 @@ Lint warns if the name isn't a single lowercase word ending in `kit`, and errors
 mkdir -p skills/<name>
 ```
 
-Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory is still empty — every skill here is public.
+Public skills live in `skills/`. A repo-only meta skill that only makes sense inside this collection goes in `.agents/skills/<name>/` instead, where it's auto-discovered without a dev link and stays out of the `skills/`-based tooling. That directory does not exist yet, because every skill here is public.
 
 ## 3. Write the frontmatter
 
@@ -52,13 +52,13 @@ Spend it on **one trigger per branch, not per synonym**. Every description in th
 
 ## 4. Write the body
 
-Full conventions are in [AGENTS.md](../../../AGENTS.md). The three that lint enforces:
+Full conventions are in [AGENTS.md](../../../AGENTS.md). Three shape every body, and lint checks the last two:
 
 - **No hard wrapping.** One continuous line per paragraph and per list item. Code fences, tables, and YAML frontmatter keep their line structure.
 - **Never cross-reference a step by number.** `see step 4` binds to a step's *position*, so inserting a step silently makes it point at the wrong one — and nothing can detect a stale-but-valid number. Link to the heading instead: `see [Group the work](#4-group-the-work)`. For a step with no heading, name the action in prose.
 - **Close with `## Hand off`** — what changed, where it landed, and the single best next move. Crown one next move rather than listing five; route to the next kit by name without invoking it, and always give the plain fallback ("open a PR with **prkit**, otherwise `gh pr create`") since a public skill often lands in a repo that has none of the others.
 
-The three above are the ones a grep can check. Two more decide whether the skill runs the same way twice, and nothing but review will catch them.
+Lint warns on a step-number reference and on a missing or routeless hand-off; it does not check wrapping. Two more decide whether the skill runs the same way twice, and nothing but review will catch them.
 
 **Every step ends on a completion criterion** — the condition that says the work is done. A step without one ends when the agent feels finished, which is where run-to-run variance actually comes from. Write a bound the agent can check, and prefer the exhaustive form ("every modified model accounted for") to the productive one ("produce a change list").
 
@@ -124,6 +124,14 @@ Then register the page in the doc map, [`docs/wiki/.wikimap.yaml`](../.wikimap.y
 
 The map is what tells a later docs audit the page exists and which source it tracks. An unregistered page is the quietest failure in this repo — it renders, it's linked, the gate is green, and the only symptom is that no audit ever sweeps it. It was missed on three skills in a row before lint started checking it, which it now does as an **error** in both directions.
 
+Then regenerate the cheatsheet, and run it again after any later page edit:
+
+```sh
+make cheatsheet
+```
+
+[`docs/wiki/cheatsheet.md`](../cheatsheet.md) is built from the skill pages. A full `make lint` rebuilds it in a temp file and errors when the committed copy differs.
+
 ## 8. Update the five collection files
 
 This is the step that gets missed. A full `make lint` now catches four of the five, so the gate tells you what you forgot. The workflow map is the one it can't.
@@ -156,4 +164,4 @@ The full run adds the cross-file checks a scoped run skips. There's no publish s
 
 If you changed how skills are structured rather than just adding one, [Architecture](../architecture.md) is the page that will go stale.
 
-_Verified against `main`@`17c5881` on 2026-09-01._
+_Verified against `main`@`e7a6a61` on 2026-10-20._

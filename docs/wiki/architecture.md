@@ -20,9 +20,9 @@ The frontmatter carries the contract:
 
 ### Satellites, for a skill whose modes are skipped
 
-A skill that runs one mode per invocation makes the agent read the other modes for nothing. Nine skills split on that seam. `SKILL.md` keeps mode selection, the guards, and the vocabulary every mode shares, then points at one file per mode: `` mode `close` → read [modes/close.md](modes/close.md), then follow it ``. A satellite assumes the root is loaded, never repeats it, and carries the hand-off for the mode body it closes.
+A skill that runs one mode per invocation makes the agent read the other modes for nothing. Fourteen skills ship a satellite file. `SKILL.md` keeps mode selection, the guards, and the vocabulary every mode shares, then points at one file per mode: `` mode `close` → read [modes/close.md](modes/close.md), then follow it ``. A satellite assumes the root is loaded, never repeats it, and carries the hand-off for the mode body it closes.
 
-The gate is the branch and never raw size. `statuskit` and `afkkit` walk their whole body on every run, so a split would only add reads, and they stay one file whatever they weigh. Six skills use the `modes/` shape: `ideakit`, `issuekit`, `mergekit`, `repokit`, `tutorkit`, and `wikikit`. Three more disclose one heavy branch to a flat sibling instead — `gitkit/clean.md` and `gitkit/rescue.md`, `promptkit/worked-example.md`, and `uikit/stack.md`.
+The gate is the branch and never raw size. `afkkit` walks its whole body on every run, so a split would only add reads, and it stays one file whatever it weighs. Ten skills use the `modes/` shape: `ideakit`, `issuekit`, `mergekit`, `paseokit`, `promptkit`, `repokit`, `seokit`, `tutorkit`, `verifykit`, and `wikikit`. Other satellites disclose one heavy branch to a flat sibling or a directory: `gitkit/clean.md`, `gitkit/rescue.md`, and `gitkit/stacks.md`, `promptkit/worked-example.md`, `qakit/db.md`, `statuskit/declaration.md`, `uikit/stack.md`, and `seokit/references/` plus `seokit/evals/triggers.md`.
 
 Satellites ship with the skill on install, so `make lint` holds them to the root's reference-integrity checks and resolves every relative pointer from the file that wrote it.
 
@@ -35,7 +35,7 @@ Satellites ship with the skill on install, so `make lint` holds them to the root
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` is empty — no skill has needed it yet. All 35 skills live in `skills/`, and every one is `metadata.internal: false`.
+`.agents/skills/` does not exist yet, because no skill has needed it yet. All 35 skills live in `skills/`, and every one is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
@@ -74,7 +74,7 @@ Two scripts, both surfaced through the `Makefile` and both run in CI by `.github
 
 ### `make lint`
 
-Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger within its first 300 characters and stays under the 1,024-character Agent Skills limit, `license` is present, `metadata.internal` is declared as a boolean — and then four more things:
+Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter, `name` matches the directory and fits the `kit` pattern, `description` carries a "Use when" trigger within its first 300 characters and stays under the 1,024-character Agent Skills limit, `license` is present, `metadata.internal` is declared as a boolean, and a description avoids "proactively" when the skill sets `disable-model-invocation: true` (a warning) — and then four more things:
 
 **A declared tool surface.** `allowed-tools` is a warning rather than an error, because a skill can have a defensible reason to inherit everything. The escape hatch is `TOOLS_EXEMPT` in the script, currently empty, and joining it means writing the reason into the skill's own Notes. The field is load-bearing here rather than decorative: `researchkit` withholds Bash precisely so a host that honors the declaration cannot run a spike instead of reading sources. An undeclared surface should be a decision somebody made, not one nobody noticed. Two further warnings compare the declaration with the body: a skill that grants `Task` or `Agent` but never dispatches a subagent, and a skill that numbers `NNNN` artifacts but grants neither `Bash` nor `Glob`, so it has no way to list the directory and find the next serial.
 
@@ -82,11 +82,11 @@ Per skill, it checks frontmatter validity — `SKILL.md` exists with frontmatter
 
 **Pointer resolution.** Every relative link, in the root and in each satellite, has to resolve on disk from the directory of the file that wrote it. This is what makes the split shape safe: a root that points at a mode file it never created is a skill that dead-ends mid-run, and the failure only shows up in the one mode nobody tested. The portability check treats the two directions differently on purpose — `](../…)` in a `SKILL.md` escapes the skill directory and breaks once installed, while the same pointer in a satellite is just the satellite reaching its own root.
 
-**A closing hand-off section.** Every skill is required to end by recapping what it did and naming the next move. A split skill passes when the root carries that section or when every one of its `modes/*.md` does, because a per-mode hand-off belongs beside the mode body. Lint verifies that the section exists and that it names a next move or says there is none; whether the move is the right one is a review judgment. `gitkit` is the sole exemption, as the primitives layer other skills call into.
+**A closing hand-off section.** Every skill is required to end by recapping what it did and naming the next move. A split skill passes when the root carries that section or when every one of its `modes/*.md` does, because a per-mode hand-off belongs beside the mode body. Lint verifies that the section exists and that it names a next move or says there is none; whether the move is the right one is a review judgment. No skill is exempt: `HANDOFF_EXEMPT` in the script is empty.
 
 Full runs add five cross-file checks that a per-skill run (`make lint name=<skill>`) deliberately skips:
 
-- **Shared-contract tables.** Two tables are duplicated across skills on purpose, because each skill must stand alone once installed and so neither pair can point at a shared source: the lifecycle label map between `issuekit` and `repokit`, and the commit-type table between `commitkit` and `issuekit`. Nothing else keeps the copies aligned, so lint diffs them.
+- **Shared-contract tables.** Two tables are duplicated across skills on purpose, because each skill must stand alone once installed and so neither pair can point at a shared source: the lifecycle and priority label maps between `issuekit` and `repokit`, and the commit-type table between `commitkit` and `issuekit`. Nothing else keeps the copies aligned, so lint diffs them.
 - **The workflow map.** [`docs/wiki/workflow.md`](./workflow.md) duplicates skill facts deliberately so a reader gets one map. Lint guards the three that rot on a rename: every skill it names must exist, every `<kit> <mode>` invocation must name a mode that skill actually defines, and every lifecycle label in its vocabulary section must still live in `issuekit`. These are greps over backtick spans — a loud tripwire, not a proof.
 - **The per-skill wiki pages.** [`docs/wiki/skills/`](./skills/) carries one reader-facing page per skill, which likewise duplicates skill facts on purpose. Lint checks page-per-skill in **both** directions — a skill with no page, and a page documenting no skill — plus mode parity, so a renamed mode breaks loudly instead of leaving a page that lies. It checks two more registrations the same way, because a page can exist and still be lost: one the doc map [`.wikimap.yaml`](./.wikimap.yaml) doesn't list is one no audit will sweep, and one [`index.md`](./index.md) doesn't link is one no reader can reach. Both failures are invisible at a glance — the file is on disk, the headings parse, the gate is green — and between them they slipped past six skill launches before the checks existed. Presence is all these checks enforce. Placement on the index is checked separately, by the collection parity check below. It also warns when a commit touching exactly one skill lands without that skill's page — the shape of a forgotten page edit. That scoping is the whole design: a repo-wide prose sweep touches most of the collection at once and genuinely owes no page edit, so an unscoped version of this check would open at a warning per skill touched, with nearly all of them correct to ignore, which is how a warning gets muted and stops working.
 - **The cheatsheet.** [`docs/wiki/cheatsheet.md`](./cheatsheet.md) is generated by `scripts/cheatsheet.sh` from the per-skill pages, so lint regenerates it into a temp file and diffs. Nothing on the page is authored, which is what makes the check unambiguous: a difference always means a skill page moved and nobody ran `make cheatsheet`. Deriving the page rather than writing it is the point — a hand-kept recall list of every skill and its modes goes stale in a week, and no reader can tell.
@@ -113,11 +113,11 @@ That inverts the usual dependency. Because the directory reads the repo directly
 | Path | Kind | Tracked |
 |------|------|---------|
 | `docs/wiki/` | reader documentation — this set | yes |
-| `docs/plans/` today, joined by `docs/research/`, `docs/reviews/`, `docs/qa/`, `docs/handoffs/`, `docs/debug/`, `docs/refactor/`, `docs/prompts/`, `docs/validation/`, `docs/adr/` as skills write them | process artifacts written for a maintainer mid-flow; they expire | yes |
+| `docs/plans/`, `docs/research/`, and `docs/reviews/` today, joined by `docs/qa/`, `docs/handoffs/`, `docs/debug/`, `docs/refactor/`, `docs/prompts/`, `docs/validation/`, `docs/names/`, `docs/seo/`, `docs/adr/` as skills write them | process artifacts written for a maintainer mid-flow; they expire | yes |
 | `docs/status/`, `docs/tests/`, `docs/verify/` | disposable scratch output | no — gitignored |
 
 Process artifacts record what was decided at a moment in time and are never read as sources of truth for reader documentation. A plan that describes a skill's intended design may have been superseded by the skill itself.
 
-Artifacts are named `<type>-<slug>-YYYY-MM-DD.md` using their **creation** date, which stays fixed when the file is edited.
+Artifacts are named `NNNN-<type>-<slug>-YYYY-MM-DD.md`. `NNNN` is a zero-padded serial counted per directory, and the date is the **creation** date. Both stay fixed when the file is edited.
 
 _Verified against `main`@`9376802` on 2026-09-06._

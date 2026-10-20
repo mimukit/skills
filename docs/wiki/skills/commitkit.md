@@ -38,7 +38,7 @@ The most interesting decision in the skill is how much diff to read, and it turn
 
 When in doubt, it reads. A vague commit message costs more than the tokens it saved.
 
-The same economics drive the git calls themselves. commitkit fires at the end of a session, when the context window is at its largest, and every extra Bash call re-pays that whole window as input. So the state read is one chained call, and the entire commit sequence — every `git add`/`git commit` pair plus the closing push and `git status -sb` — is another.
+The same economics drive the git calls themselves. commitkit fires at the end of a session, when the context window is at its largest, and every extra Bash call re-pays that whole window as input. So the state read is one chained call, and the commit sequence (every `git add`/`git commit` pair plus the closing push and `git status -sb`) is usually another. Two cases break the chain: a group that parks other staged paths runs as its own call without the push, and an interactive split of a mixed file gets a call of its own.
 
 **Generated files are never read** in either mode — lockfiles, build output, vendored directories, snapshots, compiled assets. Their stat line carries every bit of signal a commit message can use, and their diffs are the largest in most repos.
 
@@ -96,7 +96,7 @@ When other staged paths are in the way, it parks them: it saves their staged hun
 
 ## The push
 
-commitkit **pushes by default** once the commits exist, as the last link in the same chained call. The reasoning is an asymmetry: a commit that lives only on one disk is one lost machine away from gone, while a fast-forward push publishes work that a revert can undo. The old default protected against the cheap failure and left the expensive one open.
+commitkit **pushes by default** once the commits exist, as the last link of the commit chain, or in a call of its own after a parked group. The reasoning is an asymmetry: a commit that lives only on one disk is one lost machine away from gone, while a fast-forward push publishes work that a revert can undo. The old default protected against the cheap failure and left the expensive one open.
 
 The gate is the shape of the push, not the name of the branch. It pushes when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream yet. A topic branch and the base branch are treated the same, because plenty of solo repos commit straight to `main` and asking there would fire on every run.
 
@@ -144,4 +144,4 @@ npx skills add mimukit/skills -s commitkit
 
 Source: [`skills/commitkit/SKILL.md`](../../../skills/commitkit/SKILL.md) · [How it fits the loop](../workflow.md)
 
-_Verified against `main`@`4e88ae7` on 2026-10-09._
+_Verified against `main`@`e7a6a61` on 2026-10-20._

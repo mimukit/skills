@@ -121,7 +121,7 @@ Full runs only (skipped when skill names are passed):
 | No `IDEAS.md` backlog row names a skill that already shipped | warning |
 | No skill dispatches to a sibling marked `disable-model-invocation: true` | warning |
 
-The portability checks apply only to skills marked `internal: false`. The hand-off check exempts `gitkit`, and accepts the grandfathered headings `Report`, `Output`, `Finish`, and `After creating` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
+The portability checks apply only to skills marked `internal: false`, and the repo-machinery check skips the skills in `PORTABILITY_EXEMPT`, currently `repokit`, which writes a target repo's `AGENTS.md` and never reads this one. The hand-off check exempts no skill, because `HANDOFF_EXEMPT` is empty, and accepts the grandfathered headings `Report`, `Output`, `Finish`, `After creating`, and `Hand over` alongside the canonical `Hand off`. The `allowed-tools` check has its own exemption list, `TOOLS_EXEMPT`, which is currently empty — joining it requires stating the reason in the skill's own Notes.
 
 A **satellite** is any `.md` in a skill's directory other than `SKILL.md`, most often a `modes/<mode>.md`. It ships with the skill on install, so it carries the same reference-integrity checks as the root rather than rotting where nothing looks. A relative pointer is checked from the file that writes it, so `](modes/close.md)` in a root and `](../SKILL.md#remove)` in a satellite both resolve against their own directory. The portability check reads `](../…)` in a root as an escape from the skill directory and flags it; the same pointer in a satellite is how a satellite reaches its own root.
 
@@ -170,6 +170,9 @@ Every kit that writes an artifact states this rule itself, so a fresh repo gets 
 | ADR | `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` — zero-padded, monotonic | `domainkit` |
 | Verification bundle | `docs/verify/NNNN-verify-<slug>-YYYY-MM-DD/` — a directory | `verifykit` |
 | SEO report | `docs/seo/NNNN-seo-<slug>-YYYY-MM-DD.md` — a new file per run | `seokit` |
+| Status snapshot | `docs/status/NNNN-status-<repo-slug>-YYYY-MM-DD.md` — gitignored scratch | `statuskit` |
+| Test plan | `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md` — one per repository | `testkit` |
+| Names | `docs/names/NNNN-names-<slug>-YYYY-MM-DD.md` — only on request | `namekit` |
 
 Same subject means update in place, never a second file. `seokit` is the one exception: each audit is a dated snapshot, and its next run diffs against the latest one. Two distinct artifacts never collide, because each takes the next serial. An ADR's serial is its decision number. `docs/wiki/` and other reader-facing pages stay unnumbered.
 
@@ -186,4 +189,4 @@ Same subject means update in place, never a second file. `seokit` is the one exc
 
 `.github/workflows/lint.yml` runs on pushes to `main` and on every pull request. One job on `ubuntu-latest`: `actions/checkout@v4`, then `make lint`, then `make security`.
 
-_Verified against `main`@`17c5881` on 2026-09-01._
+_Verified against `main`@`e7a6a61` on 2026-10-20._
