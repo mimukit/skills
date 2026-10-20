@@ -60,7 +60,7 @@ Pick **straight-through**, **tests-after**, or **TDD** by this precedence, takin
 - The subagent builds and runs the gate under [Tool rules](#tool-rules), writes its notes and logs to a file, and returns a short result: pass or fail, the files changed, the gate result, and that file's path.
 - The conductor edits no code. It reads each result, dispatches the next group, then runs the [done-gate](#5-run-the-done-gate) once over the whole tree.
 
-When afkkit is installed, its conductor section holds the full dispatch and payload rules. On a host with no subagent tool, build the groups inline in order and say so.
+When afkkit is installed, its **Dispatch rules** section holds the full brief rules: a new agent, never a fork, inputs by path, and the two command rules. On a host with no subagent tool, build the groups inline in order and say so.
 
 Follow [Tool rules](#tool-rules) for every command and every file write, inline or delegated.
 

@@ -86,7 +86,7 @@ When the scope holds more than one heavy phase, or one mechanical bulk phase suc
 
 The reason is billing. Every tool call re-bills the whole context, so a phase built inline makes every later phase more expensive. One six-phase run built four phases in its main thread and grew to several hundred thousand tokens of context, while the phases it did delegate came back in a few thousand characters each.
 
-The brief is where delegation pays or fails. In that same run, each subagent re-read the same shared files because its brief named the task but not the APIs it would call. So the brief carries the paths, the signatures of the shared APIs, the resolved mode, the acceptance items, and the gate commands. [`afkkit`](./afkkit.md) owns the full conductor rules; on a host with no subagent tool, the groups build inline in order.
+The brief is where delegation pays or fails. In that same run, each subagent re-read the same shared files because its brief named the task but not the APIs it would call. So the brief carries the paths, the signatures of the shared APIs, the resolved mode, the acceptance items, and the gate commands. [`afkkit`](./afkkit.md) owns the full dispatch rules, including why a subagent is always a new agent and never a fork; on a host with no subagent tool, the groups build inline in order.
 
 ## Tool rules
 

@@ -4,7 +4,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 
 | Skill | What it does |
 |---|---|
-| [`afkkit`](#afkkit) | Run a groomed `ready` GitHub issue through the whole build span unattended: worktree, implement, commit, verify-and-review, fix, QA plan, and open PR. |
+| [`afkkit`](#afkkit) | Run a groomed `ready` GitHub issue through the whole build span unattended: worktree, implement, commit, QA plan, acceptance check, fix, and open PR. |
 | [`commitkit`](#commitkit) | Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. |
 | [`debugkit`](#debugkit) | Chase a symptom to its true cause — reproduce it, shrink it, write falsifiable hypotheses, and prove the cause by toggling the symptom on and off — then hand over a failing reproduction instead of a fix. |
 | [`designkit`](#designkit) | Derive a project's design system from the UI it already ships and keep it true as the code moves — a spec-compliant `DESIGN.md`, validated by the official linter. |
@@ -42,7 +42,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 
 ## [`afkkit`](./skills/afkkit.md)
 
-Run a groomed `ready` GitHub issue through the whole build span unattended: worktree, implement, commit, verify-and-review, fix, QA plan, and open PR.
+Run a groomed `ready` GitHub issue through the whole build span unattended: worktree, implement, commit, QA plan, acceptance check, fix, and open PR.
 
 _No modes — one path._
 
