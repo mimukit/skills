@@ -29,6 +29,12 @@ The grill is done when the frontier is empty: every decision is settled, or defe
 
 The rounds are bounded by the decisions that are actually open. A round never re-asks a settled decision unless a later answer contradicts it. A thin answer gets one follow-up, and a second thin answer marks the decision deferred instead of starting a loop. You can also stop at any round, and what is still open becomes deferred.
 
+## The build-stop round
+
+Before the frontier counts as empty, a grill on something that gets built asks the questions a build would otherwise stop for: permission for outward actions the plan calls for (filing issues, pushing, a deploy), the test runner for any new kind of test, and each attended phase. A plan grilled without them clears the gate and then waits on a person halfway through the build, which defeats an unattended run.
+
+The answers go into the plan, not just the conversation: approvals and runners as settled decisions, and each phase that stays attended as an `Attended:` line under its heading. [`afkkit`](./afkkit.md) reads those, and an approval that lives only in the chat never reaches it.
+
 ## Always recommend an answer
 
 Every question states the option grillkit would pick, and why. A naked question offloads the thinking; a recommendation gives you something concrete to accept, reject, or refine.
