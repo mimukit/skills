@@ -49,7 +49,19 @@ Refuse with the reason, not a bare error:
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
 - **closed, or no lifecycle label** → say which, and offer `triage` to classify it.
 
-This step is done when the issue passed the guard with its label and, for `stacked`, its parent branch named, or the run has stopped with the refusal reason.
+**Open-PR check: warn at 3, never refuse.** After the guard passes and before any worktree exists, count the user's open feature PRs in this repo:
+
+```sh
+gh pr list --author @me --state open --json number,title,headRefName,isDraft,createdAt
+```
+
+Drop drafts and `hotfix-*` branches; what remains is review work waiting on the user. **When 3 or more remain**, print each one (number, title, age in days) under one warning line: every new start adds a PR to a queue the user cannot QA yet, and old branches drift from the base while they wait. That is not a hypothetical cost: one project opened 8 PRs in two days, three of them (about 11,000 lines) later closed unmerged after a redesign, and a waiting branch fell 70 commits behind its base. Then ask once whether to start anyway, and start on a yes.
+
+This is a warning, not a gate, because the user sometimes needs a fourth branch and is the only one who knows. It is the opposite of the label guard above for that reason: the label carries a judgment already made, and the PR count asks for one now.
+
+**An unattended caller gets no question.** When the caller says the run is unattended (afkkit does), skip the ask, start the issue, and return the open-PR count and numbers with the result, so the caller reports them in its hand-off. A question nobody can answer would stall the run, and the count is information, not a refusal. A query that errors is skipped with a one-line note; it never blocks the start.
+
+This step is done when the issue passed the guard with its label and, for `stacked`, its parent branch named, and the open-PR count is checked (and, at 3 or more, warned about and answered, or returned to an unattended caller), or the run has stopped with the refusal reason.
 
 ### 2. Derive the branch name
 
@@ -78,7 +90,7 @@ A `stacked` issue flips exactly the same way. If either label is missing from th
 
 ### 5. Hand off
 
-**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path).
+**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). When the open-PR check fired, repeat the count in one line.
 
 **Where it landed.** Give the branch and the worktree path, and whether it was created fresh or adopted.
 

@@ -127,6 +127,10 @@ The gate does not depend on who types the command. It's the *label* that carries
 
 Refusals name the reason. An issue already `in-progress` isn't a failure — it takes the adopt path, where gitkit hands back the existing worktree and the label is left alone. That's what makes `start` safe to re-run.
 
+**A second check warns rather than refuses.** Once the guard passes, `start` counts your open feature PRs in the repo, leaving out drafts and `hotfix-*` branches. At 3 or more it lists them with their age and asks once whether to start anyway. The reason is a measured failure, not a style preference: one project opened 8 PRs in two days, faster than anyone could QA them, and three of them (about 11,000 lines) closed unmerged after a redesign while another branch fell 70 commits behind its base. Every start adds a PR to the queue, so the moment before the worktree exists is the cheapest place to notice it.
+
+It stays a warning because the label guard and the count answer different questions. The label carries a judgment a human already made at the grill; the count asks for a judgment now, and sometimes a fourth branch is the right call. An unattended caller such as [`afkkit`](./afkkit.md) gets no question at all, since nobody is there to answer it. `start` proceeds and returns the count, and afkkit puts it in its hand-off.
+
 ### `close`
 <!-- cheatsheet: closes an issue whose PR merged, and reclaims its workspace -->
 
