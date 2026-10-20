@@ -82,7 +82,7 @@ Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` i
 ## Docs artifact naming
 
 - An artifact under `docs/<type>/` (a plan, a QA plan, a review, research) is named `NNNN-<type>-<slug>-YYYY-MM-DD.md`.
-- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, list the directory, take the highest serial, and add one. An empty directory starts at `0001`.
+- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, take the highest serial in that directory across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD <dir>` after `git fetch origin`), and add one. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. An empty directory starts at `0001`.
 - `YYYY-MM-DD` is the creation date. The whole name stays fixed after edits.
 - An ADR uses its decision number as the serial: `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`.
 - Reader-facing pages (`docs/wiki/`, how-to guides, runbooks) stay unnumbered.

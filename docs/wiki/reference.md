@@ -174,7 +174,7 @@ Every kit that writes an artifact states this rule itself, so a fresh repo gets 
 | Test plan | `docs/tests/NNNN-testplan-<repo>-YYYY-MM-DD.md` — one per repository | `testkit` |
 | Names | `docs/names/NNNN-names-<slug>-YYYY-MM-DD.md` — only on request | `namekit` |
 
-Same subject means update in place, never a second file. `seokit` is the one exception: each audit is a dated snapshot, and its next run diffs against the latest one. Two distinct artifacts never collide, because each takes the next serial. An ADR's serial is its decision number. `docs/wiki/` and other reader-facing pages stay unnumbered.
+Same subject means update in place, never a second file. `seokit` is the one exception: each audit is a dated snapshot, and its next run diffs against the latest one. Two distinct artifacts never collide, because each takes the next serial. The next serial is counted across every local worktree and `origin/HEAD`, not one checkout, because two parallel worktrees that each looked only at their own directory used to take the same number. An ADR's serial is its decision number. `docs/wiki/` and other reader-facing pages stay unnumbered.
 
 ## Gitignored paths
 

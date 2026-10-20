@@ -57,7 +57,7 @@ A handoff is read twice by the same person, in two different states of mind, and
 ## How it works
 
 1. **Reread the session** for the goal, current state, decisions, and loose ends.
-2. **Read the workspace** from git when the task involves code. `Bash` is declared for these read-only queries, and `Glob` lists `docs/handoffs/` for the next serial.
+2. **Read the workspace** from git when the task involves code. `Bash` is declared for these read-only queries, and the next serial comes from `docs/handoffs/` in every local worktree and on `origin/HEAD`, so a handoff written in a parallel worktree does not take the same number.
 3. **Separate carry-over from reference** — does this live only in the chat, or is it already an artifact?
 4. **Draft** in the shape above, slanted toward the focus argument if given. The draft is done when every sentence carries something no linked artifact holds and the first next step is one action the next agent can run without reading further.
 5. **Redact** secrets and PII.
