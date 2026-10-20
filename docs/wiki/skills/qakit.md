@@ -1,6 +1,6 @@
 # qakit
 
-Generate a step-by-step manual QA plan for a feature just implemented, grounded in the actual code changes.
+Generate a QA plan for a feature just implemented: the agent runs every check it can, in a headless browser when one exists, and leaves a short manual list for human judgment.
 
 **Reach for it when** a coding session wraps and you want to hand-test the result.
 
@@ -13,9 +13,9 @@ Generate a step-by-step manual QA plan for a feature just implemented, grounded 
 
 ## What it does
 
-qakit turns a feature an agent just implemented into a **manual QA plan a human can actually run** — concrete steps, verification checkpoints inline, and pass/fail/skip boxes, grounded in what the code changed rather than a generic checklist.
+qakit turns a feature an agent just implemented into a **QA plan with two halves**. The agent runs every check it can and records the results. A person gets a short manual half: concrete steps, verification checkpoints inline, and pass/fail/skip boxes, grounded in what the code changed rather than a generic checklist.
 
-The key word is manual. These are steps that genuinely need a human to perform and judge: click through a flow, read a screen, feel out the UX.
+The manual half is for judgment only. Does the screen look right, match the mockup, read well in dark mode, feel smooth? Everything with a pass condition a script can assert belongs to the agent.
 
 ## Organized around setup, not around dimensions
 
@@ -43,11 +43,27 @@ The standalone *Regression checks* list is gone for the same reason. Regression 
 
 ## The split that makes it useful
 
-Anything an agent or script can confirm on its own — running a command and reading output, hitting an endpoint, asserting a return value — does **not** belong in the human's checklist.
+Anything an agent or script can confirm on its own does **not** belong in the human's checklist. The test is one question: can the pass condition be written as an assertion a script evaluates? Command output, an endpoint's response and a return value always pass it. With a browser driver such as `playwright-cli`, so does most of what a page shows: a figure reads `7`, a click lands on `/account/orders/`, the search field is absent, a link opens in a new tab, nothing overflows at 375 px.
 
-qakit runs those itself and records the outcomes in an **Automated verification** section at the end of the plan. The human sees them confirmed without re-running them by hand.
+qakit runs those itself and records the outcomes in an **Automated verification** section at the end of the plan, with the observed value beside each one. The human sees them confirmed without re-running them by hand.
 
-So as cases are generated, each gets sorted: does confirming this *require a human*, or can a script do it? Only the human-only cases become numbered test cases.
+So as cases are generated, each checkpoint gets sorted. Only the human-only ones become numbered test cases, and a UI plan should land at about ten of them.
+
+### Why the browser moved into the agent's half
+
+The rule used to stop at commands and endpoints, so every page check fell to the human by default. Eight real QA plans written that way averaged about 65 hand-ticked checkboxes each, and not one recorded a failure. The defects that mattered (a missing sidebar, an empty cart page) arrived later as chat messages. The checkboxes were costing 20 to 30 minutes per PR and catching nothing, because most of them asked a person to read a number off a screen.
+
+A headless browser reads the number faster and never rubber-stamps it. What is left for the person is the part a script genuinely cannot judge, and qakit hands it over as screenshots (light and dark, desktop and 375 px) beside each visual checkpoint, so most of the review is looking at images. The screenshots go to the temp directory, never the repo, because they describe one revision and expire with it.
+
+Driving a browser writes data the same way a user does, so qakit drives creates, deletes and submits only against a local server with sample data. It never runs a seed or a reset to reach a state, for the same reason it never runs the plan's Setup blocks. When a driver will not start, qakit records the error and tries the next one on its list, for example a host's own preview browser after `playwright-cli`. Only when every driver fails do the page checks return to the manual half. It never loosens a browser's sandbox to make it start, because that is a security choice for the operator, not the skill.
+
+### Disposable targets: when the agent may change state
+
+Some plans are almost all commands. A database lifecycle plan in saasaloy had 70 shell blocks and no browser step, and every one ran against a playground that `pnpm play:reset` rebuilds. Under the old rule the agent wrote those commands and the human ran them, because qakit never runs Setup, Reset, or a write.
+
+That rule protects work qakit cannot see, and it stays the default. The exception is a **disposable target**: an environment the project itself declares throwaway, in its agent instructions or README, together with the command that rebuilds it. On that target only, qakit runs whole scenarios (Setup, cases, Reset), ticks what it confirmed, and puts the real output into each case's Notes, so the record reads like a run a person did. It says the target out loud before the first command and resets it at the end.
+
+The declaration has to be explicit. qakit never decides on its own that a local database is safe to drop, because "local" says nothing about whether somebody's afternoon of seeded data lives there.
 
 The database is where that seam earns its keep, because a database check could plausibly land on either side. The sort isn't about who owns a terminal — the tester has one too — it's about **what produces the fact**. That a table exists, that an index is there, that the migration applied: all true before anyone touches the app, so qakit confirms them itself and the human never sees them. That clicking Place order wrote one row in `orders` and two in `order_items`: that fact doesn't exist until the tester acts, so the query belongs in their case, under the step that caused it.
 
@@ -73,7 +89,7 @@ It doesn't pad. One clear check per behavior beats ten redundant ones, and the c
 
 ## What it runs, and what it won't
 
-qakit writes no test code, but it does run the project's existing test, lint, and build commands. That is not a contradiction: those are checks a machine can confirm, and running them is exactly what keeps them off the human's list. Every command it runs is echoed in **Automated verification**.
+qakit writes no test code, but it does run the project's existing test, lint, and build commands, and it drives the app in a browser. That is not a contradiction: those are checks a machine can confirm, and running them is exactly what keeps them off the human's list. A browser check lives in the plan for one revision; it never becomes part of the test suite. Every command it runs is echoed in **Automated verification**.
 
 Two command rules have the same shape: **inspect what exists, don't reproduce it.**
 
@@ -158,8 +174,9 @@ This is also why prose paragraphs lose to bullet sublists here. A wall of prose 
    ...
 
 ## Automated verification (by AI agent)
+   ### Browser checks        — each page assertion with its observed value, plus the screenshot directory
 ## Not covered / needs human judgment
-## Overall result            — pass / fail / partial verdict boxes
+## Overall result            — pass / fail / partial verdict boxes; ticking is optional
 ```
 
 ### The verdict sits at the foot
@@ -176,7 +193,9 @@ What's left at the top is the one thing a machine genuinely can't supply — the
 
 ## Hands off to
 
-[`prkit`](./prkit.md), with the plan path: "open the PR with prkit and hand it `docs/qa/<file>`", so the PR's test plan links the QA plan instead of restating it. Without prkit, `gh pr create` with the path in the body. qakit reports how many scenarios and manual cases (and how many 🔴 critical) plus the automated result, and the human runs the plan in a fresh checkout, scenario by scenario, resetting only between scenarios.
+[`prkit`](./prkit.md), with the plan path: "open the PR with prkit and hand it `docs/qa/<file>`", so the PR's test plan links the QA plan instead of restating it. Without prkit, `gh pr create` with the path in the body. qakit reports how many scenarios and manual checkpoints (and how many 🔴 critical) plus the automated and browser results. A failed browser check comes first in that report and routes to [`implementkit`](./implementkit.md) for a fix before the PR, since it is a defect nobody had to find by hand.
+
+The human runs the manual half and reports failures in the agent session or as a PR comment. Ticking the boxes and uploading the file back is optional, because the record that matters is the comment.
 
 It never marks a *manual* case as passed — those are yours to execute. The agent only fills the Automated verification section.
 

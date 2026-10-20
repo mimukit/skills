@@ -24,7 +24,7 @@ Every skill and every mode, one line each. This is the recall page — what exis
 | [`prkit`](#prkit) | Draft and open a GitHub pull request from your branch — title, summary, and test plan written from the actual commits and diff. |
 | [`promptkit`](#promptkit) | Sharpen the prompt before you send it — the one-shot instruction you're about to hand a coding agent, or the system prompt your application ships. |
 | [`prototypekit`](#prototypekit) | Build throwaway code that answers a question, fold the answer into the decision, then delete the code. |
-| [`qakit`](#qakit) | Generate a step-by-step manual QA plan for a feature just implemented, grounded in the actual code changes. |
+| [`qakit`](#qakit) | Generate a QA plan for a feature just implemented: the agent runs every check it can, in a headless browser when one exists, and leaves a short manual list for human judgment. |
 | [`refactorkit`](#refactorkit) | Survey an existing codebase for the structural change worth making — shallow interfaces, adapter sprawl, poor locality, untested coupling — rank the candidates, crown one, and write it up as a reviewable proposal. |
 | [`releasekit`](#releasekit) | Cut a release from the Conventional Commits a repo already writes — derive the semver bump and a changelog from the commit range, bump the manifest, tag it, and publish a GitHub release, all behind a mandatory preview. |
 | [`repokit`](#repokit) | Set up a GitHub repo through the `gh` CLI — About description and topics, the workflow labels, a full new-repo setup, and a `docs/` renumbering. |
@@ -207,7 +207,7 @@ _No modes — one path._
 
 ## [`qakit`](./skills/qakit.md)
 
-Generate a step-by-step manual QA plan for a feature just implemented, grounded in the actual code changes.
+Generate a QA plan for a feature just implemented: the agent runs every check it can, in a headless browser when one exists, and leaves a short manual list for human judgment.
 
 _No modes — one path._
 
