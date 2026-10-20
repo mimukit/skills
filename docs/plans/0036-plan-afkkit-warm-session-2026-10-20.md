@@ -1,4 +1,5 @@
 # Plan: afkkit warm-session pipeline
+Grilled: 2026-10-20
 
 ## Context
 
@@ -22,11 +23,18 @@ Success: the owner runs `afkkit <n>` instead of the pasted prompt. A single-issu
 | Long builds | implementkit's own conductor rule decides when implement splits into per-phase subagents (more than one heavy phase, or a bulk mechanical phase). afkkit adds no second split rule. |
 | Guards kept | issuekit `start` and its `ready` guard, the spec gate's `needs-planning` escalation (missing decisions, attended work), `no-push` until the PR step, the authorization list, the escalation contract, and the base-branch check on a "pre-existing" failure claim. |
 | Decisions list | The agent appends each decision it takes on the owner's behalf to `.afkkit/assumptions.md` as it goes. prkit copies the entries into the PR body under **Assumptions**, and the hand-off repeats them. This is the list the pasted prompt asks for, kept in the PR. |
-| Review | One fresh subagent on the session's own model runs an **acceptance check**: reviewkit's requirement-completeness and correctness passes only, blockers only. Its brief carries the issue body, the branch diff range, `assumptions.md` and `checks.md`, and no forked history. The warm session fixes the blockers. Deep review stays with the PR review bot. |
+| Review | One fresh subagent on the session's own model runs an **acceptance check**: reviewkit's requirement-completeness and correctness passes only, blockers only. Its brief carries the issue body, the branch diff range, `assumptions.md`, `checks.md`, `orientation.md` and the QA-plan path, and no forked history. The warm session fixes the blockers. Deep review stays with the PR review bot. |
 | Fresh context is the independence | The reviewer is dispatched as a new agent, never a fork. The brief states it is the reviewer and must not run QA, commit, or open the PR. This closes the role-confusion bug. |
 | Model routing | Removed. Every step runs on the session model; an inline override ("afkkit 42, review on sonnet") still works. |
 | Repeated-work caps | One dev server per run, started once and stopped once. A red base gate is proven once and recorded in `orientation.md` with its command and exit code, and no later step re-proves it. Each gate command runs once into a log, per implementkit's tool rules. |
-| Run directory | Shrinks to `assumptions.md`, `checks.md`, `orientation.md` (known-red base gates and the dev-server command only), `findings.md` and `progress.md`. `verified.md` goes away: the warm session holds its own check results and hands them to qakit directly. |
+| Single-issue host | A named issue runs in the invoking session, as the pasted prompt does. Only batch `all` starts subagents. |
+| Spec gate | Stays as one inline read after `start`, with no dispatch. It escalates missing decisions and attended work to `needs-planning` before any code, and writes `assumptions.md` and `checks.md`. implementkit's thin-spec bounce stays as the second line. |
+| `checks.md` | A yardstick written before code: one line per acceptance criterion with its observable and an agent/human flag, such as `C3 · sidebar visible on /dashboard at 1280px · agent`. No provisional commands. |
+| Step order after implement | Commit, then qakit runs every agent check (in the headless browser when the driver is present), takes the screenshots, and writes the QA plan. The acceptance check reads that plan, its screenshots, and the diff. The warm session fixes the blockers, commits, and has qakit refresh only the checks the fix touched. Then prkit opens the PR. The browser opens in qakit only. |
+| UI evidence | The reviewer reads qakit's screenshots and starts no browser. With no driver, the check runs on the diff and says so in `findings.md`. No uikit `audit` step: implementkit already routes UI files through uikit, and the leaked defects were spec misses. |
+| Pre-existing failure claims | The warm session records each claim and its command in `orientation.md`. The acceptance check re-runs that command once on the base branch and reports `confirmed` or `belongs to this branch`; a failure that belongs to the branch is a blocker. A confirmed one that blocks a criterion goes into the PR body as an unmet criterion. |
+| Usage-limit stops | Implement commits and appends to `progress.md` at each phase boundary, and a re-run resumes at the first phase with no line. No pacing against the five-hour window, because neither host exposes it reliably. |
+| Run directory | Shrinks to `assumptions.md`, `checks.md`, `orientation.md` (pre-existing failure claims and the dev-server command only), `findings.md` and `progress.md`. `verified.md` goes away: qakit's QA plan is where check results live. |
 | Batch `all` | One thin conductor walks the queue and starts one fresh single-session subagent per issue, so issue N's context never bills issue N+1. Sequential, priority order, one OK up front, as today. |
 
 ## Approach
@@ -39,31 +47,33 @@ Rejected alternatives, one line each:
 - **Keep the conductor, trim each step.** Fixes the reruns but keeps the cold start per step, which is the cost the pasted prompt avoids by construction.
 - **Keep a cross-family reviewer.** The one recorded cross-family review found nothing, and the failure was context, not model.
 
-### Phase 1: warm-session pipeline in afkkit
+### Phase 1: warm-session pipeline in afkkit (built 2026-10-20)
 
 - Replace "How the conductor runs each step" with a section on the warm session: which steps run inline, when implementkit splits implement, and the one dispatch the run always makes (the acceptance check).
-- Fold the spec gate into the session after `start`. It still writes `assumptions.md` and `checks.md`, still escalates missing decisions and attended work to `needs-planning`, and writes `orientation.md` only for known-red base gates and the dev-server command.
-- Replace "Verify and review" and "Fix and finish" with: run the agent-confirmable checks in the warm session, dispatch the acceptance check, apply its blockers, commit with `no-push`, run qakit, run prkit.
-- Write the acceptance-check brief: inputs by path, the two reviewkit passes, blockers only, "you are the reviewer; do not run QA, commit, push or open a PR", findings to `.afkkit/findings.md` with `B1`… IDs.
+- Fold the spec gate into the session after `start` as one read. It writes `assumptions.md` and the yardstick `checks.md`, escalates missing decisions and attended work to `needs-planning`, and leaves `orientation.md` for pre-existing failure claims and the dev-server command.
+- Replace "Verify and review" and "Fix and finish" with the settled order: commit with `no-push`, qakit runs the checks and writes the QA plan, dispatch the acceptance check, apply its blockers, commit, qakit refreshes the touched checks, prkit opens the PR.
+- Write the acceptance-check brief: inputs by path (issue, diff range, `assumptions.md`, `checks.md`, `orientation.md`, QA plan and its screenshots), the two reviewkit passes, the base-branch re-run of each pre-existing claim, blockers only, "you are the reviewer; do not run QA, commit, push or open a PR", findings to `.afkkit/findings.md` with `B1`… IDs.
 - Add the repeated-work caps as hard rules in one place.
 - Make the agent append to `assumptions.md` at every decision point, not only at the gate, and have the hand-off list the entries.
-- Delete "Model routing" and the `verified.md` row; update the run-directory table and the resume table to the new step set.
+- Delete "Model routing" and the `verified.md` row; update the run-directory table and the resume table to the new step set, including the row for a run that stopped inside implement.
+- Remove the conductor from the single-issue path: a named issue runs in the invoking session.
 - Keep "with metrics" reporting so the first runs can be compared against the 21.4-minute baseline.
 
-Done when: `make lint` passes, `skills/afkkit/SKILL.md` contains no `fable` and no `gpt-5.5`, the pipeline names exactly one subagent dispatch per issue outside implementkit's own split, and the resume table has one row per remaining `progress.md` state.
+Done when: `make lint` passes, `skills/afkkit/SKILL.md` contains no `fable` and no `gpt-5.5`, the pipeline names exactly one subagent dispatch per issue outside implementkit's own split, the browser opens only inside qakit, and the resume table has one row per remaining `progress.md` state.
 
-### Phase 2: batch mode on the new shape
+### Phase 2: batch mode on the new shape (built 2026-10-20)
 
 - Rewrite "Batch mode: `all`" so the conductor starts one fresh subagent per issue that runs the whole single-issue pipeline, and holds only each issue's one-line outcome.
 - Keep the queue order, the single up-front OK, the fixed queue, and the skip rules for `in-progress` and `stacked`.
 
 Done when: the batch section states that the conductor never writes to a worktree and keeps only outcome lines between issues, and `make lint` passes.
 
-### Phase 3: companion kits and docs
+### Phase 3: companion kits and docs (built 2026-10-20)
 
 - implementkit: replace "When afkkit is installed, its conductor section holds the full dispatch and payload rules" with a pointer that still resolves after the rewrite, or move the payload rules it needs into implementkit.
 - `docs/wiki/skills/afkkit.md`: rewrite "How the conductor works", "Model routing", "Why verify and review share one dispatch" and "Why there is only one review round" to explain the warm session and the acceptance check, with the evidence above as the why. Update the summary table if `allowed-tools` changes.
-- `docs/wiki/skills/implementkit.md` if its conductor text changed; run `make cheatsheet`.
+- qakit: confirm its QA plan records each screenshot path and the revision each result ran against, so the acceptance check and the refresh can read them. Change qakit only if it does not.
+- `docs/wiki/skills/implementkit.md` and `docs/wiki/skills/qakit.md` if their text changed; run `make cheatsheet`.
 
 Done when: `make lint` passes with no stale-cheatsheet error, and `grep -rn 'verified.md\|independent review model' skills docs/wiki` returns nothing that describes afkkit's current behavior.
 
@@ -78,14 +88,7 @@ Done when: three metric tables exist, and each blocker the acceptance check rais
 
 ## Open questions
 
-- Should the spec gate keep its own pass at all, or should implementkit's "Assess implementability" step carry the `needs-planning` escalation alone? Two checks on one spec may be one too many in a warm session.
-- Is `checks.md` still worth writing before code exists, now that no separate verifier reads it? The pasted prompt has no such file and still reaches a PR.
-- Does the acceptance check need to see the running UI to catch "design B instead of A" and "sidebar missing", or is the diff plus the issue enough? A browser check costs time; the box may have no driver.
-- Should a UI issue route to uikit's audit as part of the check, since all six leaked defects were UI?
-- How does the warm session survive a usage-limit stop? The Codex run lost two agents to it; one session that dies loses more context at once. Resume from `progress.md` may need to cover a mid-implement stop.
-- Should the run pace itself against the five-hour window, or only resume cleanly after one?
-- Does dropping the conductor change what "the conductor never writes to the workspace" protects, and is anything lost when the session that decides is also the session that edits?
-- Does the single-issue run still need its own subagent when invoked directly, so a long run does not fill the owner's interactive session?
+None. The 2026-10-20 grill settled every question the draft raised.
 
 ## Non-goals
 
