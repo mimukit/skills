@@ -32,7 +32,7 @@ It's the autonomous sibling of [`statuskit`](./statuskit.md): statuskit tells a 
 
 **afkkit never publishes half-broken work.** Every commit before the PR step uses [`commitkit`](./commitkit.md)'s `no-push`, so the branch reaches `origin` only when [`prkit`](./prkit.md) opens the PR. An escalated run leaves its commits on disk and nothing on the remote.
 
-**Why the authorization is stated at entry.** prkit previews PR creation and its QA-plan commit, and afkkit escalates any preview it cannot answer. Without a stated scope, the normal successful run would stop at its last step. So the user's request is the answer, and afkkit hands it to every dispatch; prkit accepts it as the OK for exactly the actions it names. The list is closed: a force-push, a rebase of a published branch, a push to another branch, or a merge still needs a person, so the run escalates on it.
+**Why the authorization is stated at entry.** prkit previews PR creation and its QA-plan commit, and afkkit escalates any preview it cannot answer. Without a stated scope, the normal successful run would stop at its last step. So the user's request is the answer, and afkkit hands it to every dispatch; prkit accepts it as the OK for exactly the actions it names. The list is closed: a force-push, a rebase of a published branch, a push to another branch, or a merge still needs a person, so the run escalates on it. The one way to widen it is in writing: an outward action the issue body pre-approves by name, such as "may file follow-up issues", joins the list for that issue. A grill is where such an approval gets recorded.
 
 ## The safety property is the label, not who types the command
 
@@ -53,6 +53,8 @@ The conductor's boundary is sharp: it **dispatches** subagents, **redistributes*
 It also **redistributes payloads rather than re-deriving them.** Every payload class in the pipeline has a file, so a hand-off is a path plus the identifiers that matter (`apply B1, B3, N2 from .afkkit/findings.md`), not a paragraph of re-quoted evidence.
 
 **A dispatch has a floor**, and it's the rule that shapes the step list. Every subagent pays a fixed cost before doing any work, whether the step takes 175 tool uses or six. So a step that needs nothing but the previous agent's context doesn't get its own dispatch. That's why the commit is folded into implement, and why the fix, QA plan, and PR now share one tail dispatch: the agent that applied the fixes is already warm in the diff and the run files that the QA plan and PR body are written from. The floor's converse keeps implement's per-phase dispatches: phase N+1 needs phase N's committed code, not its transcript.
+
+**Every dispatch prompt states two command rules.** Commands must run the same in zsh and bash (quoted globs, no `for f in $var`), and each gate runs once into a log file. A subagent starts cold, so a lesson one agent learned the hard way is lost to the next unless the prompt carries it. In one measured session 23 commands failed on the zsh rules alone, across the main thread and its subagents.
 
 ## The run directory
 
@@ -75,6 +77,10 @@ Each file carries **facts with sources, never conclusions**: not "the auth flow 
 
 The trade is stated plainly: every downstream step inherits the gate's understanding, so a wrong orientation propagates silently. That's the price of not paying for the same discovery five times, and it's why the files carry facts rather than judgments. A wrong path is caught the moment a step opens it; a wrong conclusion is not.
 
+## Why the spec gate looks for attended work
+
+A run that reaches a design pick or an unapproved outward action in the middle stops with half the work built, and the person who could answer comes back to an escalation instead of a PR. Those stops are visible in the issue before any code exists, so the gate looks for them there. The fix is upstream: [`plankit`](./plankit.md) marks attended phases, and [`grillkit`](./grillkit.md) settles them or records the approval in the plan.
+
 ## Why the spec gate writes the acceptance checks
 
 `checks.md` holds one entry per acceptance criterion: the observable that confirms it, a provisional command, and whether an agent can confirm it or only a human can.
@@ -93,7 +99,7 @@ Cost tracks **context size × turns**, not token volume, so the way to make a st
 ## The pipeline
 
 1. **Start the issue**: issuekit `start`, sharing one dispatch with the spec gate. On a refusal the agent returns issuekit's reason verbatim and never begins the gate; the conductor verifies the returned worktree, branch, and label in one batched shell call.
-2. **Spec gate**: the same agent classifies gaps between what the issue specifies and what building it requires, writes `orientation.md`, `assumptions.md`, and `checks.md`, and returns the issue's phases grouped into dispatch groups. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Missing mechanics only** proceed, logged to `assumptions.md`.
+2. **Spec gate**: the same agent classifies gaps between what the issue specifies and what building it requires, writes `orientation.md`, `assumptions.md`, and `checks.md`, and returns the issue's phases grouped into dispatch groups. **Missing decisions** escalate to `needs-planning` before any code is written, the cheapest possible failure point. **Attended work** escalates the same way: a phase marked `Attended:`, a design pick or mockup approval, or an outward action the authorization does not cover. **Missing mechanics only** proceed, logged to `assumptions.md`.
 3. **Implement**: implementkit, one dispatch per phase group, each committing through commitkit with `no-push` before it returns and logging the commit to `progress.md`. Every step after this one runs once, over the whole branch diff.
 4. **Verify and review**: one dispatch on the independent model runs the gate's check list, probes up to six adjacent behaviors, writes `verified.md`, then invokes reviewkit on the full branch diff and writes `findings.md` with stable blocker and nit IDs. It runs code but edits nothing, never rebuilds, and records the exact server start and stop commands it used. Code that doesn't run at all escalates before any review is paid for.
 5. **Fix and finish**: one tail dispatch on the writer model applies every blocker plus the cheap nits by ID, commits, then re-runs the checks its changes touch and refreshes `verified.md`, so each result names a clean revision, then writes the QA plan through qakit (transcription; qakit re-runs only results recorded against an older revision) and opens the PR through prkit under the run's authorization, which commits the QA doc, pushes the branch for the first time, and advances the issue to `in-review`. A blocker it cannot fix escalates, and no PR opens with known blockers in it.
