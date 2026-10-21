@@ -17,7 +17,7 @@ A repo built by agents accumulates plans, reviews, QA docs, and decision records
 ## What wikikit is not
 
 - **Not the GitHub Wiki.** In-repo Markdown is the source of truth in every mode, versioned with the code and reviewed in the same PR. The wiki tab is at most a **derived, disposable mirror**, and only when [`publish`](modes/publish.md) is asked for by name. wikikit never reads the wiki as input and never treats it as canonical.
-- **Not the domain model.** A glossary (`CONTEXT.md`) and decision records (`docs/adr/`) have one owner, which is **domainkit** when it's installed and the human otherwise. A page that needs a term **links** to the glossary instead of defining it; an architecture page that needs a rationale links the ADR by number instead of paraphrasing it. A term missing from the glossary is routed, never invented inline.
+- **Not the domain model.** A glossary (`CONTEXT.md`) and decision records (`docs/adr/`) have one owner, which is **domainkit** when it's installed and the human otherwise. A page that needs a term **links** to the glossary instead of defining it; an architecture page that needs a rationale links the ADR by number instead of paraphrasing it. A term missing from the glossary is routed, never invented inline. When `CONTEXT.md` carries an `## Overview`, a page that states the product's purpose links that overview instead of restating it, and `architecture.md` opens with the link.
 - **Not process artifacts.** Plans, QA plans, reviews, handoffs, and agent instruction files (`CLAUDE.md` and its equivalents) are written for a maintainer mid-flow, expire, and are never read as sources of truth for reader docs or written by this skill.
 - **Not an API reference generator.** Where a generator exists (TypeDoc, Sphinx autodoc, an OpenAPI spec) wikikit links its output unchanged rather than hand-writing reference material that drifts within a week.
 
@@ -96,7 +96,7 @@ pages:
 | `how-to/<task>.md` | how-to | one task per page, goal-shaped |
 | `how-to/set-up-a-dev-environment.md` | how-to | the derivable half of contributor docs |
 | `how-to/cut-a-release.md` | how-to | release steps that actually exist in the repo |
-| `architecture.md` | explanation | components, boundaries, data flow, links to ADRs |
+| `architecture.md` | explanation | opens with a link to the `CONTEXT.md` overview when one exists; components, boundaries, data flow, links to ADRs |
 | `runbooks/<scenario>.md` | how-to (operator) | deploy, rollback, incident response, backup/restore |
 | `reference.md` | reference | declared surface only: commands, flags, env vars, config keys |
 

@@ -16,7 +16,7 @@ Consent-gated, and this is the gate that matters. Show the page list with a one-
 
 ### 4. Write the accepted pages
 
-Each grounded per [Grounding: verify before you write](../SKILL.md#grounding-verify-before-you-write), each held to the [Writing standards](../SKILL.md#writing-standards), each stamped with `<ref>@<sha>` and the date per [The provenance stamp](../SKILL.md#the-provenance-stamp), which leaves a page written on a feature branch unstamped until merge.
+Each grounded per [Grounding: verify before you write](../SKILL.md#grounding-verify-before-you-write), each held to the [Writing standards](../SKILL.md#writing-standards), each stamped with `<ref>@<sha>` and the date per [The provenance stamp](../SKILL.md#the-provenance-stamp), which leaves a page written on a feature branch unstamped until merge. When `CONTEXT.md` has an `## Overview`, open `architecture.md` with a link to it, and link it from any other page that states the product's purpose, per [Not the domain model](../SKILL.md#what-wikikit-is-not).
 
 ### 5. Rewrite the README front door
 
