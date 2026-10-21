@@ -325,7 +325,7 @@ Run [`repokit`](../../skills/repokit/SKILL.md) once per repo, before the loop:
 
 - `repokit labels` — creates and reconciles fifteen labels: the ten lifecycle states and the four priority steps that `issuekit` reads, plus the `ai-review` automation label that asks a repo's AI review tooling to look at a PR, each with its canonical name, color, and description. Re-run safe: missing ones get created, drifted ones get offered an update, matching ones are left alone, and your own non-canonical labels are never touched.
 - `repokit about` — infers a one-line About description and topics from the repo's own contents.
-- `repokit setup` — brings a new repo up to convention: the house settings (merge-commit-only, delete-branch-on-merge), the baseline files (LICENSE, README, `.gitignore`, `AGENTS.md`), then `about` and `labels`. `gh repo create` stays with you.
+- `repokit setup` — brings a new repo up to convention: the house settings (merge-commit-only, delete-branch-on-merge), the baseline files (LICENSE, README, `.gitignore`, `AGENTS.md`), then `about` and `labels`, all on defaults with no questions. `gh repo create` stays with you.
 - `repokit docs` — renames older `docs/` artifacts to carry a `NNNN-` serial in creation order. It needs no GitHub remote and never commits.
 
 The lifecycle and priority maps are a shared contract with `issuekit`: `repokit` writes them, `issuekit` reads them. Both skills carry those tables, and they have to stay aligned on names, colors, and meanings.
