@@ -43,7 +43,7 @@ Rejected alternatives:
 - A new skill (`briefkit` or similar): two glossary owners, and wikikit's routing would point at the wrong file.
 - Overview as a wikikit page: wikikit writes for readers outside the repo, and the overview is agent context first.
 
-### Phase 1: split domainkit into a routing root and `record` mode
+### Phase 1: split domainkit into a routing root and `record` mode (built 2026-10-21)
 
 - Move the Procedure section of `skills/domainkit/SKILL.md` (Detect, Locate, Offer, Write, Defer, Hand off) into `skills/domainkit/modes/record.md` with no behavior change.
 - Keep in the root: the intro, When this fires (now per mode, with the rule that a model-fired run routes to `record`), the `CONTEXT.md` format, the ADR format, the consent rule, and Notes.
@@ -52,7 +52,7 @@ Rejected alternatives:
 
 Done when: `make lint` passes, `skills/domainkit/modes/record.md` holds the six procedure steps, and a diff of the old Procedure against `record.md` shows only heading and anchor changes.
 
-### Phase 2: add the overview to the shared `CONTEXT.md` format
+### Phase 2: add the overview to the shared `CONTEXT.md` format (built 2026-10-21)
 
 - Add an `## Overview` block to the format template in the root, with the five subsections and the length caps.
 - Rewrite the content rules: overview and glossary only, no status, no decisions, no usage steps; the README boundary; the overview's home in `CONTEXT-MAP.md` for a multi-context project.
@@ -60,7 +60,7 @@ Done when: `make lint` passes, `skills/domainkit/modes/record.md` holds the six 
 
 Done when: the root's format section shows the overview above the first glossary term with its length caps, and the multi-context bullet names `CONTEXT-MAP.md` as the overview's home.
 
-### Phase 3: write `init` mode
+### Phase 3: write `init` mode (built 2026-10-21)
 
 - Read the repo first: manifests, entry points, README, routes or CLI surface, existing `CONTEXT.md`, `CONTEXT-MAP.md`, and `docs/adr/`. Look up every fact the code answers before asking anything.
 - Draft the overview and a candidate term list from what the code shows; mark each part as read from code or as an assumption.
@@ -73,7 +73,7 @@ Done when: the root's format section shows the overview above the first glossary
 
 Done when: `make lint` passes, `modes/init.md` exists, and every step in it ends on a `Done when` criterion.
 
-### Phase 4: write `audit` mode
+### Phase 4: write `audit` mode (built 2026-10-21)
 
 - Read the history with `git log` only: the last commit that touched `CONTEXT.md`, then the files changed since. Fall back to the current tree when git is missing or the command is refused.
 - Read `CONTEXT.md` (or the map and its context files), the changed code first, the README, and every ADR with its `Status`.
@@ -84,7 +84,7 @@ Done when: `make lint` passes, `modes/init.md` exists, and every step in it ends
 
 Done when: `make lint` passes, `modes/audit.md` exists, every step in it ends on a `Done when` criterion, and it names all six finding types.
 
-### Phase 5: update the description and the collection files
+### Phase 5: update the description and the collection files (built 2026-10-21)
 
 - Rewrite the `description`: one what-clause naming the overview, glossary, and ADRs, then the settled triggers per mode. Drop "it doesn't interrogate it" and keep the line that it records settled understanding. Stay under 1,024 characters.
 - Update `skills/wikikit/SKILL.md` and `skills/wikikit/modes/init.md` per the wikikit-link decision.
@@ -93,7 +93,7 @@ Done when: `make lint` passes, `modes/audit.md` exists, every step in it ends on
 
 Done when: `make lint` passes with no new warnings, `git diff docs/wiki/cheatsheet.md` shows the new what-clause, and the description is under 1,024 characters.
 
-### Phase 6: add the `CONTEXT.md` signal to statuskit
+### Phase 6: add the `CONTEXT.md` signal to statuskit (built 2026-10-21)
 
 - Add the signal to statuskit's survey beside the stale-tracker signal, with the two conditions and the 50-commit threshold.
 - Add a rung below every other rung: route to `domainkit init` or `domainkit audit`, with the plain fallback.
