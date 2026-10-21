@@ -204,24 +204,54 @@ git rebase "origin/$BASE"
 - **Count the threads before you ask.** On a branch with an open PR, query the GraphQL `reviewThreads` connection for unresolved threads and put the number in the preview. "3 review threads will be marked outdated" is a fact the user can decide on; "this may outdate review comments" is not.
 - **Unresolved threads are the reason to *offer* the merge exception, not to take it.** Still recommend the rebase; name merge as the available alternative alongside the count. A preference that folds in the case that argues against it was never a preference.
 - **`--force-with-lease`, never bare `--force`.** The lease is what stops you overwriting a commit someone else pushed while you were rebasing.
-- **On conflict**, stop and surface it (`git diff --name-only --diff-filter=U`). Propose a resolution per file and confirm before writing. A conflict resolution is a code change: run the repo's test gate afterward.
+- **On conflict**, resolve it by [Conflicts](#conflicts).
+
+### Conflicts
+
+The agent resolves every conflict and writes every resolution. The human never edits a conflicted file. The only open question per conflict is whether the resolution needs the human's ruling first, and a ruling is a pick between resolutions the agent has already written out.
+
+**Resolve without asking** when the conflict is mechanical, meaning the intent of both sides survives in full:
+
+- **Both sides add independent entries** (imports, exports, routes, list items, changelog lines). Keep both, in the order the file uses.
+- **Both sides make the same change.** Keep one copy.
+- **One side only reformats.** Keep the other side's content, then run the repo's formatter on the file.
+- **A lockfile or a generated file.** Take the base's version, then regenerate it with the repo's own command (`pnpm install --lockfile-only`, the codegen script).
+- **The conflict sits in context only.** The base edited or moved the surrounding lines, and the branch's change applies to the new code unaltered.
+
+**Ask first** when the resolution is a decision rather than a merge:
+
+- Both sides change the same behavior in ways that cannot both hold.
+- A modify/delete or rename/rename conflict, or a binary file.
+- The resolution drops code that either side added or kept.
+- You cannot state the intent of each side in one sentence. This is the check that catches a resolution you do not understand, so run it on every conflict, mechanical ones included.
+
+An ask names the file, the intent of each side in one sentence, the resolution you recommend, and the alternative, each shown as the code it produces. Collect every ask from one rebase stop into a single question round. Write the chosen resolution yourself.
+
+Guards on every resolution:
+
+- **Save the starting point** before the first rebase: `git update-ref "refs/gitkit/pre-sync/$BRANCH" HEAD`. Each sync overwrites it. `ORIG_HEAD` does not survive a second rebase; this ref makes the whole sync reversible with `git reset --hard "refs/gitkit/pre-sync/$BRANCH"`.
+- **Build each resolution from both sides.** A whole-side strategy (`-X ours`, `-X theirs`, `git checkout --ours` on a source file) discards one side without a record, so it resolves lockfiles and generated files only.
+- **Run `git diff --check` before each `git rebase --continue`.** It flags a leftover conflict marker.
+- **Record resolutions with rerere.** Run the rebase as `git -c rerere.enabled=true rebase …`, so a conflict resolved once replays on the next sync or restack.
+- **The gate judges the result.** A resolution is a code change, so the repo's test and build gate runs afterward. A gate failure in a resolved file is yours to fix: rework the resolution and rerun the gate. Ask only when the fix needs one of the decisions above.
+- **An unattended caller cannot answer.** With nobody to ask, run `git rebase --abort` and return each open ask, with its recommended resolution, to the caller to escalate. When the run resumes with a ruling, re-run the sync and write that resolution.
 
 ### `sync`
 
 The runnable form of the rule above. A sync has **two halves, in this order**: first bring the local branch level with its own counterpart on `origin`, then bring it up to date with the base. Skipping the first half is what makes a later `--force-with-lease` reject, or silently drop a commit pushed from another machine. Run it in the branch's worktree. Each step names the condition that ends it.
 
-1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Ends when the base name, the branch name, and a clean tree are all known.
-2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by the rule in **Resolve every conflict** below. A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
+1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Save the starting point with `git update-ref "refs/gitkit/pre-sync/$BRANCH" HEAD`. Ends when the base name, the branch name, and a clean tree are all known.
+2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by [Conflicts](#conflicts). A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
 3. **Measure the gap to the base.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already on the latest base: push whatever the previous step took, report that, and stop. Ends with a behind count and an ahead count.
 4. **Preview and confirm, once.** An unpushed branch skips this step and goes straight through. A published branch gets one preview that covers the rebase *and* the force-push: the base, the behind and ahead counts, and the unresolved review thread count from the GraphQL `reviewThreads` connection when a pull request is open. Name merge as the alternative, and still recommend the rebase. Ends on the user's answer.
-5. **Rebase onto the base.** Run `git rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
-6. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Read each conflicted file, propose a resolution that keeps the branch's intent and the base's new code, and confirm before writing. Stage the file, then `git rebase --continue`. Repeat for every remaining stop. `git rebase --abort` restores the pre-rebase state, and it is the answer when a conflict is not yours to settle. Ends when no conflict marker remains and the rebase is complete.
+5. **Rebase onto the base.** Run `git -c rerere.enabled=true rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
+6. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Sort each conflict by [Conflicts](#conflicts), write the mechanical resolutions, and ask one question round for the rest. Write the ruled resolutions, run `git diff --check`, stage the files, then `git rebase --continue`. Repeat for every remaining stop. Ends when no conflict marker remains and the rebase is complete, or, for an unattended caller, on an aborted rebase with its open asks returned.
 7. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
 8. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
 
 #### Hand off
 
-Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the files whose conflicts you resolved, the gate result, and the pushed branch. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
+Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the gate result, and the pushed branch. List each resolved file with its class and a one-line reason, mark the ones the human ruled on, and name `refs/gitkit/pre-sync/$BRANCH` as the undo point. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
 
 ### The merge exception
 
