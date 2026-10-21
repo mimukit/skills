@@ -296,7 +296,7 @@ Name a PR without an action and it assumes `start`, because setting a PR up is r
 
 **`mergekit` is the only skill permitted to merge a pull request**, gated on a per-PR human confirmation — never batched, never inferred, never a side effect. Every mode is interactive; none is ever dispatched into an unattended run.
 
-`prkit` and `mergekit` sync the same way — both **rebase**, both getting the rule from `gitkit`. What differs is the gate, and only because of branch state: `prkit` syncs a branch that usually isn't pushed yet, so it runs straight through; only `mergekit fix` syncs, on a published branch, so it previews the rebase and its lease push together and waits, naming the review threads the rewrite will outdate.
+`prkit` and `mergekit` sync the same way — both **rebase**, both getting the rule from `gitkit`. `prkit` syncs a branch that usually isn't pushed yet, and `mergekit fix` syncs a published one. Both run straight through, and the hand-off names the review threads the rewrite outdated.
 
 ### issuekit close — reconcile the tracker
 
@@ -338,7 +338,7 @@ The lifecycle and priority maps are a shared contract with `issuekit`: `repokit`
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
 - **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix that patches the base branch directly, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
-- **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. An unpublished branch rebases straight through; a published one previews the rebase and its `--force-with-lease` together, naming how many review threads it outdates.
+- **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. A sync rebases and pushes with `--force-with-lease` straight through, published or not, and reports how many review threads it outdated. It stops to ask only on a dirty tree, a conflict that needs a ruling, a failed gate, or a rejected lease.
 
 Those four facts are what the other kits borrow. Five modes act on them: `worktree` (create, adopt, look up, remove), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), and `stack`.
 
@@ -394,7 +394,7 @@ Invoked on demand, from wherever you already are. None of them is a step in the 
 
 **A grilled issue can still need a person.** A phase marked `Attended:` (a design pick, a mockup approval) or an outward action the issue body does not approve, such as filing follow-up issues, sends a `ready` issue back to `needs-planning` at `afkkit`'s spec gate, before any code is written. The cure sits upstream: `plankit` marks attended phases and puts them first, and `grillkit`'s build-stop round settles each one or records the approval in the plan.
 
-**Rebase on both sides of review.** `prkit` rebases onto the base when it opens the PR. `mergekit fix` also rebases once the PR is under review, but previews the `--force-with-lease` push first and names how many review threads it outdates. Merging the base in is the exception, with a stated reason and your consent. Same rule from `gitkit`, applied on either side of the moment the PR becomes shared.
+**Rebase on both sides of review.** `prkit` rebases onto the base when it opens the PR. `mergekit fix` also rebases once the PR is under review, pushes with `--force-with-lease`, and reports how many review threads it outdated. Merging the base in is the exception, with a stated reason and your consent. Same rule from `gitkit`, applied on either side of the moment the PR becomes shared.
 
 ## A day, end to end
 

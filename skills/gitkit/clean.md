@@ -88,7 +88,7 @@ Print one table: the branch, its worktree path, whether the remote branch goes t
 
 **A remote delete takes its own confirmation, even for a branch you are already deleting locally.** The local delete is recoverable from the reflog. The remote delete reaches a shared server and other people's clones.
 
-**Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and legitimately takes one confirmation, because there the rebase and the push are one decision about one branch.
+**Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and takes no confirmation at all, because there the rebase and the push are one decision about one branch, and the ask to sync already made it.
 
 A run where the human declines everything is a successful run. Report the table and stop.
 
