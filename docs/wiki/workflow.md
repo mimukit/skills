@@ -32,7 +32,7 @@ If you only remember one thing: **[`statuskit`](../../skills/statuskit/SKILL.md)
 
             gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge · stacks
                           borrowed by issuekit start, prkit, mergekit, issuekit close
-            domainkit ┄┄▶ CONTEXT.md glossary + ADRs, as PLAN settles decisions
+            domainkit ┄┄▶ CONTEXT.md overview + glossary, ADRs: record · init · audit
 ```
 
 The same loop, rendered (GitHub only — the ASCII above is what an agent or terminal reader sees):
@@ -71,7 +71,7 @@ flowchart TD
     RL["releasekit<br>changelog · tag · GitHub release<br>per release, not per issue"]
 
     GK["gitkit<br>worktree · branch name · base ref · rebase vs merge · stacks"]
-    DK["domainkit<br>CONTEXT.md glossary + ADRs"]
+    DK["domainkit<br>CONTEXT.md overview + glossary · ADRs<br>record · init · audit"]
 
     V --> P
     R --> P
@@ -119,12 +119,13 @@ Its ladder, when `gh` is available:
 | 9 † | an unlabeled or odd-status issue | `issuekit triage` |
 | 10 † | an unassessed backlog — open issues with no priority label | `issuekit triage` |
 | 11 | an unfiled plan, or nothing at all | `issuekit create` or `plankit` |
+| 12 | `CONTEXT.md` missing beside ADRs or plans, or older than the newest ADR or 50 commits | `domainkit init` or `domainkit audit` |
 
 **Rung 0 is numbered zero because it is not really a rung.** It is the one documented override of the finish-first spine — everything below it is the actual ladder, read in order. If rung 0 fires most runs, `critical` has stopped meaning anything, and the real move is `issuekit triage`.
 
-**† fires only when the project actually tracks work in GitHub Issues.** That is a policy fact rather than a capability one, so `gh` answering proves nothing: a repo can have Issues enabled and full of user bug reports while every planned change lives in Linear. statuskit resolves it explicitly — the prompt, then the repo's agent-guide file, then detection, then unknown — and it is the only skill in the collection that does. Seven of these fourteen rungs turn on the answer, which is why rung 8b exists: without it a trackerless project falls past every issue rung and gets crowned nothing.
+**† fires only when the project actually tracks work in GitHub Issues.** That is a policy fact rather than a capability one, so `gh` answering proves nothing: a repo can have Issues enabled and full of user bug reports while every planned change lives in Linear. statuskit resolves it explicitly — the prompt, then the repo's agent-guide file, then detection, then unknown — and it is the only skill in the collection that does. Seven of these fifteen rungs turn on the answer, which is why rung 8b exists: without it a trackerless project falls past every issue rung and gets crowned nothing.
 
-Without `gh` it falls back to a six-rung git-only ladder over the same shape: uncommitted work, unpushed commits, a stash, an unmerged branch, the newest plan on disk, then "start something". No repo yet? The move is `plankit`.
+Without `gh` it falls back to a seven-rung git-only ladder over the same shape: uncommitted work, unpushed commits, a stash, an unmerged branch, the newest plan on disk, "start something", then the `CONTEXT.md` check. No repo yet? The move is `plankit`.
 
 ## Phase 1 — Decide
 
@@ -345,12 +346,16 @@ Invoke it directly for housekeeping: "spin up a worktree for this", "where's the
 
 ### domainkit — scribe the model
 
-[`domainkit`](../../skills/domainkit/SKILL.md) runs the other way from `gitkit`: planning settles something, and this writes it down. Invoke it when a plan or a grill round settles a domain term or a hard-to-reverse trade-off. It maintains two artifacts and asks before writing either:
+[`domainkit`](../../skills/domainkit/SKILL.md) runs the other way from `gitkit`: planning settles something, and this writes it down. It maintains two artifacts and asks before writing either:
 
-- `CONTEXT.md` at the repo root — the glossary of the ubiquitous language.
+- `CONTEXT.md` at the repo root — a one-screen overview of what the product is and who it is for, then the glossary of the ubiquitous language.
 - `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md` — decision records, zero-padded and sequential.
 
-The ADR bar is three-part: hard to reverse, surprising without context, and a genuine trade-off. It scribes the model, it doesn't interrogate it — if a term is still genuinely unsettled, go back to `grillkit` rather than writing down a guess.
+It has three modes:
+
+- `record`, the default, fires when a plan or a grill round settles a domain term or a hard-to-reverse trade-off. The ADR bar is three-part: hard to reverse, surprising without context, and a genuine trade-off. It records settled understanding; if a term is still genuinely unsettled, go back to `grillkit` rather than writing down a guess.
+- `init` seeds `CONTEXT.md` in one pass: it reads the repo, asks the owner at most six questions, and proposes the overview and the first terms. On an existing file it only adds.
+- `audit` lists every place `CONTEXT.md` disagrees with the code or the ADRs and applies the fixes you accept. `statuskit` routes here when `CONTEXT.md` has fallen behind.
 
 ## Unattended: afkkit
 
