@@ -36,7 +36,7 @@ Two local edits to two public skills, each portable as written (no repo-relative
 
 Rejected: a fifth Capture item (adds a question to every run, and the goal probe is already part of "success"); a sixth `Evidence` contract part (three reference edits and a changed no-rewrite gate for a rule that fits inside two existing rows); a catalog entry (a second home for the same rule, and a forced deletion at the cap).
 
-### Phase 1: plankit goal probe
+### Phase 1: plankit goal probe (built 2026-10-22)
 
 - In `skills/plankit/SKILL.md`, Capture the idea: define the success outcome as the goal behind the request plus a target, or a reason no number fits that names what does show it worked.
 - In the same step, state the target rules: ask the user first; propose only from a baseline the user gives or a file records, labelled `proposed` with baseline and source; with no baseline, write `Target: open, no baseline` and carry it to Open questions.
@@ -45,7 +45,7 @@ Rejected: a fifth Capture item (adds a question to every run, and the goal probe
 
 Done when: `grep -n "goal behind" skills/plankit/SKILL.md` matches the Capture step and the plan-doc format; `grep -n "no baseline" skills/plankit/SKILL.md` matches the Capture step; `grep -n "measured after release" skills/plankit/SKILL.md` matches the plan-doc format; and `make lint` reports 0 errors and 0 warnings.
 
-### Phase 2: promptkit evidence rules
+### Phase 2: promptkit evidence rules (built 2026-10-22)
 
 - In `skills/promptkit/modes/task.md`, Ground in the repo: add a bullet that resolves a summary of evidence to its primary artifact, recorded in the ledger like a path or a command, or named as unresolved.
 - Extend that step's Done-when line to cover evidence references.
