@@ -21,9 +21,11 @@ The user wants to think a piece of work through *before* building it: "plan this
 ## Procedure
 
 ### 1. Capture the idea
-Get the concept, the problem it solves, who it's for, and the outcome that means success. If the input is a one-liner, ask a few **scoping** questions (use `AskUserQuestion` when available). Those are generative "what are we building and why", not adversarial "what did you miss". Ask one round at most, and only about the four items the input leaves open.
+Get the concept, the problem it solves, who it's for, and the outcome that means success. The success outcome is the **goal behind the request**, meaning what the work is for and not only what it builds ("keep the app crash-free", not "fix this crash"), plus a **target**: the number that shows it worked. If the input is a one-liner, ask a few **scoping** questions (use `AskUserQuestion` when available). Those are generative "what are we building and why", not adversarial "what did you miss". Ask one round at most, and only about the four items the input leaves open.
 
-**Done when** the concept, the problem, the user, and the success outcome each have a one-line answer, from the input or from the user.
+**Ask for the target; propose one only from a baseline.** Ask the user for their number first. When they have none, propose one only from a baseline the user gives or a file you can read (a CI report, a benchmark output, a dashboard export), and label it with both: `Target: p95 load under 200 ms (proposed; baseline 4.8 s from ci/bench.json)`. This skill has no shell, so it never measures a baseline itself. With no baseline, write `Target: open, no baseline` and carry that line to Open questions, so grillkit settles it instead of an invented number. When no number fits the work, record why and name what does show it worked ("docs-only change, so the check is a lint pass"); "not applicable" names nothing and fails the step.
+
+**Done when** the concept, the problem, the user, and the success outcome each have a one-line answer, from the input or from the user, and the success outcome carries a target, a `Target: open, no baseline` line, or a reason no number fits that names what does show it worked.
 
 ### 2. Ground it in reality
 Research before proposing, so the plan reuses what exists instead of reinventing it.
@@ -80,7 +82,7 @@ The canonical structure plankit owns. Keep it lean, so every section earns its p
 # Plan: <title>
 
 ## Context
-The problem, why it matters now, and the outcome that means success.
+The problem, why it matters now, and the outcome that means success: the goal behind the request and its target line.
 
 ## Design decisions (settled)
 | Decision | Resolution |
@@ -108,6 +110,8 @@ Explicit scope boundaries, meaning what this plan deliberately does not cover.
 A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
 
 **Every phase ends on a `Done when:` line**, the acceptance observable. It names something a person or a test can check after the phase ships, never an intent ("auth works"). It gives the build a finish line to check against, and a phase without one has no finish.
+
+**The last phase's `Done when:` carries the target when the build can measure it**, so the build checks the number instead of only recording it. A metric that only shows after release stays in Context, marked `measured after release`, because no build can check it.
 
 **A phase that asks for a new kind of test names its runner and approach** in Design decisions (for example "component tests with vitest and Testing Library, beside the source"). Without that row, the build stops to ask which runner to use.
 
