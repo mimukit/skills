@@ -25,6 +25,8 @@ Compute the dependent moves for the preview with [the transition rule](../SKILL.
 
 This step is done when the user approves the previewed line or declines it. A decline stops the run before the close.
 
+**A merge instruction is the approval when mergekit calls `close`.** mergekit calls `close` after it merges a PR on a direct human ask. That ask already covers the issue close and the teardown, so print the preview line and run it without a wait. A "keep the worktree" or "keep the branch" in the ask still applies.
+
 ### 3. Reconcile the tracker
 
 Close the issue and set each dependent with [the transition rule](../SKILL.md#promoting-a-dependent). **This is [`sync`](./sync.md)'s job and `close` reuses it rather than restating it**, so apply [Reconcile](./sync.md#1-reconcile-a-merged-pr-whose-issue-never-closed) and [Labels](./sync.md#3-labels-advance-lifecycle-state-unblock-whats-freed) to this one issue. Find the dependents through the native edge, not the body text, and recheck every open prerequisite of each one before it moves:
@@ -53,7 +55,7 @@ gitkit's own teardown rules apply and issuekit does not override them:
 - **A dirty worktree stops the removal** and shows what would be lost. A merged PR does not guarantee an empty worktree: scratch files, a stashed experiment, or an un-pushed follow-up commit all live there, and none of them are in the PR.
 - **Already gone → "already gone"**, not an error. `close` is idempotent in the same spirit as `start`'s adopt-and-stop; re-running it after a partial run is normal.
 - **gitkit owns the removal rule, and it resolves to `-d`**, with `-D` only for a squash merge whose merged PR `headRefOid` equals the branch tip. Without gitkit, delete with `-d` and keep the branch when it refuses.
-- **gitkit removes only what it created.** It marks the worktrees and branches it creates, and it reports an unmarked one as adopted and keeps it.
+- **gitkit removes only what it created.** It marks the worktrees and branches it creates, and it reports an unmarked one as adopted and keeps it. The one exception is a call from mergekit after a direct merge ask: gitkit's merged-PR exception then removes the PR's worktree and local branch, marker or not.
 - **A branch another layer is stacked on stays.** When this issue's branch is the base of a layer above it, removing the branch strips that layer of its base and its open PR of its target. Before the teardown, check for open PRs that target this branch (`gh pr list --state open --base issue-<n>-<slug>`), and when there are any, remove the worktree but keep the branch, naming the layers that still need it. Read the PRs, not the labels: a layer already in work is `in-progress` or `in-review`, not `stacked`. GitHub re-targets a layer automatically once the branch below it *merges*; it cannot recover one that was deleted underneath it.
 
 If no worktree matches the branch, say so and carry on, because the tracker half of `close` still succeeded. This step is done when the worktree is removed, kept dirty with what would be lost, kept as adopted, or reported as already gone, and the branch is deleted or kept with its reason.

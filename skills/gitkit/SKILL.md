@@ -172,6 +172,15 @@ git -C "$REPO" rev-parse "$BRANCH"     # must equal headRefOid, or -D is off the
 
 The equal SHA proves that every commit on the branch is in the merged pull request. A tip that moved after the merge holds commits the merge never saw, so the branch stays and the report names it. Name the pull request number in that row's confirmation.
 
+**The merged-PR exception lifts the marker rule and the confirmation rule for one PR's own workspace.** When a human tells a caller to merge or close one pull request, and the caller then sees it merged, that instruction is the confirmation to remove the worktree of the PR's head branch and the local head branch. They go whether gitkit created them or not, with no further prompt. The caller passes the PR number, and the exception reaches that one branch and its worktree only. These guards still hold, and each one keeps its item and names it in the report:
+
+- **The human said keep.** "Merge it but keep the worktree" keeps the worktree, and "keep the branch" keeps the branch.
+- **The worktree is dirty.** The dirty rule above still stops the removal.
+- **The branch tip moved.** Delete with `-d`, or with `-D` only when the tip equals the merged `headRefOid`, as the squash exception states.
+- **A layer stacks on the branch.** An open PR whose base is this branch keeps the branch, and the worktree still goes.
+
+When the worktree to remove is the caller's own working directory, run every command from the main checkout with `git -C "$REPO"`. After the removal, say that the session's working directory is gone, and name the main checkout as the place to continue.
+
 Already gone? Report "already gone" and succeed. Teardown is idempotent in the same spirit as adopt. Ends when each confirmed worktree and branch is gone, or its refusal is reported.
 
 ### List
