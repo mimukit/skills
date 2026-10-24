@@ -64,27 +64,27 @@ Rejected alternatives, one line each:
 - **Install the upstream skills as they are.** Cheapest today, but it adds up to seven always-loaded descriptions, none of which follow the kit conventions or hand off to the rest of the loop.
 - **Motion reference in `skills/uikit/motion.md`.** Cheapest option, but it has no review mode and no frame-drop mode, and those are the parts worth taking.
 
-### Phase 1: Root and the motion standard
+### Phase 1: Root and the motion standard (built 2026-10-24)
 Write `skills/motionkit/SKILL.md`: frontmatter, "When this fires" with one trigger per mode and the default mode for an ambiguous ask, the guards (web only; `review` and `audit` write nothing), stack detection (which motion tools and tokens the project already uses), and **the motion standard** as in-file reference: the frequency gate, purpose, easing, duration, springs, physicality and origin, interruptibility, asymmetric timing, property cost, `clip-path` and transforms, gestures, stagger, reduced motion and pointer gating, cohesion with tokens. Add one pointer per mode in the trigger-carrying form, the lookup branch pointer to `vocabulary.md`, the verb routing, and the Notes section with the credit and the upstream commit.
 Done when: `make lint` reports no error for `skills/motionkit`, the description is under 1,024 characters with "Use when" inside the first 300, and every standard topic in the list above has a heading in the root.
 
-### Phase 2: Build mode and recipes
+### Phase 2: Build mode and recipes (built 2026-10-24)
 Write `modes/build.md` (the build order, each step ending on a completion criterion, and its hand-off) and `recipes.md` (the component recipes from the source analysis, each giving the curve, duration, properties, and reduced-motion behavior).
 Done when: `make lint` passes, and every recipe names its curve, duration, properties, and reduced-motion behavior.
 
-### Phase 3: Review and audit modes
+### Phase 3: Review and audit modes (built 2026-10-24)
 Write `modes/review.md` (target resolution from a diff or a path, flag by default, the remedy order, findings table, verdict, hand-off) and `modes/audit.md` (recon, the fix lenses, the four-gate test for missing motion, the rejected-candidates section, rank, crown one, route to `build`).
 Done when: `make lint` passes, and both modes state that they write nothing, both cite `file:line` with an evidence label, and `audit`'s hand-off crowns exactly one item.
 
-### Phase 4: Perf mode
+### Phase 4: Perf mode (built 2026-10-24)
 Write `modes/perf.md`: list what animates and its driver, diagnose down the ordered cause list, report each finding with cause, before, after, and evidence label, then apply fixes only when asked.
 Done when: `make lint` passes, and every cause in the symptom table maps to a named fix.
 
-### Phase 5: Vocabulary and trigger cases
+### Phase 5: Vocabulary and trigger cases (built 2026-10-24)
 Write `vocabulary.md` (effect names by group, each with a one-line definition) and `evals/triggers.md` (should-fire and should-not-fire lists per mode).
 Done when: every mode and the lookup branch has at least two should-fire and two should-not-fire prompts, and the near-misses include at least one prompt each for `uikit`, `reviewkit`, and `debugkit`.
 
-### Phase 6: Collection wiring and the uikit pointer
+### Phase 6: Collection wiring and the uikit pointer (built 2026-10-24)
 Add `motionkit` to the `README.md` skills table, the `skills.sh.json` "Building" group, and `docs/wiki/index.md`, run `make cheatsheet`, add the `workflow.md` paragraph, and change `skills/uikit/SKILL.md:109` and `:247` to keep the conclusion and name **motionkit** when installed, and add the routing clause to `uikit audit`'s extra-animation tell.
 Done when: `make lint` passes with no new warning, `git diff docs/wiki/cheatsheet.md` shows the motionkit line, and `wc -w` over `skills/motionkit/**/*.md` is at or under 9,000.
 
