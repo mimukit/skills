@@ -15,7 +15,7 @@ Run each prompt in a fresh session and record whether motionkit fired, and which
 - "This modal animation feels off, can you check it?"
 - "Review the toast animation in this diff"
 
-**audit**
+**review, sweep scale**
 
 - "Audit the animations in this app"
 - "What should animate in the onboarding flow?"
@@ -44,7 +44,7 @@ Run each prompt in a fresh session and record whether motionkit fired, and which
 - "Review my changes before I open the PR" (code review: reviewkit)
 - "This dashboard looks AI-generated, fix it" (visual taste: uikit)
 
-**Near audit**
+**Near review, sweep scale**
 
 - "Audit our UI for slop" (UI audit: uikit)
 - "Check the agent's work on the auth refactor" (code review: reviewkit)
