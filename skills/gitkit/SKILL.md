@@ -83,6 +83,8 @@ Consequences:
 - **`pr-<n>-<slug>`** only for a **fork** pull request, where no local branch exists yet and one must be invented to hold the fetched head. Slug from the head branch name, kebab-cased, capped at roughly 40 characters.
 - Anything else takes a branch name the human or the repo's convention supplies. gitkit does not rename it.
 
+**An agent that cuts a branch on its own uses one of the three shapes above.** It never invents another prefix (`feature/…`, `fix-…`, `claude/…`). A name the human types, or one the repo documents, is the only other kind of branch.
+
 For a same-repo pull request there is already a local branch name: use it. Inventing a `pr-*` name for a branch that exists is how you land on the two-worktrees-one-branch failure above.
 
 ## `worktree`
