@@ -93,9 +93,9 @@ Worked examples:
 
 ### 1. Ground it
 
-Walk [the ladder](#the-precedence-ladder) and name the rung that matched. Detect the stack from the project's manifest and config rather than assuming, naming the framework, styling system, component library, and whether it's Tailwind v3 or v4, because [that distinction changes what renders](stack.md). Greenfield or undeclared, default to **Tailwind v4 + shadcn/ui** and say out loud that it's a default.
+Walk [the ladder](#the-precedence-ladder) and name the rung that matched. Detect the stack from the project's manifest and config rather than assuming, naming the framework, styling system, component library, and whether it's Tailwind v3 or v4, because [that distinction changes what renders](stack.md). Greenfield or undeclared, default to **Tailwind v4 + shadcn/ui** and say out loud that it's a default. Name whether the surface ships to phones (a responsive app, a PWA, a mobile-first route), because that decides whether [the mobile layer](#the-mobile-layer) applies.
 
-This step is done when the rung, the stack, and every behavior the request specifies are named.
+This step is done when the rung, the stack, whether the surface ships to phones, and every behavior the request specifies are named.
 
 ### 2. State the design read
 
@@ -105,7 +105,8 @@ This step is done when the rung, the stack, and every behavior the request speci
 
 **Compose before you invent.** Use the existing component before writing a styled `div`; extend it before forking it; fork it only when the difference is real and say why. An agent's instinct is to write fresh markup because it's faster than reading what's there, and that instinct is what produces a codebase with four Buttons.
 
-- **Clear [the accessibility floor](#the-accessibility-floor)** without announcing it. It is a floor, not a feature.
+- **Clear [the accessibility floor](#the-accessibility-floor)** without announcing it. It is a floor, not a feature. On a surface that ships to phones, clear [the mobile layer](#the-mobile-layer) the same way.
+- **Use a maintained primitive for the hard widgets.** Toasts, OTP inputs, command menus, and virtualized lists come from the project's existing library or a maintained package, never hand-rolled, because their focus, keyboard, and edge-case handling is where a fresh build fails.
 - **Motion is justified in one sentence or it doesn't ship.** Animate `transform` and `opacity` only, never `transition: all`, never animate layout properties. One orchestrated moment beats scattered effects, and extra animation is itself a tell. **motionkit**, when installed, owns how the motion moves: the curve, the duration, the origin, and the rest.
 - **Write the strings as design material.** Follow `DESIGN.md`'s voice rules when it has them. Otherwise: active voice, sentence case, name things by what people control rather than how the system is built. A control says what happens ("Save changes", not "Submit") and keeps the same verb through the whole flow, so a button that says "Publish" produces a toast that says "Published." Errors name the fix, not the failure. An empty screen is an invitation to act.
 - **Match complexity to the direction.** Maximalist needs elaborate execution; minimal needs precision in spacing and type. Elegance is executing the chosen direction well, not choosing the smaller one.
@@ -145,7 +146,7 @@ State the target in one line before reading anything. This step is done when the
 
 ### 2. Sweep
 
-Run [the catalog](#the-anti-slop-catalog), filtered to the surface, so `product` entries don't fire on a marketing page and `marketing` entries don't fire on a settings screen. Then run [the accessibility floor](#the-accessibility-floor), which fires on both. This step is done when every file in the target has been checked against every filtered catalog entry and every floor rule, or is counted as skipped.
+Run [the catalog](#the-anti-slop-catalog), filtered to the surface, so `product` entries don't fire on a marketing page and `marketing` entries don't fire on a settings screen. Then run [the accessibility floor](#the-accessibility-floor), which fires on both, and [the mobile layer](#the-mobile-layer) when the surface ships to phones. This step is done when every file in the target has been checked against every filtered catalog entry, every floor rule, and every mobile fix that applies, or is counted as skipped.
 
 ### 3. Report
 
@@ -168,7 +169,7 @@ src/components/Card.tsx:7        🟢  rounded-3xl here, rounded-lg everywhere e
 
 **Where it landed.** Inline in this reply. No artifact by default; offer to save one only if asked.
 
-**Next.** Crown the single worst finding and route it to [`build`](#mode-build). An extra or scattered animation finding routes to `motionkit audit` when motionkit is installed, and motionkit judges whether to keep, change, or remove it. **"Nothing here reads as generated" is a valid, stated result**, so say the UI is clean and stop rather than inventing a finding to justify the run.
+**Next.** Crown the single worst finding and route it to [`build`](#mode-build). An extra or scattered animation finding routes to `motionkit review` when motionkit is installed, and motionkit judges whether to keep, change, or remove it. **"Nothing here reads as generated" is a valid, stated result**, so say the UI is clean and stop rather than inventing a finding to justify the run.
 
 ## The anti-slop catalog
 
@@ -254,6 +255,10 @@ Not findings, but a floor. Every build clears these without announcing it, and `
 ## The stack layer
 
 The Tailwind v4 and shadcn/ui correctness rules live in [stack.md](stack.md). Read that file when the project uses Tailwind or shadcn/ui, and skip it whole on another stack.
+
+## The mobile layer
+
+The fixes that make a web app on a phone behave like an installed one (sticky hover, the tap flash, `100vh`, input zoom, safe areas, overscroll, touch axes) live in [mobile.md](mobile.md). Surface ships to phones → read [mobile.md](mobile.md), then apply it; skip it whole on a desktop-only surface.
 
 ## Mockups
 
