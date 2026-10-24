@@ -49,11 +49,11 @@ Rejected alternatives, one line each:
 - **DOM text substitution** with `eval`. It works on any data source, but it tests layout only: no plurals, counts, or empty states.
 - **A new `breakkit` skill.** "Try to break this" is one trigger on qakit, not a moment that needs its own entry in the index.
 
-### Phase 1: reviewkit data bounds
+### Phase 1: reviewkit data bounds (built 2026-10-24)
 Add the "Data bounds" item to Pass 4: Correctness in `skills/reviewkit/SKILL.md`, with its evidence rule (quote the limit and the render line) and its unverified fallback (a limit the review could not find is "unbounded", not a guess). Add the unbounded rule and the diff-only scope from the design decisions. Name qakit's worst-case checks as the runtime half, with the plain fallback "render the screen with long, empty, and missing values by hand".
 Done when: `make lint` passes, the item names every handling case listed in the reviewkit design decision and the frontend-shorter-than-backend rule, and it states all three branches of the unbounded rule.
 
-### Phase 2: qakit worst-case satellite
+### Phase 2: qakit worst-case satellite (built 2026-10-24)
 Write `skills/qakit/worst.md`: when it applies, the field map (every rendered value, its source, its limit or "unbounded"), the catalog, the route-mock procedure (capture the real response or fall back to the API types, build a same-shape worst-case body, mock reads only and the first page only, start after login, serve it, reload, assert), the server-fetched fallback, the assertions (horizontal overflow per viewport, text clipped with no ellipsis or title, plural at 1, empty state at 0, a missing optional field rendered as `undefined`, `null`, or `NaN`, console errors), the severity rule, and the ❌ line shape. Add the pointer in qakit's Scope step (``change renders data in a UI and a driver is present → read [worst.md](worst.md), then follow it in every step it names``), the dimension line under "Edge & boundary", the run under Browser checks, the "try to break this component" trigger in the description, and the direct-ask rule (one worst-case scenario, `-worst-case` slug).
 Done when: `make lint` passes, the description stays under 1,024 characters with "Use when" inside the first 300, `worst.md` is at or under 1,200 words, and every catalog group from the design decision has a section.
 
