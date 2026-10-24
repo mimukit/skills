@@ -16,7 +16,7 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group).
 
-This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step.
+This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step. The one planned question is the branch, when a branch-workflow repo has you [on the base branch](#on-the-base-branch).
 
 ## Scope
 
@@ -30,6 +30,32 @@ A run commits **this session's changes**, not every change in the tree. One bran
 **A path outside the scope is out of bounds.** Record those paths as the **out-of-scope list**. Never stage one, commit it, restore it, or discard it. A path another session staged stays staged, through the keep-staged set in [Group the work into multiple commits](#4-group-the-work-into-multiple-commits).
 
 **A session path can hold hunks you did not write**, when another session edited the same file. When its stat shows more change than you made, or you know another session works in that file, read its diff. Commit only your own hunks, staged as a patch the way a mixed file is in [Commit each group](#5-commit-each-group). When the hunks overlap and cannot be split, stop and ask.
+
+## On the base branch
+
+A repo that works through issue branches and pull requests does not expect a commit straight on its base branch, so a run there asks first. A solo repo that commits to the base branch every day gets no question. Run this check before the commit chain in [Commit each group](#5-commit-each-group), and only when `HEAD` is the base branch. **gitkit** owns the base branch; without gitkit, take the branch `git symbolic-ref --short refs/remotes/origin/HEAD` names, minus `origin/`.
+
+Skip the check when the user already named the branch for this run ("commit on main", "put it on a hotfix branch"), or when a calling skill passed `no-push`. A caller owns its own branch.
+
+**Read the workflow signals in one call:**
+
+```sh
+git worktree list --porcelain | grep -E '^branch refs/heads/(issue|hotfix)-'; \
+gh pr list --state merged --limit 1 --json number -q '.[].number' 2>/dev/null; \
+gh api "repos/{owner}/{repo}/branches/<base>/protection" >/dev/null 2>&1 && echo protected
+```
+
+Any output is a signal: an `issue-*` or `hotfix-*` worktree, a merged pull request, or a protected base branch. A `gh` failure counts as no signal. With no signal, commit on the base branch and push as usual.
+
+**With a signal, ask once for the whole run and stop until the user answers.** Offer three choices, and recommend `hotfix-*` for a fix and `issue-*` for anything else:
+
+- **Commit on the base branch.** Run the chain as it stands.
+- **A `hotfix-<slug>` branch.** Take the slug from the symptom, kebab-cased, at most about 40 characters, with a hyphen and never a slash. Put `git switch -c hotfix-<slug> && \` at the head of the chain.
+- **An `issue-<n>-<slug>` branch.** File the issue first: `gh issue create --title "<type(scope): summary of the main group>" --body "<one-line why>"`, and read `<n>` from the URL it prints. Add no `ready` label, because the work has already begun. Take the slug from the title without its `type(scope):` prefix, kebab-cased, at most about 50 characters. Put `git switch -c issue-<n>-<slug> && \` at the head of the chain, and add a `Refs #<n>` footer to each message. Without `gh`, drop this choice.
+
+The new branch carries the working tree with it, out-of-scope changes included, and they stay uncommitted. The run stays on the new branch after the push. Never invent a branch name with another prefix.
+
+**Done when** the run is on the branch the user chose, or the signal call printed nothing and the run stays on the base branch.
 
 ## Message-only route
 
@@ -146,7 +172,7 @@ Order the groups so dependencies land first (e.g. a shared helper before the fea
 **Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, and every recorded staged path sits in a group or in the keep-staged set.
 
 ### 5. Commit each group
-With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
+When `HEAD` is the base branch, settle the branch first with [On the base branch](#on-the-base-branch). With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
 
 ```sh
 git add -- <group 1 paths> && \
@@ -186,7 +212,7 @@ The patch holds the exact staged hunks, so a partially staged file comes back pa
 
 The `gh pr view` tail tells the hand-off whether this branch already has a pull request. It costs nothing extra, because it rides the same call. An empty result or a `gh` failure means no pull request, and that is a normal outcome rather than an error.
 
-**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way, because many solo repos commit straight to the base branch and a prompt there would fire on every run.
+**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way, because many solo repos commit straight to the base branch and a prompt there would fire on every run. A branch-workflow repo asks which branch before the commit, in [On the base branch](#on-the-base-branch), never before the push.
 
 Hold the push and ask in these cases:
 
