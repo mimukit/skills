@@ -30,7 +30,7 @@ Each name links to the skill's `SKILL.md`, the one source for what it does, its 
 [`validatekit`](../../skills/validatekit/SKILL.md) · [`namekit`](../../skills/namekit/SKILL.md) · [`researchkit`](../../skills/researchkit/SKILL.md) · [`prototypekit`](../../skills/prototypekit/SKILL.md) · [`refactorkit`](../../skills/refactorkit/SKILL.md) · [`plankit`](../../skills/plankit/SKILL.md) · [`grillkit`](../../skills/grillkit/SKILL.md)
 
 **Building**
-[`implementkit`](../../skills/implementkit/SKILL.md) · [`uikit`](../../skills/uikit/SKILL.md)
+[`implementkit`](../../skills/implementkit/SKILL.md) · [`uikit`](../../skills/uikit/SKILL.md) · [`motionkit`](../../skills/motionkit/SKILL.md)
 
 **Testing & QA**
 [`reviewkit`](../../skills/reviewkit/SKILL.md) · [`qakit`](../../skills/qakit/SKILL.md) · [`verifykit`](../../skills/verifykit/SKILL.md) · [`testkit`](../../skills/testkit/SKILL.md) · [`debugkit`](../../skills/debugkit/SKILL.md)

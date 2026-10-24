@@ -106,7 +106,7 @@ This step is done when the rung, the stack, and every behavior the request speci
 **Compose before you invent.** Use the existing component before writing a styled `div`; extend it before forking it; fork it only when the difference is real and say why. An agent's instinct is to write fresh markup because it's faster than reading what's there, and that instinct is what produces a codebase with four Buttons.
 
 - **Clear [the accessibility floor](#the-accessibility-floor)** without announcing it. It is a floor, not a feature.
-- **Motion is justified in one sentence or it doesn't ship.** Animate `transform` and `opacity` only, never `transition: all`, never animate layout properties. One orchestrated moment beats scattered effects, and extra animation is itself a tell.
+- **Motion is justified in one sentence or it doesn't ship.** Animate `transform` and `opacity` only, never `transition: all`, never animate layout properties. One orchestrated moment beats scattered effects, and extra animation is itself a tell. **motionkit**, when installed, owns how the motion moves: the curve, the duration, the origin, and the rest.
 - **Write the strings as design material.** Follow `DESIGN.md`'s voice rules when it has them. Otherwise: active voice, sentence case, name things by what people control rather than how the system is built. A control says what happens ("Save changes", not "Submit") and keeps the same verb through the whole flow, so a button that says "Publish" produces a toast that says "Published." Errors name the fix, not the failure. An empty screen is an invitation to act.
 - **Match complexity to the direction.** Maximalist needs elaborate execution; minimal needs precision in spacing and type. Elegance is executing the chosen direction well, not choosing the smaller one.
 - **A mockup follows [Mockups](#mockups).**
@@ -168,7 +168,7 @@ src/components/Card.tsx:7        🟢  rounded-3xl here, rounded-lg everywhere e
 
 **Where it landed.** Inline in this reply. No artifact by default; offer to save one only if asked.
 
-**Next.** Crown the single worst finding and route it to [`build`](#mode-build). **"Nothing here reads as generated" is a valid, stated result**, so say the UI is clean and stop rather than inventing a finding to justify the run.
+**Next.** Crown the single worst finding and route it to [`build`](#mode-build). An extra or scattered animation finding routes to `motionkit audit` when motionkit is installed, and motionkit judges whether to keep, change, or remove it. **"Nothing here reads as generated" is a valid, stated result**, so say the UI is clean and stop rather than inventing a finding to justify the run.
 
 ## The anti-slop catalog
 
@@ -244,7 +244,7 @@ Silence in these is the product-side equivalent of a purple gradient, because no
 Not findings, but a floor. Every build clears these without announcing it, and `audit` reports any that a shipped surface doesn't:
 
 - Visible `:focus-visible` on every interactive element. Never remove a focus ring without replacing it.
-- `prefers-reduced-motion` honored wherever anything moves.
+- `prefers-reduced-motion` honored wherever anything moves. **motionkit**, when installed, says what the reduced version keeps.
 - WCAG AA contrast on text and on meaningful non-text.
 - Semantic elements before ARIA: a `button` beats a `div` with `role="button"` and a click handler, always.
 - Every control labeled, every image with `alt` (empty `alt=""` when decorative, deliberately).
