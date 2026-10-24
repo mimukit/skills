@@ -92,7 +92,7 @@ A `stacked` issue flips exactly the same way. If either label is missing from th
 
 **What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). When the open-PR check fired, repeat the count in one line.
 
-**Where it landed.** Give the branch and the worktree path, and whether it was created fresh or adopted.
+**Where it landed.** Give the branch and the worktree path. Print gitkit's workspace block as the last lines of the reply, after **Next**, with `for: issue #<n>` and the base from gitkit (the parent branch for a `stacked` issue). An unattended caller such as afkkit gets the path and branch returned instead, and no block.
 
 **Next.** The ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** takes it from here to an open PR, and since afkkit calls `start` itself, mention it as `afkkit <n>` from anywhere rather than as something to run from inside the worktree; it adopts the worktree this run just prepared.
 

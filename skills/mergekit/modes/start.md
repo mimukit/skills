@@ -71,7 +71,19 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 **What changed.** Report whether the worktree was adopted or created. State that no sync ran and nothing was pushed. Nothing else here mutates anything.
 
-**Where it landed.** Two lines: the worktree path, and the single command that starts the app.
+**Where it landed.** Give the single command that starts the app. Then print gitkit's workspace block as the last lines of the reply, after **Next**, with `for: PR #<n>` and the PR's base branch. Without gitkit, print the same block:
+
+```
+Workspace ready
+- repo: <absolute path of the main checkout>
+- worktree: <absolute worktree path>
+- branch: <PR head branch>
+- base: <PR base branch>
+- state: created | adopted
+- for: PR #<n>
+```
+
+The block starts nothing. A host that can open a session bound to a worktree reads it; the reviewer decides what happens there.
 
 **Next.** The reviewer reads, runs, and forms an opinion. When the branch is behind, name **gitkit `sync`** inside the worktree as the first move, and give the behind count. Then `close <n>` executes whichever verdict they reach, whether a merge or a fix round. Say both halves, so it's clear merging isn't the assumed outcome.
 

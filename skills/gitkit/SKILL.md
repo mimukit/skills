@@ -127,7 +127,25 @@ git -C "$REPO" config "branch.$BRANCH.gitkitCreated" true             # only aft
 - **Write the branch key only when this run passed `-b`.** A branch that already existed belongs to whoever made it, and an adopted worktree gets no marker.
 - **No record means not gitkit's.** A worktree or branch made before this rule existed, or made by hand, reads as adopted, and [Remove](#remove) leaves it alone.
 
-Report the path and the branch. Creating a worktree does not imply doing anything in it. Ends when the worktree exists at `$WT` on `$BRANCH` and its records are written.
+Report the path and the branch. When the user asked gitkit for the worktree directly, end the reply with [the workspace block](#the-workspace-block). Creating a worktree does not imply doing anything in it. Ends when the worktree exists at `$WT` on `$BRANCH` and its records are written.
+
+### The workspace block
+
+A skill that hands a worktree to a human to work in ends its reply with this block. The labels are fixed; fill the values.
+
+```
+Workspace ready
+- repo: <absolute path of the main checkout>
+- worktree: <absolute worktree path>
+- branch: <branch>
+- base: <base ref the branch was cut from or tracks>
+- state: created | adopted
+- for: issue #<n> | PR #<n> | none
+```
+
+- **The block is a contract with the host, not with a tool.** It names no harness and no app. A host that can open a new session bound to a worktree reads it; any other host shows six plain lines.
+- **It starts nothing.** It carries no prompt and no command to run in the worktree. The human decides how the work begins.
+- **Print it once, last, and only to a human.** When another skill called gitkit, return the path and the branch to that caller, and the caller prints the block in its own hand-off. An unattended run prints no block, because it works in the worktree by path in its own session.
 
 ### Remove
 
