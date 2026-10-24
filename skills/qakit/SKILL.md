@@ -1,7 +1,7 @@
 ---
 name: qakit
 description: >-
-  Generate a QA plan for a feature just implemented, grounded in the actual code changes: the agent runs every check with an observable result, in a headless browser when one is available, and leaves a short manual list of what needs human judgment, saved to docs/qa. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", or runs /qakit.
+  Generate a QA plan for a feature just implemented, grounded in the actual code changes: the agent runs every check with an observable result, in a headless browser when one is available, and leaves a short manual list of what needs human judgment, saved to docs/qa. Use when a coding session wraps and you want to hand-test the result, or the user says "write a QA plan", "make a manual test plan", "how do I test this", "generate a testing plan for this feature", "try to break this component", or runs /qakit.
 license: MIT
 allowed-tools: Read, Bash, Write
 metadata:
@@ -37,17 +37,19 @@ Record the revision under test, too: `git rev-parse HEAD` and whether `git statu
 
 Diff touches the data layer (a migration, a schema file, a model, or a query) → read [db.md](db.md), then follow it in every step it names.
 
+Change renders data in a UI and a driver is present, or the user asks to try to break a component → read [worst.md](worst.md), then follow it in every step it names.
+
 When the change has a UI, list the **browser drivers** in order of preference: a CLI driver on `PATH` that opens a URL, clicks, reads the page, and writes a screenshot (probe `command -v playwright-cli`), then each browser-automation MCP tool set in this session (a host's own preview browser counts). [Run the automated checks yourself](#5-run-the-automated-checks-yourself) starts the first one and moves down the list when it fails. No driver means the page checks stay with the human, as [Derive the test dimensions](#2-derive-the-test-dimensions) describes. Do not install one; verifykit `setup` does that when it is installed. Read the viewport widths from the project's `DESIGN.md` breakpoints when it has them; otherwise use 1440 px and 375 px.
 
 Find the **disposable target**, if the project declares one: an environment that a documented command destroys and rebuilds, such as a playground app or a local database container, named as throwaway in the project's agent instruction file or README, together with its reset command. A declared target makes state-changing commands agent-verifiable on that target only. Never infer one: a local database that nobody declared throwaway may hold someone's work.
 
-This step is done when intended behavior, every entry point, every dependency, and the revision pair are written down, and you know whether db.md applies, which browser drivers you have, and which disposable target the project declares, if any.
+This step is done when intended behavior, every entry point, every dependency, and the revision pair are written down, and you know whether db.md and worst.md apply, which browser drivers you have, and which disposable target the project declares, if any.
 
 ### 2. Derive the test dimensions
 Walk every dimension below and generate candidate cases for each one that applies to the feature. Skip a dimension only when it's genuinely irrelevant, and say so under *Not covered* in the plan so the tester knows it was considered, not forgotten:
 
 - **Happy path.** The feature used exactly as intended, the primary flow end to end.
-- **Edge & boundary.** Empty input, max/min values, off-by-one boundaries, unusual-but-valid states, duplicates, unicode/large payloads.
+- **Edge & boundary.** Empty input, max/min values, off-by-one boundaries, unusual-but-valid states, duplicates, unicode/large payloads. When worst.md applies, it adds the worst-case values for every rendered field.
 - **Negative / error handling.** Bad input, missing/expired auth, unavailable dependencies, network failures; assert it fails *gracefully* with a clear message and no corruption.
 - **Regression.** Nearby behavior the change could have broken (shared components, the prior flow, adjacent features).
 - **Security & permissions.** Role/ownership checks, access to another user's data, injection-style input, secrets not leaked in logs or responses.
@@ -275,7 +277,7 @@ Both rules have the same shape: **inspect what exists, don't reproduce it.** If 
 
 These scenarios stay in the plan as cases, not in **Automated verification**, because their output is the record a reviewer reads. A command case whose target is not declared disposable stays manual.
 
-**Browser checks.** With a browser driver from [Scope the feature](#1-scope-the-feature), drive the running app and record each page assertion under **Browser checks**:
+**Browser checks.** With a browser driver from [Scope the feature](#1-scope-the-feature), drive the running app and record each page assertion under **Browser checks**. When worst.md applies, run its mock, reload, and assert loop on each screen in scope as well:
 
 - **Reach the app.** Reuse a dev server that already serves the base URL. Otherwise start it once with the plan's launch command, and stop it when the checks end. Run no Setup, Reset, seed, or migration to reach a state, except on a declared disposable target. A check that needs one anywhere else stays a manual checkpoint.
 - **Drive local state only.** A click that creates, deletes, submits, pays, or sends writes through the app. Drive it only against a local server with sample or demo data, or a declared disposable target. On any other host, the check stays manual.
