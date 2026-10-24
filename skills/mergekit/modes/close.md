@@ -38,7 +38,20 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    **Merge from the layer the reviewer approved, never from the top for convenience.** Merging a lower layer is legal and leaves the layers above it open, rebased onto the base automatically. That partial landing is a feature: a reviewer who is happy with the bottom two and not the third should land two.
 3. **Approve, when it's possible.** GitHub does not permit approving your own pull request, so on a self-authored PR (the common case when an agent opens PRs under your account) skip the approval, say once that it was skipped and why, and merge directly. When the author is someone else (or a machine identity), post `gh pr review <n> --approve` first. The merge instruction covers the approval, so it needs no separate prompt. Ends when the approval is posted or its skip is stated.
-4. **Recheck the target, then merge.** Read the PR again immediately before the merge:
+4. **Wait for CI to pass.** This is the default, so a merge never lands on a red or still-running head. Watch the PR's checks until they finish:
+
+   ```sh
+   gh pr checks <n> --watch --fail-fast
+   ```
+
+   Read the result by exit code and output:
+
+   - Exit 0: every check passed or was skipped. Continue to the merge.
+   - "no checks reported": the repo has no CI for this PR. Continue, and say so in the hand-off.
+   - Any other failure: stop. Name each failing or cancelled check with its link, and merge nothing. On your own PR, route to `fix <n>`; otherwise route to the [Fix path](#fix-path).
+
+   The watch can outlast a host's command timeout, so run it in the background where the host caps command time. Skip the wait only when the reviewer says so in the instruction, for example "merge now, don't wait for CI", and report the skip. After a cascade, wait on every layer before the stack merge. Ends when every check passed or the PR has none, or on a reported stop.
+5. **Recheck the target, then merge.** Read the PR again immediately before the merge:
 
    ```sh
    gh pr view <n> --json state,headRefOid,baseRefName,isDraft,mergeable
@@ -60,13 +73,13 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    ```
 
    This is the one `gh stack` command mergekit owns, and it owns it because merging is mergekit's alone; gitkit takes the stack plumbing and deliberately leaves this out. Run it only after the enumerated confirmation above, and only after the recheck finds every layer's `headRefOid` equal to its confirmed SHA. Without the stack extension, merge each PR by hand in bottom-up order with `--match-head-commit`, waiting for each to land before the next, since every merge re-targets the layer above it.
-5. **Hand the landing off to the tracker with issuekit's `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
+6. **Hand the landing off to the tracker with issuekit's `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
 
    - **issuekit `close <n>`, for the issue this PR closes.** Closing the issue, ticking a parent checklist, unblocking dependents, and reclaiming the issue's worktree are one action, and that mode gates on the merged PR you just produced, previews the whole consequence, and tears the worktree down through gitkit. Skip it only when the PR genuinely references no issue. **After a cascade, run it once per merged layer**, bottom-up, because the cascade landed several PRs and each one retires its own issue and its own worktree. Closing only the top layer's issue leaves the rest looking unfinished while their code is already on trunk.
    - **issuekit `sync`, immediately after, including when there was no issue to close.** `close` lands the one issue you named; `sync` sweeps for what the merge shook loose *around* it: a second issue the PR body closed, a link the PR never carried, a parent checklist still un-ticked, a dependent left `blocked` on a prerequisite that just landed. That drift is invisible from here, because mergekit sees one PR where `sync` reads the whole tracker, and it is cheapest to repair now, while the merge that caused it is the thing everyone is looking at.
 
    This step ends when both issuekit modes have reported, or the fallback calls have run. issuekit `close` prints its preview and runs it without a wait, because the merge instruction is its approval. `sync` still previews its own edits. **Their lifecycle label writes run without a prompt**, per [the label exemption](../SKILL.md#never-merge-automatically). Without issuekit installed, fall back to plain `gh issue close` / `gh issue edit` calls: preview the close, then strip the stale status label and unblock the dependents in the same pass, and say that the tracker-wide sweep did not happen, rather than implying the tracker is now clean.
-6. **Remove the PR's worktree and local branch.** This is the default after a merge, and it needs no prompt. The merge instruction is the confirmation, per gitkit's [merged-PR exception](../../gitkit/SKILL.md#remove). Pass gitkit the PR number and the head branch. This covers an adopted worktree, a branch that gitkit did not create, and the fork-PR `pr-<n>-<slug>` branch. When issuekit `close` already removed them, report "already gone".
+7. **Remove the PR's worktree and local branch.** This is the default after a merge, and it needs no prompt. The merge instruction is the confirmation, per gitkit's [merged-PR exception](../../gitkit/SKILL.md#remove). Pass gitkit the PR number and the head branch. This covers an adopted worktree, a branch that gitkit did not create, and the fork-PR `pr-<n>-<slug>` branch. When issuekit `close` already removed them, report "already gone".
 
    Keep an item only in these cases, and name each kept item with its reason:
 
@@ -77,7 +90,7 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    When the worktree is this session's working directory, run the commands from the main checkout. Without gitkit, run `git -C <repo> worktree remove <path>` and `git -C <repo> branch -d <branch>`, with the same keep cases. Use `-D` only when the branch tip equals the merged `headRefOid`. After a cascade, do this for each merged layer. Ends when each merged PR's worktree and local branch are gone, or are kept with a named reason.
 
-7. **Check the merged diff for database migrations.** Merged code is deployed code, and a migration that never runs against production leaves the schema behind the application. List the PR's files and look for the repo's migration path — `drizzle/`, `migrations/`, `db/migrate/`, `prisma/migrations/`, `alembic/versions/`, `supabase/migrations/`, or whatever this repo uses:
+8. **Check the merged diff for database migrations.** Merged code is deployed code, and a migration that never runs against production leaves the schema behind the application. List the PR's files and look for the repo's migration path — `drizzle/`, `migrations/`, `db/migrate/`, `prisma/migrations/`, `alembic/versions/`, `supabase/migrations/`, or whatever this repo uses:
 
    ```sh
    gh pr diff <n> --name-only
@@ -85,9 +98,9 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    After a cascade, check every merged layer. Record the migration files you found, with their paths. When there are none, record that and say nothing about migrations in the hand-off. Ends when every merged PR's file list is checked.
 
-8. **Hand off.**
+9. **Hand off.**
 
-   **What changed.** Report the PR merged (number, title, merge commit, and the head SHA it was bound to), whether the approval was skipped and why, and what each half of the issue-lifecycle handoff did: the issue `close` closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
+   **What changed.** Report the PR merged (number, title, merge commit, and the head SHA it was bound to), whether the approval was skipped and why, the CI result (passed, no checks, or a wait the reviewer skipped), and what each half of the issue-lifecycle handoff did: the issue `close` closed, parent ticked, dependents unblocked, and then what `sync` reconciled beyond it. A sweep that found nothing is a result worth stating in a line; it's the difference between a clean tracker and one nobody looked at. **After a cascade, list every PR that landed and every issue that closed**, not just the one the reviewer named, and say which layers are still open above it.
 
    **Where it landed.** Name each worktree and local branch that was removed, and each one that was kept, with its path and reason. When the removed worktree was this session's working directory, say so, and name the main checkout as the place to continue.
 
