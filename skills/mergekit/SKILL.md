@@ -22,7 +22,7 @@ The PR already exists, and you are either reviewing it, or you authored it and i
 
 - **list.** "What PRs are waiting on me", "show me the ready-for-review PRs", "mergekit list".
 - **start `<n>`.** "Pull PR #34 down so I can test it", "set up #34 for review", "check out this PR for QA". **`<n>` is a PR number by default**, in every mode here.
-- **close `<n>`.** "Merge #34", "this one's good, land it", "#34 needs changes: <findings>".
+- **close `[<n>]`.** "Merge #34", "close this PR", "this one's good, land it", "#34 needs changes: <findings>". With no number, `close` takes the PR of the current branch.
 - **fix `<n>`.** The author's side: "my PR is red, fix the CI", "address the review comments on #34", "respond to the feedback on my PR". It triages the feedback before acting on it; it does not apply every comment on sight.
 
 If a PR is named but the action isn't, assume `start`, because setting a PR up is safe and reversible while merging is not.
@@ -31,13 +31,13 @@ If a PR is named but the action isn't, assume `start`, because setting a PR up i
 
 ## Never merge automatically
 
-Every merge requires an explicit, per-PR confirmation from a human who has just reviewed *that* PR. Concretely:
+Every merge requires an explicit, per-PR confirmation from a human who has just reviewed *that* PR. **A direct instruction to merge or close one PR is that confirmation.** "Merge #34", "close this PR", and `mergekit close` in a worktree whose branch has one open PR all count, so mergekit merges without a second prompt. It asks only when the instruction leaves a doubt or the state shows an anomaly, as [the close mode](modes/close.md#merge-path) lists. Concretely:
 
 - **Never a batch.** "Merge them all" is not a confirmation for any individual PR. Ask once per PR, naming the number and title.
-- **A stack cascade is one action, so it takes one confirmation that names every PR in it.** Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
-- **Bound to the reviewed head.** The confirmation names the PR's head SHA and covers that commit only. A push after the confirmation is a new change, so it needs a fresh review and a fresh confirmation, and the merge call carries `--match-head-commit` so GitHub enforces it.
+- **A stack cascade is one action, so it takes one confirmation that names every PR in it.** An instruction that names only the top PR does not name the layers below it, so a cascade always gets the enumerated prompt below. Merging a PR in a stack merges every unmerged PR *below* it, bottom-up, so the reviewer who says yes to the top is saying yes to all of them. That is not an exception to the rule above; it is the rule applied honestly. The prompt lists each PR the cascade will land, in merge order, with number and title, so nothing merges that the human did not see named. A cascade nobody enumerated is exactly the batch this rule bans.
+- **Bound to the reviewed head.** The confirmation covers one head SHA only: the head `start` recorded, or the head read when the instruction arrived. A push after the confirmation is a new change, so it needs a fresh review and a fresh confirmation, and the merge call carries `--match-head-commit` so GitHub enforces it.
 - **Never inferred.** Green CI, an approving review, zero unresolved threads, and a passing local gate are *inputs to the human's decision*, and none of them is the decision. A perfectly green PR still waits.
-- **Never default-yes.** Don't phrase the prompt so silence merges. No answer means no merge.
+- **Never default-yes.** When mergekit does ask, don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.
 
 The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, closing an issue. Show what will happen, wait for the OK.
@@ -69,7 +69,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 - Mode `list` → read [modes/list.md](modes/list.md), then follow it.
 - Mode `start <n>` → read [modes/start.md](modes/start.md), then follow it.
-- Mode `close <n>` → read [modes/close.md](modes/close.md), then follow it.
+- Mode `close [<n>]` → read [modes/close.md](modes/close.md), then follow it.
 - Mode `fix <n>` → read [modes/fix.md](modes/fix.md), then follow it.
 
 ## Notes
