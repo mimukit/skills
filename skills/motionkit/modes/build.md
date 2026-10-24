@@ -34,7 +34,7 @@ Prefer a library the project already ships, and never install one for a fade. Wh
 
 ### 4. Start from a recipe
 
-Component in the recipe list (press, popover or menu, tooltip, modal, drawer, toast, accordion, stagger, hold to confirm, tab indicator, scroll reveal, drag to dismiss, crossfade, no-library motion) → read [../recipes.md](../recipes.md), then follow it. Adapt it to the project's tokens and markup.
+Component in the recipe list (press, popover or menu, tooltip, modal, drawer, toast, accordion, stagger, hold to confirm, tab indicator, scroll reveal, drag to dismiss, sheet with snap points, crossfade, no-library motion) → read [../recipes.md](../recipes.md), then follow it. Adapt it to the project's tokens and markup.
 
 **Done when** the matching recipe is read, or no recipe matches and that is stated.
 

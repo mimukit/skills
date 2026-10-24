@@ -119,6 +119,22 @@ el.style.transform = `translateY(${dragDistance}px)`;
 
 Write the transform on the element itself, not through a parent's CSS variable. Apply the capture, damping, and touch rules in [Gestures and drag](SKILL.md#gestures-and-drag).
 
+Track 1:1 from the grab point: store the offset between the pointer and the element's edge at `pointerdown`, so the element never jumps to center under the finger. Keep the last few `pointermove` positions with timestamps, because the release velocity comes from that history, not from one sample. When the user grabs the element mid-settle, start from its live on-screen transform, never from the target.
+
+## Sheet with snap points
+
+Curve: a spring, `{ type: "spring", duration: 0.3, bounce: 0.2 }` after a flick, `bounce: 0` after a slow release. Duration: the spring's. Properties `transform` on the sheet. Reduced motion: the sheet still tracks the finger and lands on the snap point nearest the release, with `bounce: 0`.
+
+Pick the snap point from where the gesture is going, not from where the finger lifted. Project the resting position with exponential decay, then hand the release velocity to the spring so dragging and settling show no seam:
+
+```js
+const project = (v, rate = 0.998) => (v / 1000) * rate / (1 - rate); // v in px/s; 0.99 feels snappier
+const target = nearestSnapPoint(currentY + project(releaseVelocity));
+animate(sheet, { y: target }, { type: "spring", velocity: releaseVelocity, bounce: Math.abs(releaseVelocity) > 500 ? 0.2 : 0 });
+```
+
+Let the in-between frames point at the outcome: a sheet heading to full height grows toward the finger, never sideways. Spring 2D motion as separate x and y springs, because one spring on the combined distance desyncs when the axes move at different speeds.
+
 ## Masking a crossfade
 
 Curve `ease`. Duration 200 ms. Properties `filter`, `opacity`. Reduced motion: keep it as is, because neither property moves the element.
