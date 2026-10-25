@@ -1,7 +1,7 @@
 ---
 name: issuekit
 description: >-
-  Own the GitHub issue lifecycle in five modes: create issues from a plan or description, start a `ready` or `stacked` issue into its own worktree, close one out once its PR merges, sync PR↔issue links and dependents after merge, and triage the tracker for lifecycle, priority, and title gaps. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "#42 is grilled, mark it ready", or "fix the titles on these issues".
+  Own the GitHub issue lifecycle in five modes: file issues from a plan, start a workable issue in its own worktree, close one once its PR merges, sync PR↔issue links and dependents after merge, and triage the tracker for label and title gaps and for done, duplicate, or obsolete issues. Use when the user says "create issues from this plan", "file an issue", "start issue #42", "close #42", "sync my issues", "triage the backlog", "set the priority on #42", "#42 is grilled, mark it ready", "fix the titles on these issues", or "clean up my issues".
 license: MIT
 allowed-tools: Bash, Read, Edit, Write, Skill
 metadata:
@@ -16,7 +16,7 @@ Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), i
 - **`start`.** Take a `ready` or `stacked` issue into its own worktree and flip it `in-progress`.
 - **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
 - **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, a dependent still marked `blocked` by an issue that landed).
-- **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue.
+- **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue and the close of issues already done, duplicated, or obsolete.
 
 One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
 
@@ -30,7 +30,7 @@ The user wants to act on GitHub issues. Route to a mode from what they ask:
 - **start.** "Start issue #42", "begin #42", "pick up #42", "spin up a worktree for #42", "I'm working on 42 now".
 - **close.** "Close #42", "close out #42", "wrap up #42 now the PR merged", "tear down #42's worktree", "#42 landed, clean it up".
 - **sync.** "Sync my issues", "this PR merged but the issue is still open", "link this PR to #42", "unblock what #42 was holding up".
-- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention", "#42 is grilled, mark it ready".
+- **triage.** "Triage the backlog", "what's the state of my issues", "review open issues", "any stale issues", "prioritize my backlog", "set the priority on #42", "nothing has a priority", "relabel #42", "rename issue #42", "fix the titles on these issues", "these titles don't follow the convention", "#42 is grilled, mark it ready", "clean up my issues", "which issues can I close", "merge these duplicate issues".
 
 **If no mode is clear, ask first.** Present the modes as options and let the user pick before doing anything, and don't guess between creating and mutating the tracker.
 
