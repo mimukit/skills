@@ -1,9 +1,9 @@
 ---
 name: commitkit
 description: >-
-  Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", runs "/commitkit all" to commit every change in the tree, or wants a well-formed commit message written for staged work, even if they don't spell out the format.
+  Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. Use when the user asks to commit changes, says "commit this", runs "/commitkit", runs "/commitkit all" to commit every change in the tree, or wants a well-formed commit message written for staged work, even if they don't spell out the format. Also use when the user says "commit these, we'll review later" or "I reviewed the X plan", to stamp a doc for review or mark it reviewed.
 license: MIT
-allowed-tools: Bash, Read
+allowed-tools: Bash, Read, Edit
 metadata:
   internal: false
 ---
@@ -14,7 +14,7 @@ Turn the current changes into one or more clean commits with [Conventional Commi
 
 ## When this fires
 
-The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group).
+The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group). A commit request that defers the review of a doc ("we'll review later"), or a report that a doc is reviewed, takes the [Review stamp](#review-stamp) before the procedure.
 
 This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step. The one planned question is the branch, when a branch-workflow repo has you [on the base branch](#on-the-base-branch).
 
@@ -69,6 +69,16 @@ A user in a live session wants the message, not the commit. This route reads and
 The only git commands on this route are reads: `status`, `diff`, `log`, `rev-parse`, `for-each-ref`, and `hash-object` without `-w`.
 
 **Done when** every message is printed and a closing run of the record commands prints the same commit and the same two hashes as the opening run. Hand off in one line: say nothing changed, and name the next move, which is to say "commit" to commit with these messages.
+
+## Review stamp
+
+A doc committed for later review carries a stamp line, so a later session finds it with one `grep`. **statuskit** lists the pending docs; without statuskit, `grep -rl '^Review: pending' docs/` lists them. The stamp is `Review: pending`, and `Review: done YYYY-MM-DD` replaces it once the user has reviewed the doc. Neither the Message-only route nor Draft mode edits a file, so no stamp runs there.
+
+**Stamp.** The user asks to commit and defers the review ("commit the plan and research files, we'll review later"). Before [Read the state](#1-read-the-state), stamp each in-scope Markdown file under `docs/` that the request names, or each one under `docs/plans/` and `docs/research/` when it names the kinds. Write the line as its own paragraph after the title block and before the first `##` heading. After YAML frontmatter, use the position after the title. A file that already has a `Review:` line gets that line replaced, not a second one. A file the request does not cover stays unstamped. The stamp lands in the same commit as the file, and the message does not mention it.
+
+**Mark reviewed.** The user says a doc is reviewed ("I reviewed the verifykit plan", "mark all reviewed"). Find the named docs, or every doc with `Review: pending` for "all", in `docs/`. Replace the line with `Review: done` and today's date. Treat only those files as the scope, and commit them through the normal procedure, usually as one `docs` commit. A named doc with no pending stamp gets a one-line note and no edit.
+
+**Done when** every covered file holds exactly one `Review:` line in the new state, before the commit chain starts.
 
 ## Draft mode
 
@@ -248,10 +258,11 @@ List each commit's changed/created files in the last column. You already know th
 
 1. **A calling skill passed `no-push`.** Report the commits and return to the caller. The caller owns the next move, so crown nothing.
 2. **The push did not happen.** Crown the push and give the command.
-3. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
-4. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
-5. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
-6. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
+3. **The run stamped docs `Review: pending`.** Crown the review: name each stamped file, and say "read it, then tell commitkit you reviewed it". Crown no pull request for a docs-only run.
+4. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
+5. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
+6. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
+7. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
 
 Don't open a pull request yourself; commitkit's job ends at the push.
 
