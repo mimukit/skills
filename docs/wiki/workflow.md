@@ -99,7 +99,7 @@ Several kits stay off the map entirely, and for three different reasons. [`repok
 
 ## Orientation: start with statuskit
 
-[`statuskit`](../../skills/statuskit/SKILL.md) is a read-only sweep of the working tree, open issues and their priority labels, open PRs, and unfiled plans. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you, and each run is a fresh read — no cache, always re-derived from git and GitHub. By default it also saves the dashboard as a gitignored scratch snapshot under `docs/status/`; add "just print it" to skip the file.
+[`statuskit`](../../skills/statuskit/SKILL.md) is a read-only sweep of the working tree, open issues and their priority labels, open PRs, unfiled plans, and docs stamped `Review: pending`. It prints a one-screen dashboard and crowns exactly one next move, routed to the kit that does it. It never launches anything for you, and each run is a fresh read — no cache, always re-derived from git and GitHub. By default it also saves the dashboard as a gitignored scratch snapshot under `docs/status/`; add "just print it" to skip the file.
 
 Its ladder, when `gh` is available:
 
@@ -118,6 +118,7 @@ Its ladder, when `gh` is available:
 | 8c † | a `needs-planning` issue | `grillkit`, then `issuekit triage` to promote it |
 | 9 † | an unlabeled or odd-status issue | `issuekit triage` |
 | 10 † | an unassessed backlog — open issues with no priority label | `issuekit triage` |
+| 10b | a doc stamped `Review: pending` | read it, then `commitkit` marks it reviewed |
 | 11 | an unfiled plan, or nothing at all | `issuekit create` or `plankit` |
 | 12 | `CONTEXT.md` missing beside ADRs or plans, or older than the newest ADR or 50 commits | `domainkit init` or `domainkit audit` |
 
@@ -125,7 +126,7 @@ Its ladder, when `gh` is available:
 
 **† fires only when the project actually tracks work in GitHub Issues.** That is a policy fact rather than a capability one, so `gh` answering proves nothing: a repo can have Issues enabled and full of user bug reports while every planned change lives in Linear. statuskit resolves it explicitly — the prompt, then the repo's agent-guide file, then detection, then unknown — and it is the only skill in the collection that does. Seven of these fifteen rungs turn on the answer, which is why rung 8b exists: without it a trackerless project falls past every issue rung and gets crowned nothing.
 
-Without `gh` it falls back to a seven-rung git-only ladder over the same shape: uncommitted work, unpushed commits, a stash, an unmerged branch, the newest plan on disk, "start something", then the `CONTEXT.md` check. No repo yet? The move is `plankit`.
+Without `gh` it falls back to a eight-rung git-only ladder over the same shape: uncommitted work, unpushed commits, a stash, an unmerged branch, a doc awaiting review, the newest plan on disk, "start something", then the `CONTEXT.md` check. No repo yet? The move is `plankit`.
 
 ## Phase 1 — Decide
 
@@ -239,7 +240,7 @@ It works off a precedence ladder — `DESIGN.md`, then the shipped components, t
 
 ### commitkit — land it in git
 
-[`commitkit`](../../skills/commitkit/SKILL.md) commits **this session's changes** with Conventional Commits messages written from the actual diff. A worktree often carries other agents' work too, so a run touches only the paths the session created, edited, or removed, and leaves every other change exactly as it found it; `commitkit all` takes the whole tree. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the session's files, groups the work, commits, pushes to `origin` when the push is a fast-forward, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files. It also asks once on the base branch of a repo that works through issue branches and pull requests: the commits can go on the base branch, on a new `hotfix-*` branch, or on a new `issue-*` branch whose issue it files first.
+[`commitkit`](../../skills/commitkit/SKILL.md) commits **this session's changes** with Conventional Commits messages written from the actual diff. A worktree often carries other agents' work too, so a run touches only the paths the session created, edited, or removed, and leaves every other change exactly as it found it; `commitkit all` takes the whole tree. In a coding session the default is **multiple commits**, one per logical group, and it works autonomously: stages the session's files, groups the work, commits, pushes to `origin` when the push is a fast-forward, and reports a table. It pauses only for genuine ambiguity — half-finished work, secrets, partially staged files. It also asks once on the base branch of a repo that works through issue branches and pull requests: the commits can go on the base branch, on a new `hotfix-*` branch, or on a new `issue-*` branch whose issue it files first. It also stamps a doc `Review: pending` when you commit it for later review, and marks it `Review: done` when you say you reviewed it; `statuskit` reads the stamp.
 
 The message shape, with a mandatory scope (fallback `repo`) and a required body:
 
