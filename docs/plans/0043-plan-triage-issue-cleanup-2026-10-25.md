@@ -40,7 +40,7 @@ Extend `skills/issuekit/modes/triage.md` in place. It reuses triage's batch-appr
 
 Rejected: a sixth mode `prune` (a second report-then-approve flow with no real choice behind it), and a disclosed `triage` branch that runs only on request (the owner chose every run).
 
-### Phase 1: Add the cleanup checks to triage
+### Phase 1: Add the cleanup checks to triage (built 2026-10-25)
 
 - Step 1 (**Read the tracker**): add `body` and `closedByPullRequestsReferences` to the `--json` field list, so the bodies and the linked PRs come with one read.
 - Step 2 (**Flag drift**): add three checks beside the existing ones, each with the candidate, evidence, scope, and closed-issue rules from Design decisions:
@@ -54,7 +54,7 @@ Rejected: a sixth mode `prune` (a second report-then-approve flow with no real c
 
 Done when: `modes/triage.md` lists the three new checks with a test per check, step 3 carries one command sequence per new fix kind, and no line in the skill proposes `gh issue delete`.
 
-### Phase 2: Update the routing and the collection pages
+### Phase 2: Update the routing and the collection pages (built 2026-10-25)
 
 - `skills/issuekit/SKILL.md` description: extend the triage branch to name cleanup ("triage the tracker for lifecycle, priority, and title gaps, and for issues that are done, duplicated, or obsolete"), and add the trigger "clean up my issues". Keep the description under 1,024 characters (532 today).
 - `skills/issuekit/SKILL.md` **When this fires**: add the cleanup phrasings to the triage line, and update the `triage` bullet in the mode list at the top.
