@@ -2,6 +2,8 @@
 
 Source read on 2026-10-24 from a clone of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) at commit `6010f91` (v2.1.4, 2026-10-20). Repo stats come from `gh api` on the same day. The kit side was checked against `skills/uikit`, `skills/motionkit` and `skills/designkit` in this repo at `3bb809b`. [0002](./0002-research-skill-ecosystem-2026-10-21.md) gave Taste Skill one row and [0003](./0003-research-impeccable-2026-10-24.md) read Impeccable, its nearest rival, in depth. This report reads Taste Skill the same way.
 
+Review: pending
+
 ## What it is
 
 Taste Skill is one Agent Skill, installed as `design-taste-frontend`, by Leonxlnx. It builds and reviews web pages and, since v2.1, app screens. The skill text tells the agent what to decide, and a set of Node scripts deals an art direction, finds real pictures and measures the result in a headless Chrome.

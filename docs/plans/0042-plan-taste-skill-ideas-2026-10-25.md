@@ -1,5 +1,7 @@
 # Plan: Taste Skill ideas for uikit, motionkit and the eval loop
 
+Review: pending
+
 ## Context
 
 [0004](../research/0004-research-taste-skill-2026-10-24.md) read Leonxlnx/taste-skill at `6010f91` (v2.1.4) and ranked six ideas for this collection. This plan takes all six as drafted. The owner reviews and grills it later, so every choice below is a recommended default, not a confirmed one.

@@ -4,6 +4,8 @@ Sources read on 2026-10-21 by six parallel research agents, each from shallow cl
 
 Claims about this repo's kits were checked against the source before they went in: afkkit's batch is sequential on purpose (`skills/afkkit/SKILL.md`, Batch mode), only `seokit` has an `evals/` directory, no kit reads project learnings back, afkkit has no check for a weakened test gate, and skillkit's live test has no without-the-skill baseline.
 
+Review: pending
+
 ## The landscape
 
 | # | Repo | Author | Stars | Workflow in one line | Read in depth |
