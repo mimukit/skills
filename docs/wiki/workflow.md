@@ -191,7 +191,7 @@ Started from anything else — a concept, an architecture, a PR — it recaps an
 | `issuekit start` | take a `ready` or `stacked` issue into its own worktree and flip it `in-progress` |
 | `issuekit close` | once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down |
 | `issuekit sync` | reconcile and repair PR↔issue links after the fact, across the whole tracker |
-| `issuekit triage` | report the tracker's lifecycle, priority, and title gaps, then apply the fixes you approve |
+| `issuekit triage` | report the tracker's lifecycle, priority, and title gaps and the issues already done, duplicated, or obsolete, then apply the fixes you approve |
 
 Issue titles use the same `type(scope): summary` shape as commits, so the tracker and the git log read as one workflow.
 
