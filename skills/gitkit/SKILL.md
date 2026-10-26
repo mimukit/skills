@@ -1,7 +1,7 @@
 ---
 name: gitkit
 description: >-
-  The shared git layer other skills borrow: the worktree path, name, and lifecycle, the base branch, rebase versus merge, branch sync, merged-branch cleanup, lost-work recovery, and stacked branches. Use when the user says "make me a worktree for #42", "where's the worktree for this branch", "tear down this worktree", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "clean up my merged worktrees", "I lost a commit", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
+  The shared git layer other skills borrow: the worktree path, name, and lifecycle, a worktree's declared setup and teardown, the base branch, rebase versus merge, branch sync, merged-branch cleanup, lost-work recovery, and stacked branches. Use when the user says "make me a worktree for #42", "where's the worktree for this branch", "tear down this worktree", "set up this worktree", "make this worktree's dev database", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "clean up my merged worktrees", "I lost a commit", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -14,7 +14,7 @@ One place where the git facts live that every other skill in a toolchain keeps r
 
 The **core** here is not clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree), with no vendor CLI, no GUI dependency, and no recorded state anywhere but git's own. That is the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there is no second code path to keep in sync and no "degraded mode" to reason about.
 
-**One branch of this skill sits outside that core, and says so.** [Stacked branches](#stacked-branches) drive GitHub's `gh stack` extension, so that branch alone needs `gh` and a GitHub remote. It degrades to plain git rather than failing, and nothing else in this file depends on it, so a box with no `gh` runs everything above untouched.
+**Two branches of this skill sit outside that core, and say so.** [Stacked branches](#stacked-branches) drive GitHub's `gh stack` extension, so that branch alone needs `gh` and a GitHub remote. It degrades to plain git rather than failing. [`prepare`](#prepare) runs the commands a repository declares for a new worktree, and it chooses none of them itself: a repository that declares nothing gets the install its lockfile implies and no more. Nothing else in this file depends on either branch.
 
 gitkit is a **primitives skill**. Most of its runs come from another skill calling it, not from a human saying its name.
 
@@ -23,6 +23,7 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 - **worktree.** "Spin up a worktree for this branch", "make me a worktree for #42", "where is the worktree for `issue-42-…`", "tear down this worktree", "list my worktrees".
 - **base ref.** "What's the base branch here", "diff me against the base".
 - **sync.** "Should I rebase or merge here", "sync this branch with main", "this branch is behind, bring it up to date", "make this PR review-ready on the latest base".
+- **prepare.** "Set up this worktree", "install and seed this worktree", "make this worktree's dev database", "prepare again".
 - **clean.** "Clean up my merged worktrees", "which branches can I delete", "this repo is full of dead branches".
 - **rescue.** "I lost a commit", "my rebase ate my work", "I reset the wrong branch", "what's in this stash".
 - **stack.** "Stack this on #43", "start #44 on top of #43's branch", "restack this chain", "show me the stack".
@@ -36,11 +37,12 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 |---|---|---|
 | `worktree` | create, adopt, look up, list, and remove a worktree | [below](#worktree) |
 | `sync` | catch a feature branch up with its own remote, bring it onto the latest base, and force-push it with a lease | [below](#sync) |
+| `prepare` | run the repository's declared setup in a worktree, and its teardown before removal | [prepare.md](./prepare.md), and [below](#prepare) |
 | `clean` | sweep the merged worktrees and branches away, one confirmation each | [clean.md](./clean.md) |
 | `rescue` | find work that looks lost and restore it onto a new branch | [rescue.md](./rescue.md) |
 | `stack` | build and restack a chain of branches through `gh stack` | [stacks.md](./stacks.md), and [Stacked branches](#stacked-branches) |
 
-`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other three load only when their mode fires.
+`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other four load only when their mode fires.
 
 **When the mode is not clear from the ask, pick it from the verb and say which one you picked.** "Tidy this up" after a merge is `clean`; "tidy this up" on a branch behind its base is `sync`. Naming the mode in the first line is what lets the human correct a wrong pick before anything runs.
 
@@ -129,6 +131,8 @@ git -C "$REPO" config "branch.$BRANCH.gitkitCreated" true             # only aft
 - **Write the branch key only when this run passed `-b`.** A branch that already existed belongs to whoever made it, and an adopted worktree gets no marker.
 - **No record means not gitkit's.** A worktree or branch made before this rule existed, or made by hand, reads as adopted, and [Remove](#remove) leaves it alone.
 
+When the caller hands the worktree to a person or an agent to work in, run [`prepare`](#prepare) next, on a created and an adopted worktree alike. A scratch worktree that only runs one command skips it.
+
 Report the path and the branch. When the user asked gitkit for the worktree directly, end the reply with [the workspace block](#the-workspace-block). Creating a worktree does not imply doing anything in it. Ends when the worktree exists at `$WT` on `$BRANCH` and its records are written.
 
 ### The workspace block
@@ -164,6 +168,7 @@ git -C "$REPO" branch -d "$BRANCH"
 - **Remove only a worktree whose marker says gitkit created it.** A worktree without the marker was adopted: it is someone else's context, and you have no idea what is open in it.
 - **Delete only a branch whose `gitkitCreated` key is set, and delete it with `-d`.** Git itself then refuses an unmerged branch, so a wrong verdict fails loudly instead of deleting the work.
 - **One confirmation per removal.** Each worktree and each branch is its own decision, so a list of them takes one answer per row and never one answer for the set.
+- **A prepared worktree runs its teardown first.** When the `gitkit-prepared` marker exists and the worktree declares `teardown:`, run it after the dirty check and the confirmation, before `git worktree remove`. A failed teardown keeps the worktree and reports the failure. [Teardown](./prepare.md#teardown) holds the procedure.
 
 **The squash exception is the only `-D` gitkit runs.** A squash-merged branch never passes `-d`, because the squash commit has no ancestry link back to the branch. Use `-D` only when `gh` reports a merged pull request for the branch and that pull request's `headRefOid` equals the local branch tip:
 
@@ -178,6 +183,7 @@ The equal SHA proves that every commit on the branch is in the merged pull reque
 
 - **The human said keep.** "Merge it but keep the worktree" keeps the worktree, and "keep the branch" keeps the branch.
 - **The worktree is dirty.** The dirty rule above still stops the removal.
+- **The teardown failed.** The teardown rule above still keeps the worktree. Teardown itself runs with no prompt under this exception.
 - **The branch tip moved.** Delete with `-d`, or with `-D` only when the tip equals the merged `headRefOid`, as the squash exception states.
 - **A layer stacks on the branch.** An open PR whose base is this branch keeps the branch, and the worktree still goes.
 
@@ -270,16 +276,17 @@ The runnable form of the rule above. A sync has **two halves, in this order**: f
 
 1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Save the starting point with `git update-ref "refs/gitkit/pre-sync/$BRANCH" HEAD`. Ends when the base name, the branch name, and a clean tree are all known.
 2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by [Conflicts](#conflicts). A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
-3. **Measure the gap to the base.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already on the latest base: push whatever the previous step took, report that, and stop. Ends with a behind count and an ahead count.
+3. **Measure the gap to the base.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already on the latest base: run the **Refresh a prepared worktree** step below when the previous step took commits, push what it took, report that, and stop. Ends with a behind count and an ahead count.
 4. **Count the review threads.** When a pull request is open, count its unresolved threads from the GraphQL `reviewThreads` connection. This step asks nothing; the count goes into the hand-off. Ends with a thread count, or with no open pull request.
 5. **Rebase onto the base.** Run `git -c rerere.enabled=true rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
 6. **Resolve every conflict.** For each stop, list the files with `git diff --name-only --diff-filter=U`. Sort each conflict by [Conflicts](#conflicts), write the mechanical resolutions, and ask one question round for the rest. Write the ruled resolutions, run `git diff --check`, stage the files, then `git rebase --continue`. Repeat for every remaining stop. Ends when no conflict marker remains and the rebase is complete, or, for an unattended caller, on an aborted rebase with its open asks returned.
-7. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
-8. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
+7. **Refresh a prepared worktree.** When the `gitkit-prepared` marker exists and the sync took commits, run `prepare`'s change check and the block it selects, per [prepare.md](./prepare.md#2-decide-what-runs). It runs before the gate, because a gate that runs on a stale install or a stale schema fails for the wrong reason. A failed block stops the sync before the push. Ends with the block's exit code, or with nothing watched changed, or with no marker.
+8. **Prove the branch still works.** Run the repository's own test and build gate. Report a failure with its output and stop before the push. Ends with a pass, or a stop.
+9. **Push with a lease.** Run `git push --force-with-lease origin "$BRANCH"`. A rejected lease means somebody pushed while you rebased: fetch, show the new commits, and ask before any retry. Ends when the remote branch matches the local one.
 
 #### Hand off
 
-Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, the gate result, the pushed branch, and the review threads the push outdated. List each resolved file with its class and a one-line reason, mark the ones the human ruled on, and name `refs/gitkit/pre-sync/$BRANCH` as the undo point. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
+Report the commits taken from `origin/$BRANCH`, the base, the behind and ahead counts, what the refresh ran, the gate result, the pushed branch, and the review threads the push outdated. List each resolved file with its class and a one-line reason, mark the ones the human ruled on, and name `refs/gitkit/pre-sync/$BRANCH` as the undo point. Say when the branch was already current and nothing changed. Next, review the pull request diff on the new base, and re-request review when threads went outdated.
 
 ### The merge exception
 
@@ -297,6 +304,12 @@ git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 ### Never bare `git pull`
 
 `git pull` on a branch behind its remote merges by default, and writes `Merge branch 'main' of github.com:owner/repo` without asking anyone. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself: configure it or pass the flag, but never let the default run.
+
+## `prepare`
+
+Make a worktree ready to run with the commands its repository declares in a `## Worktree setup` section of its agent-guide file: `setup:` on the first run, `update:` when a watched path changed, and `teardown:` before [Remove](#remove) deletes the worktree. A `gitkit-prepared` marker in the worktree's admin directory records the commit each run passed at. Teardown runs only where that marker exists, so gitkit never removes a resource it did not set up.
+
+The procedure, the declaration format, the template, and the lockfile table live in **[prepare.md](./prepare.md)**. Read it when a run prepares a worktree, when a sync took commits on a prepared one, and when a removal meets one.
 
 ## `clean`
 
@@ -357,6 +370,6 @@ A GUI dev tool that manages worktrees is welcome to **observe** these. Orca and 
 
 - **gitkit is the single source of truth for what it owns.** A calling skill may hold policy about *when* to ask, such as that a PR is worth pulling down or that a branch is ready to publish, but never about *how* the git operation is done.
 - **Restating a conclusion is allowed; restating the derivation is the bug.** Every public skill is installed on its own, into repos where gitkit may not exist, so a caller that needs a git fact has to carry enough of one to keep working, and that requirement outranks tidiness. The line runs between the two: a caller may state gitkit's **answer** together with its degradation fallback ("gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base"), and may not reproduce the **reasoning that produces** the answer, meaning the full base-ref ladder, the worktree path formula, or the rebase-versus-merge argument. The answer is one line that a rename cannot silently invalidate; the derivation is the thing that drifts. Compliant examples worth reading: prkit and mergekit each name the rebase conclusion and its one-confirmation rule without re-deriving them, and wikikit and designkit each name `gh repo view --json defaultBranchRef` as a base-ref fallback without carrying the five-rung ladder.
-- **gitkit never implements, commits, or opens anything.** It prepares the ground and tears it down. Writing code in the worktree, committing, and publishing belong to other skills.
-- **Destructive steps preview and confirm.** Removing a worktree and deleting a branch each show what is about to happen and wait for an OK. Creating, adopting, and syncing run straight through. A sync rewrites a published branch, but the user who asks for it has already made that call, the lease guards the remote, and `refs/gitkit/pre-sync/$BRANCH` undoes it.
+- **gitkit never implements, commits, or opens anything.** It prepares the ground and tears it down. The commands `prepare` runs are the repository's, never gitkit's own. Writing code in the worktree, committing, and publishing belong to other skills.
+- **Destructive steps preview and confirm.** Removing a worktree and deleting a branch each show what is about to happen and wait for an OK. A teardown rides on the confirmation of its removal. Creating, adopting, and syncing run straight through. A sync rewrites a published branch, but the user who asks for it has already made that call, the lease guards the remote, and `refs/gitkit/pre-sync/$BRANCH` undoes it.
 - **No shell available** (e.g. a browser-based agent)? Then you cannot run git. Reason from what the user provides and **print the exact commands** as a codeblock for them to run, and never report a worktree created or removed that you could not perform.

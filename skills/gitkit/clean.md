@@ -96,7 +96,7 @@ Ends when every reapable row and every reapable remote row has the human's own a
 
 ## 5. Remove
 
-For each confirmed row, in this order:
+For each confirmed row, in this order. A row whose worktree carries the `gitkit-prepared` marker runs its declared [teardown](./prepare.md#teardown) first, and a failed teardown keeps that row's worktree and branch:
 
 ```sh
 git -C "$REPO" worktree remove "$WT"
