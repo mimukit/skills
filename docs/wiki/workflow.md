@@ -19,7 +19,7 @@ If you only remember one thing: **[`statuskit`](../../skills/statuskit/SKILL.md)
             ▼
    FILE     issuekit create ──▶ ready / blocked / needs-planning
             ▼
-   START    issuekit start ──▶ worktree, ready ──▶ in-progress
+   START    issuekit start ──▶ worktree + setup, ready ──▶ in-progress
             ▼
    BUILD    implementkit ──▶ commitkit ──▶ reviewkit ──▶ verifykit / qakit ──▶ wikikit update
             (+ uikit on visual surfaces)
@@ -30,7 +30,7 @@ If you only remember one thing: **[`statuskit`](../../skills/statuskit/SKILL.md)
             ▼
    RELEASE  releasekit ──▶ changelog · tag · GitHub release   (when you're cutting one)
 
-            gitkit    ┄┄▶ worktree · branch name · base ref · rebase vs merge · stacks
+            gitkit    ┄┄▶ worktree · setup · branch name · base ref · rebase vs merge · stacks
                           borrowed by issuekit start, prkit, mergekit, issuekit close
             domainkit ┄┄▶ CONTEXT.md overview + glossary, ADRs: record · init · audit
 ```
@@ -54,7 +54,7 @@ flowchart TD
     end
 
     F["issuekit create<br>ready / blocked / needs-planning"]
-    S["issuekit start<br>worktree · ready to in-progress"]
+    S["issuekit start<br>worktree · setup · ready to in-progress"]
 
     subgraph build["BUILD"]
         direction LR
@@ -70,7 +70,7 @@ flowchart TD
 
     RL["releasekit<br>changelog · tag · GitHub release<br>per release, not per issue"]
 
-    GK["gitkit<br>worktree · branch name · base ref · rebase vs merge · stacks"]
+    GK["gitkit<br>worktree · setup · branch name · base ref · rebase vs merge · stacks"]
     DK["domainkit<br>CONTEXT.md overview + glossary · ADRs<br>record · init · audit"]
 
     V --> P
@@ -188,7 +188,7 @@ Started from anything else — a concept, an architecture, a PR — it recaps an
 | Mode | What it does |
 |---|---|
 | `issuekit create` | turn a plan document or a plain description into well-formed issues, one per plan by default |
-| `issuekit start` | take a `ready` or `stacked` issue into its own worktree and flip it `in-progress` |
+| `issuekit start` | take a `ready` or `stacked` issue into its own worktree, run the repo's declared worktree setup, and flip it `in-progress` |
 | `issuekit close` | once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down |
 | `issuekit sync` | reconcile and repair PR↔issue links after the fact, across the whole tracker |
 | `issuekit triage` | report the tracker's lifecycle, priority, and title gaps and the issues already done, duplicated, or obsolete, then apply the fixes you approve |
@@ -291,7 +291,7 @@ At PR-open time the sync rule resolves to **rebase** onto the base, and force-pu
 [`mergekit`](../../skills/mergekit/SKILL.md) has four modes:
 
 - **`mergekit list`** — what's waiting on you, most-ready first, drafts and other people's PRs marked. It deliberately does not crown a "next" PR.
-- **`mergekit start`** — pulls the PR into a worktree, sets the project up, and prints a review pack: PR metadata, the linked issue and its acceptance criteria, the commit log and diffstat, the QA plan and proof artifacts, unresolved review threads with `file:line`, CI status, and — explicitly — what's *missing*. It never syncs or pushes: it reports how far the branch is behind, and you run `gitkit sync` in the worktree if that matters. It ends with the worktree path and the one command that starts the app.
+- **`mergekit start`** — pulls the PR into a worktree, sets the project up through `gitkit prepare`, and prints a review pack: PR metadata, the linked issue and its acceptance criteria, the commit log and diffstat, the QA plan and proof artifacts, unresolved review threads with `file:line`, CI status, and — explicitly — what's *missing*. It syncs only when you ask in the same breath ("start #34 and sync"); otherwise it reports how far the branch is behind, and you run `gitkit sync` in the worktree if that matters. It ends with the worktree path and the one command that starts the app.
 - **`mergekit close`** — forks on your verdict. Say it's good and it merges with a merge commit (no squash, no rebase-merge). Say it needs changes and it takes the fix path instead.
 - **`mergekit fix`** — the author's side, for a PR *you* opened that came back with review comments or red CI. It gathers the unresolved threads and failing checks, drives the fixes in the worktree, syncs through `gitkit`, pushes, and answers the threads — then stops. It never merges; that's still `close`, behind its human gate.
 
@@ -336,16 +336,17 @@ The lifecycle and priority maps are a shared contract with `issuekit`: `repokit`
 
 ### gitkit — the git layer
 
-[`gitkit`](../../skills/gitkit/SKILL.md) is the single source of truth for four things:
+[`gitkit`](../../skills/gitkit/SKILL.md) is the single source of truth for five things:
 
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
 - **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix that patches the base branch directly, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
+- **How a worktree gets ready** — the repo declares `setup:`, `update:`, `teardown:`, and `watch:` blocks in a `## Worktree setup` section of its `AGENTS.md`. `prepare` runs them (or only the lockfile install when the repo declares none), re-runs when a watched path changes, and runs the teardown, such as a drop of the worktree's database, before a removal. gitkit names no database and picks no command of its own.
 - **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. A sync rebases and pushes with `--force-with-lease` straight through, published or not, and reports how many review threads it outdated. It stops to ask only on a dirty tree, a conflict that needs a ruling, a failed gate, or a rejected lease.
 
-Those four facts are what the other kits borrow. Five modes act on them: `worktree` (create, adopt, look up, remove), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), and `stack`.
+Those five facts are what the other kits borrow. Six modes act on them: `worktree` (create, adopt, look up, remove), `prepare` (run the declared setup, and the teardown before a removal), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), and `stack`.
 
-Invoke it directly for housekeeping: "spin up a worktree for this", "where's the worktree for #42", "tear down this worktree", "clean up my merged worktrees", "I lost a commit".
+Invoke it directly for housekeeping: "spin up a worktree for this", "where's the worktree for #42", "set up this worktree", "tear down this worktree", "clean up my merged worktrees", "I lost a commit".
 
 ### domainkit — scribe the model
 
@@ -412,7 +413,7 @@ Invoked on demand, from wherever you already are. None of them is a step in the 
 issuekit create                     # → ready / blocked issues from the plan
 
 # Working one
-issuekit start 42                   # → gitkit worktree, ready → in-progress
+issuekit start 42                   # → gitkit worktree + setup, ready → in-progress
 /implementkit #42                   # → unstaged, tests + build green
 /commitkit                          # → grouped conventional commits, pushed
 /reviewkit                          # → four passes over the branch diff
