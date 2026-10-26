@@ -36,28 +36,28 @@ Split `uikit` into a routing root plus `modes/`, write `mockup` as the third mod
 
 Rejected: a separate `mockupkit` skill (index cost, see Design decisions), an `ideation` mode (a count of options, not a different process), and a mixed layout with only `mockup` as a file (no skill mixes the two shapes).
 
-### Phase 1: Add the global rule
+### Phase 1: Add the global rule (built 2026-10-26)
 Attended: the owner approves the one-line wording before it lands in `~/.claude/CLAUDE.md`.
 
 Add the line from Design decisions to `~/.claude/CLAUDE.md`, in the owner's chosen wording.
 Done when `grep -n "mockup" ~/.claude/CLAUDE.md` shows the line.
 
-### Phase 2: Split uikit into modes
+### Phase 2: Split uikit into modes (built 2026-10-26)
 
 Move `## Mode: build` and `## Mode: audit` into `skills/uikit/modes/build.md` and `skills/uikit/modes/audit.md` with no wording change. Leave one pointer per mode in the root in the trigger-carrying form. Move each mode's `Hand off` with its body. Fix every anchor that crosses the move.
 Done when `make lint` exits 0 and `git diff -M --stat` shows the two mode bodies as moves, not rewrites.
 
-### Phase 3: Write the mockup mode
+### Phase 3: Write the mockup mode (built 2026-10-26)
 
 Write `skills/uikit/modes/mockup.md` with steps that each end on a done condition: ground it (ladder rung, design read, screen list, option count up to 4), produce it by the image path rule, check it against the catalog, hand off. Delete the old `## Mockups` section from the root and the `A mockup follows Mockups` bullet from `build`. Keep the file-based edit economy from the old section (write once, edit the file, show once, a subagent for large sets). State the no-image-path fallback.
 Done when `grep -rn "HTML page built for a person" skills/uikit` prints nothing, and the mode states the image default, the code-on-request exception, the option cap, the generator-first rule, and the fallback.
 
-### Phase 4: Route to the mode
+### Phase 4: Route to the mode (built 2026-10-26)
 
 Add a `mockup` branch to the `uikit` description inside the first 300 characters of the trigger, pruning a synonym to make room. Add a `mockup` line to `When this fires`. In `skills/prototypekit/SKILL.md`, remove "competing UI mocks" from the description and the "show me a few options for this screen" and "mock up three versions" triggers at line 19. Add one pointer there to `uikit mockup`. Run `make cheatsheet`.
 Done when `make lint` exits 0 and `git diff docs/wiki/cheatsheet.md` shows only the two changed what-clauses.
 
-### Phase 5: Update the wiki
+### Phase 5: Update the wiki (built 2026-10-26)
 
 Update `docs/wiki/workflow.md`: the `uikit` section at line 231 gains the `mockup` mode, and the `ui` line at 156 says image options go to `uikit mockup`.
 Done when `make lint` exits 0 and `grep -n "uikit mockup" docs/wiki/workflow.md` prints at least one line.
