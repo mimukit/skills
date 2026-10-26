@@ -45,7 +45,7 @@ Rejected alternatives, one line each:
 - **Lateral: a repo-managed git `post-checkout` hook.** git fires it on `git worktree add`, but git has no hook for worktree removal, the hook fails silently, and an agent cannot see that it ran.
 - **A new shared skill.** Fails the AGENTS.md gate: the agent makes this choice from context, and the human would not choose it on its own.
 
-### Phase 1: gitkit prepare and teardown
+### Phase 1: gitkit prepare and teardown (built 2026-10-26)
 
 - Write `skills/gitkit/prepare.md`. It finds the `## Worktree setup` section, exports the three `GITKIT_*` variables, and runs `setup:` inside the worktree on a first prepare. On a later prepare it runs the change check against the marker SHA and runs `update:` (else `setup:`) on a change. It writes the marker with the `HEAD` SHA on exit 0 and reports each command and its exit code. A failed command stops prepare and reports the command and the last lines of its output.
 - In `prepare.md`, cover the undeclared repo: the lockfile install, the "no worktree setup declared" line, and the section template with all four labels and the "safe to re-run" rule for `setup:`.
@@ -56,7 +56,7 @@ Rejected alternatives, one line each:
 
 Done when: `prepare.md` exists with the declared, undeclared, adopt, and change-check paths. Remove names the teardown step, its marker condition, and its failure rule. `sync` names the change check. `make lint` passes.
 
-### Phase 2: mergekit start
+### Phase 2: mergekit start (built 2026-10-26)
 
 - Replace the install half of step 4 in `skills/mergekit/modes/start.md` with a call to gitkit `prepare`. Keep the app start and its observable result, and keep the one-line fallback without gitkit.
 - Add the "and sync" opt-in to step 3: hand the sync to gitkit, refuse it on a fork PR, and report the outdated thread count.
@@ -66,7 +66,7 @@ Done when: `prepare.md` exists with the declared, undeclared, adopt, and change-
 
 Done when: `start.md` calls gitkit `prepare`, step 3 names the opt-in and the fork refusal, `close.md` names the teardown fallback, and `make lint` passes.
 
-### Phase 3: issuekit start and afkkit
+### Phase 3: issuekit start and afkkit (built 2026-10-26)
 
 - Add a step to `skills/issuekit/modes/start.md` after the worktree step: call gitkit `prepare`. An unattended caller gets the prepare result returned with the path.
 - Report the prepare result in issuekit's `start` hand-off.
@@ -75,7 +75,7 @@ Done when: `start.md` calls gitkit `prepare`, step 3 names the opt-in and the fo
 
 Done when: issuekit `start` calls prepare, issuekit `close` names the teardown fallback, afkkit names the prepare-failure route, and `make lint` passes.
 
-### Phase 4: collection docs
+### Phase 4: collection docs (built 2026-10-26)
 
 - Update `docs/wiki/workflow.md` where it maps issuekit `start` and mergekit `start` to gitkit.
 - Run `make cheatsheet` if the gitkit what-clause changed.
