@@ -88,11 +88,17 @@ gh issue edit <n> --remove-label stacked --add-label in-progress   # the stacked
 
 A `stacked` issue flips exactly the same way. If either label is missing from the repo, [report the gap](../SKILL.md#lifecycle-labels-every-mode) and point at **repokit**, because the exemption skips the prompt, never the provisioning check. This step is done when the issue carries `in-progress` and no other lifecycle label.
 
-### 5. Hand off
+### 5. Prepare the worktree through gitkit
 
-**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). When the open-PR check fired, repeat the count in one line.
+Call **gitkit** `prepare` on the worktree. It runs the repo's declared worktree setup (install, untracked files, the worktree's own database, seed), or only the lockfile install when the repo declares none, and on the adopt path it re-runs only when a watched file changed. issuekit names no setup command of its own.
 
-**Where it landed.** Give the branch and the worktree path. Print gitkit's workspace block as the last lines of the reply, after **Next**, with `for: issue #<n>` and the base from gitkit (the parent branch for a `stacked` issue). An unattended caller such as afkkit gets the path and branch returned instead, and no block.
+A failed setup is a report, not a refusal: the issue is started and the worktree exists, so the label stays `in-progress`. Report the command, the exit code, and the output tail gitkit returns. An unattended caller gets those three facts returned with the path, to escalate in its own way. This step is done when gitkit has reported what it ran, or the failure is reported.
+
+### 6. Hand off
+
+**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). Report what gitkit `prepare` ran, or that it failed and why. When the open-PR check fired, repeat the count in one line.
+
+**Where it landed.** Give the branch and the worktree path. Print gitkit's workspace block as the last lines of the reply, after **Next**, with `for: issue #<n>` and the base from gitkit (the parent branch for a `stacked` issue). An unattended caller such as afkkit gets the path, the branch, and the prepare result returned instead, and no block.
 
 **Next.** The ground is prepared and nothing has been built, so the next move is always *switch into that worktree and start there*. Give the `cd` and name the builder: **implementkit** against this issue when it's installed, otherwise plain "implement the issue in that worktree". For an unattended run, **afkkit** takes it from here to an open PR, and since afkkit calls `start` itself, mention it as `afkkit <n>` from anywhere rather than as something to run from inside the worktree; it adopts the worktree this run just prepared.
 
