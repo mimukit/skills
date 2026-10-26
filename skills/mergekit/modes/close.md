@@ -87,8 +87,9 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    - The worktree is dirty. Show what the removal would lose.
    - The local branch tip is not the merged head, so it holds commits the merge never saw.
    - An open PR uses the branch as its base.
+   - The worktree's declared teardown failed. gitkit runs it before the removal, with no prompt, and keeps the worktree when it fails.
 
-   When the worktree is this session's working directory, run the commands from the main checkout. Without gitkit, run `git -C <repo> worktree remove <path>` and `git -C <repo> branch -d <branch>`, with the same keep cases. Use `-D` only when the branch tip equals the merged `headRefOid`. After a cascade, do this for each merged layer. Ends when each merged PR's worktree and local branch are gone, or are kept with a named reason.
+   When the worktree is this session's working directory, run the commands from the main checkout. Without gitkit, run the `teardown:` block of the repo's `## Worktree setup` section from inside the worktree first, then `git -C <repo> worktree remove <path>` and `git -C <repo> branch -d <branch>`, with the same keep cases. A failed teardown keeps the worktree. Use `-D` only when the branch tip equals the merged `headRefOid`. After a cascade, do this for each merged layer. Ends when each merged PR's worktree and local branch are gone, or are kept with a named reason.
 
 8. **Check the merged diff for database migrations.** Merged code is deployed code, and a migration that never runs against production leaves the schema behind the application. List the PR's files and look for the repo's migration path — `drizzle/`, `migrations/`, `db/migrate/`, `prisma/migrations/`, `alembic/versions/`, `supabase/migrations/`, or whatever this repo uses:
 
