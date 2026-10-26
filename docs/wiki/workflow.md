@@ -153,7 +153,7 @@ It does not build to find out, and it does not read your codebase for reuse patt
 [`prototypekit`](../../skills/prototypekit/SKILL.md) takes the decisions reading can't settle. `researchkit` refuses to build and says so; this is where the cases it refuses land, along with anything where the design is unsettled *because nobody has seen it work*. It gates hard on a stated question — no question, no prototype, and "build me a demo" bounces — then routes to one of two branches:
 
 - **`logic`** — a state model, a reducer, a flow, or a feasibility question. Imports the real code when it exists, invents a self-contained file when it doesn't, and renders either as something a human clicks through or as a script that prints a number.
-- **`ui`** — three structurally different mocks on one route, switchable by a URL param, each naming the axis it diverges on. A winner is evidence, not a starting point: `uikit` builds it for real, from scratch.
+- **`ui`** — three structurally different mocks on one route, switchable by a URL param, each naming the axis it diverges on. A winner is evidence, not a starting point: `uikit` builds it for real, from scratch. An image of a screen, or image options of one, is `uikit mockup` instead.
 
 The code is throwaway by construction — marked `*.prototype.*`, registered in the repo's private exclude so `commitkit` and `reviewkit` never see it, and deleted at hand-off with per-file confirmation. What survives is a four-line verdict that lands in whatever asked the question; in a plan, it strikes the open question and writes a settled-decisions row.
 
@@ -235,6 +235,8 @@ It leaves everything **unstaged** and commits nothing. An underspecified input g
 It works off a precedence ladder — `DESIGN.md`, then the shipped components, then the product's own subject matter, then stack defaults — so taste gets spent only where nothing else constrains the choice. Before writing anything it declares a **design read** in five words: surface, audience, rung, signature, density. That line is the only durable record of why the UI looks the way it does, and it travels through the hand-off into the PR body.
 
 `uikit audit` is the read-only half, and the one worth knowing about separately: point it at UI that predates the skill and it returns `file:line` findings against a capped catalog of the tells — three equal feature cards, invented metrics, div-built fake dashboards, missing empty states. It writes nothing and routes findings back to `uikit build`.
+
+`uikit mockup` is the third mode. It shows a screen, or up to four options of it, as an image, and writes code only when you ask for code. It takes an image-generation tool when the session has one, and otherwise renders a throwaway HTML file to a PNG with a CLI browser driver. An approved mockup is never promoted to production code. `uikit build` builds the chosen option from scratch.
 
 [`motionkit`](../../skills/motionkit/SKILL.md) is the motion half of that seam. `uikit build` decides whether motion fits the design read; motionkit decides how it moves: the curve, the duration, the spring, the properties. It has three modes (`motionkit build`, `motionkit review`, `motionkit perf`) plus a vocabulary lookup for when you can picture the effect but not name it. `uikit audit` still flags extra animation as a tell, and when motionkit is installed it routes that finding to `motionkit review`, which judges whether to keep, change, or remove it. Nothing invokes motionkit automatically; you reach for it by name or by asking about an animation.
 
