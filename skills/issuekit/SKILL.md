@@ -14,13 +14,13 @@ Own the GitHub issue lifecycle through the [`gh` CLI](https://cli.github.com), i
 
 - **`create`.** Turn a plan document or a plain description into well-formed issues.
 - **`start`.** Take a `ready` or `stacked` issue into its own worktree and flip it `in-progress`.
-- **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, and tear the worktree down.
+- **`close`.** Once its PR has merged, close the issue, unblock what it was holding up, tear the worktree down, and delete the QA screenshots its plans left in `~/qakit/`.
 - **`sync`.** Reconcile and repair the PR↔issue relationship *after* the fact (issues a merged PR should have closed, a missing link on an existing PR, a dependent still marked `blocked` by an issue that landed).
 - **`triage`.** Report the health of the tracker, then apply the fixes you approve, including the `needs-planning → ready` promotion once a grill settled an issue and the close of issues already done, duplicated, or obsolete.
 
 One skill, five jobs, because they're the same job at five points in a dev workflow: file the work, pick it up, land it, keep everything in sync as PRs merge, and keep the tracker honest.
 
-**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and dependents still marked `blocked` by work that landed, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
+**`close` vs `sync`.** They do overlapping tracker work and the split is by *scope*, not mechanism: `close` lands **one named issue** whose PR you know merged, and is the only mode that touches the filesystem (the worktree teardown and the QA screenshot folders). `sync` sweeps the **whole tracker** for drift after the fact, meaning issues a merged PR should have closed but didn't, missing links, and dependents still marked `blocked` by work that landed, and it never touches a worktree. `close` reuses `sync`'s reconciliation rather than restating it.
 
 ## When this fires
 
