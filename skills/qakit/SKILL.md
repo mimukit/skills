@@ -14,7 +14,7 @@ Turn a feature an AI agent just implemented into a **QA plan**: the agent runs e
 
 The human's part is **judgment**: does the screen look right, does it match the mockup, does the flow feel good, does the copy read well. Everything else is the agent's. The value is a disciplined, diff-grounded plan whose manual half is short because nothing a machine can confirm reaches it.
 
-Anything with an **observable pass condition** does **not** belong in the human's checklist: a command's output, an endpoint's response, a return value, and, when a browser driver is available, what a page shows (a figure reads `7`, a click lands on `/account/orders/`, the search field is absent, nothing overflows at 375 px). The agent runs those itself and reports the results in an **Automated verification** section at the end of the plan, so the human sees them confirmed without re-running them by hand. The agent also captures a screenshot of every screen the human must judge, so most of the manual pass is looking at images.
+Anything with an **observable pass condition** does **not** belong in the human's checklist: a command's output, an endpoint's response, a return value, and, when a browser driver is available, what a page shows (a figure reads `7`, a click lands on `/account/orders/`, the search field is absent, nothing overflows at 375 px). The agent runs those itself and reports the results in an **Automated verification** section at the end of the plan, so the human sees them confirmed without re-running them by hand. The agent also captures a screenshot of every screen the human must judge and builds one gallery page that groups them by case, so most of the manual pass is looking at images.
 
 The plan is organized around **setup**, not around dimensions. Setup is what a manual QA pass actually costs: reseeding data, logging in, getting the app into a particular state. A plan that makes the tester rebuild the same state five times because five cases each restate it is a worse plan than one with fewer, fatter cases.
 
@@ -111,6 +111,7 @@ True for the whole plan. Do this once, before Scenario 1.
 - Branch / build under test
 - Base URL, credentials, and how to obtain any auth token the calls need
 - Feature flags / config
+- Screenshots: local to this run at `<commit sha>` and not committed. The names under each case match the labels in the gallery.
 
 Launch with:
 
@@ -152,7 +153,7 @@ Priority legend: 🔴 Critical · 🟡 Normal · 🟢 Low
    - [ ] <one judgment the tester stops to make right here>
      - <what to look at, when the judgment needs a guide; a plain bullet, not a checkbox>
      - <another thing taken in at the same glance>
-     - screenshot: `<path>` <light 1440 px · dark 1440 px · light 375 px, as captured>
+     - screenshots: `<screen>-light-1440` · `<screen>-dark-1440` · `<screen>-light-375`
    - [ ] <a second judgment, only when it's a genuinely separate look>
 2. <next action; a command goes in its own block>
 
@@ -200,7 +201,7 @@ Commands run (one per block; chain with `&&` when they must run together):
 - ❌ <anything that failed, with the actual output> _(if any)_
 
 ### Browser checks
-_Driven with `<driver>` against `<base URL>` at `<revision>`. Screenshots in `<screenshot directory>`._
+_Driven with `<driver>` against `<base URL>` at `<revision>`. <n> screenshots, local to this run and not committed._
 
 - ✅ <page> · <what was asserted> → <the observed value>
 - ❌ <page> · <what was asserted> → <the observed value, and what was expected>
@@ -246,7 +247,8 @@ Rules for good cases:
   ```
 - **Every checkbox owns its own line.** A `- [ ]` renders as a *clickable* checkbox only when it starts a line: write `[ ] Pass  [ ] Fail` inline and every previewer shows dead literal text the tester has to edit by hand. This applies to Result's three outcomes, each step checkpoint, and the Environment and Setup boxes alike: one per line, no exceptions, never side by side to save vertical space.
 - **Observable, not internal.** Write what the tester sees or measures, not state they have no way to inspect.
-- **Point each visual judgment at its screenshot.** A checkpoint about how a screen looks carries a plain `screenshot:` sub-bullet with the path [Run the automated checks yourself](#5-run-the-automated-checks-yourself) captured, one per variant. The tester can then judge most screens from the image and open the app only for motion, feel, and real interaction. Leave the sub-bullet out when no driver ran.
+- **Point each visual judgment at its screenshots by name, never by path.** A checkpoint about how a screen looks carries a plain `screenshots:` sub-bullet that names each capture [Run the automated checks yourself](#5-run-the-automated-checks-yourself) took for it, one name per variant, each in backticks and written in full. A name is `<screen>-<light|dark>-<width>`, the file name without `.png`, and it is the label the gallery shows. A path works on one machine only, breaks on GitHub and in every other clone, and says nothing about the commit it shows, so the committed plan carries names and the Environment line names the commit. The tester judges most screens from the gallery and opens the app only for motion, feel, and real interaction. Leave the sub-bullet out when no driver ran.
+- **A screenshot that must last goes through verifykit, not the plan.** The capture folder is local and temporary. When a reviewer needs an image after the run, **verifykit** `proof` publishes the chosen images to a hidden ref and **prkit** embeds them in the PR body. Without verifykit, attach the image to the PR by hand.
 - **Concrete and reproducible.** Real values and exact steps, so not "test the login" but "enter `bad@example.com` / blank password, click Sign in".
 - **Skipped is a first-class outcome.** **Result** offers Pass, Fail *and* Skipped, one per line, and **Notes** carries the reason. A case the tester couldn't run, because the environment was missing, a dependency was down, or they ran out of time, has to be distinguishable from one nobody reached; a plan that comes back with silent blanks tells the next reader nothing.
 - **Write the whole plan in the procedural register.** A tester reads it while doing something, often against a clock, so the plan is written in ASD-STE100 Simplified Technical English throughout: Goal, Setup, Reset, Steps, checkpoints and Not covered alike. One instruction per sentence. Procedural sentences 20 words or fewer, descriptive sentences 25 or fewer. Active voice, present tense, and name the actor ("the app redirects to `/login`", not "a redirect occurs"). Keep the articles. No metaphor, idiom, or word with a second meaning. Prefer short sentences and bullet sublists over paragraphs. **Pick one term per thing and keep it for the whole plan**, so if the setup calls it the *cart*, a later step does not call it the *basket*, and a checkpoint does not call it the *order*. This is the rule that costs the most attention and saves the most: a tester who has to work out that two words mean one thing stops trusting both. The rule is scoped to one plan; a different document may use different words.
@@ -282,7 +284,7 @@ These scenarios stay in the plan as cases, not in **Automated verification**, be
 - **Reach the app.** Reuse a dev server that already serves the base URL. Otherwise start it once with the plan's launch command, and stop it when the checks end. Run no Setup, Reset, seed, or migration to reach a state, except on a declared disposable target. A check that needs one anywhere else stays a manual checkpoint.
 - **Drive local state only.** A click that creates, deletes, submits, pays, or sends writes through the app. Drive it only against a local server with sample or demo data, or a declared disposable target. On any other host, the check stays manual.
 - **Assert, then record the observed value.** "✅ `/account/` · Active orders card → `7`" proves more than "✅ figures correct". A ❌ records what the page showed and what the plan expected.
-- **Capture the human's screens.** Take one screenshot of each screen a human-only checkpoint judges, in each variant the change supports: light and dark, and each viewport width from [Scope the feature](#1-scope-the-feature) for a responsive page. Save them under `${TMPDIR:-/tmp}/qakit/<plan file name without .md>/`, never inside the repo, and write each path into its checkpoint.
+- **Capture the human's screens.** Take one screenshot of each screen a human-only checkpoint judges, in each variant the change supports: light and dark, and each viewport width from [Scope the feature](#1-scope-the-feature) for a responsive page. Save each one as `~/qakit/<plan file name without .md>/<screen>-<light|dark>-<width>.png`, never inside the repo, and write its name into its checkpoint. The folder is the run's own, and nothing in it is committed. When installed, **issuekit** `close` deletes it after the merge and **gitkit** `clean` sweeps old ones; otherwise delete it by hand once the PR merges.
 - **Close the browser** when the checks end, because a CLI driver keeps a background browser alive between commands.
 
 When a driver fails to start, record its error once under **Browser checks** and try the next driver on the list. When every driver fails, move the page checks back into the manual cases and name each error in the hand-off. Do not change the driver's sandbox or security settings to make it start; that is the operator's decision.
@@ -291,7 +293,35 @@ A ❌ is a defect the human no longer has to find. Do not fix it, because qakit 
 
 This step is done when every agent-verifiable check from [Derive the test dimensions](#2-derive-the-test-dimensions) has a ✅ or ❌ line, or a line that names the revision of the reused result, every scenario on a disposable target has its ticks and output and the target is reset, every human-only visual checkpoint has its screenshots or the plan says why not, and no browser or server you started is still running.
 
-### 6. Hand off
+### 6. Build the gallery
+
+Skip this step when no screenshot was captured, and say why in the hand-off.
+
+The bundled [`gallery.py`](gallery.py) builds one page from the plan file, so the plan stays the single source. It reads each case, the checkpoints under its steps as the judge questions, and the `screenshots:` names, then groups the images in `~/qakit/<plan file name without .md>/` by case. Resolve the installed skill directory and run the script there; the working directory is the target project. Run plain `python3`, because `python3 -I` hides a Pillow installed for the user.
+
+```sh
+python3 "<path-to-this-skill>/gallery.py" docs/qa/<file> --dry-run
+```
+
+```sh
+python3 "<path-to-this-skill>/gallery.py" docs/qa/<file>
+```
+
+```sh
+python3 "<path-to-this-skill>/gallery.py" docs/qa/<file> --inline
+```
+
+- **Dry run first.** It prints each case with its judge questions and screenshot names, then the missing names and the "Other captures". A missing name is a typo in the plan or a capture that did not happen: fix the plan or take the capture, then run it again. An image in "Other captures" is one no checkpoint names: name it under its checkpoint, or leave it there as context.
+- **`index.html` is the page to keep.** It is one self-contained file with every image embedded, and it opens in any browser.
+- **`--inline` is for a host that renders HTML in the session.** It writes `inline.html` plus a `web/` folder of smaller copies that the page references by absolute path, styled with the host's theme variables. It warns when the page passes 512 KB. Build it only on such a host.
+- **Pillow is optional.** With it, the script converts the images to WebP. Without it, `index.html` embeds the original PNGs, a larger file, and the script says so. Report that line in the hand-off.
+- **The page names the capture commit** from the Environment line, and it shows a stale warning when `HEAD` has moved past that commit. A qakit refresh on the same plan builds the page again.
+
+Without Python 3, skip the page and say so in the hand-off.
+
+This step is done when the dry run shows no missing name and `index.html` exists, plus `inline.html` on a host that renders HTML, or the hand-off says why there is no gallery.
+
+### 7. Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
@@ -299,13 +329,13 @@ Close with three short beats:
 
 - **Failures first.** When a browser or automated check failed, list each ❌ with its observed value before anything else.
 - **What changed.** Give a one-line summary: how many scenarios and manual checkpoints (and how many 🔴 critical), plus the automated and browser results (e.g. "2 scenarios, 7 manual checkpoints, 2 critical · 6 commands and 41 browser checks ran, 1 failed · Scenario 3 run by the agent on the playground, reset after"). Say that no manual case is marked. Tell the human to report failures in the session or as a PR comment; ticking the file is optional.
-- **Where it landed.** Give the plan path, `docs/qa/<file>`, the revision it was written against, and the screenshot directory.
+- **Where it landed.** Give the plan path, `docs/qa/<file>`, and the revision it was written against. Then show the gallery. When the host renders HTML in the session (T3 Code: `html_preview`, then `html_render` with the `contentHeight` the preview returns), render `inline.html` in the thread. Always give the path to `index.html` as well. Never hand off a bare screenshot folder.
 - **Next.** With a ❌, fix it first with **implementkit** (otherwise fix it by hand), then run qakit again. With none, open the PR with **prkit** and hand it `docs/qa/<file>`, so the PR's test plan links the QA plan. Without prkit, run `gh pr create` and put the plan path in the body.
 
 Don't mark any *manual* case as passed yourself, because those are the human's to execute. The agent fills the Automated verification section and the scenarios it ran on a disposable target, nothing else. Route to prkit; do not invoke it.
 
 ## Notes
-- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#5-run-the-automated-checks-yourself) (the project's test, lint, and build commands, read-only database introspection on a local or confirmed host, and a browser driver against a local dev server). Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive, and it reuses a gate result only when it names the same revision; see the two command rules in [Run the automated checks yourself](#5-run-the-automated-checks-yourself). If a verification step would modify state or need elevated access, describe it for the human instead of running it.
+- **Scope of shell use.** qakit runs the shell only to read the change and to run the project's own verification checks: `git diff`/`git log` to ground the plan, and the automated checks from [Run the automated checks yourself](#5-run-the-automated-checks-yourself) (the project's test, lint, and build commands, read-only database introspection on a local or confirmed host, and a browser driver against a local dev server), plus the bundled `gallery.py`, which writes only inside `~/qakit/`. Every command it runs is echoed in the plan's **Automated verification** section, so the user sees exactly what ran. It does not fetch remote code, touch credentials, or run anything destructive, and it reuses a gate result only when it names the same revision; see the two command rules in [Run the automated checks yourself](#5-run-the-automated-checks-yourself). If a verification step would modify state or need elevated access, describe it for the human instead of running it.
 - **A plan, not a test suite.** qakit's output is a QA plan with its automated results filled in and its manual cases left for a human. It writes no unit, integration, or E2E tests; it runs the suite the project already has and drives the browser for this one plan.
-- **A browser MCP is outside `allowed-tools`.** `Bash` covers a CLI driver such as `playwright-cli`. A browser MCP arrives as tools whose names the server chooses, so a host that enforces `allowed-tools` strictly must grant them, or qakit runs without a driver and leaves the page checks manual. New automated tests belong to **implementkit** (TDD mode) for new work, or **testkit** for a codebase with no tests; when neither is installed, name the plain step rather than assuming a particular skill.
+- **A browser MCP and an HTML render tool are outside `allowed-tools`.** `Bash` covers a CLI driver such as `playwright-cli` and the bundled `gallery.py`. A browser MCP or a host's render tool arrives as tools whose names the server chooses, so a host that enforces `allowed-tools` strictly must grant them. Without the browser tools, qakit runs without a driver and leaves the page checks manual. Without the render tool, the hand-off gives the `index.html` path only. New automated tests belong to **implementkit** (TDD mode) for new work, or **testkit** for a codebase with no tests; when neither is installed, name the plain step rather than assuming a particular skill.
 - **No filesystem or shell?** You can't write the file or read a diff. Instead ask the user to paste the change or describe the feature, then print the finished plan as a codeblock with the canonical `docs/qa/NNNN-qa-<feature-slug>-YYYY-MM-DD.md` path, with `0001` when you can't list their QA plans, for them to save themselves.
