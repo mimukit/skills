@@ -247,7 +247,7 @@ Nobody watched this run, so the report is the handover. Stop the dev server firs
 
 **Next.** Route by outcome, naming a sibling kit only when it's installed and otherwise describing the action plainly:
 
-- **opened** → the PR needs a human reviewer. **mergekit `start <n>`** pulls it down into the worktree it was built in; the manual cases of the committed QA plan are what they run by hand.
+- **opened** → the PR needs a human reviewer. **mergekit `start <n>`** pulls it down into the worktree it was built in; the manual cases of the committed QA plan are what they run by hand. Give the path to qakit's gallery, `~/qakit/<plan file name without .md>/index.html`, which shows each case's screenshots.
 - **escalated to `needs-planning`** → run a grill session with **grillkit** on the issue's open questions. Then promote the issue back with **issuekit** `triage`, which flips `needs-planning → ready` on your word after the grill, and re-run afkkit.
 - **escalated, still `in-progress`** → execution is stuck. Point at the commented gate output or surviving blockers; pick it up in the existing worktree by hand.
 
