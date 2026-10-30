@@ -313,7 +313,7 @@ The procedure, the declaration format, the template, and the lockfile table live
 
 ## `clean`
 
-Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed.
+Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed. Last, it deletes qakit screenshot folders in `~/qakit/` older than 14 days whose QA plan is on no branch it kept.
 
 Two things make it more than a `git branch --merged` loop, and both live in **[clean.md](./clean.md)**: a squash-merged branch is invisible to ancestry, so "merged" needs three detections rather than one; and the per-item confirmation is deliberate, because a sweep's rows are not equally safe to delete. Read that file when a run actually sweeps.
 
