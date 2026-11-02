@@ -1,7 +1,7 @@
 ---
 name: gitkit
 description: >-
-  The shared git layer other skills borrow: the worktree path, name, and lifecycle, a worktree's declared setup and teardown, the base branch, rebase versus merge, branch sync, merged-branch cleanup, lost-work recovery, and stacked branches. Use when the user says "make me a worktree for #42", "where's the worktree for this branch", "tear down this worktree", "set up this worktree", "make this worktree's dev database", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "clean up my merged worktrees", "I lost a commit", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
+  The shared git layer other skills borrow: the worktree path, name, and lifecycle, a worktree's declared setup and teardown, the base branch, rebase versus merge, branch sync, hotfix branches, merged-branch cleanup, lost-work recovery, and stacked branches. Use when the user says "make me a worktree for #42", "where's the worktree for this branch", "tear down this worktree", "set up this worktree", "make this worktree's dev database", "what's the base branch here", "should I rebase or merge", "sync this branch with main", "start a hotfix for the login crash", "backport this hotfix", "clean up my merged worktrees", "I lost a commit", "stack this on #43", or runs "/gitkit", and whenever another skill needs any of those answers.
 license: MIT
 allowed-tools: Bash, Read
 metadata:
@@ -24,6 +24,7 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 - **base ref.** "What's the base branch here", "diff me against the base".
 - **sync.** "Should I rebase or merge here", "sync this branch with main", "this branch is behind, bring it up to date", "make this PR review-ready on the latest base".
 - **prepare.** "Set up this worktree", "install and seed this worktree", "make this worktree's dev database", "prepare again".
+- **hotfix.** "Start a hotfix for the login crash", "quick change to main, skip the issue", "backport the hotfix to develop".
 - **clean.** "Clean up my merged worktrees", "which branches can I delete", "this repo is full of dead branches".
 - **rescue.** "I lost a commit", "my rebase ate my work", "I reset the wrong branch", "what's in this stash".
 - **stack.** "Stack this on #43", "start #44 on top of #43's branch", "restack this chain", "show me the stack".
@@ -38,11 +39,12 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 | `worktree` | create, adopt, look up, list, and remove a worktree | [below](#worktree) |
 | `sync` | catch a feature branch up with its own remote, bring it onto the latest base, and force-push it with a lease | [below](#sync) |
 | `prepare` | run the repository's declared setup in a worktree, and its teardown before removal | [prepare.md](./prepare.md), and [below](#prepare) |
+| `hotfix` | cut a fix or a quick change from the branch production deploys from, with no issue, and backport it after the merge | [hotfix.md](./hotfix.md), and [below](#hotfix) |
 | `clean` | sweep the merged worktrees and branches away, one confirmation each | [clean.md](./clean.md) |
 | `rescue` | find work that looks lost and restore it onto a new branch | [rescue.md](./rescue.md) |
 | `stack` | build and restack a chain of branches through `gh stack` | [stacks.md](./stacks.md), and [Stacked branches](#stacked-branches) |
 
-`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other four load only when their mode fires.
+`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other five load only when their mode fires.
 
 **When the mode is not clear from the ask, pick it from the verb and say which one you picked.** "Tidy this up" after a merge is `clean`; "tidy this up" on a branch behind its base is `sync`. Naming the mode in the first line is what lets the human correct a wrong pick before anything runs.
 
@@ -81,7 +83,7 @@ Consequences:
 ### Branch naming
 
 - **`issue-<n>-<slug>`** for work that starts from a tracker issue. Slug from the issue title: if it follows a conventional `type(scope): summary` form, strip the prefix; kebab-case the rest, cap at roughly 50 characters on a word boundary, drop a trailing hyphen. An empty slug degrades to a bare `issue-<n>`. The number guarantees uniqueness, so no tie-break is ever needed.
-- **`hotfix-<slug>`** for an urgent fix that patches the base branch directly. Slug from the symptom, kebab-cased, capped at roughly 40 characters. The number is absent because a hotfix starts from the symptom rather than from a tracker issue; when one *does* trace to an issue, the branch still takes this shape and the pull request carries the `Closes #<n>` link. On a collision with an existing branch, add a short distinguishing word rather than a counter. **The separator is a hyphen: write `hotfix-<slug>`, never `hotfix/<slug>`.** A slash makes git treat `hotfix` as a directory in the ref namespace, so `hotfix-restore-session` and `hotfix/restore-session` cannot both exist, and every skill that reads the type off the branch name (commitkit, prkit) matches the hyphen form only.
+- **`hotfix-<slug>`** for an urgent fix or a quick change that goes straight to the branch production deploys from, with no issue first. Slug from the symptom for a fix, or from the change for a quick change, kebab-cased, capped at roughly 40 characters. A backport of a merged hotfix appends `-to-<target>`. The number is absent because a hotfix starts from the symptom rather than from a tracker issue; when one *does* trace to an issue, the branch still takes this shape and the pull request carries the `Closes #<n>` link. On a collision with an existing branch, add a short distinguishing word rather than a counter. **The separator is a hyphen: write `hotfix-<slug>`, never `hotfix/<slug>`.** A slash makes git treat `hotfix` as a directory in the ref namespace, so `hotfix-restore-session` and `hotfix/restore-session` cannot both exist, and every skill that reads the type off the branch name (commitkit, prkit) matches the hyphen form only.
 - **`pr-<n>-<slug>`** only for a **fork** pull request, where no local branch exists yet and one must be invented to hold the fetched head. Slug from the head branch name, kebab-cased, capped at roughly 40 characters.
 - Anything else takes a branch name the human or the repo's convention supplies. gitkit does not rename it.
 
@@ -205,11 +207,12 @@ If paths look wrong after a move or a restore, `git worktree repair <path>` rewr
 
 Never assume `main`. Repos default to `develop`, `trunk`, and `master` in the wild, and getting this wrong silently produces an empty or enormous diff. The ladder, in order:
 
-1. `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`, authoritative when the GitHub CLI is available and authenticated.
-2. `git symbolic-ref --short refs/remotes/origin/HEAD`, the local record, if it has been set.
-3. `git remote set-head origin --auto` to repair an unset `origin/HEAD`, then retry the previous step. This is the step most implementations skip, and it is the one that turns a failure into an answer.
-4. Whichever of `origin/main` / `origin/master` actually exists.
-5. Ask the human. Do not guess past this point.
+1. `git config --get "branch.$BRANCH.gh-merge-base"`, for a branch that records its own base. [`hotfix`](#hotfix) sets it, and `gh pr create` reads the same key, so the sync, the diff, and the pull request all agree.
+2. `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`, authoritative when the GitHub CLI is available and authenticated.
+3. `git symbolic-ref --short refs/remotes/origin/HEAD`, the local record, if it has been set.
+4. `git remote set-head origin --auto` to repair an unset `origin/HEAD`, then retry the previous step. This is the step most implementations skip, and it is the one that turns a failure into an answer.
+5. Whichever of `origin/main` / `origin/master` actually exists.
+6. Ask the human. Do not guess past this point.
 
 Everything downstream uses the answer: `git diff <base>...HEAD`, ahead/behind counts, and the branch a worktree is cut from.
 
@@ -311,6 +314,12 @@ Make a worktree ready to run with the commands its repository declares in a `## 
 
 The procedure, the declaration format, the template, and the lockfile table live in **[prepare.md](./prepare.md)**. Read it when a run prepares a worktree, when a sync took commits on a prepared one, and when a removal meets one.
 
+## `hotfix`
+
+Start an urgent fix or a quick change with no issue: cut a `hotfix-<slug>` worktree from the branch production deploys from, move a change already written in the main checkout into it, and record that branch as the pull request base. After the merge, `backport` replays the commits onto each branch the project names. The project declares its flow in a `## Hotfix flow` section of its agent-guide file. Without one, gitkit reads CI deploy triggers, and with no evidence it uses the default branch.
+
+The procedure, the declaration, and the template live in **[hotfix.md](./hotfix.md)**. Read it when a run starts or backports a hotfix. gitkit stops at the prepared worktree, as everywhere else: the change, the commit, the pull request, and the deploy belong to other skills and to CI.
+
 ## `clean`
 
 Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed. Last, it deletes qakit screenshot folders in `~/qakit/` older than 14 days whose QA plan is on no branch it kept.
@@ -369,7 +378,7 @@ A GUI dev tool that manages worktrees is welcome to **observe** these. Orca and 
 ## Notes
 
 - **gitkit is the single source of truth for what it owns.** A calling skill may hold policy about *when* to ask, such as that a PR is worth pulling down or that a branch is ready to publish, but never about *how* the git operation is done.
-- **Restating a conclusion is allowed; restating the derivation is the bug.** Every public skill is installed on its own, into repos where gitkit may not exist, so a caller that needs a git fact has to carry enough of one to keep working, and that requirement outranks tidiness. The line runs between the two: a caller may state gitkit's **answer** together with its degradation fallback ("gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base"), and may not reproduce the **reasoning that produces** the answer, meaning the full base-ref ladder, the worktree path formula, or the rebase-versus-merge argument. The answer is one line that a rename cannot silently invalidate; the derivation is the thing that drifts. Compliant examples worth reading: prkit and mergekit each name the rebase conclusion and its one-confirmation rule without re-deriving them, and wikikit and designkit each name `gh repo view --json defaultBranchRef` as a base-ref fallback without carrying the five-rung ladder.
+- **Restating a conclusion is allowed; restating the derivation is the bug.** Every public skill is installed on its own, into repos where gitkit may not exist, so a caller that needs a git fact has to carry enough of one to keep working, and that requirement outranks tidiness. The line runs between the two: a caller may state gitkit's **answer** together with its degradation fallback ("gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base"), and may not reproduce the **reasoning that produces** the answer, meaning the full base-ref ladder, the worktree path formula, or the rebase-versus-merge argument. The answer is one line that a rename cannot silently invalidate; the derivation is the thing that drifts. Compliant examples worth reading: prkit and mergekit each name the rebase conclusion and its one-confirmation rule without re-deriving them, and wikikit and designkit each name `gh repo view --json defaultBranchRef` as a base-ref fallback without carrying the six-rung ladder.
 - **gitkit never implements, commits, or opens anything.** It prepares the ground and tears it down. The commands `prepare` runs are the repository's, never gitkit's own. Writing code in the worktree, committing, and publishing belong to other skills.
 - **Destructive steps preview and confirm.** Removing a worktree and deleting a branch each show what is about to happen and wait for an OK. A teardown rides on the confirmation of its removal. Creating, adopting, and syncing run straight through. A sync rewrites a published branch, but the user who asks for it has already made that call, the lease guards the remote, and `refs/gitkit/pre-sync/$BRANCH` undoes it.
 - **No shell available** (e.g. a browser-based agent)? Then you cannot run git. Reason from what the user provides and **print the exact commands** as a codeblock for them to run, and never report a worktree created or removed that you could not perform.

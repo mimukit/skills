@@ -105,7 +105,7 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
 
    **Where it landed.** Name each worktree and local branch that was removed, and each one that was kept, with its path and reason. When the removed worktree was this session's working directory, say so, and name the main checkout as the place to continue.
 
-   **Next.** A merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked, from either the issuekit `close` or the issuekit `sync` pass, is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins, because finishing outranks starting.
+   **Next.** A merge frees capacity, so point at what fills it, naming a kit only when it's installed: an issue this merge unblocked, from either the issuekit `close` or the issuekit `sync` pass, is the strongest candidate (**issuekit `start <n>`**), otherwise the next PR waiting on you (`list`), otherwise **statuskit** to re-orient. If a dependent was unblocked *and* another PR is waiting, the PR wins, because finishing outranks starting. A merged `hotfix-*` PR whose repository declares `backport:` branches outranks both: the next move is **gitkit** `hotfix` backport for this PR, otherwise a `git cherry-pick -x` onto each branch through its own PR.
 
    **Migrations.** When the merge carried migration files, close the hand-off with this reminder, as the last thing the reviewer reads:
 

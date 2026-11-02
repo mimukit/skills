@@ -341,14 +341,14 @@ The lifecycle and priority maps are a shared contract with `issuekit`: `repokit`
 [`gitkit`](../../skills/gitkit/SKILL.md) is the single source of truth for five things:
 
 - **Where a worktree lives** — `$WORKTREE_ROOT/<repo-basename>/<local-branch-name>`, defaulting to `~/worktrees`, always outside the repo. Slashes in a branch name flatten to dashes. A branch has at most one worktree, and lookup is by branch through git, never by guessing at a path.
-- **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix that patches the base branch directly, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
+- **What a branch is called** — `issue-<n>-<slug>` for tracker work, `hotfix-<slug>` for an urgent fix or a quick change that skips the issue and goes straight to the deploy branch, `pr-<n>-<slug>` only for a fork PR that has no local branch yet, and anything the repo already uses otherwise.
 - **The base ref** — resolved through a ladder starting at `gh repo view --json defaultBranchRef`. Never assumed to be `main`.
 - **How a worktree gets ready** — the repo declares `setup:`, `update:`, `teardown:`, and `watch:` blocks in a `## Worktree setup` section of its `AGENTS.md`. `prepare` runs them (or only the lockfile install when the repo declares none), re-runs when a watched path changes, and runs the teardown, such as a drop of the worktree's database, before a removal. gitkit names no database and picks no command of its own.
 - **Rebase or merge** — rebase to sync a feature branch with its base, published or not. Merging the base in is an exception needing a stated reason and your consent, and it commits as `chore(repo): sync with origin <base>`, never git's default subject. A sync rebases and pushes with `--force-with-lease` straight through, published or not, and reports how many review threads it outdated. It stops to ask only on a dirty tree, a conflict that needs a ruling, a failed gate, or a rejected lease.
 
-Those five facts are what the other kits borrow. Six modes act on them: `worktree` (create, adopt, look up, remove), `prepare` (run the declared setup, and the teardown before a removal), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), and `stack`.
+Those five facts are what the other kits borrow. Seven modes act on them: `worktree` (create, adopt, look up, remove), `prepare` (run the declared setup, and the teardown before a removal), `sync` (rebase onto the latest base and force-push with a lease), `clean` (sweep the merged worktrees and branches away, one confirmation each), `rescue` (find work that looks lost and restore it onto a new branch), `hotfix` (cut a fix or a quick change from the deploy branch with no issue, and backport it after the merge), and `stack`.
 
-Invoke it directly for housekeeping: "spin up a worktree for this", "where's the worktree for #42", "set up this worktree", "tear down this worktree", "clean up my merged worktrees", "I lost a commit".
+Invoke it directly for housekeeping: "spin up a worktree for this", "where's the worktree for #42", "set up this worktree", "tear down this worktree", "start a hotfix for the login crash", "clean up my merged worktrees", "I lost a commit".
 
 ### domainkit — scribe the model
 
@@ -425,6 +425,10 @@ issuekit start 42                   # → gitkit worktree + setup, ready → in-
 
 # Or all of that unattended, worktree included
 afkkit 42
+
+# Urgent fix or quick change, no issue
+gitkit hotfix login crash on refresh # → hotfix-* worktree off the deploy branch
+/commitkit && /prkit                # → hotfix(scope): PR into the deploy branch
 
 # Landing it
 mergekit list
