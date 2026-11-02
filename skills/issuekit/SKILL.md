@@ -70,7 +70,7 @@ Pick the `type` from what the issue delivers, not the files it touches. The set 
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
-| `hotfix` | an urgent fix patched straight onto the base branch |
+| `hotfix` | a fix on a `hotfix-<slug>` branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -86,7 +86,7 @@ Rules, applied to **every** title you generate:
 - **Imperative mood**, stating the *effect* ("add sso login"), not the activity ("changes to auth"). **No trailing period.** Keep it concise.
 - **Title the whole issue, not its first phase.** A multi-phase issue names the capability it delivers end to end (`feat(auth): add sso login`), and its phases live in the body. A title that reads like one phase is a sign the issue was sliced too thin.
 
-**A hotfix needs no issue before the branch.** Urgent work that patches the base branch directly starts from the symptom: somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker. So no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, title it `hotfix(scope): …`, label it `in-review` when its PR is already open, and never label it `ready`, because `ready` promises work nobody has begun.
+**A hotfix needs no issue before the branch.** An urgent fix or a quick change that goes straight to the deploy branch starts from the symptom: somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker. So no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, title it `hotfix(scope): …`, label it `in-review` when its PR is already open, and never label it `ready`, because `ready` promises work nobody has begun.
 
 If the repo has its own issue-title style (visible in `gh issue list` or an `.github/ISSUE_TEMPLATE/`), follow that instead and say you did; see [Notes](#notes).
 

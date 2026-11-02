@@ -47,10 +47,10 @@ gh api "repos/{owner}/{repo}/branches/<base>/protection" >/dev/null 2>&1 && echo
 
 Any output is a signal: an `issue-*` or `hotfix-*` worktree, a merged pull request, or a protected base branch. A `gh` failure counts as no signal. With no signal, commit on the base branch and push as usual.
 
-**With a signal, ask once for the whole run and stop until the user answers.** Offer three choices, and recommend `hotfix-*` for a fix and `issue-*` for anything else:
+**With a signal, ask once for the whole run and stop until the user answers.** Offer three choices, and recommend `hotfix-*` for a fix or a quick change and `issue-*` for anything else:
 
 - **Commit on the base branch.** Run the chain as it stands.
-- **A `hotfix-<slug>` branch.** Take the slug from the symptom, kebab-cased, at most about 40 characters, with a hyphen and never a slash. Put `git switch -c hotfix-<slug> && \` at the head of the chain.
+- **A `hotfix-<slug>` branch.** Take the slug from the symptom, or from the change when it is not a fix, kebab-cased, at most about 40 characters, with a hyphen and never a slash. Put `git switch -c hotfix-<slug> && \` at the head of the chain.
 - **An `issue-<n>-<slug>` branch.** File the issue first: `gh issue create --title "<type(scope): summary of the main group>" --body "<one-line why>"`, and read `<n>` from the URL it prints. Add no `ready` label, because the work has already begun. Take the slug from the title without its `type(scope):` prefix, kebab-cased, at most about 50 characters. Put `git switch -c issue-<n>-<slug> && \` at the head of the chain, and add a `Refs #<n>` footer to each message. Without `gh`, drop this choice.
 
 The new branch carries the working tree with it, out-of-scope changes included, and they stay uncommitted. The run stays on the new branch after the push. Never invent a branch name with another prefix.
@@ -130,7 +130,7 @@ Pick the `type` from what the diff *does*, not what files it touches:
 |------|------|
 | `feat` | a new capability the user can see |
 | `fix` | a bug fix |
-| `hotfix` | an urgent fix patched straight onto the base branch |
+| `hotfix` | a fix on a `hotfix-<slug>` branch |
 | `docs` | documentation only |
 | `refactor` | behavior-preserving code change |
 | `perf` | a performance improvement |
@@ -139,7 +139,7 @@ Pick the `type` from what the diff *does*, not what files it touches:
 | `style` | formatting/whitespace, no logic |
 | `chore` | routine maintenance that fits nothing above |
 
-**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** Use `hotfix` when the commit sits on a branch named `hotfix-<slug>`, cut from the base branch to patch it directly. Everything else stays `fix`, however urgent it felt. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
+**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** A fix on a branch named `hotfix-<slug>` takes `hotfix`. A fix anywhere else stays `fix`, however urgent it felt. A hotfix branch also carries quick changes that are not fixes, and those keep the type their diff earns (`docs`, `chore`, `feat`), because the changelog files a `hotfix` under **Fixed**. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
 
 **Scope** is **mandatory** here. Unlike vanilla Conventional Commits, never omit it. Work out the module or feature group the diff belongs to (a package, module, directory, or feature area) and use that as the scope: `feat(auth): …`. When a change is genuinely global or fits no single area (repo-wide config, tooling, cross-cutting cleanup), use `repo` as the scope: `chore(repo): …`. Add a `!` (or a `BREAKING CHANGE:` footer) when the change breaks existing behavior.
 
