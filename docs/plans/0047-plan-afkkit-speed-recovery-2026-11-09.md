@@ -61,7 +61,7 @@ Every phase also keeps `make lint` green and `make cheatsheet` unchanged. Each n
 
 Rejected alternatives, one line each. A devaloy subcommand as the relauncher: only this box would get it. A T3 scheduled task: it polls instead of owning the child, and it puts a host into the skill. A per-group full suite inside the phase agent: it keeps the load spike that made the suite flaky. Moving the invariant check into the phase agent's own brief: the author of an assumption is the worst grader of it, which is the same reason afkkit's acceptance check is a fresh agent.
 
-### Phase 1: self-recovery
+### Phase 1: self-recovery (built 2026-11-09)
 
 Tasks, in-session recovery (afkkit):
 
@@ -78,7 +78,7 @@ Tasks, session relauncher:
 
 Done when: (a) a stub-agent dry run in the scratchpad that returns "interrupted" makes the conductor stop the PID in `.afkkit/pids/`, dispatch one continuation, and escalate on a second stub failure, as the transcript shows; (b) with PATH-shimmed `gh` reporting `in-progress` and no PR, a stub agent that exits 1 makes `relaunch.sh --agent <stub>` log 3 restarts, with a PATH-shimmed `sleep` that records waits of 60, 300, and 900 s and returns at once, then post one comment through the shim and exit; (c) a stub run that writes an `escalated` line, and one where the shim reports a PR, each make the script exit with no restart; (d) a second `relaunch.sh <n>` while the first PID lives exits with a refusal; (e) `bash -n` passes under bash 3.2 rules and `grep -n 'T3' skills/afkkit/SKILL.md` prints nothing; (f) `make lint` passes.
 
-### Phase 2: per-group invariant check
+### Phase 2: per-group invariant check (built 2026-11-09)
 
 Tasks:
 
@@ -90,7 +90,7 @@ Tasks:
 
 Done when: replaying issue #189's assumptions 14 and 43 (copied into a scratch run directory with plan 0048) through the invariant brief returns at least one blocker that quotes the plan's "every taka that moves between an order and the wallet also shows as a `payments` or `payment_refunds` row", and a group whose new lines break nothing returns zero blockers; `progress.md` grammar and the resume table name both new line kinds; `make lint` passes.
 
-### Phase 3: gate scope
+### Phase 3: gate scope (built 2026-11-09)
 
 Tasks:
 
@@ -100,7 +100,7 @@ Tasks:
 
 Done when: `grep` finds the phase-gate sentence in implementkit's conductor bullets and the brief rule in afkkit's Dispatch rules; a phase brief written from the new rules for issue #189's Phase 3 contains the phase-gate line and no full-suite command; `make lint` passes.
 
-### Phase 4: acceptance check beside qakit
+### Phase 4: acceptance check beside qakit (built 2026-11-09)
 
 Tasks:
 
