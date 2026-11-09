@@ -29,8 +29,8 @@
     },
     {
       "title": "Building",
-      "description": "Turn a hardened plan, spec, or issue into working code — straight-through or test-driven, gated on the repo's own tests and build — and make the UI half look like somebody chose it, down to how it moves.",
-      "skills": ["implementkit", "uikit", "motionkit"]
+      "description": "Turn a hardened plan, spec, or issue into working code — straight-through or test-driven, gated on the repo's own tests and build — make the UI half look like somebody chose it, down to how it moves, and keep the data layer sound, from schema design and safe migrations to query tuning.",
+      "skills": ["implementkit", "uikit", "motionkit", "dbkit"]
     },
     {
       "title": "Skill & Prompt Authoring",

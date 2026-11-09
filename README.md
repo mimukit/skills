@@ -57,6 +57,7 @@ Makefile                        command surface (run `make help`)
 | `implementkit` | implement a plan, spec, or issue into code (straight-through or TDD), gated on tests + build | public |
 | `uikit` | build production UI that reads as a deliberate choice for the project, and audit shipped UI for the tells that give it away | public |
 | `motionkit` | choose the easing, duration, spring, and properties that make web UI motion feel right, then build, review, sweep, or fix it when it drops frames | public |
+| `dbkit` | model schemas, write and check migrations so they run safely on a live database, tune a slow query from its plan, and audit a schema and its migration history | public |
 | `refactorkit` | survey an existing codebase for the structural change worth making, rank the candidates, and crown one — proposes, never edits | public |
 | `reviewkit` | review AI-written changes in four passes — convention-fit, agent-slop, completeness, correctness — against the working tree or branch diff | public |
 | `verifykit` | drive a built frontend feature in a browser and capture screenshots + a GIF as PR-ready proof, published to a hidden git ref | public |

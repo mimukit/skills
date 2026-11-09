@@ -6,6 +6,7 @@ Every skill, one line each. This is the recall page, not the explanation. For ho
 |---|---|
 | [`afkkit`](../../skills/afkkit/SKILL.md) | Run a groomed `ready` GitHub issue through the whole build span unattended, covering worktree, implement, commit, QA plan, acceptance check, fix, and open PR, so one issue reaches a reviewable PR with no human at the keyboard. |
 | [`commitkit`](../../skills/commitkit/SKILL.md) | Commit this session's changes with Conventional Commits messages derived from the actual diff, then push them to origin. |
+| [`dbkit`](../../skills/dbkit/SKILL.md) | Model database schemas, write and check migrations so they run safely on a live database, find why a query is slow from its plan, and audit a schema and its migration history, in four modes: design, migrate, tune, and audit. |
 | [`debugkit`](../../skills/debugkit/SKILL.md) | Chase a symptom to its true cause: reproduce it, shrink it, write falsifiable hypotheses, and prove the cause by toggling the symptom on and off, then hand over a failing reproduction instead of a fix. |
 | [`designkit`](../../skills/designkit/SKILL.md) | Derive a project's design system from the UI it already ships and keep it true as the code moves, producing a spec-compliant DESIGN.md at the repo root, validated by the official linter. |
 | [`domainkit`](../../skills/domainkit/SKILL.md) | Maintain a project's domain model as a consented record of settled understanding: the CONTEXT.md overview and glossary of the ubiquitous language, and docs/adr/ decision records. |
