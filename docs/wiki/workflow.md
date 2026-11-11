@@ -2,7 +2,7 @@
 
 How these skills fit together day to day. Every skill here is usable on its own, but they were designed as one loop: **decide → plan → file → build → ship → land**. This page is the map — what to reach for, in what order, and where one skill hands off to the next.
 
-Depth on any single skill lives on [its own page](./index.md#the-skills). What this page covers is the seams: what each phase takes in, what it produces, and what has to be true before the next one starts.
+Depth on any single skill lives in its `SKILL.md`, linked from [the index](./index.md#the-skills). What this page covers is the seams: what each phase takes in, what it produces, and what has to be true before the next one starts.
 
 If you only remember one thing: **[`statuskit`](../../skills/statuskit/SKILL.md) tells you which of these to run next.** Start there when you sit down and aren't sure.
 
@@ -272,7 +272,7 @@ Two different jobs, often both:
 
 ### wikikit — keep the reader docs true
 
-`wikikit update` is the docs half of the same change. It resolves the working tree first and the branch diff otherwise, maps the changed paths to affected pages through a per-set manifest at `<doc home>/.wikimap.yaml`, and **states which pages it will touch and which it is deliberately leaving alone before it edits anything**. Edits to existing pages go straight in; new pages and deletions are consent-gated. Every page it writes carries a stamp — `` _Verified against `main`@`a1b2c3d` on 2026-08-06._ `` — which is what makes the audit cheap later. This page is one of them; [`wikikit`](../../skills/wikikit/SKILL.md) has the other three modes.
+`wikikit update` is the docs half of the same change. It resolves the working tree first and the branch diff otherwise, maps the changed paths to affected pages through a per-set manifest at `<doc home>/.wikimap.yaml`, and **states which pages it will touch and which it is deliberately leaving alone before it edits anything**. Edits to existing pages go straight in; new pages and deletions are consent-gated. Every page it writes carries a stamp — `` _Verified against `main`@`a1b2c3d` on 2026-08-06._ `` — which is what makes the audit cheap later. This page is one of them; [`wikikit`](../../skills/wikikit/SKILL.md) has the other modes: `init`, `audit`, and an opt-in `publish`.
 
 The rule underneath all of them: **a feature it cannot find in code does not get documented.** Commands come from the real manifest, and a fixed allowlist of side-effect-free probes (`--help`, `--version`, `make -n`, script listings) runs after one consent ask. It never installs, builds, migrates, or deploys to check a claim.
 

@@ -57,7 +57,7 @@ Two ways, and the first is the one to reach for:
 - **Describe the task.** "Commit this", "review my changes", "write a QA plan for this feature". The agent matches your wording against the skill's `description` and loads it. Every description here is written as a routing rule for exactly this reason, so plain English works better than you'd expect.
 - **Name it explicitly.** `/commitkit` in Claude Code, or just "use commitkit". Do this when you want a specific skill and don't want to negotiate with the router.
 
-Skills run with your agent's full permissions. Read one before you trust it with your repo — `SKILL.md` is plain Markdown, and every skill here is [documented page by page](./index.md#the-skills).
+Skills run with your agent's full permissions. Read one before you trust it with your repo — `SKILL.md` is plain Markdown, and [the index](./index.md#the-skills) links every skill's `SKILL.md`.
 
 ### Try one without installing
 
@@ -134,7 +134,7 @@ Each skill gets a badge showing whether the repo copy is what's currently live i
   humankit         ■ real
   ...
 
-35 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
+37 skills · ● linked  ⇄ swapped  ◑ partial  ◆ foreign  ■ real  ○ unlinked
 ```
 
 `■ real` means a non-symlink install is sitting there — typically one you installed from skills.sh. `○ unlinked` means the skill exists only in this repo and isn't active anywhere. Either way, the repo copy is *not* what your agent is reading yet. [Reference](./reference.md#link-status-badges) has the full badge table.
@@ -204,8 +204,8 @@ This removes the symlink and restores anything that was backed up, so your publi
 
 ### Next
 
-Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there's a reader-facing page to write and five more files to update beyond the skill itself, and lint catches most of them, but not the workflow map.
+Adding a skill rather than editing one? See [Add a new skill](./how-to/add-a-new-skill.md) — there are five collection files to update beyond the skill itself, plus the cheatsheet to regenerate. Lint catches most of them, but not a missing workflow-map entry.
 
 To understand why the repo is laid out this way, read [Architecture](./architecture.md).
 
-_Verified against `main`@`9376802` on 2026-09-06._
+_Verified against `main`@`521d7ae` on 2026-11-11._

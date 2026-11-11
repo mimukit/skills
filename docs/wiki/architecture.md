@@ -20,9 +20,9 @@ The frontmatter carries the contract:
 
 ### Satellites, for a skill whose modes are skipped
 
-A skill that runs one mode per invocation makes the agent read the other modes for nothing. Fourteen skills ship a satellite file. `SKILL.md` keeps mode selection, the guards, and the vocabulary every mode shares, then points at one file per mode: `` mode `close` → read [modes/close.md](modes/close.md), then follow it ``. A satellite assumes the root is loaded, never repeats it, and carries the hand-off for the mode body it closes.
+A skill that runs one mode per invocation makes the agent read the other modes for nothing. Seventeen skills ship a satellite file. `SKILL.md` keeps mode selection, the guards, and the vocabulary every mode shares, then points at one file per mode: `` mode `close` → read [modes/close.md](modes/close.md), then follow it ``. A satellite assumes the root is loaded, never repeats it, and carries the hand-off for the mode body it closes.
 
-The gate is the branch and never raw size. `afkkit` walks its whole body on every run, so a split would only add reads, and it stays one file whatever it weighs. Ten skills use the `modes/` shape: `ideakit`, `issuekit`, `mergekit`, `paseokit`, `promptkit`, `repokit`, `seokit`, `tutorkit`, `verifykit`, and `wikikit`. Other satellites disclose one heavy branch to a flat sibling or a directory: `gitkit/clean.md`, `gitkit/rescue.md`, and `gitkit/stacks.md`, `promptkit/worked-example.md`, `qakit/db.md`, `statuskit/declaration.md`, `uikit/stack.md`, and `seokit/references/` plus `seokit/evals/triggers.md`.
+The gate is the branch and never raw size. `afkkit` walks its whole body on every run, so a split would only add reads, and it stays one file whatever it weighs. Fourteen skills use the `modes/` shape: `dbkit`, `domainkit`, `ideakit`, `issuekit`, `mergekit`, `motionkit`, `paseokit`, `promptkit`, `repokit`, `seokit`, `tutorkit`, `uikit`, `verifykit`, and `wikikit`. Other satellites disclose one heavy branch to a flat sibling or a directory: `gitkit/clean.md`, `gitkit/hotfix.md`, `gitkit/prepare.md`, `gitkit/rescue.md`, and `gitkit/stacks.md`; `promptkit/worked-example.md`; `qakit/db.md` and `qakit/worst.md`; `statuskit/declaration.md`; `uikit/stack.md` and `uikit/mobile.md`; `motionkit/recipes.md` and `motionkit/vocabulary.md`; `dbkit/orms.md` and `dbkit/engines/`; `seokit/references/`; and an `evals/triggers.md` in `dbkit`, `motionkit`, and `seokit`.
 
 Satellites ship with the skill on install, so `make lint` holds them to the root's reference-integrity checks and resolves every relative pointer from the file that wrote it.
 
@@ -35,7 +35,7 @@ Satellites ship with the skill on install, so `make lint` holds them to the root
 
 The split exists because internal skills would otherwise pollute the public surface. A skill in `.agents/skills/` is always on inside this repo, needs no dev link, and stays out of the `skills/`-based lint, list, and skills.sh machinery by design.
 
-`.agents/skills/` does not exist yet, because no skill has needed it yet. All 35 skills live in `skills/`, and every one is `metadata.internal: false`.
+`.agents/skills/` does not exist yet, because no skill has needed it yet. All 37 skills live in `skills/`, and every one is `metadata.internal: false`.
 
 **`internal: true` is effectively unpublished.** skills.sh honors the field natively and hides such skills from discovery — they install only when someone sets `INSTALL_INTERNAL_SKILLS=1`. That's why the marker is a lint *error* rather than a warning: an undeclared skill has undefined publication behavior.
 
@@ -119,4 +119,4 @@ Process artifacts record what was decided at a moment in time and are never read
 
 Artifacts are named `NNNN-<type>-<slug>-YYYY-MM-DD.md`. `NNNN` is a zero-padded serial counted per directory, and the date is the **creation** date. Both stay fixed when the file is edited.
 
-_Verified against `main`@`9376802` on 2026-09-06._
+_Verified against `main`@`521d7ae` on 2026-11-11._
