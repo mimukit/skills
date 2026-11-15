@@ -25,7 +25,7 @@ The main evidence is `EXPLAIN (ANALYZE, BUFFERS)` from the database where the qu
 
 ### 3. Diagnose
 
-Read the plan through the engine file's plan table (Postgres: [Reading a plan for tune](../engines/postgres.md#reading-a-plan-for-tune)). Compare estimated and actual rows first.
+Read the plan through the engine file's plan table (Postgres: [Reading a plan for tune](../engines/postgres-tune.md#reading-a-plan-for-tune)). Compare estimated and actual rows first.
 
 - Label every claim **from plan** or **from code**.
 - Crown the cause that owns the most time or buffers. Name runners-up in one line each.
@@ -34,7 +34,7 @@ Read the plan through the engine file's plan table (Postgres: [Reading a plan fo
 
 ### 4. Propose one change
 
-Propose one change for the crowned cause, taken from the plan table or a batched load for an N+1.
+Propose one change for the crowned cause, taken from the plan table or a batched load for an N+1: one statement shape, `WHERE user_id = ANY($1::bigint[])`, or the ORM's eager load.
 
 When the change is an index:
 

@@ -31,7 +31,7 @@ Check every migration file for these breaks of [Migrations](../SKILL.md#migratio
 
 ### 4. List what needs production stats
 
-List unused indexes, bloat, and table sizes as **needs production stats**, with the catalog query from the engine file (Postgres: [Catalog queries for audit](../engines/postgres.md#catalog-queries-for-audit)) for the user to run on the primary and each replica. Never read these from a dev database.
+List unused indexes, bloat, table sizes, and top queries as **needs production stats**, with the catalog query from the engine file (Postgres: [Catalog queries for audit](../engines/postgres-audit.md#catalog-queries-for-audit)) for the user to run on the primary and each replica. Never read these from a dev database.
 
 **Optional drift check.** On a [cleared host](../SKILL.md#the-connection-guard), run read-only catalog queries and compare the live schema with the schema the migrations build. Each difference is a finding. Without a cleared host, give the queries and mark drift "not checked".
 

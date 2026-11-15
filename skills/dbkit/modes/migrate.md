@@ -23,7 +23,7 @@ Write only the steps safe for the current deploy. **Never write a migration that
 
 ### 3. Run the data-integrity pre-checks
 
-Before a step tightens a constraint, count the rows that break it under [Constraints](../SKILL.md#constraints): `NULL`s before `NOT NULL`, duplicates before `UNIQUE`, orphans before a foreign key. Run each count as a `SELECT` through `DB_CMD` on a cleared host under [the connection guard](../SKILL.md#the-connection-guard), or give the query to the user. A nonzero count puts a data fix before the tightening step.
+Before a step tightens a constraint, count the rows that break it under [Constraints](../SKILL.md#constraints): `NULL`s before `NOT NULL`, duplicates before `UNIQUE`, orphans before a foreign key, values that do not fit before a narrowing type change (`SELECT count(*) FROM t WHERE length(col) > N`). Run each count as a `SELECT` through `DB_CMD` on a cleared host under [the connection guard](../SKILL.md#the-connection-guard), or give the query to the user. A nonzero count puts a data fix before the tightening step.
 
 **Done when** every tightening step has a count or a query handed to the user, and every nonzero count has a data-fix step.
 

@@ -119,7 +119,7 @@ Done when: `make lint` resolves the new `tenancy.md` pointer and passes; `grep -
 
 Done when: `make lint` passes; `orms.md` has `## TypeORM` and `## Sequelize` headings; `grep -c synchronize` finds the flag in `modes/audit.md` and `modes/migrate.md`; and the phase's commit body lists the doc URL for each TypeORM and Sequelize fact.
 
-### Phase 4: Postgres split, facts, and Credit
+### Phase 4: Postgres split, facts, and Credit (built 2026-11-15)
 
 Do the split first, as a move with no wording change, so the diff of moved text stays separate from the new facts.
 
