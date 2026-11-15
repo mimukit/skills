@@ -30,7 +30,7 @@ A change to a live table that needs more than one deploy (a rename, a drop, a ty
 
 ### 4. Check the generated migration
 
-Run `migrate` **check** on the generated file as the last step before the report: read [migrate.md](migrate.md) and follow its check branch. Fix every statement with a verdict other than safe, in the migration or the schema source, then check again.
+Run `migrate` **check** on the generated file as the last step before the report: read [migrate.md](migrate.md) and follow its check branch. Fix every statement with a verdict of **unsafe** or **safe with a change**, in the migration or the schema source, then check again. A **destroys data** verdict counts as a stated reason for the user to decide, as in [Check the written files](migrate.md#5-check-the-written-files).
 
 **Done when** the risk table shows every statement as safe, or each remaining verdict has a stated reason for the user to decide.
 

@@ -70,7 +70,7 @@ Rejected alternatives:
 - **Tier 1 only.** It closes the guard holes, but it leaves the wrong `LIKE` row and the tenancy gap in place, and the facts batch is cheap.
 - **A separate `tenantkit` skill.** It fails the gate in AGENTS.md, because nobody chooses "tenant schema design" as a separate moment from schema design.
 
-### Phase 1: guard gaps
+### Phase 1: guard gaps (built 2026-11-15)
 
 - `SKILL.md` "The connection guard":
   - Rewrite **Read only** to the read-only enforcement rule, its session mechanism, the side-effect examples, and the read timeout scope from the decisions table.

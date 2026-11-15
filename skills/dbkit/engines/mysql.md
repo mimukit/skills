@@ -12,6 +12,8 @@ Read this file once [Stack detection](../SKILL.md#stack-detection) finds MySQL o
 
 Every DDL takes a metadata lock, even an `INSTANT` one. A DDL that waits behind one open transaction blocks every later query on the table. The default `lock_wait_timeout` is one year, so open each migration with `SET SESSION lock_wait_timeout = 5;` and retry on failure.
 
+A dbkit read session opens read-only with `mysql --init-command='SET SESSION TRANSACTION READ ONLY'` and caps each `SELECT` with `max_execution_time` in milliseconds (MariaDB: `max_statement_time` in seconds).
+
 ## Types and keys
 
 - The primary key is the clustered index: every secondary index carries a copy of it, and inserts land in its order. Use a short, increasing key; a random UUIDv4 key fragments the table and bloats each index. Store a time-ordered UUID as `BINARY(16)`.

@@ -10,7 +10,7 @@ metadata:
 
 # dbkit
 
-Database mistakes pass every test on a seed database of 40 rows and fail in production, under lock, at a size the dev database never reaches: a `NOT NULL` column added to a large table, an index built without `CONCURRENTLY`, a rename shipped while old code still reads the old name, a backfill folded into the schema change, a foreign key with no index, a `timestamp` that drops the time zone, an index added to "fix" a query nobody measured.
+Database mistakes pass every test on a 40-row seed database and fail in production, under lock, at a size dev never reaches: a `NOT NULL` column added to a large table, an index built without `CONCURRENTLY`, a rename shipped while old code reads the old name, a backfill folded into the schema change, an unindexed foreign key, a `timestamp` with no time zone, an index nobody measured.
 
 dbkit holds one body of rules for those choices, [the schema standard](#the-schema-standard), and four modes that apply it.
 
@@ -18,7 +18,7 @@ dbkit holds one body of rules for those choices, [the schema standard](#the-sche
 
 Route by the object of the ask, read that mode's file through [Run the mode](#run-the-mode), then follow it. Everything in this root applies to every mode; the mode files do not repeat it.
 
-- **design.** "Design the schema for invoices", "model these tables", "how should I store this". It edits the project's schema source, generates the migration through the project's tool, and checks that migration before it reports.
+- **design.** "Design the schema for invoices", "model these tables", "how should I store this". It edits the schema source, generates the migration, and checks it.
 - **migrate.** "Write a migration to rename `email`", "is this migration safe", "check this migration", a migration file or a diff with a migration in it. It has two branches: **write** makes a migration for a stated change, and **check** gives a risk table for an existing one.
 - **tune.** "Why is this query slow", "explain this query plan", "add an index for this query", a pasted `EXPLAIN` output. It writes a report in chat and changes no code. A proposed index ships through `migrate` write.
 - **audit.** "Audit our database schema", "review our migrations history". It sweeps the whole schema and migration history and writes one ranked report.
@@ -27,19 +27,24 @@ When an ask names both a change and a check ("add a column and make sure it is s
 
 **Not this skill.**
 
-- A symptom with an unknown cause ("this page got slow", "this got slower") belongs to **debugkit** when installed, or to a plain root-cause hunt; dbkit `tune` takes over once the cause is a named query.
-- Behavior tests after a data change ("write a QA plan for this migration") belong to **qakit** when installed, or to a hand-written test plan; dbkit `migrate` keeps the migration's safety check.
+- A symptom with an unknown cause ("this page got slow") belongs to **debugkit** when installed, or to a plain root-cause hunt; `tune` takes over once the cause is a named query.
+- Behavior tests after a data change ("write a QA plan for this migration") belong to **qakit** when installed, or to a hand-written test plan; `migrate` keeps the safety check.
 - Document stores (MongoDB, DynamoDB, Firestore) are out of scope; say so in one line and stop.
 
 ## Guards
 
 ### The connection guard
 
-Every mode that opens a database follows these rules, and no mode has an exception to them.
+Every mode that opens a database follows these rules, without exception.
 
 - **Name the host before the first connection.** Resolve the host from `DB_CMD`, the compose file, and `DATABASE_URL`, then state it to the user. A shell's `DATABASE_URL` holds whatever the last person exported, so read it, never trust it.
-- **Connect only to a cleared host.** A cleared host is `localhost`, a loopback address, a service the project's compose file defines, or a host the user confirms in this session. For any other host, ask first. When the user declines, write the queries for the user to run and continue without the connection.
-- **Read only.** Run `SELECT`, `EXPLAIN`, and catalog queries. A read against production is still an unauthorized read of customer data, which is why the host check comes first.
+- **Connect only to a cleared host.** A cleared host is a loopback address that passes the listener check, a compose service whose image passes the image check, or a host the user confirms in this session. For any other host, ask first. When the user declines, write the queries for the user to run and continue without the connection.
+- **Check what listens on loopback.** A proxy or tunnel on loopback can lead to production. Run `ss -ltnp` on Linux or `lsof -nP -iTCP:<port> -sTCP:LISTEN` on macOS. Clear the address only when no `cloud-sql-proxy`, `alloydb-auth-proxy`, `ssh`, or `kubectl` process listens on the port. Ask when one does, or when neither tool runs.
+- **Clear a compose service by its image.** A service clears only when its `image:` is a database engine (`postgres`, `mysql`, `mariadb`, `pgvector/pgvector`, and similar). A proxy or tunnel image asks, and so does an image you cannot classify.
+- **Read only, one statement per call.** Run `SELECT`, `EXPLAIN`, and catalog queries, never a stacked string. A read against production is still an unauthorized read of customer data, which is why the host check comes first.
+- **Open every session read-only.** `DB_CMD` carries the option: Postgres `PGOPTIONS='-c default_transaction_read_only=on'` (`docker compose exec -e PGOPTIONS=…` for a compose service), MySQL `--init-command='SET SESSION TRANSACTION READ ONLY'`, SQLite `-readonly`. A runner that takes no such option gets each single statement wrapped in `BEGIN READ ONLY … ROLLBACK` (MySQL `START TRANSACTION READ ONLY`). The session is the real guarantee; one statement per call keeps a stacked `SET` from undoing it.
+- **Refuse a side-effect function.** A `SELECT` that calls one is refused: `pg_read_file`, `lo_export`, `dblink`, `set_config`, `pg_sleep`, MySQL `LOAD_FILE`, SQLite `load_extension`. These are examples, and no such list is complete.
+- **Cap each read at 30 seconds.** Set `statement_timeout` (MySQL `max_execution_time`) to 30 seconds in the read session on every host except a declared disposable target. A read that times out goes to the user to run.
 - **`EXPLAIN ANALYZE` executes the query.** Run it only on [a disposable target](#the-disposable-target), and never on a statement that writes (`INSERT`, `UPDATE`, `DELETE`, `MERGE`, a function with side effects). On any other host, give the exact command for the user to run.
 - **Never run a production-named script.** A script whose name marks production (`db:prod:*`, `*:production`, an `env-deploy` wrapper, any command that loads production credentials) is refused, whatever the user's reason. Say which script and why, and give the read-only query instead.
 - **Each mode writes only what it promises.** `design` and `migrate` edit the schema source and write migration files through the project's generator. `tune` changes no file. `audit` writes its one report and changes no code.
@@ -56,9 +61,10 @@ A generator that connects to a database to build its migration (`prisma migrate 
 
 Every mode starts here, so the work extends what the project already runs.
 
-- **Engine.** Read the compose file's image (`postgres:17`, `mysql:8.4`, `mariadb`), the scheme of `DATABASE_URL` in `.env.example` or config, the ORM's dialect or provider setting (`dialect` in a Drizzle config, `provider` in a Prisma schema, `ENGINE` in Django settings, `adapter` in Rails `database.yml`), and the file extension of a SQLite database. Take the major version from the image tag or the ORM's driver pin; when only a connection settles it, run `SELECT version()` under [the connection guard](#the-connection-guard). The version decides which engine rules apply.
+- **Engine.** Read the compose file's image (`postgres:17`, `mysql:8.4`, `mariadb`), the scheme of `DATABASE_URL` in `.env.example` or config, the ORM's dialect or provider setting (`dialect` in a Drizzle config, `provider` in a Prisma schema, `ENGINE` in Django settings, `adapter` in Rails `database.yml`), and the file extension of a SQLite database. Take the major version from the image tag or the ORM's driver pin; when only a connection settles it, run `SELECT version()` under [the connection guard](#the-connection-guard).
 - **Migration tool.** Read the package manifest, `requirements.txt` or `pyproject.toml`, the `Gemfile`, or `go.mod` for the tool (Drizzle, Prisma, Kysely, Django, Rails, golang-migrate, Alembic, Flyway, or raw SQL files). Find the migrations directory, the schema source, and the project's own scripts for generate and apply (`db:generate`, `db:migrate`). Read the tool's `--help` for its commands; never trust a pinned syntax from memory.
-- **`DB_CMD`.** Build one client invocation from what the project declares: `psql "$DATABASE_URL"`, `docker compose exec -T db psql -U app app` (service name from the compose file), `mysql`, `sqlite3 path/to/file.db`, or the ORM's own SQL runner. Every query in a run goes through it, so a report reads the same across projects.
+- **`DB_CMD`.** Build one client invocation from what the project declares, with the read-only options of [the connection guard](#the-connection-guard): `psql "$DATABASE_URL"`, `docker compose exec -T db psql -U app app` (service name from the compose file), `mysql`, `sqlite3 path/to/file.db`, or the ORM's own SQL runner. Every query in a run goes through it.
+- **Migrate URL.** Name the URL the migrate script uses; it can differ from the app's. A host with `-pooler`, port 6543, `?pgbouncer=true`, or a `directUrl` or `*_DIRECT` twin marks a pooled target. A connector package (`@google-cloud/cloud-sql-connector`, `cloud-sql-python-connector`, `google-cloud-alloydb-connector`) marks a managed target, whose loopback may be a proxy.
 
 Once the engine is known, read its file once:
 
@@ -69,13 +75,13 @@ Once the engine is known, read its file once:
 
 When a mode writes a migration through a generator, read [orms.md](orms.md) for the tool's transaction and dev-only gotchas.
 
-This is done when the engine and its major version, the migration tool, the migrations directory, the schema source, and `DB_CMD` are each named in one line, or "not found" is stated for each, and the engine file is read.
+This is done when the engine and its major version, the migration tool, the migrations directory, the schema source, `DB_CMD`, and the migrate URL with its pooled or managed mark are each named in one line, or "not found" is stated for each, and the engine file is read.
 
 ## Project conventions win
 
-Read the existing schema before writing any of it: the schema source, the three most recent migrations, and the naming of tables, columns, keys, indexes, and constraints. When the repo uses `camelCase` columns, singular table names, `uuid` keys, or its own index names throughout, follow them in every new line.
+Read the existing schema before writing any of it: the schema source, the three most recent migrations, and the naming of tables, columns, keys, indexes, and constraints. Follow the repo's `camelCase` columns, singular table names, `uuid` keys, or index names in every new line.
 
-A place where the repo breaks the schema standard is a finding to report, never a silent rewrite. A new table that matches its neighbors and breaks the standard is correct; a new table that follows the standard and breaks its neighbors is a second convention, and each later change then picks one of the two at random.
+A place where the repo breaks the schema standard is a finding to report, never a silent rewrite. A new table matches its neighbors even where they break the standard, because a second convention makes each later change pick one at random.
 
 The order is the user's explicit instruction, then the repo's convention (its existing schema, its documented rules), then [the schema standard](#the-schema-standard).
 
@@ -83,7 +89,7 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 ## The schema standard
 
-`design`, `migrate`, and `audit` apply these rules, and every finding cites the heading it breaks. The rules are engine-neutral; the engine file gives the type names, lock levels, and version limits that put each one into practice. A mode is done with the standard when each rule that touches the change is checked, and each break is either fixed or reported.
+`design`, `migrate`, and `audit` apply these rules, and every finding cites the heading it breaks. The rules are engine-neutral; the engine file gives the type names, lock levels, and version limits. A mode is done with the standard when each rule that touches the change is checked, and each break is either fixed or reported.
 
 ### Naming
 
@@ -104,8 +110,8 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 - Columns are `NOT NULL` unless "unknown" or "not applicable" is a real state the application handles. A boolean is `NOT NULL` with a default unless three states are intended.
 - A column added to a populated table is nullable, or carries a default. A `NOT NULL` column with no default fails or locks on a table with rows.
-- Defaults are constants or cheap built-ins evaluated once. A default that differs per row can force a rewrite of the whole table; the engine file says which ones do.
-- One empty value per column. A column that holds both `NULL` and `''` for "none" makes every filter wrong in one of the two cases.
+- Defaults are constants or cheap built-ins evaluated once. A per-row default can rewrite the whole table; the engine file says which.
+- One empty value per column. A column that holds both `NULL` and `''` for "none" makes every filter miss one of them.
 
 ### Constraints
 
@@ -114,12 +120,12 @@ This is done when the repo's naming, key type, and timestamp style are each name
 - A unique constraint allows many `NULL`s on most engines. When at most one row may have no value, use the engine's form for that (the engine file names it) or a partial unique index.
 - An upsert (`ON CONFLICT`, `ON DUPLICATE KEY`) needs a unique constraint or index on exactly its conflict columns.
 - A small, stable set of values gets a `CHECK` or a native enum. A set the business changes gets a lookup table, because changing an enum is a schema migration.
-- Before a migration tightens a constraint, count the rows that break it: `NULL`s in a column about to become `NOT NULL`, duplicates in a column about to become unique, orphans in a column about to get a foreign key. A nonzero count needs a data fix first, in its own migration.
+- Before a migration tightens a constraint, count the rows that break it: `NULL`s before `NOT NULL`, duplicates before unique, orphans before a foreign key. A nonzero count needs a data fix first, in its own migration.
 
 ### Foreign keys and their index
 
 - Every reference to another table's key is a declared foreign key, with an explicit `ON DELETE`. Use `RESTRICT` (or the engine's default "no action") by default, `CASCADE` only for rows that the parent owns outright (an order's items), and `SET NULL` for an optional link.
-- Index every foreign key column. Postgres and SQLite do not create that index; without it, a delete on the parent scans the child table and a join from the parent side scans it too. An index whose leading columns are the foreign key columns covers it.
+- Index every foreign key column. Postgres and SQLite do not create that index; without it, a parent delete or a parent-side join scans the child table. An index whose leading columns are the foreign key columns covers it.
 
 ### Money and time
 
@@ -136,7 +142,7 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 ### Indexes earn their write cost
 
-- Every index slows each insert and each update to its columns, and takes disk and memory. An index exists for a named query or a constraint; state which.
+- Every index slows writes to its columns and takes disk and memory. An index exists for a named query or a constraint; state which.
 - A composite index serves queries that use its leading columns. Order the columns as equality filters first, then the range filter, then the sort.
 - An index whose columns are a leading prefix of another index is redundant, unless it is unique.
 - Measure before and after: a plan before the index, a plan after, and a usage check once it ships. An index added on a guess is a finding.

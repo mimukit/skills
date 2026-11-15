@@ -20,7 +20,8 @@ The lock decides the risk first, and table size decides it second. `ACCESS EXCLU
 | `CREATE INDEX CONCURRENTLY` | `SHARE UPDATE EXCLUSIVE` | Two scans; waits for open transactions | Safe; see [Concurrent index builds](#concurrent-index-builds) |
 | `DROP INDEX` | `ACCESS EXCLUSIVE` | Instant once the lock is held | `DROP INDEX CONCURRENTLY` |
 | `ADD UNIQUE` or `ADD PRIMARY KEY` | `ACCESS EXCLUSIVE` | Builds an index under the lock | `CREATE UNIQUE INDEX CONCURRENTLY idx …`, then `ADD CONSTRAINT name UNIQUE USING INDEX idx` (or `PRIMARY KEY USING INDEX`) |
-| `DROP COLUMN` | `ACCESS EXCLUSIVE` | Catalog only | Ship code that no longer reads the column first (contract step) |
+| `DROP COLUMN` | `ACCESS EXCLUSIVE` | Catalog only; destroys data | Ship code that no longer reads the column first (contract step) |
+| `DROP TABLE` | `ACCESS EXCLUSIVE` | Catalog only; destroys data | Contract step. Optionally rename it to `_deprecated_<name>` one release first, so a straggler fails loudly and the rename can be undone |
 | `RENAME COLUMN` or `RENAME TO` | `ACCESS EXCLUSIVE` | Catalog only; breaks running code | Expand, migrate, contract |
 | `ALTER COLUMN … TYPE` | `ACCESS EXCLUSIVE` | Rewrites table and indexes, except `varchar(n)` to a larger `n` or `text` | New column, backfill, switch reads, drop the old one |
 | `SET DEFAULT` or `DROP DEFAULT` | `ACCESS EXCLUSIVE` | Catalog only | Safe with a lock timeout |
@@ -38,6 +39,17 @@ SET statement_timeout = '15min';
 ```
 
 Inside a transaction, use `SET LOCAL`. A migration that hits the lock timeout fails cleanly and holds nothing; retry it a few times with a pause, and never raise the timeout instead. A concurrent index build can run long, so give that statement a `statement_timeout` of `0` or one that fits the build.
+
+- **Run migrations over a direct or session-mode connection**, never a transaction-mode or statement-mode pooler (PgBouncer in those modes, a Neon `-pooler` host, Supabase port 6543). That pooler can hand each statement to a different server connection, so the session `SET` may not reach the next statement and the lock timeout silently does nothing. Session-mode pooling is safe.
+- **A file outside a transaction ends with `RESET lock_timeout; RESET statement_timeout;`**, so its settings do not stay on a reused connection.
+- **Every file is safe to rerun.** A retry after a timeout can find part of the file applied, so use `IF NOT EXISTS` and `IF EXISTS` where the statement takes them, and check for an `INVALID` index first under [Concurrent index builds](#concurrent-index-builds).
+- **Find the blockers before the deploy.** Give the user this query to run on the primary; each row is a transaction the migration would queue behind:
+
+```sql
+SELECT pid, state, xact_start, query
+FROM pg_stat_activity
+WHERE xact_start < now() - interval '1 min';
+```
 
 ## Concurrent index builds
 

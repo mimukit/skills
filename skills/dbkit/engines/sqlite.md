@@ -5,6 +5,7 @@ Read this file once [Stack detection](../SKILL.md#stack-detection) finds SQLite,
 ## Locks per DDL statement
 
 - SQLite has one writer at a time. Any DDL, `CREATE INDEX` included, holds the write lock until commit, so a large index build stops all writes.
+- A dbkit read session opens the file with `sqlite3 -readonly`, so no statement can take the write lock.
 - `ALTER TABLE` supports only `RENAME TABLE`, `RENAME COLUMN`, `ADD COLUMN`, and `DROP COLUMN` (3.35+, with limits). An added column cannot be `PRIMARY KEY` or `UNIQUE`, and a `NOT NULL` one needs a non-null default.
 - Any other change (a type, a constraint, a foreign key) uses the documented table rebuild, inside one transaction:
   1. Run `PRAGMA foreign_keys=OFF` before the transaction starts; the pragma is a no-op inside one.

@@ -40,13 +40,13 @@ Read [orms.md](../orms.md), then write each current-deploy file through the proj
 
 ### 5. Check the written files
 
-Run the [check branch](#branch-check) on every written file. Fix each statement with a verdict other than safe, then check again.
+Run the [check branch](#branch-check) on every written file. Fix each statement with a verdict of **unsafe** or **safe with a change**, then check again. A **destroys data** verdict is never a fix: it counts as a stated reason for the user to decide, so the loop ends on an intended drop.
 
 **Done when** every statement is safe, or has a stated reason for the user to decide.
 
 ### 6. Write the deploy order and rollback
 
-List the steps in deploy order: the deploy number, the file or held step, and a rollback line. A rollback is a new forward migration under [Migrations](../SKILL.md#migrations).
+List the steps in deploy order: the deploy number, the file or held step, and a rollback line. A rollback is a new forward migration under [Migrations](../SKILL.md#migrations). A step that destroys data has no forward rollback: mark it `destroys data, restore from backup`.
 
 When a plan file for this change exists, write the held steps and rollback lines into its `Migration and rollback` section, in the shape the check branch uses.
 
@@ -61,12 +61,13 @@ Read the migration, or the SQL its tool prints (`sqlmigrate`). Take each stateme
 1. **Lock class first.** A statement that takes `ACCESS EXCLUSIVE` or rewrites the table needs a lock timeout at any table size. Without one, it is unsafe.
 2. **Size second.** Only scan or rewrite time takes a size condition, stated as "unsafe above N rows".
 
-The verdict is **safe**, **safe with a change** (name the change), or **unsafe** (name the safe path).
+The verdict is **safe**, **safe with a change** (name the change), **unsafe** (name the safe path), or **destroys data**. **destroys data** covers `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, and a narrowing type change, whatever the lock. Its rollback is "restore from backup". When its lock is also unsafe, the same cell names the safe path.
 
 ```
 | # | Statement | Lock | Table | Verdict |
 | --- | --- | --- | --- | --- |
 | 1 | CREATE INDEX orders_customer_id_idx ON orders (customer_id) | SHARE | orders | unsafe: blocks writes during the build; use CONCURRENTLY |
+| 2 | DROP TABLE legacy_orders | ACCESS EXCLUSIVE | legacy_orders | destroys data: rollback is restore from backup |
 ```
 
 **Done when** every statement has a row with its lock, its table, and a verdict.
@@ -80,10 +81,12 @@ Add a finding for each of these:
 - A dev-only command in a deploy path, per orms.md.
 - A live-table statement with no lock timeout before it.
 - `CONCURRENTLY` inside a migrator that wraps the file in a transaction, per orms.md.
+- A pooled migrate URL, per [Stack detection](../SKILL.md#stack-detection): verdict **safe with a change**, use the direct or session-mode URL under [Timeouts and the lock queue](../engines/postgres.md#timeouts-and-the-lock-queue).
+- Squawk findings, only when the project declares Squawk (`squawk-cli` or `squawk` in a package manifest, or a `.squawk.toml`): run the project's Squawk on the file and add each finding. dbkit never installs it; without a declaration, this check passes as "not declared".
 
 Then write a rollback section in the plan's `Migration and rollback` shape: how existing data moves, in which deploy, and how to undo it.
 
-**Done when** each of the five checks has a finding or a stated pass, and the rollback section is written.
+**Done when** each of the seven checks has a finding or a stated pass, and the rollback section is written.
 
 ### 9. Hand off
 
@@ -93,4 +96,6 @@ Then write a rollback section in the plan's `Migration and rollback` shape: how 
 
 **Held steps.** List each held step with its trigger condition. With no plan file, file it with **issuekit** when installed. Otherwise, add a TODO.
 
-**Next.** For write, apply the current deploy's migration on the dev database with the project's command, for example `pnpm db:migrate`. For check with an unsafe row, fix the first one with `migrate` write: "rewrite this migration safely". When every row is safe, state that the migration passes and stop.
+**Backup.** When any step destroys data, tell the deployer to confirm a tested backup before deploying that step. Ask no question.
+
+**Next.** For write, apply the current deploy's migration on the dev database with the project's command, for example `pnpm db:migrate`. For check with an unsafe row, fix the first one with `migrate` write: "rewrite this migration safely". When every row is safe or destroys data, state that the migration passes and stop.
