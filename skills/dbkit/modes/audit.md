@@ -24,7 +24,7 @@ Check every migration file for these breaks of [Migrations](../SKILL.md#migratio
 
 - **Edited after it merged.** Run `git log --follow --format='%h %ad %s' -- <file>` on each migration. More than one commit after the merge to the default branch marks an applied migration that changed.
 - **DDL and DML in one file.**
-- **A dev-only command in a deploy path.** A deploy script, CI workflow, or `Dockerfile` calls `drizzle-kit push`, `prisma migrate reset`, or another command [orms.md](../orms.md) marks dev-only.
+- **A dev-only command in a deploy path.** A deploy script, CI workflow, or `Dockerfile` calls `drizzle-kit push`, `prisma migrate reset`, or another command [orms.md](../orms.md) marks dev-only. Schema sync at app start counts too, in app config or boot code: TypeORM `synchronize: true`, Sequelize `sync({ alter: true })` or `force`, Hibernate `ddl-auto=update` (Spring `spring.jpa.hibernate.ddl-auto`).
 - **DDL on a live table with no lock timeout**, and an index built without the online form.
 
 **Done when** every migration file has each of the four checks marked found or clear.

@@ -22,6 +22,19 @@ Read this file when a mode writes a migration through a generator. It holds only
 - Type each migration's `db` as `Kysely<any>`, never the app's database interface, so an old migration still compiles after the schema moves on.
 - The migrator runs pending migrations in a transaction on engines with transactional DDL, Postgres included. A concurrent build needs the migrator's option to disable transactions, where the installed version has one, or a run outside the migrator.
 
+## TypeORM
+
+- `migration:run` wraps all pending migrations in one transaction by default (`--transaction all`, or `migrationsTransactionMode` in the data source). `--transaction each` wraps each migration alone, and `--transaction none` wraps nothing.
+- A concurrent index goes in a migration class with `transaction = false`. That property works only in `each` or `none` mode, so under the default `all` the build still fails inside the transaction.
+- `synchronize: true` in the data source changes the schema on every app start, and `schema:sync` does the same from the CLI. Both are dev-only; `schema:log` prints the SQL `schema:sync` would run.
+- `migrationsRun: true` applies pending migrations at app start, so every boot is a deploy.
+
+## Sequelize
+
+- sequelize-cli runs each migration's `up` with no transaction, so a multi-step file half-applies on failure. Wrap the steps in `queryInterface.sequelize.transaction()` and pass `{ transaction }` to each call.
+- A concurrent index is `queryInterface.addIndex` with `concurrently: true`, in a migration that opens no transaction.
+- `sync({ alter: true })` and `sync({ force: true })` change or drop tables to match the models, and are dev-only. Plain `sync()` creates missing tables only; the docs point production schema changes to migrations.
+
 ## Django
 
 - `makemigrations` asks for a one-off default when a model gains a `NOT NULL` field; answer with the expand path instead (a nullable field first).
@@ -44,4 +57,5 @@ Read this file when a mode writes a migration through a generator. It holds only
 ## Raw SQL and other tools
 
 - With plain SQL files, the file controls its transaction: wrap ordinary DDL in `BEGIN` and `COMMIT`, and leave a concurrent build outside any transaction.
+- A serverless HTTP driver (`drizzle-orm/neon-http`, `@neondatabase/serverless` over HTTP) runs no interactive transaction. A migration or backfill script that needs `BEGIN … SET LOCAL … COMMIT` uses a TCP or WebSocket client, so check the driver the script imports.
 - For any other tool (Alembic, Flyway, Liquibase, Atlas, sqlx), find its transaction behavior and its raw-SQL escape in its docs before writing the first file, and say in the hand-off what you found.

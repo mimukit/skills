@@ -110,7 +110,7 @@ Done when: `make lint` passes; `wc -w skills/dbkit/SKILL.md` prints 3,000 or few
 
 Done when: `make lint` resolves the new `tenancy.md` pointer and passes; `grep -c FORCE skills/dbkit/tenancy.md` is at least 1; and `modes/audit.md` names a tenant leak as the first High item.
 
-### Phase 3: ORM and tool coverage
+### Phase 3: ORM and tool coverage (built 2026-11-15)
 
 - `orms.md`: add TypeORM and Sequelize sections, each with its transaction behavior and its dev-only commands, verified against the docs for the current major version.
 - `modes/audit.md` "Sweep the migration history" and `modes/migrate.md` "Check the file as a whole": the dev-only check also catches app-start schema sync. That means TypeORM `synchronize: true`, Sequelize `sync({ alter: true })`, and Hibernate `ddl-auto=update`.

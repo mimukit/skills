@@ -78,7 +78,7 @@ Add a finding for each of these:
 
 - An edited applied migration: `git log --follow` shows a change after the file merged to the default branch.
 - DDL and DML in one file.
-- A dev-only command in a deploy path, per orms.md.
+- A dev-only command in a deploy path, per orms.md, or schema sync at app start in app config or boot code: TypeORM `synchronize: true`, Sequelize `sync({ alter: true })` or `force`, Hibernate `ddl-auto=update`.
 - A live-table statement with no lock timeout before it.
 - `CONCURRENTLY` inside a migrator that wraps the file in a transaction, per orms.md.
 - A pooled migrate URL, per [Stack detection](../SKILL.md#stack-detection): verdict **safe with a change**, use the direct or session-mode URL under [Timeouts and the lock queue](../engines/postgres.md#timeouts-and-the-lock-queue).
