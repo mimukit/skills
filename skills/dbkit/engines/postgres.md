@@ -79,6 +79,11 @@ WHERE id >= :start AND id < :start + 5000
 
 The runner steps `:start` across the id range, commits each batch, and pauses so replicas keep up. Where concurrent workers claim rows, pick each batch's ids with `FOR UPDATE SKIP LOCKED`. A migrator that runs a file in one transaction defeats batching, so a large backfill runs as a script outside it.
 
+## Functions and triggers
+
+- **A `SECURITY DEFINER` function fixes its path and its callers.** Give it `SET search_path = ''` (or a fixed list) and run `REVOKE EXECUTE ON FUNCTION … FROM PUBLIC`, then grant it to the roles that need it. Otherwise a caller who can create objects in a schema on the path takes over the function's privileges.
+- **`CREATE OR REPLACE FUNCTION` with a new argument list creates an overload**, and the old signature stays. Drop the old one explicitly in the same migration.
+
 ## Version limits
 
 | Version | What it adds |

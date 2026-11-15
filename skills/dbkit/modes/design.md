@@ -14,7 +14,7 @@ Run [Stack detection](../SKILL.md#stack-detection) and [Project conventions win]
 
 Write down every entity and every fact the feature stores. Place each one under [Normalize first](../SKILL.md#normalize-first), then walk every heading of the schema standard against it, with the engine file's types (for Postgres, [Types to avoid](../engines/postgres.md#types-to-avoid) and [Index types](../engines/postgres.md#index-types)). Where the repo's convention overrides a rule, follow the repo and record the break as a finding.
 
-Every index names the query or constraint it serves under [Indexes earn their write cost](../SKILL.md#indexes-earn-their-write-cost), and every foreign key column gets its index under [Foreign keys and their index](../SKILL.md#foreign-keys-and-their-index).
+Every index names the query or constraint it serves under [Indexes earn their write cost](../SKILL.md#indexes-earn-their-write-cost), and every foreign key column gets its index under [Foreign keys and their index](../SKILL.md#foreign-keys-and-their-index). When the [Tenancy](../SKILL.md#tenancy) trigger fires, read [tenancy.md](../tenancy.md) and apply it too.
 
 A schema question with no change ends here: go to [Report the decisions](#5-report-the-decisions).
 

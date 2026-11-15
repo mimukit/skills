@@ -94,7 +94,7 @@ Rejected alternatives:
 
 Done when: `make lint` passes; `wc -w skills/dbkit/SKILL.md` prints 3,000 or fewer; `grep -c` finds `default_transaction_read_only`, `pooler`, and `destroys data` in the skill (each at least 1); and `modes/migrate.md` "Check the file as a whole" lists seven checks, with a **Done when** line that names seven.
 
-### Phase 2: tenancy, functions, and privileges
+### Phase 2: tenancy, functions, and privileges (built 2026-11-15)
 
 - `SKILL.md` schema standard: a `### Tenancy` heading with the four engine-neutral rules (tenant key on every tenant-owned table, `UNIQUE (tenant_id, id)` with composite FKs, tenant-scoped uniqueness, tenant key leading composite indexes) and the pointer to `tenancy.md`. The pointer line states the tenancy trigger from the decisions table.
 - New `skills/dbkit/tenancy.md` holds:

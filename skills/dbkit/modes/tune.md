@@ -18,6 +18,7 @@ The main evidence is `EXPLAIN (ANALYZE, BUFFERS)` from the database where the qu
 
 - **No pasted plan?** Give the exact `EXPLAIN (ANALYZE, BUFFERS)` command with the SQL from [Find the SQL](#1-find-the-sql) filled in, and say where to run it. Then stop.
 - **A production-named script?** When the user asks dbkit to run `db:prod:query` or a similar script, refuse per the [connection guard](../SKILL.md#the-connection-guard) and give the `EXPLAIN` command for the user to run.
+- **A table with RLS?** The plan comes from the app role: `SET ROLE <app role>;` before `EXPLAIN`. A plan taken as the owner or a superuser skips the policies and counts as plan shape only.
 - **A local plan** counts as evidence only when the user states the production row counts and the plan's row counts on each large table fall within 10× of them. Otherwise it shows plan shape only, and the report says so.
 
 **Done when** a pasted plan is in hand, or the exact `EXPLAIN` command is given and the mode has stopped.
