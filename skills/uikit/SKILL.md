@@ -105,10 +105,10 @@ Scope tags: **P** product · **M** marketing · **B** both.
 | | Ban | Instead |
 |---|---|---|
 | B | Violet/purple gradient as the accent, on the hero or the primary CTA | the project's own accent; at rung 3–4, a color the subject actually implies |
-| B | Gradient text on headings | solid color; reach for weight or size when a heading needs emphasis |
+| B | Gradient text on headings, or one italic serif accent word inside a sans headline | solid color in one face; reach for weight or size when a heading needs emphasis |
 | B | Glassmorphism by reflex: `backdrop-blur` over translucent white cards | an opaque surface with a real border |
 | B | A drop shadow on every surface | shadow marks elevation; a card sitting in normal flow has none |
-| B | `rounded-2xl`/`rounded-3xl` on everything | one corner language, taken from the system |
+| B | `rounded-2xl`/`rounded-3xl` on everything, and pill-shaped (`rounded-full`) buttons by reflex | one corner language, taken from the system |
 | B | Decorative status dots, like a pulsing green dot bound to nothing | bind it to real state, or delete it |
 
 ### Typography
@@ -119,7 +119,7 @@ Scope tags: **P** product · **M** marketing · **B** both.
 | M | An eyebrow/kicker label above every heading | delete it; if the section needs context, the heading carries it |
 | M | `01 / 02 / 03` numbered markers on content that is not a sequence | use them only when order is information the reader needs |
 | B | Em-dashes in **interface strings** | a period, a comma, or two sentences. This governs strings on screen, not prose in the repo |
-| B | All-caps letterspaced micro-labels scattered as texture | one label style, used where a label is genuinely needed |
+| B | All-caps letterspaced or monospace micro-labels scattered as texture | one label style, used where a label is genuinely needed |
 
 ### Layout
 
