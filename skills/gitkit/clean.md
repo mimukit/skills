@@ -1,9 +1,5 @@
 # The clean sweep: `gitkit clean`
 
-Reference for gitkit's [`clean`](./SKILL.md#clean) mode. Read this only when a run actually sweeps; nothing else in gitkit depends on it.
-
-The sweep finds the worktrees, local branches, and remote branches whose work has landed, and removes them one at a time. It then sweeps old QA screenshot folders, which live outside git. It is the counterpart to [create, or adopt](./SKILL.md#create-or-adopt): the teardown rules in [Remove](./SKILL.md#remove) govern every removal here, and this file adds only the classification that decides which rows reach them.
-
 ## 1. Enumerate
 
 ```sh
@@ -13,7 +9,7 @@ git -C "$REPO" branch -vv
 git -C "$REPO" branch -r --list 'origin/*'
 ```
 
-Fetch with `--prune` first. It is what deletes the stale remote-tracking refs the classification below reads, so a sweep on an unfetched repo misreads every row.
+Fetch with `--prune` first. It deletes the stale remote-tracking refs the classification below reads.
 
 Ends with one row per worktree, one row per local branch, and one row per `origin/*` branch. A branch with no worktree is a legal row; so is a worktree whose branch is gone, and so is a remote branch with no local copy.
 
@@ -22,18 +18,18 @@ Ends with one row per worktree, one row per local branch, and one row per `origi
 Every row lands in exactly one bucket. Work down the list and stop at the first match:
 
 - **active** — the branch checked out in the repo you are sweeping from, a branch with an open pull request, or an `issue-<n>-<slug>` branch whose issue `gh issue view "$N" --json state` reads as open. Leave it. Say nothing about the first two. Name the third as tracker drift: its work may have landed, but **issuekit** `close <n>` closes the issue and tears the worktree down in one pass, and without issuekit, `gh issue close <n>` and a second sweep do the same. Without `gh`, say the issue test did not run.
-- **adopted** — a worktree without gitkit's `gitkit-created` marker, or a local branch without its `gitkitCreated` key, per [Create, or adopt](./SKILL.md#create-or-adopt). Never touch it. You do not know what is open in it.
-- **dirty** — uncommitted changes, untracked files, or commits the remote does not have. Report exactly what is there and leave it. This is the bucket that protects work, so check it before calling anything reapable.
+- **adopted** — a worktree without gitkit's `gitkit-created` marker, or a local branch without its `gitkitCreated` key, per [Create, or adopt](./SKILL.md#create-or-adopt). Never touch it.
+- **dirty** — uncommitted changes, untracked files, or commits the remote does not have. Report exactly what is there and leave it.
 - **reapable** — the branch's work is in the base, the tree is clean, and gitkit's records say it created the worktree and the branch.
-- **orphan** — a worktree whose directory is gone, or whose branch was deleted elsewhere. `git worktree prune` handles these and needs no confirmation, because there is nothing left to lose.
+- **orphan** — a worktree whose directory is gone, or whose branch was deleted elsewhere. `git worktree prune` handles these and needs no confirmation.
 
-A row that matches nothing is **active** by default. Silence is the safe answer.
+A row that matches nothing is **active** by default.
 
 ### A remote branch is its own row
 
 A branch on GitHub whose work is in the base is reapable on the remote, whether or not a local copy still exists. Classify it by the same tests below, and hold it back for any of these:
 
-- **the base branch itself**, `origin/HEAD`, and any release or long-lived branch the repo keeps. Deleting one of these is the failure this sweep must never cause.
+- **the base branch itself**, `origin/HEAD`, and any release or long-lived branch the repo keeps.
 - **an open pull request on that head.** Check with `gh pr list --head "$BRANCH" --state open`. Deleting the head branch closes the pull request.
 - **an open pull request on that base.** Check with `gh pr list --base "$BRANCH" --state open`, and name the pull request number in the hold reason. Deleting a base branch closes every pull request stacked on it, and GitHub then refuses both `gh pr reopen` and `gh pr edit --base` until the branch is pushed back.
 - **a branch you cannot prove landed.** The remote delete has no `-d` guard behind it, so require a merged pull request from `gh` whose `headRefOid` equals `origin/$BRANCH`, or a passing test 3 patch-id match. A remote tip that moved after the merge holds commits the merge never saw. A bare `: gone]` proves nothing here, because the remote branch is the thing in question.
@@ -43,7 +39,7 @@ Ends with each remote row marked reapable or held, and each held row carrying it
 
 ## 3. Decide "merged", the part that is not obvious
 
-**`git branch --merged` misses a squash-merged branch entirely.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges, a sweep built on `--merged` alone finds nothing reapable on every run and reports a tidy repo that is full of dead branches.
+**`git branch --merged` misses a squash-merged branch entirely.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges, a sweep built on `--merged` alone finds nothing reapable.
 
 Three tests, each catching a merge shape the one before it misses. Run them in order and stop at the first that answers:
 
@@ -64,8 +60,8 @@ for c in $(git -C "$REPO" rev-list "$MB".."$BASE_REF"); do
 done
 ```
 
-- **Test 2 does not catch a squash**, which is the trap worth stating because it looks like it should. `git cherry` compares one commit's patch at a time, and a squash collapses several commits into one patch that matches none of them individually. A two-commit branch that was squash-merged prints both commits as `+`, meaning unmerged. Test 2 earns its rung on the *rebase-merge* shape, where each commit did land separately.
-- **Test 3 is the squash detection.** It reduces the whole branch to a single patch-id and looks for that patch on the base. That is exactly what a squash commit is, so the ids match, and they keep matching after the base moves on with unrelated work.
+- **Test 2 does not catch a squash.** `git cherry` compares one commit's patch at a time, and a squash collapses several commits into one patch that matches none of them, so a squash-merged branch prints its commits as `+`, meaning unmerged.
+- **Test 3 is the squash detection.** It reduces the whole branch to a single patch-id and looks for that patch on the base, and the match holds after the base moves on.
 - **`--stable` is required.** Without it, `git patch-id` output depends on hunk ordering and the comparison silently stops matching.
 
 Two corroborating signals, neither sufficient alone:
@@ -86,9 +82,9 @@ Ends when every reapable row carries a named reason.
 
 Print one table: the branch, its worktree path, whether the remote branch goes too, the bucket, and the reason. A row that needs [the squash exception](./SKILL.md#remove) names its merged pull request number. Then confirm **each removal on its own**.
 
-**A remote delete takes its own confirmation, even for a branch you are already deleting locally.** The local delete is recoverable from the reflog. The remote delete reaches a shared server and other people's clones.
+**A remote delete takes its own confirmation, even for a branch you are already deleting locally.**
 
-**Never a batch yes.** A sweep is the one place where a single confirmation covers many independent deletions, and the rows are not equally safe — a `: gone]` row and a `gh`-confirmed row differ in exactly the way one prompt hides. Sync is different, and takes no confirmation at all, because there the rebase and the push are one decision about one branch, and the ask to sync already made it.
+**Never a batch yes.** A `: gone]` row and a `gh`-confirmed row carry different risk, and one prompt hides that.
 
 A run where the human declines everything is a successful run. Report the table and stop.
 
@@ -104,7 +100,7 @@ git -C "$REPO" branch -d "$BRANCH"
 git -C "$REPO" worktree prune
 ```
 
-`-d` is the last guard: git itself refuses a branch whose commits are not in the base, so a wrong reapable verdict fails loudly here rather than deleting the work. A squash-merged branch always meets that refusal, and [the squash exception](./SKILL.md#remove) is the one case that lifts it: `gh` reports the merged pull request, its `headRefOid` equals the branch tip, and that row's confirmation named the pull request. Then run `git -C "$REPO" branch -D "$BRANCH"`. Any other refusal keeps the worktree removal and reports the refusal. The branch stays, and that is the correct outcome.
+`-d` is the last guard: git refuses a branch whose commits are not in the base. A squash-merged branch always meets that refusal, and [the squash exception](./SKILL.md#remove) is the one case that lifts it: `gh` reports the merged pull request, its `headRefOid` equals the branch tip, and that row's confirmation named the pull request. Then run `git -C "$REPO" branch -D "$BRANCH"`. Any other refusal keeps the branch: the worktree removal stands, and the report names the refusal.
 
 Then delete the remote branch, once its own confirmation is in:
 
@@ -112,9 +108,9 @@ Then delete the remote branch, once its own confirmation is in:
 git -C "$REPO" push origin --delete "$BRANCH"
 ```
 
-**Let a local refusal that the squash exception did not lift veto the remote delete too.** The refusal is git saying the work is not in the base, which is the same verdict the remote delete depends on. When the branch has no local copy, take the `gh` merged pull request as the proof instead.
+**Let a local refusal that the squash exception did not lift veto the remote delete too.** When the branch has no local copy, take the `gh` merged pull request as the proof instead.
 
-A server-side rejection is a normal outcome. A protected branch rule refuses the push; report the refusal and move to the next row.
+A server-side rejection, such as a protected branch rule, is a normal outcome: report it and move to the next row.
 
 Ends when every confirmed row is removed or carries its reported refusal.
 

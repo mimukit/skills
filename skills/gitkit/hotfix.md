@@ -1,14 +1,12 @@
 # Starting a hotfix: `gitkit hotfix`
 
-Reference for gitkit's [`hotfix`](./SKILL.md#hotfix) mode. Read it when a run starts a hotfix, and when a merged hotfix needs to reach another branch.
-
-A hotfix is an urgent fix or a quick change that goes straight to the branch production deploys from. It skips the issue tracker: no issue, no `ready` label, no grill. It keeps the pull request, because CI and a reviewed **Rollback** line are what make a fast change safe. gitkit prepares the ground and stops. Writing the change, committing it, and opening the pull request belong to other skills.
+A hotfix is an urgent fix or a quick change that goes straight to the branch production deploys from. It skips the issue tracker: no issue, no `ready` label, no grill. It keeps the pull request, with CI and a reviewed **Rollback** line.
 
 The mode has two parts. **Start** runs at the beginning of every hotfix. **Backport** runs after the merge, and only when the hotfix base is not the branch everything else is built on.
 
 ## The hotfix flow
 
-A project's production path is its own, so the hotfix base is the project's to declare, and gitkit never guesses past the evidence. Resolve the flow in this order, and stop at the first answer.
+The hotfix base is the project's to declare, and gitkit never guesses past the evidence. Resolve the flow in this order, and stop at the first answer.
 
 ### 1. The declaration
 

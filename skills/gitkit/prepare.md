@@ -1,7 +1,5 @@
 # Preparing a worktree: `gitkit prepare`
 
-Reference for gitkit's [`prepare`](./SKILL.md#prepare) mode. Read it when a caller hands a new or adopted worktree to a person or an agent, when a [sync](./SKILL.md#sync) took commits on a prepared worktree, and when [Remove](./SKILL.md#remove) meets a prepared worktree.
-
 A fresh worktree is a bare checkout: no dependencies, no `.env`, no database. `prepare` makes it ready to run by executing the commands **the repository declares**, and `teardown` undoes what they made before the worktree goes. gitkit chooses *when* each one runs. The repository chooses *what* runs: gitkit never names a database, picks a port, or guesses a seed command. The one command gitkit infers is the install a lockfile implies, and only when the repository declares nothing.
 
 ## The declaration

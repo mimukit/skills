@@ -10,25 +10,7 @@ metadata:
 
 # gitkit
 
-One place where the git facts live that every other skill in a toolchain keeps re-deriving: **where a worktree goes and what it's named, how it is created, adopted, and removed, which branch is the base, and when to rebase versus merge.**
-
-The **core** here is not clever. All of it is native [git worktree](https://git-scm.com/docs/git-worktree), with no vendor CLI, no GUI dependency, and no recorded state anywhere but git's own. That is the point: a laptop with a desktop dev tool and a headless Linux box run *identical* commands, so there is no second code path to keep in sync and no "degraded mode" to reason about.
-
-**Two branches of this skill sit outside that core, and say so.** [Stacked branches](#stacked-branches) drive GitHub's `gh stack` extension, so that branch alone needs `gh` and a GitHub remote. It degrades to plain git rather than failing. [`prepare`](#prepare) runs the commands a repository declares for a new worktree, and it chooses none of them itself: a repository that declares nothing gets the install its lockfile implies and no more. Nothing else in this file depends on either branch.
-
-gitkit is a **primitives skill**. Most of its runs come from another skill calling it, not from a human saying its name.
-
-## When this fires
-
-- **worktree.** "Spin up a worktree for this branch", "make me a worktree for #42", "where is the worktree for `issue-42-…`", "tear down this worktree", "list my worktrees".
-- **base ref.** "What's the base branch here", "diff me against the base".
-- **sync.** "Should I rebase or merge here", "sync this branch with main", "this branch is behind, bring it up to date", "make this PR review-ready on the latest base".
-- **prepare.** "Set up this worktree", "install and seed this worktree", "make this worktree's dev database", "prepare again".
-- **hotfix.** "Start a hotfix for the login crash", "quick change to main, skip the issue", "backport the hotfix to develop".
-- **clean.** "Clean up my merged worktrees", "which branches can I delete", "this repo is full of dead branches".
-- **rescue.** "I lost a commit", "my rebase ate my work", "I reset the wrong branch", "what's in this stash".
-- **stack.** "Stack this on #43", "start #44 on top of #43's branch", "restack this chain", "show me the stack".
-- **called by another skill.** Any skill that needs a worktree, a base ref, a branch name, or a sync decision delegates here and uses what comes back.
+The core is native [git worktree](https://git-scm.com/docs/git-worktree), with no vendor CLI and no state outside git, so every machine runs the same commands. Two branches go further. [Stacked branches](#stacked-branches) need `gh` and a GitHub remote, and degrade to plain git without them. [`prepare`](#prepare) runs only the commands the repository declares, or the install its lockfile implies when it declares none.
 
 **Not this skill:** committing, opening a PR, reviewing a diff, judging code. gitkit answers *where and how*, never *what the change should be*.
 
@@ -44,9 +26,9 @@ gitkit is a **primitives skill**. Most of its runs come from another skill calli
 | `rescue` | find work that looks lost and restore it onto a new branch | [rescue.md](./rescue.md) |
 | `stack` | build and restack a chain of branches through `gh stack` | [stacks.md](./stacks.md), and [Stacked branches](#stacked-branches) |
 
-`worktree` and `sync` sit inline because nearly every run and every calling skill reaches them. The other five load only when their mode fires.
+**When the mode is not clear from the ask, pick it from the verb and name it in the first line.** "Tidy this up" after a merge is `clean`; "tidy this up" on a branch behind its base is `sync`.
 
-**When the mode is not clear from the ask, pick it from the verb and say which one you picked.** "Tidy this up" after a merge is `clean`; "tidy this up" on a branch behind its base is `sync`. Naming the mode in the first line is what lets the human correct a wrong pick before anything runs.
+Running inside a container with a bind-mounted repo, or a GUI worktree tool does not show gitkit's worktrees → read [container.md](./container.md), then follow it.
 
 ## The convention
 
@@ -58,52 +40,40 @@ $WORKTREE_ROOT/<repo-basename>/<local-branch-name>
 
 `$WORKTREE_ROOT` defaults to `~/worktrees`; honor the environment variable when it is set. `<repo-basename>` is the main checkout's directory name.
 
-**Slashes in a branch name flatten to dashes.** A branch `mimukit/6-marketing-site` gets the directory `mimukit-6-marketing-site`, not a nested `mimukit/` parent. This keeps one flat level per repo, so `ls "$WORKTREE_ROOT/<repo>"` is a complete inventory rather than a tree to walk. The trade is that the directory name no longer round-trips back to the branch name, which costs nothing, because [lookup is always through git](#look-up-a-branchs-worktree), never by reading a path. On the rare collision (branches `a/b` and `a-b` both flatten to `a-b`), `git worktree add` fails on the existing path: report it and let the human pick a name rather than silently appending a suffix.
+**Slashes in a branch name flatten to dashes.** A branch `mimukit/6-marketing-site` gets the directory `mimukit-6-marketing-site`, not a nested `mimukit/` parent. The directory name does not round-trip to the branch, so [look a worktree up through git](#look-up-a-branchs-worktree). On a collision (branches `a/b` and `a-b` both flatten to `a-b`), `git worktree add` fails on the existing path: report it and let the human pick a name rather than append a suffix.
 
-Worktrees live **outside** the repository, never in a `.worktrees/` directory inside it. An in-repo worktree gets swept into docker build contexts, bind mounts, file watchers, and test globs, and every one of those failures shows up far from its cause.
+Worktrees live **outside** the repository, never in a `.worktrees/` directory inside it, because an in-repo worktree gets swept into docker build contexts, bind mounts, file watchers, and test globs.
 
 ### The invariant: one branch, one worktree
 
-**A branch has at most one worktree, and the directory is named after it.** A worktree is keyed to a *branch*, not to a workflow stage, so implementing a feature and later reviewing its pull request use the same worktree, because they are the same branch.
+**A branch has at most one worktree, and the directory is named after it.** Git enforces this: `git worktree add` refuses a branch that another worktree holds. A worktree is keyed to a *branch*, not to a workflow stage, so implementing a feature and later reviewing its pull request use the same worktree. Never name a worktree by stage (`review-…`, `qa-…`).
 
-This is not a style preference. Git enforces it:
-
-```
-$ git worktree add ../wt-b feature-x
-fatal: 'feature-x' is already used by worktree at '.../wt-a'
-```
-
-Any scheme that names worktrees by stage (`review-…`, `qa-…`) hard-fails the moment two stages touch one branch, which is the normal case, not the edge case.
-
-Consequences:
-
-- **Lookup is by branch, always**, through git, never by reading or guessing at a directory path. This is what makes the flattening above free, and what lets a worktree sitting in some older root keep working untouched.
-- **The "kind" of a worktree rides along for free**, because the branch name already carries it. `issue-42-auth-capability-module` is named that because the *branch* was named that when the work started.
+**Look a worktree up by branch, through git**, never by reading or guessing a directory path. A worktree in an older root then keeps working.
 
 ### Branch naming
 
-- **`issue-<n>-<slug>`** for work that starts from a tracker issue. Slug from the issue title: if it follows a conventional `type(scope): summary` form, strip the prefix; kebab-case the rest, cap at roughly 50 characters on a word boundary, drop a trailing hyphen. An empty slug degrades to a bare `issue-<n>`. The number guarantees uniqueness, so no tie-break is ever needed.
-- **`hotfix-<slug>`** for an urgent fix or a quick change that goes straight to the branch production deploys from, with no issue first. Slug from the symptom for a fix, or from the change for a quick change, kebab-cased, capped at roughly 40 characters. A backport of a merged hotfix appends `-to-<target>`. The number is absent because a hotfix starts from the symptom rather than from a tracker issue; when one *does* trace to an issue, the branch still takes this shape and the pull request carries the `Closes #<n>` link. On a collision with an existing branch, add a short distinguishing word rather than a counter. **The separator is a hyphen: write `hotfix-<slug>`, never `hotfix/<slug>`.** A slash makes git treat `hotfix` as a directory in the ref namespace, so `hotfix-restore-session` and `hotfix/restore-session` cannot both exist, and every skill that reads the type off the branch name (commitkit, prkit) matches the hyphen form only.
+- **`issue-<n>-<slug>`** for work that starts from a tracker issue. Slug from the issue title: if it follows a conventional `type(scope): summary` form, strip the prefix; kebab-case the rest, cap at roughly 50 characters on a word boundary, drop a trailing hyphen. An empty slug degrades to a bare `issue-<n>`.
+- **`hotfix-<slug>`** for an urgent fix or a quick change that goes straight to the branch production deploys from, with no issue first. Slug from the symptom for a fix, or from the change for a quick change, kebab-cased, capped at roughly 40 characters. A backport of a merged hotfix appends `-to-<target>`. When a hotfix traces to an issue, the branch keeps this shape and the pull request carries the `Closes #<n>` link. On a collision with an existing branch, add a short distinguishing word rather than a counter. **The separator is a hyphen: write `hotfix-<slug>`, never `hotfix/<slug>`.** The skills that read the type off the branch name (commitkit, prkit) match the hyphen form only.
 - **`pr-<n>-<slug>`** only for a **fork** pull request, where no local branch exists yet and one must be invented to hold the fetched head. Slug from the head branch name, kebab-cased, capped at roughly 40 characters.
 - Anything else takes a branch name the human or the repo's convention supplies. gitkit does not rename it.
 
 **An agent that cuts a branch on its own uses one of the three shapes above.** It never invents another prefix (`feature/…`, `fix-…`, `claude/…`). A name the human types, or one the repo documents, is the only other kind of branch.
 
-For a same-repo pull request there is already a local branch name: use it. Inventing a `pr-*` name for a branch that exists is how you land on the two-worktrees-one-branch failure above.
+For a same-repo pull request there is already a local branch name: use it, never a `pr-*` name.
 
 ## `worktree`
 
-All four are native git, and all four are **idempotent**, so running one twice is a normal thing to do and must never error or destroy work.
+All four operations are **idempotent**: a second run never errors and never destroys work.
+
+**No skill may create or remove a worktree through a vendor CLI.** Use native git, so every machine stays in step. A vendor's own metadata about a worktree (the issue its card links to, a status, a comment) has no git equivalent, so a companion skill may reconcile it. gitkit never calls a vendor tool, and works where none is installed.
 
 ### Look up a branch's worktree
-
-The one lookup primitive everything else is built on:
 
 ```sh
 git -C "$REPO" worktree list --porcelain
 ```
 
-Each record carries a `worktree <path>` line and, when a branch is checked out, a `branch refs/heads/<name>` line. Match on the branch to get the path. If the porcelain shape ever shifts, check `git worktree list --help` rather than guessing, but treat the `worktree`/`branch` pairing as stable; that is what porcelain output is for.
+Each record carries a `worktree <path>` line and, when a branch is checked out, a `branch refs/heads/<name>` line. Match on the branch to get the path.
 
 ### Create, or adopt
 
@@ -117,7 +87,7 @@ git -C "$REPO" fetch origin --prune
 git -C "$REPO" worktree add -b "$BRANCH" "$WT" "$BASE"
 ```
 
-- Fetch first, always. Branching off a stale base is silent and only surfaces as conflicts later.
+- Fetch first, always.
 - `$BASE` comes from [The base ref](#the-base-ref), never a hard-coded `origin/main`, and never a sibling feature branch. The one exception is a [stack layer](#stacked-branches), whose base *is* the branch below it, named deliberately by the caller.
 - Drop `-b` when the branch already exists locally (a same-repo PR you have fetched, a branch you made earlier); `git worktree add <path> <branch>` checks it out.
 - For a **fork** pull request, fetch the head into a local branch first with `git fetch origin "pull/<n>/head:pr-<n>-<slug>"`, then add the worktree on that branch, no `-b`.
@@ -129,9 +99,9 @@ touch "$(git -C "$WT" rev-parse --absolute-git-dir)/gitkit-created"   # gitkit m
 git -C "$REPO" config "branch.$BRANCH.gitkitCreated" true             # only after -b: gitkit made the branch too
 ```
 
-- **Both records live in git's own storage**, so they need no state file. The worktree marker sits in the worktree's admin directory under `.git/worktrees/`, and `git worktree remove` deletes it with the worktree. The branch key sits in the branch's config section, and `git branch -d` deletes it with the branch.
+- **Both records live in git's own storage.** The worktree marker sits in the worktree's admin directory under `.git/worktrees/`, and `git worktree remove` deletes it with the worktree. The branch key sits in the branch's config section, and `git branch -d` deletes it with the branch.
 - **Write the branch key only when this run passed `-b`.** A branch that already existed belongs to whoever made it, and an adopted worktree gets no marker.
-- **No record means not gitkit's.** A worktree or branch made before this rule existed, or made by hand, reads as adopted, and [Remove](#remove) leaves it alone.
+- **No record means not gitkit's.** A worktree or branch with no record reads as adopted, and [Remove](#remove) leaves it alone.
 
 When the caller hands the worktree to a person or an agent to work in, run [`prepare`](#prepare) next, on a created and an adopted worktree alike. A scratch worktree that only runs one command skips it.
 
@@ -151,7 +121,7 @@ Workspace ready
 - for: issue #<n> | PR #<n> | none
 ```
 
-- **The block is a contract with the host, not with a tool.** It names no harness and no app. A host that can open a new session bound to a worktree reads it; any other host shows six plain lines.
+- **The block names no harness and no app.** A host that can open a session bound to a worktree reads it; any other host shows six plain lines.
 - **It starts nothing.** It carries no prompt and no command to run in the worktree. The human decides how the work begins.
 - **Print it once, last, and only to a human.** When another skill called gitkit, return the path and the branch to that caller, and the caller prints the block in its own hand-off. An unattended run prints no block, because it works in the worktree by path in its own session.
 
@@ -164,12 +134,12 @@ git -C "$REPO" worktree remove "$WT"
 git -C "$REPO" branch -d "$BRANCH"
 ```
 
-**This is the one removal rule in the collection.** Every skill that removes a worktree or deletes a branch, whether a sweep here, a workspace tool's cleanup, or an issue close-out, follows it and cites it rather than restating its own. Five rules, each one guarding against a real way to lose work:
+**This is the one removal rule in the collection.** Every skill that removes a worktree or deletes a branch, whether a sweep here, a workspace tool's cleanup, or an issue close-out, follows these five rules:
 
 - **A dirty worktree stops teardown.** Show exactly what would be lost (uncommitted changes, untracked files, unpushed commits) and let the human decide. Never reach for `--force` on their behalf.
-- **Remove only a worktree whose marker says gitkit created it.** A worktree without the marker was adopted: it is someone else's context, and you have no idea what is open in it.
-- **Delete only a branch whose `gitkitCreated` key is set, and delete it with `-d`.** Git itself then refuses an unmerged branch, so a wrong verdict fails loudly instead of deleting the work.
-- **One confirmation per removal.** Each worktree and each branch is its own decision, so a list of them takes one answer per row and never one answer for the set.
+- **Remove only a worktree whose marker says gitkit created it.** A worktree without the marker was adopted, and you do not know what is open in it.
+- **Delete only a branch whose `gitkitCreated` key is set, and delete it with `-d`**, so git refuses an unmerged branch.
+- **One confirmation per removal.** A list of worktrees and branches takes one answer per row, never one answer for the set.
 - **A prepared worktree runs its teardown first.** When the `gitkit-prepared` marker exists and the worktree declares `teardown:`, run it after the dirty check and the confirmation, before `git worktree remove`. A failed teardown keeps the worktree and reports the failure. [Teardown](./prepare.md#teardown) holds the procedure.
 
 **The squash exception is the only `-D` gitkit runs.** A squash-merged branch never passes `-d`, because the squash commit has no ancestry link back to the branch. Use `-D` only when `gh` reports a merged pull request for the branch and that pull request's `headRefOid` equals the local branch tip:
@@ -179,7 +149,7 @@ gh pr list --head "$BRANCH" --state merged --json number,headRefOid --jq '.[0]'
 git -C "$REPO" rev-parse "$BRANCH"     # must equal headRefOid, or -D is off the table
 ```
 
-The equal SHA proves that every commit on the branch is in the merged pull request. A tip that moved after the merge holds commits the merge never saw, so the branch stays and the report names it. Name the pull request number in that row's confirmation.
+A tip that moved after the merge holds commits the merge never saw, so the branch stays and the report names it. Name the pull request number in that row's confirmation.
 
 **The merged-PR exception lifts the marker rule and the confirmation rule for one PR's own workspace.** When a human tells a caller to merge or close one pull request, and the caller then sees it merged, that instruction is the confirmation to remove the worktree of the PR's head branch and the local head branch. They go whether gitkit created them or not, with no further prompt. The caller passes the PR number, and the exception reaches that one branch and its worktree only. These guards still hold, and each one keeps its item and names it in the report:
 
@@ -191,7 +161,7 @@ The equal SHA proves that every commit on the branch is in the merged pull reque
 
 When the worktree to remove is the caller's own working directory, run every command from the main checkout with `git -C "$REPO"`. After the removal, say that the session's working directory is gone, and name the main checkout as the place to continue.
 
-Already gone? Report "already gone" and succeed. Teardown is idempotent in the same spirit as adopt. Ends when each confirmed worktree and branch is gone, or its refusal is reported.
+Already gone? Report "already gone" and succeed. Ends when each confirmed worktree and branch is gone, or its refusal is reported.
 
 ### List
 
@@ -205,42 +175,29 @@ If paths look wrong after a move or a restore, `git worktree repair <path>` rewr
 
 ## The base ref
 
-Never assume `main`. Repos default to `develop`, `trunk`, and `master` in the wild, and getting this wrong silently produces an empty or enormous diff. The ladder, in order:
+Never assume `main`. The ladder, in order:
 
 1. `git config --get "branch.$BRANCH.gh-merge-base"`, for a branch that records its own base. [`hotfix`](#hotfix) sets it, and `gh pr create` reads the same key, so the sync, the diff, and the pull request all agree.
 2. `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`, authoritative when the GitHub CLI is available and authenticated.
 3. `git symbolic-ref --short refs/remotes/origin/HEAD`, the local record, if it has been set.
-4. `git remote set-head origin --auto` to repair an unset `origin/HEAD`, then retry the previous step. This is the step most implementations skip, and it is the one that turns a failure into an answer.
+4. `git remote set-head origin --auto` to repair an unset `origin/HEAD`, then retry the previous step.
 5. Whichever of `origin/main` / `origin/master` actually exists.
 6. Ask the human. Do not guess past this point.
 
 Everything downstream uses the answer: `git diff <base>...HEAD`, ahead/behind counts, and the branch a worktree is cut from.
 
-**A stack layer is the one deliberate exception, and the ladder still runs.** A layer's base is the branch below it rather than the repo default, so the caller names it and this ladder is not consulted for that branch. The ladder is still what resolves the **trunk** the stack's bottom layer sits on. The ban on a sibling-branch base keeps its teeth everywhere else, because what it catches is the *accidental* case: a worktree cut from whatever happened to be checked out. A layer base is legal because somebody said which branch and why. See [Stacked branches](#stacked-branches).
+**A stack layer is the one exception.** A layer's base is the branch below it, so the caller names it and this ladder is not consulted for that branch. The ladder still resolves the **trunk** the stack's bottom layer sits on. Everywhere else a sibling-branch base stays banned. See [Stacked branches](#stacked-branches).
 
 ## Rebase or merge
 
-Syncing a feature branch with its base has one default here, and it does not depend on whether a pull request is open:
-
 > **Rebase onto the base to sync a feature branch, published or not. Merging the base in is an exception that needs a stated reason and the user's consent.**
 
-The default is rebase because that is the history worth having: a feature branch that reads as a linear sequence of its own commits, with the base's work underneath rather than braided through it. A repo that merges the base in on every sync accumulates one merge commit per sync, and the branch's own story becomes unreadable long before it lands.
+Rebasing rewrites commit SHAs. On an open pull request, a force-push marks every review thread outdated, human and bot findings alike. That is a cost to **disclose**, not a bar.
 
-Rebasing does have a real cost, and it is mechanical rather than aesthetic: it rewrites commit SHAs. Once a pull request is open, its review threads are anchored to those commits, so a force-push marks every one of them outdated, human and bot findings alike. That is a cost to **disclose**, not a bar, so the sync reports the count after the push. It is also the usual reason a user asks for the merge exception.
-
-In practice:
-
-```sh
-git fetch origin
-git rev-list --left-right --count "origin/$BASE"...HEAD   # "<behind>\t<ahead>"; left > 0 means behind
-git rebase "origin/$BASE"
-```
-
-- **Rebase is the answer unless someone has said otherwise for this branch.** No pull request, an open one, a shared branch: the recommendation is the same.
-- **A sync runs straight through, published branch or not.** Asking for the sync is the consent to its rebase and its `--force-with-lease` push, because they are one decision about one branch, and the ask already made it. Stop and ask only on a problem: a dirty tree, a conflict that needs a ruling, a failed gate, or a rejected lease.
-- **Report the cost after the push.** On a branch with an open PR, query the GraphQL `reviewThreads` connection for unresolved threads before the rebase, and put the number in the hand-off. "3 review threads are now outdated" tells the user to re-request review; "this may have outdated comments" tells them nothing.
+- **A sync runs straight through, published branch or not.** Asking for the sync is the consent to its rebase and its `--force-with-lease` push. Stop and ask only on a problem: a dirty tree, a conflict that needs a ruling, a failed gate, or a rejected lease.
+- **Report the cost after the push.** On a branch with an open PR, query the GraphQL `reviewThreads` connection for unresolved threads before the rebase, and put the exact number in the hand-off.
 - **The merge exception runs only on request.** Unresolved threads are not a reason to stop and offer it. When the user asks for the merge, take [The merge exception](#the-merge-exception).
-- **`--force-with-lease`, never bare `--force`.** The lease is what stops you overwriting a commit someone else pushed while you were rebasing.
+- **`--force-with-lease`, never bare `--force`.** The lease stops you overwriting a commit someone else pushed while you rebased.
 - **On conflict**, resolve it by [Conflicts](#conflicts).
 
 ### Conflicts
@@ -260,7 +217,7 @@ The agent resolves every conflict and writes every resolution. The human never e
 - Both sides change the same behavior in ways that cannot both hold.
 - A modify/delete or rename/rename conflict, or a binary file.
 - The resolution drops code that either side added or kept.
-- You cannot state the intent of each side in one sentence. This is the check that catches a resolution you do not understand, so run it on every conflict, mechanical ones included.
+- You cannot state the intent of each side in one sentence. Run this check on every conflict, mechanical ones included.
 
 An ask names the file, the intent of each side in one sentence, the resolution you recommend, and the alternative, each shown as the code it produces. Collect every ask from one rebase stop into a single question round. Write the chosen resolution yourself.
 
@@ -275,10 +232,10 @@ Guards on every resolution:
 
 ### `sync`
 
-The runnable form of the rule above. A sync has **two halves, in this order**: first bring the local branch level with its own counterpart on `origin`, then bring it up to date with the base. Skipping the first half is what makes a later `--force-with-lease` reject, or silently drop a commit pushed from another machine. Run it in the branch's worktree. Each step names the condition that ends it.
+The runnable form of the rule above. A sync has **two halves, in this order**: first bring the local branch level with its own counterpart on `origin`, then bring it up to date with the base. Skipping the first half makes a later `--force-with-lease` reject, or silently drop a commit pushed from another machine. Run it in the branch's worktree.
 
 1. **Fix the ground.** Resolve the base with [the base ref ladder](#the-base-ref). Run `git -C "$WT" fetch origin --prune`. Confirm the worktree is on the feature branch and that `git status --porcelain` is empty. A dirty tree stops the sync: report the files and let the human stash or commit. Save the starting point with `git update-ref "refs/gitkit/pre-sync/$BRANCH" HEAD`. Ends when the base name, the branch name, and a clean tree are all known.
-2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by [Conflicts](#conflicts). A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
+2. **Sync with `origin/$BRANCH`.** Run `git rev-list --left-right --count "origin/$BRANCH"...HEAD` when the remote branch exists; it prints `<behind>\t<ahead>`. Behind count `0` means nothing to take. Otherwise run `git pull --rebase origin "$BRANCH"` to replay your local commits on the remote ones, and resolve every conflict by [Conflicts](#conflicts). A branch with no remote counterpart skips this step. Ends when the local branch contains every commit on `origin/$BRANCH`.
 3. **Measure the gap to the base.** Run `git rev-list --left-right --count "origin/$BASE"...HEAD`. Behind count `0` means the branch is already on the latest base: run the **Refresh a prepared worktree** step below when the previous step took commits, push what it took, report that, and stop. Ends with a behind count and an ahead count.
 4. **Count the review threads.** When a pull request is open, count its unresolved threads from the GraphQL `reviewThreads` connection. This step asks nothing; the count goes into the hand-off. Ends with a thread count, or with no open pull request.
 5. **Rebase onto the base.** Run `git -c rerere.enabled=true rebase "origin/$BASE"`. Ends when the rebase reports success or stops on a conflict.
@@ -299,10 +256,10 @@ When the user takes the merge, or asks for it outright, it is still a sync, and 
 git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 ```
 
-- **Never git's default subject.** `Merge branch 'main' into issue-42-tailwind-4-foundation` is what git writes when nobody chose a message, and it reads that way forever in `git log`. The fixed subject is the message.
-- **Interpolate the base, don't hardcode `main`.** The [base ref](#the-base-ref) ladder exists because `develop` and `trunk` repos are real; a subject that says `main` in one of them is simply false.
-- **No `--no-ff`.** If the sync can fast-forward, the branch had nothing of its own to preserve and git writes no commit at all, so there is no subject to fix, and forcing one manufactures an empty merge commit.
-- **State the reason in the same breath as the ask.** "Merging instead of rebasing because this PR has 3 unresolved review threads" is a reason. "Merging to be safe" is not; if you cannot name what rebasing would break, rebase.
+- **Use the fixed subject**, never git's default `Merge branch 'main' into …`.
+- **Interpolate the base** from [the base ref](#the-base-ref); never hardcode `main`.
+- **No `--no-ff`.** A sync that can fast-forward writes no commit, and `--no-ff` would make an empty merge commit.
+- **Name a concrete reason with the ask**, such as "Merging instead of rebasing because this PR has 3 unresolved review threads". If you cannot name what rebasing would break, rebase.
 
 ### Never bare `git pull`
 
@@ -312,7 +269,7 @@ A bare `git pull` does whatever the user's `pull.rebase` and `pull.ff` config sa
 
 Make a worktree ready to run with the commands its repository declares in a `## Worktree setup` section of its agent-guide file: `setup:` on the first run, `update:` when a watched path changed, and `teardown:` before [Remove](#remove) deletes the worktree. A `gitkit-prepared` marker in the worktree's admin directory records the commit each run passed at. Teardown runs only where that marker exists, so gitkit never removes a resource it did not set up.
 
-The procedure, the declaration format, the template, and the lockfile table live in **[prepare.md](./prepare.md)**. Read it when a run prepares a worktree, when a sync took commits on a prepared one, and when a removal meets one.
+The procedure, the declaration format, the template, and the lockfile list live in **[prepare.md](./prepare.md)**. Read it when a run prepares a worktree, when a sync took commits on a prepared one, and when a removal meets one.
 
 ## `hotfix`
 
@@ -322,9 +279,9 @@ The procedure, the declaration, and the template live in **[hotfix.md](./hotfix.
 
 ## `clean`
 
-Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket — active, adopted, dirty, reapable, orphan — and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed. Last, it deletes qakit screenshot folders in `~/qakit/` older than 14 days whose QA plan is on no branch it kept.
+Sweep away the worktrees and branches whose work has landed, on your machine and on `origin`. It classifies every worktree, local branch, and remote branch into one bucket (active, adopted, dirty, reapable, orphan) and removes only the reapable ones, one confirmation at a time. A remote delete takes its own confirmation and its own proof that the work landed. Last, it deletes qakit screenshot folders in `~/qakit/` older than 14 days whose QA plan is on no branch it kept.
 
-Two things make it more than a `git branch --merged` loop, and both live in **[clean.md](./clean.md)**: a squash-merged branch is invisible to ancestry, so "merged" needs three detections rather than one; and the per-item confirmation is deliberate, because a sweep's rows are not equally safe to delete. Read that file when a run actually sweeps.
+The three merge detections and the per-item confirmation live in **[clean.md](./clean.md)**. Read it when a run sweeps.
 
 The [Remove](#remove) rules govern every removal the sweep makes. It confirms each row on its own, uses `-D` only under the squash exception, never touches a worktree without gitkit's marker, and stops on a dirty one. On `origin` it never deletes the base branch and never deletes the head of an open pull request.
 
@@ -332,53 +289,23 @@ The [Remove](#remove) rules govern every removal the sweep makes. It confirms ea
 
 Find work that looks lost and put it back. A bad rebase, a hard reset, a deleted branch, a stash nobody can find: the commits usually still exist, and git's own logs say where they went.
 
-The procedure is in **[rescue.md](./rescue.md)**. Two rules shape it. It is **read-only until the restore**, and the restore **adds a branch rather than moving one**, because a reset is the operation that lost the work in the first place. It also states the bound rather than implying safety: an unreachable commit lives until git prunes it.
+The procedure is in **[rescue.md](./rescue.md)**. It is **read-only until the restore**, and the restore **adds a branch rather than moving one**. It states the bound: an unreachable commit lives until git prunes it.
 
 Never run `git gc`, `git prune`, or `git reflog expire` during a rescue, in any mode.
 
 ## Stacked branches
 
-A **stack** is a chain of branches in one repository where each branch is cut from the one below it and the bottom sits on trunk. It is what you reach for when work depends on work that is built but not yet merged: instead of waiting for the prerequisite's pull request to land, you branch from it and keep going.
-
-GitHub supports this natively, and the `gh stack` extension drives it. **This is the one part of gitkit that needs `gh` and a GitHub remote.** The full command surface, the preflight, and the degradation path live in **[stacks.md](./stacks.md)**; read it when a run actually touches a stack. What follows is the part every run needs.
+A **stack** is a chain of branches in one repository where each branch is cut from the one below it and the bottom sits on trunk, so work can build on a branch still in review. The `gh stack` extension drives it. The command surface, the preflight, and the plain-git fallback live in **[stacks.md](./stacks.md)**; read it when a run touches a stack.
 
 ### One worktree per layer
 
 **Each layer keeps its own worktree, cut from the layer below.** The [one branch, one worktree](#the-invariant-one-branch-one-worktree) invariant is unchanged: a layer is a branch, so it gets a directory named after it, and [lookup is still by branch](#look-up-a-branchs-worktree).
 
-The alternative, one worktree for the whole stack with `gh stack up` and `down` moving between layers inside it, is what the extension's own navigation assumes. It is not what this collection does, because every caller here keys a worktree to *the issue being worked*, and a stack is several issues. So `gh stack`'s navigation commands are out of scope, and `up`, `down`, `switch`, `top`, and `bottom` are not gitkit's to run: they would move a checkout that another worktree already holds.
+gitkit runs the stack plumbing only. It never runs `gh stack submit` (pull request authoring), `gh stack merge` (merging), or the navigation commands, as [stacks.md](./stacks.md#commands-gitkit-does-not-run) lists.
 
-### What gitkit owns here, and what it does not
-
-gitkit takes the **plumbing** and nothing else: create a stack, add a layer, restack, sync, inspect, and adopt existing branches into one. Two commands are deliberately excluded, because they cross boundaries this skill holds elsewhere:
-
-- **`gh stack submit` opens pull requests.** gitkit never opens anything. That belongs to whichever skill authors pull requests.
-- **`gh stack merge` merges them.** gitkit never merges, and a stack merge is a *cascade* that lands several pull requests at once, which needs a human confirmation naming every one of them. That belongs to whichever skill owns merging.
-
-Naming the owner rather than the command is the point: gitkit prepares ground, and publishing is somebody else's job whether the branch is stacked or not.
-
-### The cost of depth
-
-Every layer added to a stack is one more pull request to review and one more branch to rebase each time anything below it changes. Restacking is cascading, so a change to the bottom layer rewrites every layer above it.
-
-**No number is stated here on purpose.** How deep a stack should go depends on how big each layer is and how fast they get reviewed, which is the human's call. State the mechanism when they ask, so they can size it themselves.
-
-## Containers and remote boxes
-
-Git worktrees store **absolute** paths. If a repo is bind-mounted into a container at a path different from the host's, every worktree inside it breaks.
-
-- Mount **both** `$WORKTREE_ROOT` and the main checkout. A worktree's real git directory lives under the main repo's `.git/worktrees/`; mounting only the worktree yields a broken checkout.
-- Mount both at the **same absolute path** inside and outside the container. This is the robust answer.
-- Second belt, on git 2.48+: `git config worktree.useRelativePaths true` and `git worktree repair --relative-paths`. Relative pointers survive remapping *as long as the repo and the worktree root keep their relative positions*, which argues for siding them, e.g. `~/code/<repo>` and `~/worktrees/<repo>`.
-
-A GUI dev tool that manages worktrees is welcome to **observe** these. Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines.
-
-**No skill may create or remove a worktree through a vendor CLI**: the moment one does, the two machines diverge. A vendor's own *metadata* about a worktree, such as the issue its card links to, a status, or a comment, is a different layer and is fair game, because it exists only inside that tool and has no git equivalent to diverge from. A companion skill may reconcile that layer as long as the worktree itself is still created and destroyed here. gitkit never calls in that direction: it must keep working on a machine where no such tool is installed.
+**When asked how deep a stack should go, give no number.** State the mechanism and leave the depth to the human: each layer is one more pull request to review and one more branch to restack whenever anything below it changes.
 
 ## Notes
 
-- **gitkit is the single source of truth for what it owns.** A calling skill may hold policy about *when* to ask, such as that a PR is worth pulling down or that a branch is ready to publish, but never about *how* the git operation is done.
-- **Restating a conclusion is allowed; restating the derivation is the bug.** Every public skill is installed on its own, into repos where gitkit may not exist, so a caller that needs a git fact has to carry enough of one to keep working, and that requirement outranks tidiness. The line runs between the two: a caller may state gitkit's **answer** together with its degradation fallback ("gitkit owns the sync rule, and it resolves to rebase; without gitkit, rebase onto the base"), and may not reproduce the **reasoning that produces** the answer, meaning the full base-ref ladder, the worktree path formula, or the rebase-versus-merge argument. The answer is one line that a rename cannot silently invalidate; the derivation is the thing that drifts. Compliant examples worth reading: prkit and mergekit each name the rebase conclusion and its one-confirmation rule without re-deriving them, and wikikit and designkit each name `gh repo view --json defaultBranchRef` as a base-ref fallback without carrying the six-rung ladder.
-- **gitkit never implements, commits, or opens anything.** It prepares the ground and tears it down. The commands `prepare` runs are the repository's, never gitkit's own. Writing code in the worktree, committing, and publishing belong to other skills.
-- **Destructive steps preview and confirm.** Removing a worktree and deleting a branch each show what is about to happen and wait for an OK. A teardown rides on the confirmation of its removal. Creating, adopting, and syncing run straight through. A sync rewrites a published branch, but the user who asks for it has already made that call, the lease guards the remote, and `refs/gitkit/pre-sync/$BRANCH` undoes it.
+- **Creating, adopting, and syncing run with no prompt.** A removal or a branch delete previews and waits for an OK, unless [the merged-PR exception](#remove) covers it. A teardown rides on the confirmation of its removal.
 - **No shell available** (e.g. a browser-based agent)? Then you cannot run git. Reason from what the user provides and **print the exact commands** as a codeblock for them to run, and never report a worktree created or removed that you could not perform.

@@ -1,7 +1,5 @@
 # Recovering lost work: `gitkit rescue`
 
-Reference for gitkit's [`rescue`](./SKILL.md#rescue) mode. Read this only when work has gone missing; nothing else in gitkit depends on it.
-
 Most work that looks lost is not. A commit stays in the object database after the ref that pointed at it moves, and git keeps a log of every move. The mode reads those logs, shows candidates, and restores by **adding a new branch** rather than by moving anything that exists.
 
 **The whole mode is read-only until the restore step.** Every command below except the last one prints and changes nothing.
@@ -10,7 +8,7 @@ Most work that looks lost is not. A commit stays in the object database after th
 
 Ask two things: what was in the work, and roughly when it was last seen. A subject line, a filename, or "before the rebase this morning" is enough.
 
-No description, no search. A reflog with no target is a wall of SHAs, and picking one at random is how a rescue makes things worse.
+No description, no search.
 
 Ends with something to recognize and a rough time window.
 
@@ -23,7 +21,7 @@ git -C "$WT" status                  # says "interactive rebase in progress" or 
 git -C "$WT" rebase --abort
 ```
 
-That puts the branch back exactly where it started. Check this before anything else, because it is both the most common cause and the only instant fix.
+That puts the branch back exactly where it started. Check this before anything else.
 
 ## 3. Search, in order
 
@@ -36,9 +34,9 @@ git -C "$REPO" fsck --lost-found --no-reflogs    # commits no ref and no log rem
 ```
 
 - **HEAD reflogs are per-worktree.** Each worktree keeps its own `HEAD` log, so work lost in one worktree is invisible from another. Run the reflog inside the worktree where it happened, and say so when the user is somewhere else. Branch reflogs are shared, which is why the second command works from anywhere.
-- **`ORIG_HEAD` is the fastest answer to a bad rebase or a hard reset.** Git writes it before any operation that moves HEAD in bulk, so it is a one-command answer to "where was I".
+- **`ORIG_HEAD` is the fastest answer to a bad rebase or a hard reset.** Git writes it before any operation that moves HEAD in bulk.
 - **A stash entry is not always in `stash list`.** `git stash create` writes a snapshot commit and touches no ref, which is what `testkit` and `debugkit` use for their baselines. Those SHAs appear only in the output of the run that made them, or in `fsck`. When the user has one of those `git stash apply <sha>` lines from an earlier run, that SHA is the candidate and no search is needed.
-- **`fsck` runs last** because it is slow and noisy. Reach for it only when the reflogs came back empty.
+- **`fsck` runs last**, only when the reflogs came back empty.
 
 Ends with candidate SHAs, each with a subject and a date.
 
@@ -48,7 +46,7 @@ Ends with candidate SHAs, each with a subject and a date.
 git -C "$REPO" show --stat <sha>
 ```
 
-Print the subject, the date, and the changed files for each candidate. The user picks one. Guessing on their behalf is how the wrong commit gets restored and the right one gets forgotten.
+Print the subject, the date, and the changed files for each candidate. The user picks one.
 
 Ends on a chosen SHA.
 
@@ -58,7 +56,7 @@ Ends on a chosen SHA.
 git -C "$REPO" branch "rescue-<slug>" <sha>
 ```
 
-**Always a new branch, never a move.** A reset, a checkout over a dirty tree, or a force update is the same class of operation that lost the work in the first place, and it can lose a second thing on the way to recovering the first. A new branch touches nothing that exists, so a wrong candidate costs one `git branch -d`.
+**Always a new branch, never a move.** Never reset, check out over a dirty tree, or force-update a ref to restore. A new branch touches nothing that exists, so a wrong candidate costs one `git branch -d`.
 
 For a stash snapshot the equivalent additive form is `git stash apply <sha>`, never `git stash pop`, on a clean tree.
 
@@ -78,4 +76,4 @@ Report the cause when you found one (an aborted rebase, a reset, a deleted branc
 
 Next, inspect the rescued branch with `git log rescue-<slug>` and take what you need from it: merge it, or cherry-pick the commits you want.
 
-**Say that `git branch -d` will refuse the rescue branch, and why.** The recovered commits are by definition not in any other branch yet, so git protects them — which is the guard working. Delete it with `-D` only after the work is somewhere else, and confirm that first.
+**Say that `git branch -d` will refuse the rescue branch, and why:** the recovered commits are in no other branch yet. Delete it with `-D` only after the work is somewhere else, and confirm that first.

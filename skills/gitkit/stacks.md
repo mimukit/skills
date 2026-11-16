@@ -1,7 +1,5 @@
 # Stacked branches: the `gh stack` surface
 
-Reference for gitkit's [Stacked branches](./SKILL.md#stacked-branches) section. Read this only when a run actually touches a stack; nothing else in gitkit depends on it.
-
 A **stack** is a chain of branches in one repository where each branch targets the one below it and the bottom targets trunk. Opening a pull request per layer means each one reviews as its own small diff, and merging any of them merges every unmerged layer below it, bottom-up, with the layers above rebased automatically.
 
 ## Preflight
@@ -69,9 +67,9 @@ Render it bottom layer first, so the reading order matches the merge order.
 
   Before they run it, the working tree must be clean, no rebase may be in progress, and the history must be linear.
 
-## Degradation: no extension, no problem
+## Degradation without the extension
 
-The extension automates the branching and the base refs. Neither is magic, so a stack is reproducible with plain git plus one flag:
+The extension automates the branching and the base refs. Plain git plus one flag reproduces a stack:
 
 ```sh
 git switch -c <new-branch> <parent-branch>    # the layer
