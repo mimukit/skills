@@ -69,8 +69,10 @@ The reviewer has formed an opinion. Which fork you take depends entirely on whic
    **A cascade merges through the stack tool, not one PR at a time:**
 
    ```sh
-   gh stack merge --merge
+   gh stack merge <top-pr> --merge
    ```
+
+   Pass the top confirmed PR number. In a non-interactive terminal the command merges every layer up to that PR without a prompt, and with no argument it merges the whole stack. The merge is atomic: if one layer cannot merge, none merge (gh-stack v0.3.0, checked 2026-11-16).
 
    This is the one `gh stack` command mergekit owns, and it owns it because merging is mergekit's alone; gitkit takes the stack plumbing and deliberately leaves this out. Run it only after the enumerated confirmation above, and only after the recheck finds every layer's `headRefOid` equal to its confirmed SHA. Without the stack extension, merge each PR by hand in bottom-up order with `--match-head-commit`, waiting for each to land before the next, since every merge re-targets the layer above it.
 6. **Hand the landing off to the tracker with issuekit's `close`, then `sync`.** A merge is a tracker event as much as a git one, and both halves belong to an issue-lifecycle skill rather than to mergekit. Invoke **issuekit** for each, in this order, rather than doing any of it here:
