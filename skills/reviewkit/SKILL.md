@@ -74,11 +74,13 @@ The pass is done when every changed file has been compared against at least one 
 Hunt the tells of machine-generated code, the padding that looks productive but earns its keep nowhere:
 
 - **Over-engineering.** Abstraction for a single caller, config knobs nothing sets, layers of indirection a direct call would replace, "future-proofing" for requirements that don't exist.
-- **Dead & unreachable code.** Helpers never called, branches that can't execute, exports nothing imports, variables assigned and never read.
-- **Hallucinated or wrong APIs.** Calls to methods, flags, or fields that don't exist on the real type; a plausible-sounding function from the wrong library version. Verify against the actual dependency, not the model's guess.
-- **Redundant comments.** Narration that restates the code (`// increment i`), docstrings that add nothing, commented-out code left behind.
+- **Defensive fallbacks and silent catch-alls.** try/catch that swallows the error, a default or `??` fallback that hides a failure the caller should see, guards and retries around code that cannot fail, `TODO`s standing in for real handling.
+- **Shims and dead paths nobody asked for.** Backward-compatibility wrappers, re-exports under old names, and flags or branches for callers that don't exist; helpers never called, exports nothing imports, variables assigned and never read.
+- **Tests that test the mock.** A test that mocks the unit under test, asserts on the mock's own return value, or asserts nothing.
+- **Special-casing the test input.** Code that branches on the exact value a test feeds it, or returns a hardcoded expected output, so the test passes and the general case stays broken.
+- **Narrating comments.** Long docstrings and comments that restate the code or narrate intent or the change ("now uses X instead of Y"), and commented-out code left behind.
 - **Scope creep.** Changes outside what was asked: unrelated refactors, reformatting untouched lines, drive-by renames, version bumps nobody requested. Flag anything the stated intent doesn't justify.
-- **Fake robustness.** try/catch that swallows errors, defaults that hide failures, tests that assert nothing or are tautological, `TODO`s standing in for real handling.
+- **Hallucinated APIs.** A method, flag, or field the real dependency doesn't have. Check it against the installed version.
 
 Named smells that show up here: *Speculative Generality* (abstraction for needs that don't exist, so delete it and inline until a real second caller appears), *Duplicated Code* (the same logic pasted across hunks instead of shared), *Primitive Obsession* (a bare string/int standing in for a domain concept), *Middle Man* / *Message Chains* (layers that only delegate, or `a.b().c().d()` navigation). Speculative Generality especially is the signature agent smell.
 
