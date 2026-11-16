@@ -2,7 +2,7 @@
 
 A mockup is a picture a person looks at to compare or approve a screen before the real build. **The output is an image.** Code appears only when the user asks for code ("as code", "the HTML", "the component"), and that ask is a [`build`](build.md).
 
-Options belong here too. "Show me a few options", "three directions", and "mock up three versions" mean one mockup run with N options, each from a different design read. N is at most 4, because more images shrink until a reader cannot compare them. A request for more gets four, with the cap said in one line.
+A request for options is one mockup run with N options, each from a different design read. N is at most 4. A request for more gets four, with the cap said in one line.
 
 No code ships from this mode, so the stack layer, the mobile layer, and the accessibility floor do not apply. The catalog and the design read do.
 
@@ -33,7 +33,7 @@ With neither path, say what is missing, offer to write the HTML file and give it
 
 Both paths follow the [catalog](../SKILL.md#the-anti-slop-catalog) rule on content: real copy, or the real empty state, never invented names, metrics, or logos.
 
-**Collect every fix before you resend.** A resend of the whole image for one small fix is the expensive path. Several screens or four options is a large run. Run it in a subagent that returns the image paths and a one-line summary, so the pixels stay out of this context.
+**Collect every fix before you resend.** Several screens or four options is a large run. Run it in a subagent that returns the image paths and a one-line summary.
 
 **Done when** every option exists as an image and the user has seen all of them in one reply.
 
