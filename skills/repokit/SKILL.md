@@ -31,6 +31,8 @@ The user wants to configure a repo on GitHub. Route to a mode from what they ask
 
 **If no mode is clear, ask first.** Present the four modes and let the user pick before touching anything.
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 The mode bodies live in one file each under `modes/`. Route with the list above, read that one file, and follow it. Everything in this root applies to every mode and is not restated in the mode files.
 
 - Mode `about` → read [modes/about.md](modes/about.md), then follow it.

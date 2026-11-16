@@ -9,11 +9,11 @@ Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD
 Fetch the current settings and diff them against the canonical map, which is the user's default for every repo:
 
 ```sh
-gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge,autoMergeAllowed,hasIssuesEnabled,hasWikiEnabled,hasProjectsEnabled,defaultBranchRef
-gh api repos/{owner}/{repo} --jq '{allow_update_branch, security_and_analysis}'
+gh repo view --json visibility,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge,hasIssuesEnabled,hasWikiEnabled,hasProjectsEnabled,defaultBranchRef
+gh api repos/{owner}/{repo} --jq '{allow_update_branch, allow_auto_merge, security_and_analysis}'
 ```
 
-`gh repo view` carries no field for the update-branch button or for secret scanning, so the API call above supplies both current values.
+`gh repo view` carries no field for the update-branch button, auto-merge, or secret scanning, so the API call above supplies those current values.
 
 | Setting | Value | Why |
 |---------|-------|-----|
@@ -78,13 +78,13 @@ Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` i
 ## Docs artifact naming
 
 - An artifact under `docs/<type>/` (a plan, a QA plan, a review, research) is named `NNNN-<type>-<slug>-YYYY-MM-DD.md`.
-- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, take the highest serial in that directory across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD <dir>` after `git fetch origin`), and add one. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. An empty directory starts at `0001`.
+- `NNNN` is a four-digit serial, per directory, assigned in creation order and never reused. To get it, take the highest serial in that directory across this worktree, every other worktree that `git worktree list` names, and `origin/<default branch>` (`git ls-tree --name-only origin/<base> <dir>` after `git fetch origin <base>`), and add one. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. An empty directory starts at `0001`.
 - `YYYY-MM-DD` is the creation date. The whole name stays fixed after edits.
 - An ADR uses its decision number as the serial: `docs/adr/NNNN-adr-<slug>-YYYY-MM-DD.md`.
 - Reader-facing pages (`docs/wiki/`, how-to guides, runbooks) stay unnumbered.
 ```
 
-The holder name comes from `gh api user --jq .name`, falling back to `git config user.name` when that is empty, This step is done when every row is written or skipped for its stated reason.
+The holder name comes from `gh api user --jq .name`, falling back to `git config user.name` when that is empty. This step is done when every row is written or skipped for its stated reason.
 
 ## 4. Run `about`
 Read [about.md](about.md) and run it against the now-scaffolded repo, so the README it reads is the one this run just wrote. Run it on defaults: skip the per-field question and apply the defaults that file states for a `setup` run. Skip its hand-off; this file's [Hand off](#6-hand-off) closes for the whole span.

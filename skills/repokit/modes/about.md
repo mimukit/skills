@@ -47,8 +47,6 @@ To *replace the whole topic set* in one call instead of add/remove reconciliatio
 
 ## 6. Hand off
 
-_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
-
 **What changed.** Report the description, topics, and homepage as they now stand, and anything the user chose to keep current rather than replace. A field you proposed and they rejected is worth one line; it's the part most likely to come up again.
 
 **Where it landed.** Name the repo's About panel, with its URL, so they can eyeball the result.
