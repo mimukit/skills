@@ -165,6 +165,30 @@ handoff_without_next() {
   ' "$1"
 }
 
+# Does a "When this fires" or "When to use" section carry a trigger list? The
+# description owns the trigger phrases and the body loads only after the skill
+# fires, so three or more quoted phrases there repeat the description. Routing
+# rules stay. The section runs to the next `## ` heading; code fences are
+# skipped. Counts straight "…" pairs and curly “…” openers. Exit 0 = list found.
+has_body_trigger_list() {
+  LC_ALL=C awk '
+    /^```/ || /^~~~/ { infence = !infence; next }
+    infence { next }
+    /^## / {
+      h = tolower($0)
+      insec = (h ~ /^## +when (this fires|to use)/)
+      next
+    }
+    insec {
+      line = $0
+      while (match(line, /"[^"]+"/)) { n++; line = substr(line, RSTART + RLENGTH) }
+      line = $0
+      n += gsub(/“/, "", line)
+    }
+    END { exit !(n >= 3) }
+  ' "$1"
+}
+
 check_skill() {
   local name="$1" file="$SKILLS_DIR/$1/SKILL.md" fm fname desc_has
 
@@ -302,6 +326,20 @@ check_skill() {
     while IFS= read -r hl; do
       [[ -n "$hl" ]] && issues+=("W:$lrel: hand-off at line $hl names no next move — crown one, or say there is no next step")
     done < <(handoff_without_next "$lf")
+  done
+
+  # body trigger list: quoted phrases in a "When this fires" section repeat the
+  # description, which already carries them (AGENTS.md § Pruning)
+  for lf in "$file" "$SKILLS_DIR/$name/modes/"*.md; do
+    [[ -f "$lf" ]] || continue
+    lrel="${lf#"$SKILLS_DIR/$name/"}"
+    if has_body_trigger_list "$lf"; then
+      if [[ "$lrel" == "SKILL.md" ]]; then
+        issues+=("W:body trigger list in 'When this fires' — keep routing rules, drop quoted trigger phrases (AGENTS.md § Pruning)")
+      else
+        issues+=("W:$lrel: body trigger list in 'When this fires' — keep routing rules, drop quoted trigger phrases (AGENTS.md § Pruning)")
+      fi
+    fi
   done
 
   # Tool surface against the body. Two mismatches a grep can see without
