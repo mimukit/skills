@@ -18,6 +18,6 @@ On an append, add a dated `NOTES.md` entry carrying the jot's blocks, refresh th
 
 ### 4. Flip the jot row and leave the blocks alone
 
-Set the jot's state to `` `promoted` · `<slug>` ``. **Cut nothing out of any dated file.** The pad records when the thought arrived and how it read at the time, and moving the text destroys that record for no gain.
+Set the jot's state to `` `promoted` · `<slug>` ``. **Cut nothing out of any dated file.**
 
 **Done when** `topics/<slug>/` holds `IDEA.md` and a first `NOTES.md` entry naming the jot id, the idea router carries its row, and the jot row reads `promoted`. Then go to [Hand off](../SKILL.md#hand-off).

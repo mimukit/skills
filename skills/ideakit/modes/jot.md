@@ -6,13 +6,13 @@ Drop the thought into the pad and stop. It does not discuss, does not propose a 
 
 Read `jotpad/INDEX.md` and today's dated file when it exists. **Match the thought against every jot summary.** When one is plainly the same thought, append a block under that jot's existing id. Otherwise allocate the next id, as [The jotpad](../SKILL.md#the-jotpad) sets out. When today's file holds a block whose id has no router row, write that row too.
 
-Read `INDEX.md` too, because it is bounded and cheap. **When the thought plainly belongs to a registered idea, say so in one line and write the jot anyway.** The pad is the low-friction door, and stopping to route a thought is the friction the pad removes. [`promote`](./promote.md) is what moves it later, and it appends to that idea rather than creating a second one.
+Read `INDEX.md` too, because it is bounded and cheap. **When the thought plainly belongs to a registered idea, say so in one line and write the jot anyway.** [`promote`](./promote.md) is what moves it later, and it appends to that idea rather than creating a second one.
 
 Open no topic folder, and no dated file other than today's and the ones the matched jot names. Done when you hold one id, either matched or newly allocated.
 
 ### 2. Write the block
 
-Create `jotpad/YYYY-MM-DD.md` when today has no file yet. Append the block at the end of the file under a `## j-NNN · <short title>` heading, two to six lines in the user's own words. **When the mode fires from another repo, record that repo in the block.** Where a thought arrived from is usually part of the thought.
+Create `jotpad/YYYY-MM-DD.md` when today has no file yet. Append the block at the end of the file under a `## j-NNN · <short title>` heading, two to six lines in the user's own words. **When the mode fires from another repo, record that repo in the block.**
 
 Leave every earlier block in the file alone.
 

@@ -14,19 +14,19 @@ Read `IDEA.md`, then `NOTES.md`, then only the artifacts those two name. Open no
 
 ### 3. Open with the status report
 
-Print the single-idea report from [`status`](./status.md) as the first thing the user sees. The session then starts from where the last one stopped rather than from a cold restatement.
+Print the single-idea report from [`status`](./status.md) as the first thing the user sees.
 
 ### 4. Discuss
 
-**The posture: state the strongest version of the idea, then name what would kill it.** Build the case first, because an idea argued down before it is stated properly never gets a fair test. Then say the one condition that would end it.
+**The posture: state the strongest version of the idea first, then name the one condition that would kill it.**
 
-**When the user says they are thinking out loud, build only and skip the stress pass.** Record the kill condition as the open question either way, so an expansive night still costs the log nothing.
+**When the user says they are thinking out loud, build only and skip the stress pass.** Record the kill condition as the open question either way.
 
 ### 5. Close the session
 
 Compose three writes, then offer them as one save:
 
-1. The dated `NOTES.md` entry, three to six lines minimum, naming a decision, a rejection, or an open question. That entry is the spine the next session reads.
+1. The dated `NOTES.md` entry, three to six lines minimum, naming a decision, a rejection, or an open question.
 2. A refreshed `## Open` block for `IDEA.md`, plus a rewritten head when the idea itself changed.
 3. The router row, including `Last touched`.
 

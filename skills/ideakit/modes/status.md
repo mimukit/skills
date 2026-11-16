@@ -6,9 +6,9 @@ Reports, and writes nothing at all.
 
 Read `INDEX.md` and list `topics/`. **Open no topic folder.** Print one table sorted by last touched, grouped by status, with each row's age in days (`untouched 94 days`). Name any folder the router does not list, and say to run `session` on it to register it.
 
-Read `jotpad/INDEX.md` and report the pad in one line below the table: the count of `live` jots, and every jot with three or more entries named as a promotion candidate. **Open no dated file.** The `Entries` cell already carries the count, which is what that column is for.
+Read `jotpad/INDEX.md` and report the pad in one line below the table: the count of `live` jots, and every jot with three or more entries named as a promotion candidate. **Open no dated file.** The `Entries` cell carries the count.
 
-There is no stale marker. A tag most rows would wear inside a year is a verdict on a repo whose whole point is that ideas sit, and the crown below already promotes the cold ones.
+Mark no row as stale.
 
 Then crown one move. Take the first row that matches; the last row matches every state, so exactly one move is always crowned:
 
@@ -20,7 +20,7 @@ Then crown one move. Take the first row that matches; the last row matches every
 | 4 | a `building` idea carries an open question | `session` on it |
 | 5 | no row above matches | say there is no next move, and offer `capture` |
 
-**Within rule 1 the crown goes to the coldest idea, not the warmest.** Cold plus an open question means the user stopped mid-thought, which is the recoverable case, and it is the row a table sorted by recency buries. Ranking on recency would make the crown restate row one.
+**Within rule 1 the crown goes to the coldest idea, not the warmest.**
 
 **No ideas repo, or an empty one?** Say so in one line, offer `capture` or `jot`, and print no empty table.
 

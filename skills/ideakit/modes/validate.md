@@ -7,7 +7,7 @@ Route to one slug, then pick a path. **validatekit is invocation-only: the model
 
 Without validatekit installed, run the short version and say so.
 
-**Honor the side-project off-ramp rather than working around it.** It will fire often here, because most ideas in a personal ideas repo are not businesses, and an honest "this is a side project, not a company" is a real answer worth offering to write down.
+**Honor the side-project off-ramp rather than working around it.** Offer to write down "this is a side project, not a company" as a verdict.
 
 Offer the verdict, the wedge, and the assignment as one `NOTES.md` entry, with the router status change when the verdict moves it.
 
