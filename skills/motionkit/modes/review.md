@@ -32,12 +32,12 @@ Walk every animation through [the motion standard](../SKILL.md#the-motion-standa
 Escalate these on sight, at the highest severity:
 
 - `ease-in` on an entrance, an exit, or any response to input ([Easing](../SKILL.md#easing)).
-- An entrance from `scale(0)`, or a pure fade with no starting transform ([Physicality and origin](../SKILL.md#physicality-and-origin)).
+- An entrance from `scale(0)`, or a pure fade with no starting transform outside a reduced-motion path ([Physicality and origin](../SKILL.md#physicality-and-origin)).
 - A trigger-anchored popover, menu, or tooltip that scales from its own center.
 - `transition: all`, or a layout property animated where a transform tier exists ([Property cost](../SKILL.md#property-cost)).
 - Keyframes on UI a user can trigger again mid-motion, such as toasts, toggles, and tabs ([Interruptibility](../SKILL.md#interruptibility)).
 - Any animation on a keyboard shortcut, the command palette, or another action at the top frequency tier.
-- UI motion over 300 ms with no stated reason ([Duration](../SKILL.md#duration)).
+- UI motion over 300 ms with no stated reason, other than a loop's period or an edge drawer in its band ([Duration](../SKILL.md#duration)).
 - Movement with no reduced-motion path, or hover motion with no fine-pointer gate ([Reduced motion and pointer gating](../SKILL.md#reduced-motion-and-pointer-gating)).
 - A parent CSS variable that drives a child's `transform`.
 

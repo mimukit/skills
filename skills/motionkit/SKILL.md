@@ -73,17 +73,19 @@ Every motion names one purpose before it gets a curve: feedback, spatial consist
 
 ### Easing
 
+Take the first row that fits.
+
 | The element is | Curve |
 | --- | --- |
+| Changing color, changing opacity alone, or responding to hover | `ease` |
+| Moving at a constant rate (marquee, progress bar, spinner) | `linear` |
 | Entering or leaving the screen | ease-out |
 | Moving or morphing while it stays on screen | ease-in-out |
-| Changing color or responding to hover | `ease` |
-| Moving at a constant rate (marquee, progress bar) | `linear` |
 | Anything else | ease-out |
 
 `ease-in` on UI is a finding.
 
-The built-in keywords are too gentle to read as deliberate. Use strong curves, as tokens:
+The built-in `ease-out` and `ease-in-out` keywords are too gentle to read as deliberate, so the ease-out and ease-in-out rows use strong curves, as tokens. Plain `ease` and `linear` stay keywords, so a hover runs on plain `ease`.
 
 ```css
 --ease-out: cubic-bezier(0.23, 1, 0.32, 1);      /* entrances, exits, most UI */
@@ -98,12 +100,16 @@ For any other curve, take one from a published set such as easing.dev or easings
 | Element | Duration |
 | --- | --- |
 | Press feedback | 100-160 ms |
+| Hover | 100-160 ms |
+| Badges: appear, or change count | 125-200 ms |
 | Tooltips, small popovers | 125-200 ms |
 | Dropdowns, selects, menus | 150-250 ms |
 | Modals, drawers, sheets | 200-500 ms |
 | Marketing and explanatory motion | longer when the story needs it |
 
-**Keep UI motion under 300 ms.** Elements that travel further sit at the top of their band. In a toolbar, the first tooltip waits and animates, and each later tooltip appears at once.
+A loop (a spinner, indeterminate progress, a pulse) has a period, not a duration: 750-1000 ms per spinner turn, and 1.5-2 s per progress or pulse cycle.
+
+**Keep UI motion under 300 ms.** Two cases fall outside this cap: a loop's period, which is not a response time, and a drawer or sheet that travels in from an edge, which keeps its 200-500 ms band. Elements that travel further sit at the top of their band. In a toolbar, the first tooltip waits and animates, and each later tooltip appears at once.
 
 ### Springs
 
@@ -118,7 +124,7 @@ Keep bounce between 0.1 and 0.3, and use none for most product UI; save visible 
 
 ### Physicality and origin
 
-- **Enter from almost there.** Start at `scale(0.9)` to `scale(0.97)` with `opacity: 0`. Flag `scale(0)` and a pure fade with no starting transform.
+- **Enter from almost there.** An element that appears in place starts at `scale(0.9)` to `scale(0.97)` with `opacity: 0`. Flag `scale(0)`, and a pure fade with no starting transform outside a reduced-motion path. A surface that slides in from a viewport edge (a drawer, a sheet, a toast) travels its full distance instead, from `translateX(100%)` or `translateY(100%)`.
 - **Grow from the trigger.** A popover, dropdown, menu, or tooltip sets `transform-origin` at the element that opened it, through the library's variable when one exists (`var(--transform-origin)` in Base UI). A modal belongs to the viewport, so it stays centered.
 - **Press feedback.** A pressable scales to `0.97` on `:active` (between 0.95 and 0.98) with `transition: transform 160ms` on the ease-out curve.
 
@@ -174,7 +180,7 @@ When a group enters on a surface people see occasionally, offset each item by 30
 
 ### Reduced motion and pointer gating
 
-- **Reduced motion means fewer and gentler, not none.** Under `prefers-reduced-motion: reduce`, keep the opacity and color changes that help a person follow what happened, and remove translation, scaling, and parallax. In Motion, read `useReducedMotion()` and set the moving value to its resting position. This ships with the animation.
+- **Reduced motion means fewer and gentler, not none.** Under `prefers-reduced-motion: reduce`, keep the opacity and color changes that help a person follow what happened, and remove translation, scaling, and parallax. In Motion, read `useReducedMotion()` and set the moving value to its resting position. Rotation follows the same split: a spinner that shows status keeps turning at twice its period, and decorative rotation stops. This ships with the animation.
 - **Hover motion runs only on a fine pointer.** Wrap it in `@media (hover: hover) and (pointer: fine)`, because a touch screen fires a hover on tap and leaves the element stuck in it.
 
 ### Cohesion with tokens

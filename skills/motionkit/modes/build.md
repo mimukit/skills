@@ -38,7 +38,7 @@ Component in the recipe list (press, popover or menu, tooltip, modal, drawer, to
 
 ### 5. Choose the properties
 
-Apply [Property cost](../SKILL.md#property-cost), [Physicality and origin](../SKILL.md#physicality-and-origin), and [Clip-path and transforms](../SKILL.md#clip-path-and-transforms). Name every transitioned property, start an entrance from almost its final state, and anchor a trigger-born surface at its trigger.
+Apply [Property cost](../SKILL.md#property-cost), [Physicality and origin](../SKILL.md#physicality-and-origin), and [Clip-path and transforms](../SKILL.md#clip-path-and-transforms). Name every transitioned property, start an in-place entrance from almost its final state and an edge entrance from the edge, and anchor a trigger-born surface at its trigger.
 
 **Done when** every animated property is listed by name, and each one is `transform`, `opacity`, `clip-path`, or carries a stated reason.
 
@@ -56,7 +56,7 @@ Apply [Interruptibility](../SKILL.md#interruptibility) and [Asymmetric timing](.
 
 ### 8. Ship reduced motion and pointer gating
 
-Apply [Reduced motion and pointer gating](../SKILL.md#reduced-motion-and-pointer-gating) in the same change as the animation, never as a follow-up. Keep the opacity and color that help a person follow the change, and drop the movement.
+Apply [Reduced motion and pointer gating](../SKILL.md#reduced-motion-and-pointer-gating) in the same change as the animation, never as a follow-up. Keep the opacity and color that help a person follow the change, and drop the movement; a status spinner follows the rotation rule there.
 
 **Done when** the diff holds a reduced-motion variant for every moving property and a fine-pointer gate around every hover motion.
 

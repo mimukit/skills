@@ -47,7 +47,7 @@ Curve `--ease-drawer`. Duration 500 ms. Properties `transform`. Reduced motion: 
 .drawer[data-closed] { transform: translateY(100%); }
 ```
 
-A draggable drawer adds [Drag to dismiss](#drag-to-dismiss).
+A side drawer slides on `translateX(100%)` from its own edge. A draggable drawer adds [Drag to dismiss](#drag-to-dismiss).
 
 ## Toast
 
