@@ -12,7 +12,7 @@ Run [Stack detection](../SKILL.md#stack-detection), then list every animation in
 | --- | --- | --- | --- | --- |
 | Tab indicator | Motion `layoutId` | layout (width, left) | route change | `Tabs.tsx:31` |
 
-- **Expand every shorthand into what it really animates.** `transition: all` animates every property that changes on that element, so read the state rules and list them. Tailwind `transition` covers colors, shadow, opacity, transform, and filter; `transition-all` covers everything. Motion `x`, `y`, `scale`, and `rotate` animate CSS variables. Motion `layout` and `layoutId` animate size and position.
+- **Expand every shorthand into what it really animates.** `transition: all` animates every property that changes on that element, so read the state rules and list them. Tailwind `transition` covers colors, shadow, opacity, transform, and filter; `transition-all` covers everything. Motion `x`, `y`, `scale`, and `rotate` run on the main thread before Motion 14.2.0 and on the compositor from 14.2.0. Motion `layout` and `layoutId` animate size and position.
 - **Name the moment it plays**: hover, drag, mount, route change, data load, or hydration.
 
 **Done when** every animation in scope has a row with all five columns filled, and no row reads `all` or a shorthand unexpanded.

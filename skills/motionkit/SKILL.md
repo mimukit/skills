@@ -151,7 +151,7 @@ The browser shows a change by recomputing layout, by repainting, or by compositi
 
 | Cost | Properties |
 | --- | --- |
-| Composite only, cheapest | `transform`, `opacity`; in current Chrome and Firefox also `filter`, `clip-path`, `background-color` |
+| Composite only, cheapest | `transform`, `opacity`; in current Chrome also `filter`, `clip-path`, `background-color`; in current Firefox also `background-color` only (browser source, checked 2026-11-16) |
 | Paint and composite | `box-shadow`, `border-radius`, `color` |
 | Layout, paint, and composite | `width`, `height`, `padding`, `margin`, `top`, `left`, `border-width` |
 
@@ -167,7 +167,7 @@ Animate `transform` and `opacity` by default; anything else needs a reason. Swap
 - **Name each transitioned property.** `transition: all` animates whatever changes next, layout included, so it is always a finding.
 - **Height is the one tolerated layout animation**, for accordions, where no transform gives the same result.
 - **Set the transform on the moving element.** A CSS variable on a parent read by a child's `transform` recomputes styles for every descendant each frame, so the motion slows as content grows.
-- **Motion's `x`, `y`, `scale`, and `rotate` props** run through CSS variables on the main thread. Keep them by default, and switch to a full `transform` string when the motion must stay smooth during load or hydration.
+- **Motion's `x`, `y`, `scale`, and `rotate` props** run on the main thread before Motion 14.2.0. From 14.2.0, Motion hardware-accelerates them, and since 14.7.12 a layout animation that interrupts them moves them back to the main thread (Motion changelog, checked 2026-11-16). On an older Motion, keep them by default, and switch to a full `transform` string when the motion must stay smooth during load or hydration.
 - **Motion during heavy work** (route changes, data loads, hydration) runs as CSS or WAAPI, which the browser can run off the main thread; a `requestAnimationFrame` loop competes with everything else.
 - **Write per-frame values to the element** through a ref or a motion value, because a React re-render per frame alone exceeds the budget.
 - **Keep animated `blur()` under 20 px**; 2 to 5 px softens a change, and heavy blur is slow in Safari.
@@ -178,7 +178,7 @@ Animate `transform` and `opacity` by default; anything else needs a reason. Swap
 - **Translate by percentage** for elements of unknown size. `translateY(100%)` moves an element by its own height, which is how toast and drawer libraries place their surfaces.
 - **`scale()` scales the children**, text and icons included; that suits press feedback and rules it out where text must stay a fixed size.
 - **3D depth without JavaScript** comes from `rotateX()` and `rotateY()` inside a parent with `transform-style: preserve-3d`.
-- **`clip-path: inset(top right bottom left)`** cuts in from each side and animates on the compositor. It serves a reveal (`inset(0 0 100% 0)` to `inset(0)`), a hold-to-confirm overlay (`inset(0 100% 0 0)` to `inset(0)`), a tab whose active color moves (a duplicate layer clipped to the active tab), and a before-and-after slider.
+- **`clip-path: inset(top right bottom left)`** cuts in from each side and animates on the compositor in Chrome; Firefox animates it on the main thread. It serves a reveal (`inset(0 0 100% 0)` to `inset(0)`), a hold-to-confirm overlay (`inset(0 100% 0 0)` to `inset(0)`), a tab whose active color moves (a duplicate layer clipped to the active tab), and a before-and-after slider.
 - **Mask a crossfade that shows two states.** When the overlap still reads as two objects after tuning, add `filter: blur(2px)` during the change so the eye reads one transformation.
 
 ### Gestures and drag
