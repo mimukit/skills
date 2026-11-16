@@ -1,8 +1,6 @@
 # qakit: worst-case data checks
 
-Read this file when the change renders data in a UI and a browser driver is present, or when the user asks to try to break a component. Each section names the qakit step it extends. The root `SKILL.md` stays in force; this file adds to it.
-
-These checks put worst-case values on the screen through the browser driver's request mocking, so nothing is written to the repo.
+Each section names the qakit step it extends. These checks put worst-case values on the screen through the browser driver's request mocking, so nothing is written to the repo.
 
 ## Scope the feature: map the rendered fields
 
