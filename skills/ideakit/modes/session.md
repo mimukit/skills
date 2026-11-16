@@ -24,6 +24,8 @@ Print the single-idea report from [`status`](./status.md) as the first thing the
 
 ### 5. Close the session
 
+**A switch to another mode ends the session.** When the user asks for another mode mid-session, run this step first. Then, in place of this mode's hand-off, say in one line what the save wrote or that it wrote nothing, offer the commit only after a save, and start the other mode.
+
 Compose three writes, then offer them as one save:
 
 1. The dated `NOTES.md` entry, three to six lines minimum, naming a decision, a rejection, or an open question.
@@ -36,4 +38,4 @@ A full session record goes to `topics/<slug>/docs/sessions/` **only when the use
 
 A `parked` or `closed` idea that gets a saved session returns to `active` under a new dated entry.
 
-**Done when** the user has seen the composed entry and answered. On a save, the entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. On a drop, nothing in the folder changed. Then go to [Hand off](../SKILL.md#hand-off).
+**Done when** the user has seen the composed entry and answered. On a save, the entry names a decision, a rejection, or an open question, the `## Open` block matches that entry, and the router row matches both. On a drop, nothing in the folder changed. Then go to [Hand off](../SKILL.md#hand-off), or on a mode switch, start the other mode.

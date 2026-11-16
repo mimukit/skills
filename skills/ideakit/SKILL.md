@@ -29,10 +29,12 @@ Resolve on intent, not on phrasing.
 - Thinking about one idea → `session`.
 - Where ideas stand, or what to think about next → `status`.
 - An external fact the idea needs (a tool, a library, a market, a cost) → `research`.
-- Whether the idea is worth building or would sell → `validate`.
+- Whether the idea is worth building or would sell, including "would anyone pay for this" → `validate`.
 - A verdict: drop, build, or park → `close`.
 
 **An ask that wants a picture or wants to think, but names no idea, is `status` or `session`, never a guess between them.** `status` reports every idea; `session` asks which one to open. When the ask wants a picture, run `status`. When the ask wants to think, run `session` and ask for the idea.
+
+**An explicit phrase in the list above beats every tie-break below.** "capture this" runs `capture` even when the text reads as a loose thought and never says "idea".
 
 When the ask is ambiguous between `capture` and `session`, run `capture` first.
 
