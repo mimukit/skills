@@ -59,11 +59,11 @@ The new branch carries the working tree with it, out-of-scope changes included, 
 
 This route reads and prints. It leaves the index, the refs, and the remote untouched.
 
-1. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. The read limits in [Read the state](#1-read-the-state) apply.
+1. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. An untracked path has no diff against `HEAD`, so read it with `git diff --no-index /dev/null <path>` or read the file itself. `git diff --no-index` exits 1 when the file has content, so keep it out of an `&&` chain. The read limits in [Read the state](#1-read-the-state) apply.
 2. Apply [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message). Write one message for the subject. When the subject plainly spans several concerns, write one message per group and name each group's paths.
 3. Print each message in a code block.
 
-The only git commands on this route are reads: `status`, `diff`, `log`, and `rev-parse`.
+The only git commands on this route are reads: `status`, `diff` (including `diff --no-index`), `log`, and `rev-parse`.
 
 **Done when** every message is printed. Hand off in one line: say nothing changed, and name the next move, which is to say "commit" to commit with these messages.
 
