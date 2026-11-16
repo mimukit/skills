@@ -1,11 +1,11 @@
 ## Mode: `triage`
 
-Report first, then apply the fixes the user approves, labels included. triage sits outside [the label exemption](../SKILL.md#preflight-every-mode), because every fix it makes is a judgment the report proposes.
+Report first, then apply the fixes the user approves, labels included, because triage sits outside [the label exemption](../SKILL.md#preflight-every-mode).
 
 **A targeted request is its own approval.** "Set the priority on #42", "relabel #42", "rename #42", or "#42 is grilled, mark it ready" names one fix on one issue. Skip the full report, apply that fix with the rules below, and report it.
 
 ### 1. Read the tracker
-Fetch `--state all` (not just open), because a `Blocked by #N` pointing at an already-closed issue is drift that the open-issue list alone cannot see, and an open issue can repeat a closed one. Filter to open for the drift that only concerns open work. The bodies and the linked PRs feed the [cleanup checks](#cleanup-checks).
+Fetch `--state all` (not just open), because a `Blocked by #N` can point at a closed issue and an open issue can repeat a closed one. Filter to open for the drift that only concerns open work. The bodies and the linked PRs feed the [cleanup checks](#cleanup-checks).
 
 ```sh
 gh issue list --state all --limit 200 --json number,title,body,state,stateReason,labels,assignees,updatedAt,createdAt,blockedBy,blocking,closedByPullRequestsReferences
@@ -21,21 +21,21 @@ Produce a **status report**, as a table, surfacing:
 - **Stale block.** An issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency.** A `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
 - **Unmarked.** An open issue carrying no [lifecycle label](../SKILL.md#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `needs-planning` / `ready` / `blocked`).
-- **Unassessed.** An open issue carrying no [priority label](../SKILL.md#priority-labels-every-mode) → offer to rank it. Report this as its own count rather than folding it into *Unmarked*: the two are independent gaps, and a tracker with tidy lifecycle labels and no priorities anywhere is both a common state and an invisible one if the report only ever prints one number. Exclude `wontfix` and `duplicate`, which need no rank.
-- **Double-ranked.** An open issue carrying **more than one** priority label → offer to keep the highest and drop the rest. This is the failure mode the [one-at-a-time rule](../SKILL.md#priority-labels-every-mode) exists to prevent, and it happens whenever a label is set outside this skill (the GitHub UI applies labels additively, with nothing to stop it). Keeping the highest is the safe repair: it can only ever over-rank an issue the user is about to look at anyway, where silently keeping the lowest buries work somebody explicitly escalated.
-- **Stale `critical`.** An issue labeled `critical` that hasn't been updated in weeks → offer to demote it. `critical` means *preempt what's in progress*, so an untouched one is self-refuting: nobody dropped anything for it, which is the tracker saying out loud that it isn't critical. Left alone it's worse than no label at all, because it outranks everything downstream forever and trains the user to ignore the level that's supposed to be unignorable. Scale "weeks" to the repo's pace, the same way the *Stale* check does.
+- **Unassessed.** An open issue carrying no [priority label](../SKILL.md#priority-labels-every-mode) → offer to rank it. Report this as its own count, separate from *Unmarked*. Exclude `wontfix` and `duplicate`, which need no rank.
+- **Double-ranked.** An open issue carrying **more than one** priority label → offer to keep the highest and drop the rest, per the [one-at-a-time rule](../SKILL.md#priority-labels-every-mode).
+- **Stale `critical`.** An issue labeled `critical` that hasn't been updated in weeks → offer to demote it. Scale "weeks" to the repo's pace, the same way the *Stale* check does.
 - **Grilled `needs-planning`.** An issue labeled `needs-planning` whose body or linked plan carries a `Grilled: YYYY-MM-DD` stamp → offer [the promotion](#promote-needs-planning-to-ready).
-- **Ungrilled `ready`.** An issue labeled `ready` whose decisions clearly aren't settled (open questions in the body, no acceptance criteria) → it was promoted too early; offer to move it back to `needs-planning` so unattended workers skip it until a human grills it.
-- **Missing labels**, relative to the [lifecycle map](../SKILL.md#lifecycle-labels-every-mode) (or the repo's own scheme, if it predates it). When the map's labels aren't provisioned, say so and point at **repokit** rather than creating them.
+- **Ungrilled `ready`.** An issue labeled `ready` whose decisions clearly aren't settled (open questions in the body, no acceptance criteria) → it was promoted too early; offer to move it back to `needs-planning`.
+- **Missing labels**, relative to the [lifecycle map](../SKILL.md#lifecycle-labels-every-mode) (or the repo's own scheme, if it predates it). When the map's labels aren't provisioned, point at **repokit**.
 - **Status cross-checks.** Issues whose linked PR merged but that are still open (hand off to `sync` for the actual close).
-- **Off-convention title.** An **open** issue whose title does not match the [title convention](../SKILL.md#title-convention-every-issue-this-skill-creates). Detect with a regex over the fetched titles, e.g. `^(feat|fix|hotfix|docs|refactor|perf|test|build|ci|style|chore)\([a-z0-9./-]+\): \S` (allow leading uppercase only for a proper noun or acronym after the colon). **First confirm the repo actually uses the convention:** when most existing titles already ignore the shape, the repo has its own style, so say so, skip this check, and follow the repo per [Notes](../SKILL.md#notes). For each real miss, derive the `type` from what the issue delivers, not the files it touches, and the `(scope)` from the package or directory the body names; fall back to `repo` for genuinely global work.
+- **Off-convention title.** An **open** issue whose title does not match the [title convention](../SKILL.md#title-convention-every-issue-this-skill-creates). Detect with a regex over the fetched titles, e.g. `^(feat|fix|hotfix|docs|refactor|perf|test|build|ci|style|chore)\([a-z0-9./-]+\): \S` (allow leading uppercase only for a proper noun or acronym after the colon). **First confirm the repo actually uses the convention:** when most existing titles already ignore the shape, the repo has its own style, so say so, skip this check, and follow the repo's style. For each real miss, derive the `type` from what the issue delivers, not the files it touches, and the `(scope)` from the package or directory the body names; fall back to `repo` for genuinely global work.
 
 #### Cleanup checks
 
 These three find open issues that can close with no change to the code. Two rules bind all three:
 
 - **Started work keeps its own path.** An issue labeled `in-progress` or `in-review` is never an **Already done** or **Obsolete** row; name it for `sync` instead.
-- **Close, never delete.** Every cleanup row ends in `gh issue close`. Triage never runs `gh issue delete`, which cannot be undone and takes the issue's history with it.
+- **Close, never delete.** Every cleanup row ends in `gh issue close`. Triage never runs `gh issue delete`, which cannot be undone.
 
 The checks:
 
@@ -56,17 +56,15 @@ gh issue comment <n> --body-file <decision>
 
 Closes follow [Apply the cleanup closes](#apply-the-cleanup-closes).
 
-**Ranking an unassessed backlog is a batch, so propose it as one table**, with issue, title, and a proposed priority per row, rather than as one question per issue. Priority is comparative by nature: the user is deciding what beats what, and a table is the only shape that shows them the comparison they're actually making. Asked one at a time, twenty issues become twenty context-free judgments and every one of them comes back `medium`, which is the same as not ranking at all.
+**Ranking an unassessed backlog is a batch, so propose it as one table**, with issue, title, and a proposed priority per row, rather than as one question per issue.
 
-**Propose a distribution, not a wall of `high`.** A backlog where most things are `high` has no priority information in it: the label stops discriminating and every consumer falls back to whatever tiebreak sits underneath it. Aim for a shape where `critical` is empty or nearly so, `high` is a handful, and the long tail is `medium` and `low`. When your own proposal comes out top-heavy, that's a signal to re-read the issues rather than to ship the table.
+**Propose a distribution, not a wall of `high`.** Aim for a shape where `critical` is empty or nearly so, `high` is a handful, and the long tail is `medium` and `low`. When your proposal comes out top-heavy, re-read the issues before you print the table.
 
-**Title repairs are a previewed batch.** A title edit rewrites what every list, notification, and PR link shows. Propose all renames as one `old -> new` table, get one OK for the whole batch, then apply each with `gh issue edit <n> --title "<new>"`. A row the user rewrites or strikes is applied as corrected or skipped.
-
-**The table is the approval.** Ranking is a claim the user owns, so the table is how they see and correct the ranking you chose before it lands. Re-read the issues before you print a top-heavy table rather than after.
+**Title repairs are a previewed batch.** Propose all renames as one `old -> new` table, get one OK for the whole batch, then apply each with `gh issue edit <n> --title "<new>"`. A row the user rewrites or strikes is applied as corrected or skipped.
 
 #### Apply the cleanup closes
 
-**A close wins over every other row for its issue.** Drop that issue's relabel, rank, and rename rows from the batch, because they fix an issue that is about to close. Strip any active status label in the same action as each close, as `sync` does.
+**A close wins over every other row for its issue.** Drop that issue's relabel, rank, and rename rows from the batch. Strip any active status label in the same action as each close, as `sync` does.
 
 - **Already done.** Close as completed, with the citation on the issue:
   ```sh
@@ -87,7 +85,7 @@ Closes follow [Apply the cleanup closes](#apply-the-cleanup-closes).
 
 #### Promote `needs-planning` to `ready`
 
-This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled or that afkkit escalated. It runs **only on the user's word**, because the `ready` label carries a human judgment that no agent can award.
+This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled or that afkkit escalated. It runs **only on the user's word**, because no agent can award `ready`.
 
 1. **Look for the grill.** Read the issue body for a `Grilled: YYYY-MM-DD` stamp, then any plan file the body links. Report the stamp and its source when you find one.
 2. **Ask when there is no stamp.** Say that no `Grilled:` stamp exists, and ask whether a grill settled the decisions. A "yes" is the user's word; a "no" routes to **grillkit**, and the issue keeps `needs-planning`.
@@ -99,8 +97,8 @@ This sub-step is done when the issue carries the label the rule computes, or kee
 This step is done when every open issue has exactly one lifecycle label and, except `wontfix` and `duplicate`, exactly one priority label, or is named in the hand-off as a declined or unresolved row. An issue that an approved close shut leaves this count, and every approved cleanup row has run.
 
 ### 4. Hand off
-**What changed.** Report what the report found, and which fixes you applied versus left alone. A flagged item the user declined is worth naming; it stays drift until someone decides otherwise. Count the closes by kind (completed, duplicate, not planned, stale), and name each narrowed issue and each merge's survivor.
+**What changed.** Report what the report found, and which fixes you applied versus left alone. Name each flagged item the user declined. Count the closes by kind (completed, duplicate, not planned, stale), and name each narrowed issue and each merge's survivor.
 
-**Where it landed.** Give the tracker's state after the pass, per namespace: how many open issues now carry a lifecycle label and how many are still unmarked, and how many carry a priority and how many are still unassessed. Two numbers, because a pass can genuinely fix one and leave the other untouched.
+**Where it landed.** Give the tracker's state after the pass, per namespace: how many open issues now carry a lifecycle label and how many are still unmarked, and how many carry a priority and how many are still unassessed.
 
-**Next.** triage only classifies; the fixes it can't make itself belong to a sibling mode, so route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early, or a `needs-planning` issue with no grill → a human grill session (**grillkit** when installed), then the promotion above; missing labels in either namespace → **repokit**. A label gap a merge surfaced → the promotion above or a rank row; started work a cleanup check skipped → `sync`. If the tracker came back clean, say so and point at the `ready` set, because the next move is `start` on the **highest-priority** one, not more tidying.
+**Next.** Route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early, or a `needs-planning` issue with no grill → a human grill session (**grillkit** when installed), then the promotion above; missing labels in either namespace → **repokit**. A label gap a merge surfaced → the promotion above or a rank row; started work a cleanup check skipped → `sync`. If the tracker came back clean, say so and point at the `ready` set, because the next move is `start` on the **highest-priority** one.
