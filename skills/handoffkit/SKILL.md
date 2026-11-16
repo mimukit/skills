@@ -13,21 +13,18 @@ metadata:
 
 Turn everything learned in this conversation into a single **handoff document** a fresh agent, with none of this context, can read and continue from. The point is transfer, not archival: capture the *state and reasoning* that only lives in this session, and **point** at the artifacts that already exist (specs, PRs, commits, diffs, issues) rather than copying them. By default, save it as a Markdown file under `docs/handoffs/`; print it as a copy-pastable block only when the user explicitly asks for inline or terminal output, or when no writable filesystem is available.
 
-## When this fires
-
-The user wants continuity across a context boundary: "write a handoff", "hand this off", "summarize for the next session", "pass this to another agent", "compact this before we run out of context". If they give an argument (e.g. "handoff for finishing the migration"), treat it as the **focus of the next session** and slant the whole document toward it. Lead with what that goal needs and prune what it doesn't.
+If the user gives an argument (e.g. "handoff for finishing the migration"), treat it as the **focus of the next session** and slant the whole document toward it. Lead with what that goal needs and prune what it doesn't.
 
 ## What goes in, and what stays out
 
-A handoff earns its keep by carrying what a new agent *can't reconstruct*:
+A handoff carries what a new agent *can't reconstruct*:
 
 - **Include**: the goal and why it matters; what's done vs. still open; the immediate next action; decisions made and the reasoning behind them; dead ends already ruled out; gotchas, constraints, and how to run/verify.
-- **Exclude** (reference instead): anything already written down, meaning specs, ADRs, plans, issues, commit messages, diffs, PR descriptions. Link them by **path or URL**; don't paste their contents. A handoff that restates the diff is noise.
-- **Redact**: API keys, tokens, passwords, and personally identifiable information. Never carry secrets into the document. Refer to them by name ("the staging DB password in `.env`"), not value.
+- **Exclude** (reference instead): anything already written down, meaning specs, ADRs, plans, issues, commit messages, diffs, PR descriptions. Link them by **path or URL**; don't paste their contents.
 
 ## Document shape
 
-Write these sections; drop any that are genuinely empty rather than padding them.
+Write these sections; drop any that are empty rather than padding them.
 
 **Two registers, split by section.** **Current state**, **Next steps** and **How to run / verify** are read by someone who is *doing* the work, so write them in ASD-STE100 Simplified Technical English: one instruction per sentence, procedural sentences 20 words or fewer, active voice, present tense, name the actor, no metaphor or idiom, and one term per thing for the whole document. If the top calls it the *worker*, the bottom does not call it the *job runner*. **Goal** and **Decisions & constraints** are read by someone forming a judgment before they touch anything, so they keep ordinary prose with the reasoning intact; flattening a rejected approach into clipped steps strips the *why* that stops the next agent repeating it.
 
@@ -64,7 +61,7 @@ Capabilities the next session should reach for, e.g. a commit skill to land the 
 
 ## Procedure
 
-1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends. That is the raw material. The step is done when each section of the shape has its material, or is known to be empty.
+1. **Reread the session.** Scan the conversation for the goal, the current state, decisions, and loose ends. The step is done when each section of the shape has its material, or is known to be empty.
 2. **Read the workspace** when the task involves code. Read it from git, never from memory of the session, because the session may predate the last commit:
 
    ```sh
@@ -77,7 +74,7 @@ Capabilities the next session should reach for, e.g. a commit skill to land the 
    `Bash` is declared for these read-only queries only. A failed upstream query means "no upstream", and the document says so. The step is done when every **Workspace** field has a value read in this run.
 3. **Separate carry-over from reference.** For each thing worth mentioning, decide: does it live only in this chat (carry it) or is it already an artifact (link it)? The step is done when every item has one of the two labels.
 4. **Draft the document** in the shape above, slanted toward the focus argument if one was given. The draft is done when every sentence carries something no linked artifact holds, every empty section is dropped, and **Next steps** opens with one action the next agent can run without reading further.
-5. **Redact** any secrets or PII before output. The step is done when no key, token, password, or personal datum appears by value.
+5. **Redact** API keys, tokens, passwords, and personally identifiable information before output. Refer to each by name ("the staging DB password in `.env`"), not value. The step is done when no key, token, password, or personal datum appears by value.
 6. **Save or print it** according to the output rules below, then close per [Hand off](#hand-off).
 
 ## Output
@@ -96,4 +93,4 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **Where it landed.** Give the exact path (`docs/handoffs/NNNN-handoff-<slug>-YYYY-MM-DD.md`), or "printed inline, no file written" when that's what happened.
 
-**Next.** One move. Start a fresh session pointed at this document, beginning with the handoff's own first next-step. Name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session; the whole point of the handoff is that this context can now end.
+**Next.** One move. Start a fresh session pointed at this document, beginning with the handoff's own first next-step. Name that step here so the user doesn't have to open the file to learn it. Nothing else follows in *this* session.
