@@ -26,8 +26,6 @@ Curve `--ease-out`. Duration 200 ms. Properties `opacity`, `transform`. Reduced 
 .popover[data-ending-style] { opacity: 0; transform: scale(0.95); }
 ```
 
-The origin carries the effect: the panel reads as coming out of the control that opened it.
-
 ## Tooltip
 
 Curve `--ease-out`. Duration 125 ms. Properties `opacity`, `transform`. Reduced motion: opacity only.
@@ -49,7 +47,7 @@ Curve `--ease-drawer`. Duration 500 ms. Properties `transform`. Reduced motion: 
 .drawer[data-closed] { transform: translateY(100%); }
 ```
 
-The percentage moves the drawer by its own height whatever its content. A draggable drawer adds [Drag to dismiss](#drag-to-dismiss).
+A draggable drawer adds [Drag to dismiss](#drag-to-dismiss).
 
 ## Toast
 
@@ -62,13 +60,13 @@ Curve `ease`. Duration 400 ms. Properties `opacity`, `transform`. Reduced motion
 }
 ```
 
-A toast can run slower than the UI band on plain `ease`, which suits its personality. Without `@starting-style`, set `data-mounted` in an effect after mount and transition on it. It is a transition, never keyframes, because a second toast can arrive mid-motion. When stacked toasts reflow, tune opacity against height by eye and label it "needs a recording".
+Without `@starting-style`, set `data-mounted` in an effect after mount and transition on it. It is a transition, never keyframes. When stacked toasts reflow, tune opacity against height by eye and label it "needs a recording".
 
 ## Accordion or collapse
 
 Curve `--ease-out`. Duration 200 ms. Properties `height`, `opacity`. Reduced motion: the height changes at once and the opacity keeps its 200 ms fade.
 
-Set `overflow: hidden` and animate to a measured pixel height, from JavaScript or a headless primitive that exposes it, rather than to `auto`. Keep it short: this is the one tolerated layout animation, and it costs layout every frame.
+Set `overflow: hidden` and animate to a measured pixel height, from JavaScript or a headless primitive that exposes it, rather than to `auto`.
 
 ## Stagger a group entrance
 

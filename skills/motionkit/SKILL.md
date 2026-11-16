@@ -10,18 +10,16 @@ metadata:
 
 # motionkit
 
-Motion goes wrong in ways no test catches: an entrance that eases in, a popover that grows from `scale(0)` at its own center, a toast whose keyframes restart when a second toast arrives, a command palette that fades in fifty times a day. Each makes an interface feel slower or cheaper than it is.
-
-motionkit holds one body of rules for those choices, [the motion standard](#the-motion-standard), and three modes that apply it. **uikit** (when installed) decides whether motion fits a screen's design read. motionkit decides how that motion moves.
+motionkit holds one body of rules, [the motion standard](#the-motion-standard), and three modes that apply it. **uikit** (when installed) decides whether motion fits a screen's design read. motionkit decides how that motion moves.
 
 ## When this fires
 
 Route by the verb in the ask, read that mode's file, then follow it. Everything in this root applies to every mode; the mode files do not repeat it.
 
-- **build.** "Animate this dropdown", "add a press effect", "make the drawer slide in", "fix this transition". The verbs "fix", "add", "make", and "animate" run it. It writes code. Mode `build` → read [modes/build.md](modes/build.md), then follow it.
-- **review.** "This animation feels off", "check the motion in this diff", "audit the animations in this app", "what should animate here". "Feels off", "check", "review", "audit", and a motion ask with no verb run it. It writes nothing. A change gets findings and a verdict; a codebase sweep gets a ranked list of fixes and missing motion, with one item crowned. Mode `review` → read [modes/review.md](modes/review.md), then follow it.
-- **perf.** "This transition is janky", "the drawer stutters", "the list drops frames". It names the cause of each dropped frame and writes nothing until the user asks for the fixes. Mode `perf` → read [modes/perf.md](modes/perf.md), then follow it.
-- **lookup.** "What's it called when an element slides in and settles". It needs no file. Follow [The lookup branch](#the-lookup-branch).
+- **build.** The verbs fix, add, make, and animate run it. It writes code. Mode `build` → read [modes/build.md](modes/build.md), then follow it.
+- **review.** Feels off, check, review, audit, and a motion ask with no verb run it. It writes nothing. A change gets findings and a verdict; a codebase sweep gets a ranked list of fixes and missing motion, with one item crowned. Mode `review` → read [modes/review.md](modes/review.md), then follow it.
+- **perf.** Jank, stutter, and dropped frames run it. It names the cause of each dropped frame and writes nothing until the user asks for the fixes. Mode `perf` → read [modes/perf.md](modes/perf.md), then follow it.
+- **lookup.** A request for the name of an effect needs no mode file. Follow [The lookup branch](#the-lookup-branch).
 
 Two phrases cross the verb split. "Make the app feel alive" runs `review` at sweep scale, because it asks where motion belongs. "Fix the jank" runs `perf`, because the cause comes before any code change.
 
@@ -63,7 +61,7 @@ How often a person sees a motion decides whether it animates at all. Ask it firs
 | Occasionally: modals, drawers, toasts, settings | Standard animation |
 | Rarely or once: onboarding, empty states, success, celebration | Room for delight |
 
-**Keyboard-initiated actions get no animation.** The person has already decided, and a transition makes the response feel late. Raycast opens and closes with no animation for this reason.
+**Keyboard-initiated actions get no animation.**
 
 **Function decides too.** Data a person reads or acts on stays still for style; a mouse-tracking effect suits a marketing page, not a chart in a banking app.
 
@@ -71,14 +69,7 @@ When a request fails the gate, the right output is the instant state change and 
 
 ### Purpose
 
-Every motion names one purpose before it gets a curve:
-
-- **Feedback**: the interface confirms the input (press scale, hold-to-confirm fill).
-- **Spatial consistency**: the motion shows where something came from or went.
-- **State indication**: a state change becomes legible (a button morphs, an accordion opens).
-- **Bridging a jarring change**: content that would appear, vanish, or jump gets a transition.
-- **Explanation**: motion shows how a feature works, on marketing and onboarding surfaces only.
-- **Delight**: allowed only at the rare tier of the frequency gate.
+Every motion names one purpose before it gets a curve: feedback, spatial consistency, state indication, bridging a jarring change, explanation (marketing and onboarding only), or delight (rare tier of the frequency gate only).
 
 ### Easing
 
@@ -90,7 +81,7 @@ Every motion names one purpose before it gets a curve:
 | Moving at a constant rate (marquee, progress bar) | `linear` |
 | Anything else | ease-out |
 
-An ease-out curve moves most at the start, so the response begins the moment the user acts; at 200 ms it feels faster than an ease-in of the same length. That is why `ease-in` on UI is a finding: it spends its first frames nearly still, while the user watches most closely.
+`ease-in` on UI is a finding.
 
 The built-in keywords are too gentle to read as deliberate. Use strong curves, as tokens:
 
@@ -112,13 +103,11 @@ For any other curve, take one from a published set such as easing.dev or easings
 | Modals, drawers, sheets | 200-500 ms |
 | Marketing and explanatory motion | longer when the story needs it |
 
-**Keep UI motion under 300 ms.** A dropdown at 180 ms feels more responsive than one at 400 ms, because the user waits on every frame. Elements that travel further sit at the top of their band.
-
-Speed is also perceived. A faster spinner makes the same load feel shorter. In a toolbar, the first tooltip waits and animates, and each later tooltip appears at once while the pointer moves along the bar.
+**Keep UI motion under 300 ms.** Elements that travel further sit at the top of their band. In a toolbar, the first tooltip waits and animates, and each later tooltip appears at once.
 
 ### Springs
 
-A spring settles by physics instead of a fixed duration, and it keeps its velocity when interrupted. Use one for a drag with momentum, a gesture the user can reverse mid-motion, an element that should feel alive (a surface that reshapes to its content), or a decorative value that follows the pointer.
+Use a spring for a drag with momentum, a gesture the user can reverse mid-motion, a surface that reshapes to its content, or a decorative value that follows the pointer.
 
 ```js
 { type: "spring", duration: 0.5, bounce: 0.2 }           // perceptual: easier to tune
@@ -129,9 +118,9 @@ Keep bounce between 0.1 and 0.3, and use none for most product UI; save visible 
 
 ### Physicality and origin
 
-- **Enter from almost there.** Start at `scale(0.9)` to `scale(0.97)` with `opacity: 0`. Nothing real appears out of nothing, so a `scale(0)` start reads as a pop from a point. Flag `scale(0)` and a pure fade with no starting transform.
+- **Enter from almost there.** Start at `scale(0.9)` to `scale(0.97)` with `opacity: 0`. Flag `scale(0)` and a pure fade with no starting transform.
 - **Grow from the trigger.** A popover, dropdown, menu, or tooltip sets `transform-origin` at the element that opened it, through the library's variable when one exists (`var(--transform-origin)` in Base UI). A modal belongs to the viewport, so it stays centered.
-- **Press feedback.** A pressable scales to `0.97` on `:active` (between 0.95 and 0.98) with `transition: transform 160ms` on the ease-out curve. The scale shrinks the label and icon too, which is what makes the press read.
+- **Press feedback.** A pressable scales to `0.97` on `:active` (between 0.95 and 0.98) with `transition: transform 160ms` on the ease-out curve.
 
 ### Interruptibility
 
@@ -147,7 +136,7 @@ For an entrance with no JavaScript, declare the settled state and put the starti
 
 ### Property cost
 
-The browser shows a change by recomputing layout, by repainting, or by compositing layers it already painted, and each step down costs roughly an order of magnitude less. A frame has 16.7 ms at 60 Hz and about 8 ms at 120 Hz.
+A frame has 16.7 ms at 60 Hz and about 8 ms at 120 Hz.
 
 | Cost | Properties |
 | --- | --- |
@@ -155,14 +144,7 @@ The browser shows a change by recomputing layout, by repainting, or by compositi
 | Paint and composite | `box-shadow`, `border-radius`, `color` |
 | Layout, paint, and composite | `width`, `height`, `padding`, `margin`, `top`, `left`, `border-width` |
 
-Animate `transform` and `opacity` by default; anything else needs a reason. Swap down a tier when the visual allows:
-
-| Instead of animating | Animate |
-| --- | --- |
-| `width`, `height`, `padding` | `scale()` |
-| `top`, `left`, `margin` | `translate()` |
-| a `display` or `visibility` swap | `opacity` |
-| `box-shadow` | `filter: drop-shadow()` |
+Animate `transform` and `opacity` by default; anything else needs a reason. Swap down a tier when the visual allows, and swap `box-shadow` for `filter: drop-shadow()`.
 
 - **Name each transitioned property.** `transition: all` animates whatever changes next, layout included, so it is always a finding.
 - **Height is the one tolerated layout animation**, for accordions, where no transform gives the same result.
@@ -175,9 +157,6 @@ Animate `transform` and `opacity` by default; anything else needs a reason. Swap
 
 ### Clip-path and transforms
 
-- **Translate by percentage** for elements of unknown size. `translateY(100%)` moves an element by its own height, which is how toast and drawer libraries place their surfaces.
-- **`scale()` scales the children**, text and icons included; that suits press feedback and rules it out where text must stay a fixed size.
-- **3D depth without JavaScript** comes from `rotateX()` and `rotateY()` inside a parent with `transform-style: preserve-3d`.
 - **`clip-path: inset(top right bottom left)`** cuts in from each side and animates on the compositor in Chrome; Firefox animates it on the main thread. It serves a reveal (`inset(0 0 100% 0)` to `inset(0)`), a hold-to-confirm overlay (`inset(0 100% 0 0)` to `inset(0)`), a tab whose active color moves (a duplicate layer clipped to the active tab), and a before-and-after slider.
 - **Mask a crossfade that shows two states.** When the overlap still reads as two objects after tuning, add `filter: blur(2px)` during the change so the eye reads one transformation.
 
@@ -200,13 +179,13 @@ When a group enters on a surface people see occasionally, offset each item by 30
 
 ### Cohesion with tokens
 
-Motion matches the product's personality: a playful app can carry more bounce and a longer beat; a dashboard stays crisp. A component feels right when its easing, duration, and visual design agree; a toast can run a little slower on plain `ease` and feel elegant for it.
+A playful app can carry more bounce and a longer beat; a dashboard stays crisp. A toast can run slower than the UI band, at 400 ms on plain `ease`.
 
 The product draws from one token set, so a modal and a drawer that do the same job move the same way. A one-off curve or duration that the token set already covers is a finding. Some balances have no formula, such as opacity against height in a list that grows; tune them by eye and label the result "needs a recording".
 
 ## The lookup branch
 
-For "what's it called when an element…", read [vocabulary.md](vocabulary.md) and answer with the effect's name, a one-line definition, and the motion standard heading that governs it. When two names compete, give the more common one first. Any mode that names an effect takes the name from the same file, so one effect has one name across runs.
+For "what's it called when an element…", read [vocabulary.md](vocabulary.md) and answer with the effect's name, a one-line definition, and the motion standard heading that governs it. When two names compete, give the more common one first. An effect the file does not list takes its common name. Any mode that names an effect takes the name from the same file, so one effect has one name across runs.
 
 ### Hand off
 
@@ -214,6 +193,5 @@ The lookup changes no file. Give the name in chat. There is no next step; a late
 
 ## Notes
 
-- **Existing conventions win.** The order is the user's explicit instruction, then the project's documented motion convention (its tokens, a `DESIGN.md`, a component library's built-in motion), then [the motion standard](#the-motion-standard).
 - **No shell or filesystem** (a browser-based agent)? `build` prints the code as a codeblock, and the other modes work from code the user pastes.
-- **Credit.** motionkit is this collection's version of Emil Kowalski's web-motion skills at [emilkowalski/skills](https://github.com/emilkowalski/skills) (MIT), authored from scratch: it carries the facts and values and rewrites every sentence and table. It was read at upstream commit `2d22863` (2026-10-11); a refresh diffs upstream against that commit and runs only when the owner asks.
+- **Credit.** motionkit is this collection's version of Emil Kowalski's web-motion skills at [emilkowalski/skills](https://github.com/emilkowalski/skills) (MIT), authored from scratch and read at upstream commit `2d22863` (2026-10-11).

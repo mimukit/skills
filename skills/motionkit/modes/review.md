@@ -1,8 +1,8 @@
 ## Mode: `review`
 
-**Read-only. Writes nothing, ever.** It judges motion at the scale of its target: a change gets a findings table and a verdict, and a codebase sweep gets a ranked list with one crowned item. A fix is a separate `build` run, so the person who reads the report decides what to change. A uikit audit may route an "extra animation" finding here; this mode judges whether that motion stays, changes, or goes.
+**Read-only. Writes nothing, ever.** It judges motion at the scale of its target: a change gets a findings table and a verdict, and a codebase sweep gets a ranked list with one crowned item. A fix is a separate `build` run. A uikit audit may route an "extra animation" finding here; this mode judges whether that motion stays, changes, or goes.
 
-**Flag by default; approval is earned.** Motion that runs is not motion that passes. A transition that lands late, grows from the wrong point, fires on a high-frequency action, or restarts on a second trigger is a finding even when nothing breaks. **Restraint is the bar for new motion.** Daily use argues for less, so expect to reject most candidates, and treat "the motion here is already right" as a result worth stating.
+**Flag by default.** A transition that lands late, grows from the wrong point, fires on a high-frequency action, or restarts on a second trigger is a finding even when nothing breaks. For new motion, expect to reject most candidates, and state it when the motion is already right.
 
 ### 1. Resolve the target and its scale
 

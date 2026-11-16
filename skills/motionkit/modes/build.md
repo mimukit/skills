@@ -1,12 +1,10 @@
 # Mode `build`: make one animation
 
-Build turns one request for motion into code that passes [the motion standard](../SKILL.md#the-motion-standard) on the first review. Two failures matter, and the first is worse: motion on something that should not move, and the right motion built from the wrong ingredients.
-
 Run the steps in order; the first two decide whether any later step runs. At each choice, make the call, give the reason in one line, and write the code. Offer one answer, never a menu. Every curve, duration, and spring comes from the standard or from the project's tokens, never from memory.
 
 ### 1. Gate the request
 
-Place the motion on a tier of [The frequency gate](../SKILL.md#the-frequency-gate), and apply its keyboard and function rules. A request that fails the gate gets the instant state change, or a static affordance, plus a one-line reason. Zero lines of motion code is a successful run here, so go straight to [Hand off](#9-hand-off).
+Place the motion on a tier of [The frequency gate](../SKILL.md#the-frequency-gate), and apply its keyboard and function rules. A request that fails the gate gets the instant state change, or a static affordance, plus a one-line reason. Then go straight to [Hand off](#9-hand-off).
 
 **Done when** the tier is named and the request either passes or has shipped as an instant change with its reason.
 
