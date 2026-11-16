@@ -12,15 +12,15 @@ metadata:
 
 Rewrite text so it stops sounding like a language model produced it. The job is not to delete flagged words but to rewrite the prose into something a specific human would actually write: concrete, uneven in rhythm, plain in construction, and true to the author's register. Keep every claim the original makes, but not its shape: compress the dull stretches, dwell where a person would, merge or split paragraphs freely. Uniform structure is itself a tell, so mirroring the original's paragraph count preserves the thing you came to remove. When coverage and structure pull against each other, coverage wins. A five-paragraph source may land in four, but it never becomes a summary.
 
-**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user. This is the failure mode the rest of the skill invites: told to replace *nestled in the heart of a vibrant region* with something concrete, the tempting move is to supply the concrete detail yourself. Concreteness comes from the source or it doesn't come at all. Where the source offers nothing specific, cut to the plain version and leave it plain. Opinions, reactions, and mixed feelings are voice rather than fact; add those where the register allows and the author's position stays the same (see [Removing tells is half the job](#removing-tells-is-half-the-job)), but never a factual claim to make the prose feel human. Fiction is the exception, where inventing detail is the job. This governs everything else.
+**Never invent facts.** The rewrite carries no fact, name, number, date, quote, or citation that isn't in the source or supplied by the user. Where the source offers nothing specific, cut to the plain version and leave it plain. Opinions, reactions, and mixed feelings are voice rather than fact; add those where the register allows and the author's position stays the same (see [Removing tells is half the job](#removing-tells-is-half-the-job)). Fiction is the exception, where inventing detail is the job.
 
 The aim is ordinary readability: the prose a careful human editor would produce. This is copy-editing to make writing read well, not a way to disguise machine-written work as human where honesty is required, as in academic submissions, disclosure-bound, or attributed writing. Edit for the reader, not to game any automated check.
 
 ## When this fires
 
-The user hands you text and asks to "humanize" it, "remove the AI tells," "make it sound human," "de-slop this," or "edit out the ChatGPT voice", or asks you to *review* a draft for those tells without rewriting. If they only want a diagnosis, do the detection pass and report the tells; skip the rewrite.
+A review-only ask gets the detection pass and a report of the tells, no rewrite.
 
-**Prose for a person, not instructions for a model.** A `SKILL.md`, an agent instruction file (`CLAUDE.md`, an `AGENTS`-style guide, `.cursorrules`), a system prompt, a rules file: every tell below is a lever in that text. A metaphor noun the document defines and reuses anchors a region of behavior in one token, boldface marks the load-bearing rule among the ones that aren't, and a formula repeated verbatim is what makes the behavior repeat. Say the file is out of scope and name the pass that owns it (**promptkit** for a prompt, **skillkit** for a skill, when either is installed) rather than rewriting it. Documentation, a README, release notes, a PR body, and UI copy stay in scope, because a person reads those.
+**Agent instruction files and prompts are out of scope.** That covers a `SKILL.md`, `CLAUDE.md`, an `AGENTS`-style guide, `.cursorrules`, a system prompt, or a rules file. Say so and name **promptkit** for a prompt or **skillkit** for a skill, when either is installed. Documentation, a README, release notes, a PR body, and UI copy stay in scope, because a person reads those.
 
 **Procedural text takes the subtraction only.** A runbook, QA steps, a handoff, install instructions: run the tells and [the two cut tests](#two-cut-tests), then skip [Removing tells is half the job](#removing-tells-is-half-the-job). Uniform short sentences and a repeated sentence shape are the correct register there, not a tell to remove.
 
@@ -38,9 +38,9 @@ A sample outranks every style rule here, including [the em-dash rule](#the-em-da
 
 Scan for these. They matter in **clusters**, not in isolation. One em dash or one "however" proves nothing; em dashes plus rule-of-three plus "vibrant tapestry" plus a "Conclusion" section is a confession.
 
-**Inflated significance.** Puffing arbitrary facts into history: *stands as a testament to, marks a pivotal moment, reflects a broader, plays a crucial role, setting the stage for, evolving landscape, leaves an indelible mark.* Cut the editorializing; state the fact.
+**Inflated significance.** *Stands as a testament to, marks a pivotal moment, plays a crucial role.* State the fact.
 
-**Promotional tone.** Travel-brochure adjectives: *nestled, in the heart of, vibrant, rich cultural heritage, breathtaking, boasts a, must-visit, renowned, stunning.* Replace with what the source says the thing is or does. When the source offers nothing concrete, the bare fact is the rewrite; do not supply a market, a founding date, or an 18th-century church to fill the hole.
+**Promotional tone.** *Nestled, in the heart of, breathtaking.* Replace with what the source says the thing is or does.
 
 **Superficial -ing tails.** Present-participle clauses bolted on for fake depth: *…, highlighting its importance,* *…, reflecting the community's connection,* *…, ensuring seamless integration.* Delete or fold the real content into a plain clause.
 
@@ -48,7 +48,7 @@ Scan for these. They matter in **clusters**, not in isolation. One em dash or on
 
 **Abstract metaphor nouns.** Words that sound technical and carry less than a plain one would: *substrate, wedge, vector, locus, nexus, vantage, primitive (as a noun), harness, surface (as in "API surface"), bedrock, scaffolding, modality, paradigm, flywheel, north star, endgame, ratchet, gold-plating, evacuate (for moving code).* Reach for the concrete word: *substrate* → *base*, *vector* → *way*, *gold-plating* → *more than the job needs*, *evacuate* → *move out*. The test is use, not the word. A term the text defines and then reuses for the same thing is doing work and stays; a term dropped in once for texture is decoration and goes.
 
-**Elevated synonyms.** *Utilize* → *use*, *facilitate* → *help*, *numerous* → *many*, *prior to* → *before*, *in the event that* → *if*. The fancier synonym is rarely the clearer one.
+**Elevated synonyms.** *Utilize* → *use*, *facilitate* → *help*, *prior to* → *before*.
 
 **Copula avoidance.** Dodging *is/are*: *serves as, functions as, represents, boasts, features.* Prefer "X is Y."
 
@@ -62,9 +62,9 @@ Scan for these. They matter in **clusters**, not in isolation. One em dash or on
 
 **Negative parallelism.** *Not only… but also…,* *It's not just X, it's Y,* and clipped tailing negations tacked on as fragments: *…, no guessing,* *…, no wasted motion.* Write the real clause instead.
 
-**Filler and hedging.** *In order to* → *to*; *due to the fact that* → *because*; *at this point in time* → *now*; *has the ability to* → *can*; *it is important to note that.* Strip the padding. Cut stacked qualifiers: *could potentially possibly* → *may.*
+**Filler and hedging.** *In order to, due to the fact that, it is important to note that.* Strip the padding and cut stacked qualifiers.
 
-**Signposting and chatbot residue.** *Let's dive in, here's what you need to know, without further ado,* and pasted correspondence: *I hope this helps, Certainly!, You're absolutely right!, Would you like me to…, let me know.* Do the thing instead of announcing it; delete the chat framing.
+**Signposting and chatbot residue.** *Let's dive in, I hope this helps, Would you like me to…* Delete the announcement and the chat framing.
 
 **Persuasive-authority and aphorism formulas.** *The real question is, at its core, what really matters, fundamentally;* and *X is the language of Y, X becomes a trap.* These dress an ordinary claim in ceremony. Replace with the concrete claim underneath.
 
@@ -78,7 +78,7 @@ Scan for these. They matter in **clusters**, not in isolation. One em dash or on
 
 The catalog above names patterns. These two judge a sentence that trips none of them and still reads as machine-written. Both are falsifiable, and both end in a deletion or a plain restatement.
 
-**Does it name a mechanism, or a feeling?** *The database stays close at hand,* *SQL you can read,* *types that follow your schema* all describe a sensation the reader is supposed to have. The fix names what actually happens: *`.toSQL()` returns the exact string sent to the database,* *a column rename fails the build.* Ask what the sentence tells the reader to do or know, then write that. If it can't be restated as a concrete instruction, fact, or number, cut it. Where the source supplies no mechanism, cutting is the only move available: never invent one to pass this test.
+**Does it name a mechanism, or a feeling?** *The database stays close at hand,* *SQL you can read,* *types that follow your schema* all describe a sensation the reader is supposed to have. The fix names what actually happens: *`.toSQL()` returns the exact string sent to the database,* *a column rename fails the build.* Ask what the sentence tells the reader to do or know, then write that. If it can't be restated as a concrete instruction, fact, or number, cut it.
 
 **Could it appear unchanged in another project's documentation?** Then it says nothing about this project, and it goes.
 
@@ -86,7 +86,7 @@ The catalog above names patterns. These two judge a sentence that trips none of 
 
 ## The em-dash rule
 
-The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, parentheses, or a restructured sentence. A colon works too, but only where it introduces a list or an example, per the colon tell above; swapping an em dash for a mid-sentence colon trades one tell for another. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done. One exception: a user-supplied writing sample that uses em dashes overrides this rule, and then the mark is matched to the sample's frequency rather than banned.
+The finished rewrite contains **no em dashes (—)** and uses **no en dashes (–) as sentence punctuation**. Replace those marks, in rough order of preference, with a period, comma, parentheses, or a restructured sentence. A colon works too, but only where it introduces a list or an example, per the colon tell above; swapping an em dash for a mid-sentence colon trades one tell for another. Preserve legitimate numeric/date/page ranges by using a hyphen or writing "to" (`1914-1918`, `pp. 10 to 12`). Catch spaced em dashes (` — `) and double hyphens (` -- `) used the same way. Before delivering, search the draft for `—` and `–`; any remaining en dash must be a legitimate range, and any em dash means the rewrite is not done.
 
 ## What not to flag
 
@@ -110,26 +110,22 @@ Prose with every tell stripped out and nothing put back reads as sterile, and st
 - **Say the specific thing.** Not *this is concerning* but the concrete version the source already supports.
 - **Allow mixed feelings.** *Impressive, and a little unsettling* beats *impressive.*
 
-None of this loosens the never-invent-facts rule at the top. Opinion, reaction, and unresolved feeling are voice, and you may add them. A name, number, date, or claim is fact, and you may not.
-
 **An added reaction keeps the author's position where it was.** It does not strengthen, soften, or reverse what the source concludes, and it does not imply an experience the source never reports (*when I tried it*, *in my years running this*). Where the voice you want would move the position, keep the plain version and flag the spot in the hand-off instead. In encyclopedic, technical, legal, or reference text, plain and neutral *is* the human voice, and this section barely applies.
 
 ## Process
 
 1. Read the input and mark every instance of the tells above, then run [the two cut tests](#two-cut-tests) over what survives. Done when every sentence has been checked against the catalog and both tests.
-2. Write a **draft rewrite**: read it aloud in your head, vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage, and give it the voice described in [Removing tells is half the job](#removing-tells-is-half-the-job). Done when every claim in the source appears in the draft.
-3. Ask four questions: *what still makes this read as AI-generated?*, *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?*, *does any added reaction move the author's position or imply an experience the source never reports?*, and *has the de-slopping left it sterile?* Answer all four in a few blunt bullets. A fabrication is a defect even when it reads more human than the vague original it replaced.
+2. Write a **draft rewrite**: vary sentence length, prefer concrete detail and plain constructions (*is/are/has*), hold the original's register and coverage, and give it the voice described in [Removing tells is half the job](#removing-tells-is-half-the-job). Done when every claim in the source appears in the draft.
+3. Ask four questions: *what still makes this read as AI-generated?*, *does the draft state any fact, name, number, date, quote, or citation that isn't in the source?*, *does any added reaction move the author's position or imply an experience the source never reports?*, and *has the de-slopping left it sterile?* Answer all four in a few blunt bullets.
 4. Revise into a **final rewrite** that fixes all four. Done when every audit bullet is fixed and a search for `—` and `–` finds only legitimate ranges.
 
 ## Hand off
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-This is the hand-off for text pasted into the conversation. Called by another skill or agent, none of it applies: deliver the final text alone and stop. Working from a file, deliver the summary and the path, not the rewrite itself.
+**What changed.** Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. List each spot where you kept the plain version because a reaction would have moved the author's position. For a review-only ask, report the located tells with line references instead.
 
-**What changed.** Deliver, in order: the **final rewrite** (the main artifact), a short **"what still read as AI"** note listing the tells you caught when you asked *what still reads as AI-generated*, and a one-line **summary of changes**. Say so plainly if the audit turned up a fabrication you had to pull back out. List each spot where you kept the plain version because a reaction would have moved the author's position. If the user asked only for a review, skip the rewrite and report the located tells with line references instead.
-
-**Where it landed.** When a writable filesystem is available and the source came from a file, write the rewrite back (or beside it), leaving code blocks, frontmatter, tables, data, and link targets untouched, and report the path; otherwise print the rewrite in a fenced code block so it copies cleanly.
+**Where it landed.** For a file source, report the path of the rewrite. With no writable filesystem, print the rewrite in a fenced code block.
 
 **Next.** Name one move and stop. Rewritten a file in a repo? The change is uncommitted prose: offer to commit it (**commitkit** when installed, otherwise a plain commit). Reviewed rather than rewrote? The move is to apply the tells you listed, so re-run humankit on the draft once they've decided which to take. Rewrote text that came from the chat rather than a file? There's nothing to route to; say the draft is theirs to paste back and stop rather than inventing a next step.
 
