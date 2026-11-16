@@ -79,7 +79,7 @@ jobs:
   publish-wiki:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # The wiki page namespace is flat: docs/wiki/how-to/deploy.md and
       # docs/wiki/runbooks/deploy.md would both land on /wiki/deploy. Flatten
@@ -141,6 +141,8 @@ jobs:
           # Flip to false once the first run's output looks right.
           dry-run: true
 ```
+
+The template pins `actions/checkout@v7` and `Andrew-Chen-Wang/github-wiki-action@v5`, the current majors, and v5.0.6 still takes the `preprocess` and `dry-run` inputs (checked 2026-11-16).
 
 Four choices in there are load-bearing, so don't quietly drop them:
 
