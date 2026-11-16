@@ -157,12 +157,12 @@ A page with hreflang links or locale paths adds the `INTL-*` checks in [referenc
 
 ### AI user agents by purpose
 
-As of 2026-10. Vendor names and purposes change, so verify against the vendor pages before quoting a consequence: [OpenAI](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq), [Anthropic](https://privacy.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), [Perplexity](https://docs.perplexity.ai/docs/resources/perplexity-crawlers), [Google](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers).
+Checked 2026-11-16. Vendor names and purposes change, so verify against the vendor pages before quoting a consequence: [OpenAI](https://developers.openai.com/api/docs/bots), [Anthropic](https://privacy.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), [Apple](https://support.apple.com/en-us/119829), [Perplexity](https://docs.perplexity.ai/docs/resources/perplexity-crawlers), [Google](https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers).
 
 | Purpose | Agents | Blocking it means |
 |---------|--------|-------------------|
 | Search discovery | `Googlebot`, `Bingbot`, `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` | Fewer appearances in that engine's results and answers; Bing's index also feeds Copilot and part of ChatGPT search |
-| User-triggered retrieval | `ChatGPT-User`, `Claude-User`, `Perplexity-User` | The assistant cannot open the page when a user asks it to |
+| User-triggered retrieval | `ChatGPT-User`, `Claude-User`, `Perplexity-User` | The assistant may not open the page when a user asks it to; OpenAI and Perplexity say these user-triggered fetches may ignore robots.txt |
 | Model training | `GPTBot`, `ClaudeBot`, `CCBot` | A training opt-out; citations are a separate control |
 | Product control tokens | `Google-Extended`, `Applebot-Extended` | Opts out of Gemini or Apple AI use of content already crawled; no effect on Google Search or Apple search |
 
