@@ -1,12 +1,10 @@
 ## Mode: `audit`
 
-One page closely, plus the site files that govern it. Up to five URLs in one run. The root's guards, environment rules, catalog, and report skeleton all apply.
-
 ### 1. Find the URL and the environment
 
-Take the URL the user gave. With none ("check SEO before I deploy"), read the repository's `dev`, `start`, and `preview` scripts and framework config for the port, probe that port, and ask for the URL only when nothing answers. Classify the environment from the host.
+Take the URL the user gave. With none, read the repository's `dev`, `start`, and `preview` scripts and framework config for the port, probe that port, and ask for the URL only when nothing answers. Classify the environment from the host.
 
-Inside the site's repository, note the framework and where its metadata lives (a layout file, a head component, an SEO plugin config), because every fix maps to a file. In `local`, run the production-origin lookup now and record its source.
+Inside the site's repository, note the framework and where its metadata lives (a layout file, a head component, an SEO plugin config). In `local`, run the production-origin lookup now and record its source.
 
 Done when the URL, the environment, and (in `local`) the production origin with its source are recorded.
 
@@ -70,7 +68,7 @@ Done when the file exists, or prints as a code block with its filename, and each
 
 ### 8. Stop what seokit started
 
-When seokit started a production server, stop it by its process ID now, and confirm its port no longer answers. The same stop runs after any failed step and on interrupt.
+Run the [Server lifecycle](../SKILL.md#server-lifecycle) stop.
 
 Done when no process seokit started is still running, or seokit started none.
 

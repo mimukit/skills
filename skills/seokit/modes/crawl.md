@@ -1,7 +1,5 @@
 ## Mode: `crawl`
 
-A whole site broadly: template bugs and structural gaps one page cannot show. The root's guards, environment rules, catalog, and report skeleton all apply. `crawl` needs Node 18 or later for the extractor; without it, stop and say so.
-
 ### 1. Find the start URL, the environment, and the cap
 
 Take the start URL (the home page when the user named the site or a sitemap). Classify the environment. In `local`, run the production-origin lookup and record its source. State the cap of 100 pages, and accept a higher one when the user asks; at one request per second on a public host, 100 pages take about two minutes.
@@ -10,7 +8,7 @@ Done when the start URL, the environment, the cap, and (in `local`) the producti
 
 ### 2. Run the dev-server gate
 
-`local` only. Run `extract` on the start URL. When it reports `devMarkers`, run the root's [dev-server gate](../SKILL.md#the-dev-server-gate) before discovery: a crawl of a dev server repeats the problem on every URL. Under choice (a), follow the server lifecycle and restart this mode on the production URL.
+`local` only. Run `extract` on the start URL. When it reports `devMarkers`, run the root's [dev-server gate](../SKILL.md#the-dev-server-gate) before discovery. Under choice (a), follow the server lifecycle and restart this mode on the production URL.
 
 Done when no marker was found, or the user picked (a) and the production URL answers, or the user picked (b), or a build failure was reported with its log tail.
 
@@ -24,7 +22,7 @@ Done when every intake item holds a stated or inferred value.
 
 Run `crawl` with `--out` to a file in the system temp directory:
 
-- public host: `crawl <start-url> --cap <n> --out <file>`. It identifies as `seokit/1.0`, obeys the `*` and `seokit` groups in `robots.txt`, and waits one second between requests, because a public host may belong to someone else. Record robots-blocked URLs under `CRAWL-ROBOTS`.
+- public host: `crawl <start-url> --cap <n> --out <file>`. It identifies as `seokit/1.0`, obeys the `*` and `seokit` groups in `robots.txt`, and waits one second between requests. Record robots-blocked URLs under `CRAWL-ROBOTS`.
 - `local`: `crawl <start-url> --local --origin <production-origin> --cap <n> --out <file>`. It sends no delay, maps production-origin sitemap and link URLs to the local server, and reads `robots.txt` without obeying it; a `Disallow` rule feeds the expected-block rule.
 
 Read the summary, then read the file in parts. Never paste the whole file into the conversation.
@@ -51,13 +49,13 @@ Done when every sample has a verdict on every catalog row except the `crawl` row
 
 ### 8. Prioritize, plan, and write the report
 
-Rank with the root's rules, weighting template-level fixes, since one template change clears many URLs. Name the template or file behind each aggregated finding when inside the site's repository. Write the root's long-term plan and the report, with one row per check ID carrying its fail count and example URLs, and the per-URL table in the appendix. Add the delta section when an earlier report for this host exists.
+Rank with the root's rules, weighting template-level fixes. Name the template or file behind each aggregated finding when inside the site's repository. Write the root's long-term plan and the report, with one row per check ID carrying its fail count and example URLs, and the per-URL table in the appendix. Add the delta section when an earlier report for this host exists.
 
 Done when every finding carries severity, effort, engine, and a fix, every plan item cites a finding ID or playbook entry, and the report holds all eight skeleton sections or marks them not applicable.
 
 ### 9. Stop what seokit started
 
-When seokit started a production server, stop it by its process ID now and confirm its port no longer answers. The same stop runs after any failed step and on interrupt. Delete the crawl file from the temp directory.
+Run the [Server lifecycle](../SKILL.md#server-lifecycle) stop. Delete the crawl file from the temp directory.
 
 Done when no process seokit started is still running, or seokit started none.
 

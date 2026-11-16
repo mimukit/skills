@@ -1,10 +1,10 @@
-# Structured data: eligibility and templates
+# Structured data: eligibility
 
-Read this when `DATA-VALID` or `DATA-ENTITY` needs a fix, or a page type has no markup. Markup describes what is visible on the page; a type added only to win a rich result breaks Google's guidelines.
+Read this when `DATA-VALID` or `DATA-ENTITY` needs a fix, or a page type has no markup.
 
-## Eligibility, as of 2026-10
+## Eligibility
 
-Check Google's [search gallery](https://developers.google.com/search/docs/appearance/structured-data/search-gallery) before recommending a type, because the list changes. At this date it holds Article, Breadcrumb, Carousel, Course list, Dataset, Discussion forum, Education Q&A, Employer aggregate rating, Event, Image metadata, Job posting, Local business, Math solver, Movie, Organization, Product, Profile page, Q&A, Recipe, Review snippet, Software app, Speakable, Subscription and paywalled content, Vacation rental, Video, Book actions, Fact check, Loyalty program, and the Merchant listing, return policy, and shipping policy types.
+Fetch Google's [search gallery](https://developers.google.com/search/docs/appearance/structured-data/search-gallery) before recommending a type; the list changes.
 
 Gone from the gallery, so never promised as a Google rich result:
 
@@ -12,7 +12,7 @@ Gone from the gallery, so never promised as a Google rich result:
 - **HowTo.** Rich results removed in 2023.
 - **Sitelinks search box.** Removed in late 2024; `WebSite` with `SearchAction` earns nothing in Google now.
 
-Google's AI features need no special markup. Structured data helps every engine identify the entity, the author, and the dates; it is not a ticket into AI answers.
+Google's AI features need no special markup, so never sell structured data as a way into AI answers.
 
 ## What to check per type
 
@@ -27,89 +27,6 @@ Google's AI features need no special markup. Structured data helps every engine 
 | `Person` (profile, author) | inside `ProfilePage` for that feature | `jobTitle`, `sameAs`, `knowsAbout` |
 
 Use absolute URLs and stable `@id` values (`https://example.com/#organization`) so pages can reference one entity instead of repeating it.
-
-## Templates
-
-One `@graph` per page keeps the entities linked. Replace every value with what the page shows.
-
-```json
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": "https://example.com/#organization",
-      "name": "Example",
-      "url": "https://example.com/",
-      "logo": "https://example.com/logo.png",
-      "sameAs": ["https://www.linkedin.com/company/example", "https://github.com/example"]
-    },
-    {
-      "@type": "WebSite",
-      "@id": "https://example.com/#website",
-      "url": "https://example.com/",
-      "name": "Example",
-      "publisher": { "@id": "https://example.com/#organization" }
-    },
-    {
-      "@type": "BlogPosting",
-      "headline": "How to choose a widget",
-      "image": "https://example.com/images/widget.jpg",
-      "datePublished": "2026-09-01",
-      "dateModified": "2026-09-20",
-      "author": { "@type": "Person", "name": "Jane Doe", "url": "https://example.com/team/jane" },
-      "publisher": { "@id": "https://example.com/#organization" },
-      "mainEntityOfPage": "https://example.com/blog/choose-a-widget"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Blog", "item": "https://example.com/blog/" },
-        { "@type": "ListItem", "position": 2, "name": "How to choose a widget", "item": "https://example.com/blog/choose-a-widget" }
-      ]
-    }
-  ]
-}
-```
-
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "Blue Widget",
-  "image": "https://example.com/images/blue-widget.jpg",
-  "description": "Chrome-finish widget with a side control panel.",
-  "sku": "BW-100",
-  "brand": { "@type": "Brand", "name": "Example" },
-  "offers": {
-    "@type": "Offer",
-    "url": "https://example.com/products/blue-widget",
-    "price": "49.00",
-    "priceCurrency": "USD",
-    "availability": "https://schema.org/InStock"
-  }
-}
-```
-
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "Example Plumbing",
-  "url": "https://example.com/",
-  "telephone": "+1-555-010-0000",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "1 Main St",
-    "addressLocality": "Springfield",
-    "postalCode": "00000",
-    "addressCountry": "US"
-  },
-  "openingHoursSpecification": [
-    { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "08:00", "closes": "18:00" }
-  ]
-}
-```
 
 ## Validating
 
