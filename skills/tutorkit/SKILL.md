@@ -80,7 +80,7 @@ Status is `active` or `learned`. Three routing outcomes, all cheap:
 
 **Both files are caches.** Repair runs only where a mode already has the topic folder open:
 
-- **Every mode that opens a topic folder rewrites that topic's row in both files**, from the folder's own `CUES.md` and `MISSION.md`, whether or not the row looked wrong.
+- **Every mode that opens a topic folder rewrites that topic's row in both files**, from the folder's own `CUES.md` and `MISSION.md`, whether or not the row looked wrong. The rewrite carries the `Status` cell over, or writes `active` on a new row. The one exception is `exam`, which sets the cell from its two gates.
 - **A slug with a folder on disk but no `INDEX.md` row** routes as if the row existed. `lesson`, `drill`, or `exam` on that slug opens the folder and writes the row.
 - **`status` opens no topic folder, so it repairs nothing.** It names each folder missing from the routers and each row with a missing or old-format field, and says to run `lesson` on that slug.
 

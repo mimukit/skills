@@ -2,7 +2,7 @@
 
 Measures and never teaches. Ask, grade, record, refuse to explain.
 
-`exam` runs twice per track, and its verdict decides where lesson 1 starts or whether the track closes. Never grade a cue in `exam`, and never write a status in `drill`.
+`exam` runs at both ends of a track, and its verdict decides where lesson 1 starts or whether the track closes. Never grade a cue in `exam`, and never write `learned` in `drill`.
 
 ### At track start, placement
 
@@ -18,4 +18,4 @@ Pose a problem the user has not seen, which needs the concept without naming it.
 
 **A `learned` topic keeps its cues.** They keep coming due, and the fill order in `drill` stops them displacing a live track.
 
-`exam` writes `PROGRESS.md` at both ends and touches `INDEX.md` only to close a track. It never writes `MISSION.md`. Then go to [Hand off](../SKILL.md#hand-off).
+`exam` writes `PROGRESS.md` at both ends and rewrites its topic's row in `INDEX.md` and `REVIEW.md` on every run, like every mode that opens a topic folder. It never writes `MISSION.md`. Then go to [Hand off](../SKILL.md#hand-off).
