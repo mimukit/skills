@@ -12,7 +12,7 @@ metadata:
 
 ## Preview and authorization
 
-prkit previews each mutation outside its [label exemption](#8-advance-the-linked-issue) and waits for an OK: creating or editing the PR, and committing a handed-in path. A sync and its force-push run without a preview, by gitkit's sync rule. **A caller that carries the user's recorded authorization satisfies the preview for the actions that authorization names.** afkkit is the case in point: the user's unattended request authorizes the commits on the issue's own branch, the push of that branch, and the PR, so prkit runs the handed-in QA-plan commit and `gh pr create` without a prompt, and names the authorization in the hand-off. An action outside the named scope still previews, and an unattended caller escalates it rather than answering for the user: a rebase of a published branch with its `--force-with-lease`, a push to another branch, a merge. prkit never infers an authorization the caller did not state.
+prkit previews each mutation outside its [label exemption](#8-advance-the-linked-issue) and waits for an OK: creating or editing the PR, and committing a handed-in path. A sync and its `--force-with-lease` push run without a preview, by gitkit's sync rule, with one exception for an unattended caller below. **A caller that carries the user's recorded authorization satisfies the preview for the actions that authorization names.** afkkit is the case in point: the user's unattended request authorizes the commits on the issue's own branch, the plain push of that branch, and the PR, so prkit runs the handed-in QA-plan commit and `gh pr create` without a prompt, and names the authorization in the hand-off. An action outside the named scope still previews, and an unattended caller escalates it rather than answering for the user: a push to another branch, a merge, and a rebase of a published branch with its `--force-with-lease`. That last one is the exception: an attended sync runs it straight through, but an unattended caller whose authorization leaves it out escalates it. prkit never infers an authorization the caller did not state.
 
 ## Draft-only route
 
@@ -57,8 +57,8 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 ```
 
 - **Behind by zero**: nothing to do, so go to [Push the branch](#4-push-the-branch).
-- **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**, and it resolves to **rebase** (`git rebase origin/<base>`). **Inside a stack, the rebase is cascading** (`gh stack rebase --upstack`), because replaying this layer moves every layer above it; hand that to gitkit rather than rebasing the one branch. The sync runs without an OK, published branch or not: gitkit stops to ask only on a problem, such as a conflict that needs a ruling or a rejected lease. Without gitkit, rebase and push with `--force-with-lease`, and stop on any of those problems.
-- **Rebase conflicts**: if the rebase stops on a conflict, **resolve it yourself**; the user never edits a conflicted file. List the conflicted files (`git diff --name-only --diff-filter=U`). gitkit owns the conflict rule: it writes mechanical resolutions without asking and asks the user to rule on any resolution that is a decision, then writes the chosen one. Without gitkit, resolve additive conflicts directly and ask before any resolution that drops either side's code. Then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user declines the sync, say the PR may show conflicts and proceed only if they confirm.
+- **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**, and it resolves to **rebase** (`git rebase origin/<base>`). **Inside a stack, the rebase is cascading** (`gh stack rebase --upstack`), because replaying this layer moves every layer above it; hand that to gitkit rather than rebasing the one branch. The sync runs without an OK, published branch or not, except the unattended case in [Preview and authorization](#preview-and-authorization): gitkit stops to ask only on a problem, such as a conflict that needs a ruling or a rejected lease. Without gitkit, rebase and push with `--force-with-lease`, and stop on any of those problems.
+- **Rebase conflicts**: if the rebase stops on a conflict, **resolve it yourself**; the user never edits a conflicted file. List the conflicted files (`git diff --name-only --diff-filter=U`). gitkit owns the conflict rule: it writes mechanical resolutions without asking and asks the user to rule on any resolution that is a decision, then writes the chosen one. Without gitkit, resolve additive conflicts directly and ask before any resolution that drops either side's code. Then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user says not to sync, say the PR may show conflicts and proceed only if they confirm.
 
 After a rebase with resolved conflicts, re-read only the resolved files (`git diff origin/<base>...HEAD -- <paths>`); after a clean rebase, keep the title and body you derived.
 
@@ -82,7 +82,7 @@ Push the branch:
 git push -u origin HEAD
 ```
 
-If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-branch)) and the remote rejects a normal push, use `git push --force-with-lease` (never bare `--force`). A rejected lease means somebody else pushed: fetch, show their commits, and ask before any retry.
+If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-branch)) and the remote rejects a normal push, use `git push --force-with-lease`, not bare `--force`, which needs an explicit ask. A rejected lease means somebody else pushed: fetch, show their commits, and ask before any retry.
 
 ### 5. Write the title and body
 - **Title**: one line, imperative, in the repo's commit style (match `git log`, often Conventional Commits like `feat(auth): add SSO login`). No trailing period.
@@ -191,6 +191,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 ## Notes
 
-- **Never** merge, close, or force-push without an explicit ask. Creating or editing a PR is fine; `gh pr merge` is not, unless requested.
+- **Never** merge or close without an explicit ask. Creating or editing a PR is fine; `gh pr merge` is not, unless requested.
+- **Force-push follows gitkit's sync rule.** The `--force-with-lease` push of this branch after its own sync rebase needs no ask, except the unattended case in [Preview and authorization](#preview-and-authorization). A bare `--force`, or a force-push for any other reason, needs an explicit ask.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.
