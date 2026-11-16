@@ -10,70 +10,56 @@ metadata:
 
 # reviewkit
 
-Review code an AI agent just wrote, for the failure modes that are specific to AI-generated changes. A generic "find bugs" pass misses the three things agents get wrong most: writing code that is *correct in a vacuum but wrong for this repo*, padding a change with *plausible-looking cruft nobody asked for*, and quietly *leaving part of the job undone*. reviewkit runs those checks first, then a correctness pass, and reports findings ranked by severity. It does not fix anything. Fixing is the human's call, or a handoff to an implement-style skill.
-
-This is a **reviewer, not an editor.** It reads the change and judges it; it never edits source. Its one optional artifact is a review report the user can save to feed a PR description.
+Review agent-written code in four passes; report findings, and never edit source, commit, or push. A correctness-only request runs only the [Correctness](#5-pass-4-correctness) pass.
 
 ## Review with fresh eyes
 
-**The reviewer should not be the agent that wrote the change.** reviewkit usually fires in the same session that just produced the code, which means the reviewer arrives carrying every rationalization it made while writing: the shortcut it already justified, the edge case it already decided didn't matter. That is the single biggest way this review turns into a rubber stamp.
-
-So when you have a subagent tool, **delegate the passes to a fresh subagent**: hand it the diff, the stated intent, and the passes below, and let it report back with no memory of the implementation session. Review its findings, then present them. When no subagent tool is available, run the passes yourself but say plainly in the report that this was a **self-review**, because the user needs to know how much weight the verdict carries. Never quietly self-review a change you just wrote.
-
-The one thing that survives either mode: judge the code that is actually on disk, not the code you remember intending to write.
-
-## When this fires
-
-After an agent (or the user) finishes a chunk of work and wants it judged before it ships: "review this", "review my changes", "review the diff", "check this code", "self-review before I commit", "/reviewkit", or a bare "does this look right" after a coding session. It reviews **uncommitted work or a branch's diff**, not a line-by-line audit of the whole codebase.
-
-It is distinct from a generic correctness linter: reviewkit leads with **convention-fit** and **agent-slop** passes that a bug-focused review skips. If the user only wants correctness bugs, say so and run just that pass; don't pad the report with the other two.
+**Delegate the passes to a fresh subagent** with the diff, the stated intent, and the passes below; review its findings, then present them. When no subagent tool is available, run the passes yourself and label the report a **self-review**. Either way, judge the code on disk, not the code you remember intending to write.
 
 ## Procedure
 
 ### 1. Pick the review target
 
-Ground the review in an actual diff, because reviewing from memory is worthless. Detect the target from git state, then state your pick and let the user override:
+Ground the review in an actual diff. Detect the target from git state, then state your pick and let the user override:
 
-- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files**, so a brand-new file an agent never staged is invisible to it, and a whole new module silently escaping review is the worst possible miss. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change: **every untracked source file, no exceptions**. The only untracked files you may skip are ones nobody wrote: lockfiles, build output, vendored dependencies, compiled assets, snapshots. Note them as generated, spot-check that they're actually generated rather than hand-edited, and move on.
-- **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution. Don't assume `main`, and don't re-derive it here; a wrong base silently yields an empty diff or one containing half the repo's history, and both look like a real review target. Without gitkit, take the remote default branch from `git symbolic-ref --short refs/remotes/origin/HEAD` (strip the `origin/` prefix), else the first of `main` or `master` that `git rev-parse --verify` resolves, and say in the target line which fallback you used. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
+- **Uncommitted changes present** (`git status --porcelain` is non-empty) → review the working tree: `git diff HEAD` (include staged with `git diff --staged`). This is the default after a fresh coding session. **`git diff` does not show untracked files**, so a brand-new file an agent never staged is invisible to it. List them with `git status --porcelain` (the `??` entries) or `git ls-files --others --exclude-standard`, and `Read` each one in full as part of the change: **every untracked source file, no exceptions**. The only untracked files you may skip are ones nobody wrote: lockfiles, build output, vendored dependencies, compiled assets, snapshots. Note them as generated, spot-check that they're actually generated rather than hand-edited, and move on.
+- **Clean tree, branch ahead of its base** → review the branch diff. **Get the base branch from gitkit**, which owns that resolution; a wrong base yields an empty diff or half the repo's history, and both look like a real review target. Without gitkit, take the remote default branch from `git symbolic-ref --short refs/remotes/origin/HEAD` (strip the `origin/` prefix), else the first of `main` or `master` that `git rev-parse --verify` resolves, and say in the target line which fallback you used. Then run `git diff <base>...HEAD` and `git log <base>..HEAD --oneline` for intent.
 - **If the invocation names a target** ("review the branch", "review my staged changes") → honor it directly, skip detection.
 
 Say which target you chose and why in one line, then proceed. If neither applies (clean tree, no branch ahead), ask what to review rather than guessing.
 
-**Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the change is actually non-empty: the tracked diff plus the untracked files you listed. A change made only of new untracked files has an empty `git diff` and is still a full review target. If the ref doesn't resolve, or both the diff and the untracked list are empty, stop and say so, because reviewing a bad or empty range produces fabricated findings, not a review.
+**Validate before reviewing.** Confirm the target resolves (`git rev-parse <ref>` for a named base) and the change is actually non-empty: the tracked diff plus the untracked files you listed. A change made only of new untracked files has an empty `git diff` and is still a full review target. If the ref doesn't resolve, or both the diff and the untracked list are empty, stop and say so.
 
 Read the diff in full before judging anything, **once**. The four passes below are four questions asked of one reading, not four readings; don't re-run `git diff` at the top of each pass. If a pass needs a detail you didn't retain, pull that hunk (`git diff HEAD -- <path>`), not the whole diff again. The same applies to the neighboring code you compare against in [Convention-fit](#2-pass-1-convention-fit): read the sibling that establishes the pattern, not every file in the directory.
 
 This step is done when the target line is stated, the ref resolves, every changed file and every non-generated untracked file has been read, and the stated intent is written down (or recorded as absent).
 
-Note the change's *stated intent*, from the commit messages, the branch name, the plan or issue it references, or the user's own words, because half the review is asking "did it do what was asked, all of it, and *only* that?" Capture that intent concretely: it's the spec both [Requirement-completeness](#4-pass-3-requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2-agent-slop-signatures) measure against.
+Note the change's *stated intent*, from the commit messages, the branch name, the plan or issue it references, or the user's own words. Capture it concretely: it's the spec both [Requirement-completeness](#4-pass-3-requirement-completeness) and the scope-creep check in [Agent-slop signatures](#3-pass-2-agent-slop-signatures) measure against.
 
-**Ground rules for every pass.** Apply these throughout; they are what separate a real review from noise:
+**Ground rules for every pass:**
 
-- **Skip what tooling already enforces.** Don't report formatting, import order, or lint rules a formatter/linter/CI catches on its own. The whole value of this review is what machines *miss*. Spend it there.
-- **Every finding needs evidence.** Quote the offending hunk and name what it violates: a specific line of a repo convention doc, the stated intent, a real API signature, or the concrete failing input. A finding you can't back with a quote is a guess; drop it. This is the primary guard against inventing findings.
-- **Hold each finding to a confidence bar before it ships.** Ask what would have to be true for this to be wrong, and report it only when the answer is *confirmed by the code, a reproduction, or a test run*, or *strongly supported with no credible innocent explanation*. "Probably a problem, but I couldn't check the runtime behavior" clears the bar only if you say which part you couldn't check. Anything weaker is not a finding. It is an **unverified area**, and it belongs in the coverage note in [Report the findings](#6-report-the-findings) rather than in the findings list. Downgrading a hunch to "unverified" is a real result; dressing it up as a bug wastes the reader's time and burns their trust in the whole report.
-- **Track what you could not judge.** As you go, keep a running list of areas the review didn't genuinely cover: a concurrency path you can't reason about statically, a security boundary whose auth model lives outside the diff, generated files you spot-checked rather than read, a dependency whose real API you couldn't verify offline. Silence reads as "clean," so an unexamined area must be named, not omitted.
+- **Skip what tooling already enforces.** Don't report formatting, import order, or lint rules a formatter/linter/CI catches on its own.
+- **Every finding needs evidence.** Quote the offending hunk and name what it violates: a specific line of a repo convention doc, the stated intent, a real API signature, or the concrete failing input. A finding you can't back with a quote is a guess; drop it.
+- **Hold each finding to a confidence bar before it ships.** Ask what would have to be true for this to be wrong, and report it only when the answer is *confirmed by the code, a reproduction, or a test run*, or *strongly supported with no credible innocent explanation*. "Probably a problem, but I couldn't check the runtime behavior" clears the bar only if you say which part you couldn't check. Anything weaker is not a finding. It is an **unverified area**, and it belongs in the coverage note in [Report the findings](#6-report-the-findings) rather than in the findings list.
+- **Track what you could not judge.** As you go, keep a running list of areas the review didn't cover: a concurrency path you can't reason about statically, a security boundary whose auth model lives outside the diff, generated files you spot-checked rather than read, a dependency whose real API you couldn't verify offline. Silence reads as "clean," so name each unexamined area.
 
 ### 2. Pass 1: Convention-fit
 
-Does the change look like the rest of *this* repository wrote it? Agents default to generically-correct code that ignores local idiom. For each changed file, compare against its neighbors, because the surrounding code is the spec:
+Does the change look like the rest of *this* repository wrote it? For each changed file, compare against its neighbors:
 
-- **Naming & structure.** Do new names, file layout, and module boundaries match sibling files? An agent that names a helper `getUserData` in a repo full of `fetch_user` stands out.
+- **Naming & structure.** Do new names, file layout, and module boundaries match sibling files?
 - **Established patterns.** Does the repo already have a way to do this (an HTTP client, an error type, a logging helper, a test factory) that the change reinvents instead of reusing? Grep for prior art before accepting a new abstraction.
-- **Idiom & style.** Error handling, async style, imports, formatting conventions the linter doesn't catch. Match what's there, not what's "best practice" in the abstract.
+- **Idiom & style.** Error handling, async style, imports, formatting conventions the linter doesn't catch. Match what's there.
 - **Dependencies.** Did it add a library for something the repo already solves, or that the project's conventions forbid? Check the manifest and existing imports.
 - **Stated conventions.** If the repo documents its conventions (a `CLAUDE.md`, an agent-guide file, a `CONTRIBUTING.md`, or a style guide), read it and hold the change to it. A documented repo rule always overrides a general "best practice."
 
-Named smells that show up here (Fowler's vocabulary, so use the label when it fits, since it's sharper than a paragraph): *Mysterious Name* (unclear naming), *Shotgun Surgery* (one logical change smeared across many files), *Divergent Change* (one module edited for several unrelated reasons).
-
-The pass is done when every changed file has been compared against at least one sibling or documented convention, and each check above has a finding or a recorded clean result.
+The pass is done when every changed file has been compared against at least one sibling or documented convention, and against each check above.
 
 ### 3. Pass 2: Agent-slop signatures
 
-Hunt the tells of machine-generated code, the padding that looks productive but earns its keep nowhere:
+Hunt the tells of machine-generated code:
 
-- **Over-engineering.** Abstraction for a single caller, config knobs nothing sets, layers of indirection a direct call would replace, "future-proofing" for requirements that don't exist.
+- **Over-engineering.** Abstraction for a single caller, config knobs nothing sets, layers of indirection a direct call would replace, "future-proofing" for requirements that don't exist. This is *Speculative Generality*, the signature agent smell: inline it until a real second caller appears.
 - **Defensive fallbacks and silent catch-alls.** try/catch that swallows the error, a default or `??` fallback that hides a failure the caller should see, guards and retries around code that cannot fail, `TODO`s standing in for real handling.
 - **Shims and dead paths nobody asked for.** Backward-compatibility wrappers, re-exports under old names, and flags or branches for callers that don't exist; helpers never called, exports nothing imports, variables assigned and never read.
 - **Tests that test the mock.** A test that mocks the unit under test, asserts on the mock's own return value, or asserts nothing.
@@ -82,68 +68,57 @@ Hunt the tells of machine-generated code, the padding that looks productive but 
 - **Scope creep.** Changes outside what was asked: unrelated refactors, reformatting untouched lines, drive-by renames, version bumps nobody requested. Flag anything the stated intent doesn't justify.
 - **Hallucinated APIs.** A method, flag, or field the real dependency doesn't have. Check it against the installed version.
 
-Named smells that show up here: *Speculative Generality* (abstraction for needs that don't exist, so delete it and inline until a real second caller appears), *Duplicated Code* (the same logic pasted across hunks instead of shared), *Primitive Obsession* (a bare string/int standing in for a domain concept), *Middle Man* / *Message Chains* (layers that only delegate, or `a.b().c().d()` navigation). Speculative Generality especially is the signature agent smell.
-
 The pass is done when every hunk has been checked against each signature above, and every new export, helper, and dependency has a confirmed caller or a finding.
 
 ### 4. Pass 3: Requirement-completeness
 
-Agents under-deliver as often as they over-deliver: they stub a branch, skip an edge of the ask, or solve the easy 80% and leave the rest silently unfinished. Measure the change against the intent captured in [Pick the review target](#1-pick-the-review-target), meaning the plan, issue, or user's words, and report the gaps:
+Measure the change against the intent captured in [Pick the review target](#1-pick-the-review-target), meaning the plan, issue, or user's words, and report the gaps:
 
 - **Missing requirements.** Something the ask called for that the diff doesn't do at all.
 - **Partial implementation.** A requirement handled for the happy path only, one case of several, or the interface without the behavior.
 - **Stubs & placeholders left in.** `TODO`/`FIXME`/`throw new Error("not implemented")`/`pass`/empty handlers presented as if the work were done.
 - **Wrong interpretation.** The change does *something*, but not the thing that was asked; it solved a nearby, easier problem.
 
-If there's no captured intent to measure against (no plan, issue, or clear request), say so and skip this pass rather than inventing a spec. Don't guess at requirements the user never stated.
+If there's no captured intent to measure against (no plan, issue, or clear request), say so and skip this pass rather than inventing a spec.
 
 The pass is done when every requirement in the captured intent is marked met, partial, or missing, each with the hunk that shows it.
 
 ### 5. Pass 4: Correctness
 
-Now the classic review, on what survives the earlier passes:
-
-- **Logic errors.** Off-by-one, inverted conditions, wrong operator, mishandled return values.
-- **Edge cases.** Empty/null/missing input, boundary values, unicode, large payloads, the error path as well as the happy path.
+- **Logic, edge cases, state, and security.** Logic errors, empty and boundary input, the error path, races and resource cleanup, injection, missing authz, and secrets in code or logs.
 - **Data bounds.** For each value the changed UI renders whose render or data source the diff adds or changes, find its limit in the validation schema, the database column, the API type, or a `maxLength`, then check that the render handles it: truncation or wrapping for long text, a break rule (`overflow-wrap`, `word-break`) for an unbroken string such as an email or an ID, the plural form at 1, an empty state at 0, and a fallback for a missing optional field. Quote the limit and the render line. A frontend limit shorter than the backend one is a finding, since a valid row then fails to save or display. When no limit exists in the repo, split on the render: a render with no long-text handling is a 🟡 finding written as `unbounded: no limit in <schema>, <column>, <API type>; render at file:line has no truncation or break rule`, a render that already handles long text is no finding, and a limit that lives outside the repo (a third-party API) goes in the coverage note. qakit's worst-case checks are the runtime half, which put these values on the screen. Without qakit, render the screen by hand with long, empty, and missing values.
 - **Migrations.** When the diff adds or changes a migration file, name **dbkit** `migrate` check when it is installed. Otherwise check the lock each statement takes and that the file sets a lock timeout.
-- **State & concurrency.** Race conditions, mutation of shared state, ordering assumptions, idempotency, resource cleanup (files, connections, locks).
-- **Security.** Injection, missing authz/ownership checks, secrets in code or logs, unsafe deserialization, unvalidated input crossing a trust boundary.
 - **Tests.** Do the changed tests actually exercise the change, and do they pass? Run the repo's test command if one is obvious and cheap; report what you ran and what happened.
 
-A passing test suite is not evidence of a tested change, because agents write tests that pass *because they assert nothing that could fail*. Hold each new or changed test to these:
+A passing suite does not prove a tested change. Hold each new or changed test to these five questions:
 
-- **Would it fail against a broken implementation?** Mentally invert the logic it covers, or break a boundary value. If the test still passes, it's decoration. This is the single sharpest test-quality question.
+- **Would it fail against a broken implementation?** Mentally invert the logic it covers, or break a boundary value. If the test still passes, it's decoration.
 - **Does it assert observable behavior**, or does it re-implement the production logic in the assertion and compare the code to itself?
 - **Is the scenario visible in the test**, or buried in setup/fixtures/mocks so thoroughly that the test proves the mock works and nothing else?
 - **Does it cover the failure paths the change introduced**, not just the happy path the feature demo walks?
 - **Does it prove the stated requirement**, or an easier neighbor of it?
 
-The pass is done when every changed code path has a finding or a recorded clean result for each check above, and every new or changed test has answered the five questions.
+The pass is done when every changed code path has been checked against the list above, and every new or changed test has answered the five questions.
 
 ### 6. Report the findings
 
-Print the review inline, findings ranked by severity so the reader triages at a glance. Tag each:
+Print the review inline, findings ranked by severity. Tag each:
 
 - 🔴 **Blocker.** Must fix before this ships; a real bug, security hole, missing requirement, or broken convention that will bite.
-- 🟡 **Should-fix.** A genuine problem worth addressing, not release-blocking.
+- 🟡 **Should-fix.** A real problem worth addressing, not release-blocking.
 - 🟢 **Nit.** Polish, style, minor slop; take it or leave it.
 
-For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input, per the evidence ground rules in [Pick the review target](#1-pick-the-review-target)), what's wrong in one sentence, and the concrete fix. If a pass found nothing, say so; a clean pass is a real result. **Never invent findings to look thorough.** If you can't quote the evidence, it's not a finding. An empty report on a clean diff is the honest outcome.
+For each finding give, in this order: the location as `file:line` (clickable), which pass caught it (convention / slop / completeness / correctness), **a quote of the offending hunk and what it violates** (the convention doc line, the stated requirement, the real API, or the failing input, per the evidence ground rules in [Pick the review target](#1-pick-the-review-target)), what's wrong in one sentence, and the concrete fix. If a pass found nothing, say so in one line.
 
 Structure the report as: the verdict line, the findings most severe first, then the coverage note.
 
-**The verdict follows from the findings; it is not a vibe.** Pick it mechanically so a reader can trust it without re-reading the list:
+**Pick the verdict mechanically from the findings:**
 
 - **needs-work.** One or more 🔴 Blockers.
 - **ready-with-fixes.** No Blockers, but at least one 🟡 Should-fix.
 - **ready.** Nothing above 🟢 Nits. Nits never hold up a change.
 
-Never soften a verdict because the change is mostly good or the author worked hard on it; never harden one to look rigorous. If a Blocker is real, the change needs work even if everything else is excellent.
-
-Close with the **coverage note**: one short paragraph naming what this review did *not* verify, meaning the unverified areas collected during the passes, plus whether you ran the tests and whether this was a fresh-eyes review or a self-review (per [Review with fresh eyes](#review-with-fresh-eyes)). A reader who knows the concurrency path went unexamined can go look; a reader who assumes it was covered cannot. When a gap is serious enough that a real problem could be hiding in it (an unreviewed security boundary, a migration nobody can validate here), say the change is **blocked on outside review** rather than issuing a verdict the evidence doesn't support.
-
-Do not edit source or apply fixes. Routing the fixes belongs to [Hand off](#8-hand-off).
+Close with the **coverage note**: one short paragraph naming what this review did *not* verify, meaning the unverified areas collected during the passes, plus whether you ran the tests and whether this was a fresh-eyes review or a self-review (per [Review with fresh eyes](#review-with-fresh-eyes)). When a gap is serious enough that a real problem could be hiding in it (an unreviewed security boundary, a migration nobody can validate here), say the change is **blocked on outside review** rather than issuing a verdict the evidence doesn't support.
 
 ### 7. Optional: save the report
 
@@ -164,8 +139,6 @@ Route to the next kit; do not invoke it.
 
 ## Notes
 
-- **Read-only by contract.** reviewkit runs git and read/search commands to understand the change, and at most the repo's own test command to check correctness. It never edits source, never commits, never pushes. Its only write is the optional report file in [Optional: save the report](#7-optional-save-the-report), and only when the user asks for it.
-- **`Skill` is in the tool list for gitkit, and for nothing else.** reviewkit *calls* gitkit to resolve the base ref when it reviews a branch diff, because a wrong base yields an empty diff or half the repo's history, and both look like a real review target. The kits named in [Hand off](#8-hand-off) are routed to, never invoked.
-- **Scale to the diff.** A one-line fix gets a quick pass-through and a one-line verdict; a large feature branch gets the full treatment. Don't pad a small change with ceremony.
-- **Not a substitute for tests or CI.** It's a judgment pass on top of them, tuned for how agent-written code fails. Report what the automated gates already cover as covered; spend the review on what they miss. This is the same reason the [review-target ground rules](#1-pick-the-review-target) skip tooling-enforced rules.
+- **`Skill` is in the tool list for gitkit only**, to resolve the base ref.
+- **Scale to the diff.** A one-line fix gets a quick pass-through and a one-line verdict; a large feature branch gets the full treatment.
 - **No shell or git?** Ask the user to paste the diff *and* the original ask, then run the four passes on what they provide and print the report as a codeblock for them to save themselves.
