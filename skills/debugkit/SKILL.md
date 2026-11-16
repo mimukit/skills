@@ -10,29 +10,11 @@ metadata:
 
 # debugkit
 
-The skill you reach for when something is broken and nobody knows why. Every other build skill takes *intent* as its input: a plan, an issue, a diff, a settled decision. debugkit takes a **symptom**, and its whole job is to turn that symptom into a cause somebody can act on.
-
-It is a single procedure. There are no modes: the ritual runs the same way on every bug, and the branches inside it are decided by what the evidence allows rather than by what the user asked for.
-
 ## It diagnoses, it never fixes
 
-**debugkit mutates the repo freely to learn, and reverts every one of those mutations.** Log lines, bisects, config probes, commented-out branches are all fair game, and none of them survive the run. What survives is the cause, a failing reproduction (a red test stays on disk as the hand-off artifact), and a fix *described* rather than applied.
+**debugkit mutates the repo freely to learn, and reverts every one of those mutations.** Log lines, bisects, config probes, commented-out branches are all fair game, and none of them survive the run. What survives is the cause, a failing reproduction (a red test stays on disk as the hand-off artifact), and a fix *described* rather than applied. **Never apply the fix**, not even an obvious one-liner.
 
-This boundary is not modesty, it is what makes the report trustworthy. A skill that finds the cause and also lands the cure has already committed to an answer, so what you read afterwards is a rationalization of an edit that already happened. Keeping the diagnosis and the change in separate hands means there is a moment in between where you can disagree.
-
-`Edit` is present in this skill's tools precisely *because* probes edit tracked files. That makes [the probe ledger](#the-probe-ledger) load-bearing rather than decorative: it is the only thing standing between a debugging session and somebody's uncommitted work.
-
-## When this fires
-
-"Debug this", "why is this failing", "find the root cause", "what's actually causing this", "this test is flaky", "it broke after the upgrade", "it worked yesterday and now it doesn't", "this endpoint got slower", "/debugkit".
-
-Five boundaries, one line each:
-
-- **Not a code review.** A review reads a *diff* for defects in work somebody just wrote. debugkit chases a symptom in code that already ran and misbehaved. A symptom in a diff nobody has executed is a review job, not a debugging one.
-- **Not a test plan.** Planning how to verify a feature happens *before* the bug exists. debugkit starts after something has already gone wrong.
-- **Not a prototype.** A throwaway spike answers an *unsettled intent* ("would this design hold up?"). debugkit probes to explain an *observed failure*. The tools look similar; the question is the opposite.
-- **Not a feature request.** See [the intake bar](#the-intake-bar). Behaviour nobody ever built is missing, not broken.
-- **Not optimization.** A performance *regression* is in scope: "it used to be fast" has a change to bisect and a clean before-and-after, so the ritual runs unmodified. "Make this faster" is not: it has no cause to find, only a profile to read, and every gate below presumes a working state that stopped working.
+**Out of scope:** behaviour nobody ever built (see [the intake bar](#the-intake-bar)), "make this faster" with no prior fast state, and a suspected bug in a diff nobody has run, which is a review job. A performance regression is in scope.
 
 ## The intake bar
 
@@ -44,15 +26,13 @@ Before the ritual starts, you need three facts. **Ask once if any is missing, th
 | **Actual** | what happened instead |
 | **Where** | which environment, branch, or machine you saw it on |
 
-Expected-versus-actual *is* the symptom. Handed only "it's broken," an agent invents the expectation it then debugs against, and that invented expectation is the root of every confident fix to the wrong thing. "Where" costs nothing to answer and immediately sorts the run onto the reproduce path or into [evidence-only mode](#the-three-terminal-states).
-
-The bar is deliberately answerable in one sentence, because a bar that takes ten minutes to clear is a bar that gets skipped.
+Without expected vs actual, you debug an invented expectation. "Where" decides between the reproduce path and the [instrumentation-plan branch](#the-three-terminal-states).
 
 **One bounce.** When "expected" turns out to be behaviour nobody ever built, this is a feature request rather than a bug. Say so and route to a planning skill: **plankit** when it is installed, otherwise say plainly that this needs a plan, not a diagnosis.
 
 ## The three terminal states
 
-Every run ends in exactly one of these. There is no fourth, and inventing one is the failure this whole skill exists to prevent.
+Every run ends in exactly one of these.
 
 | Outcome | What it means | Where it goes |
 |---|---|---|
@@ -60,9 +40,7 @@ Every run ends in exactly one of these. There is no fourth, and inventing one is
 | **Reproduced, not explained** | the bug reproduces reliably and every hypothesis died | back to the user, with the shrunk reproduction and the eliminated candidates |
 | **Instrumentation plan** | the bug could not be reproduced at all | back to the user, with ranked hypotheses and the measurement that would discriminate each |
 
-**The fourth state is a plausible theory that was never tested, and it is a failure even when it happens to be right.** It reads exactly like a real diagnosis, with the same confidence, vocabulary, and shape, which is what makes it dangerous rather than merely unhelpful.
-
-Only the first outcome hands off to a build step. The other two hand back to the user, because nothing was proven and there is therefore nothing to implement. Reporting an honest non-result is a success here, not a shortfall.
+**A plausible theory that was never tested is not a fourth state; it is a failure even when it happens to be right.** Report an unproven cause as unproven.
 
 ## The ritual
 
@@ -70,46 +48,40 @@ Only the first outcome hands off to a build step. The other two hand back to the
 
 Find a command that makes it fail, every time, that anybody can run.
 
-**The gate: no reproduction, no diagnosis.** An unreproduced bug yields a theory that is indistinguishable from a finding, and you have no way to tell which one you wrote.
-
-This gate carries more traffic than it appears to. Every production-only bug lands here, and so does every cause that cannot be safely toggled, because [the proof gate](#4-prove) runs against the reproduction and nothing else. If the only place the symptom exists is a live system, you never had a safe place to prove anything, and that is a reproduce failure rather than a proof failure.
+**The gate: no reproduction, no diagnosis.** Every production-only bug and every cause that cannot be toggled safely fails here, because [the proof gate](#4-prove) runs against the reproduction and nothing else.
 
 The step is done when one command fails on three consecutive runs, or when you have declared the symptom intermittent and carry it to the statistical form of the proof gate.
 
-When reproduction genuinely fails, **say so out loud with a stated confidence** and drop to the instrumentation-plan branch. Never let it become a quiet fallback; a degraded run that does not announce itself is read as a full one.
+When reproduction fails, **say so with a stated confidence** and drop to the instrumentation-plan branch.
 
 ### 2. Isolate
 
 Shrink the reproduction until nothing can be removed without the symptom disappearing. The output is the smallest failing case.
 
-**Force determinism while you shrink.** Pin the seed, serialize the concurrency, freeze the clock, fix the fixture ordering. A bug that fails one run in twenty cannot be toggled on and off, so determinism is not a nicety here. It is the precondition for the gate that follows.
+**Force determinism while you shrink.** Pin the seed, serialize the concurrency, freeze the clock, fix the fixture ordering. The proof gate needs a symptom you can toggle.
 
 Bisect over whatever axis the bug actually has: commits, inputs, config values, dependency versions, the delta between two environments.
 
-**Run any commit bisect in a throwaway worktree, never in the user's tree.** `git bisect` moves `HEAD` and wants a clean tree, so running it in place either refuses outright or walks over both the user's uncommitted work and your own probe ledger:
+**Run any commit bisect in a throwaway worktree, never in the user's tree.** `git bisect` moves `HEAD` and wants a clean tree, so in place it refuses or walks over the user's uncommitted work and your probe ledger:
 
 ```sh
 git worktree add --detach <scratch-path> <known-good-ref>   # bisect lives here
 git worktree remove <scratch-path>                          # before the run ends
 ```
 
-A worktree skill owns this lifecycle when one is installed, which is **gitkit** in this ecosystem. Without it the two commands above are the whole story. Either way the worktree is removed before the run ends, or named by absolute path in the hand-off if removal failed.
+A worktree skill owns this lifecycle when one is installed (**gitkit**). Either way, remove the worktree before the run ends, or name it by absolute path in the hand-off if removal failed.
 
-**When forcing determinism makes the bug vanish entirely**, that is itself a finding, because the timing *is* the mechanism. Say so, keep the non-deterministic reproduction, and carry it into the statistical form of the proof gate rather than pretending you shrank it.
+**When forcing determinism makes the bug vanish entirely**, that is itself a finding, because the timing *is* the mechanism. Say so, keep the non-deterministic reproduction, and carry it into the statistical form of the proof gate.
 
 ### 3. Hypothesize
 
 **Write the candidate causes down before testing any of them.** Each one carries a **prediction that could fail**: something you expect to observe that you would not observe if the hypothesis were wrong.
 
-A hypothesis with no falsifiable prediction is a guess wearing a label. It cannot be eliminated, so it survives the entire run and is still standing at the end, which is exactly how it ends up in the report.
+**Test the cheapest discriminating hypothesis first**, meaning the one that eliminates the most candidates.
 
-Writing them first is not ceremony either. Hypotheses written *after* probing are reverse-engineered from whatever you happened to observe, which makes every one of them fit and none of them discriminating.
+**Prefer a probe that changes nothing.** Calling the unit directly, running it in a fresh process, or printing an intermediate value from the outside often discriminates just as sharply as an edit and needs no revert. Reach for [the ledger](#the-probe-ledger) only when the question requires changing the code.
 
-**Test the cheapest discriminating hypothesis first**, meaning the one that eliminates the most candidates, not the one that is easiest to type. Halving the space beats confirming your favourite.
-
-**Prefer a probe that changes nothing.** Calling the unit directly, running it in a fresh process, or printing an intermediate value from the outside often discriminates just as sharply as an edit, and a probe that writes nothing needs no revert and can lose nobody's work. Reach for [the ledger](#the-probe-ledger) when the question genuinely requires changing the code, not by default.
-
-**Stop when you can no longer write a new hypothesis carrying a falsifiable prediction.** That is the termination condition, and it needs no arbitrary count: an agent that wants to keep hunting has to produce a real prediction to justify the next round. When you hit it with the bug still reproducing, the run ends in **reproduced, not explained**, which is a real outcome, not a defeat.
+**Stop when you can no longer write a new hypothesis carrying a falsifiable prediction.** When you hit it with the bug still reproducing, the run ends in **reproduced, not explained**.
 
 ### 4. Prove
 
@@ -119,17 +91,17 @@ Writing them first is not ceremony either. Hypotheses written *after* probing ar
 2. Cause removed → it passes.
 3. Cause restored → it fails again.
 
-Anything short of all three is correlation. This is the single gate that separates a diagnosis from "I changed something and it stopped."
+Anything short of all three is correlation.
 
-**Quote the evidence** for each of the three steps. A gate whose output is the word "confirmed" has not been run in any way a reader can check.
+**Quote the evidence** for each of the three steps, never just the word "confirmed".
 
-**One change at a time.** Two changes at once teaches you nothing about either, and it is the exact mechanic behind the failure this skill exists to prevent.
+**One change at a time.**
 
-**Never toggle against production, against real data, or against any system the user did not point at.** The test runs in the reproduction. This needs no unsafe-case exception, because the reproduce gate already filtered for one: a cause too dangerous to toggle belongs in the instrumentation-plan branch. An escape hatch here would be a door marked *skip the proof*, sitting in exactly the situation that most tempts an agent to walk through it.
+**Never toggle against production, against real data, or against any system the user did not point at.** The test runs in the reproduction, with no unsafe-case exception: a cause too dangerous to toggle belongs in the instrumentation-plan branch.
 
-**When determinism could not be forced**, the toggle takes a statistical form: three arms of N runs each, cause present, cause removed, and cause restored, reporting every failure rate. One rule makes this honest instead of a loophole, which is to **declare N before running, never after.** The loophole was never statistics; it was running until the numbers looked convincing. State N, state each rate, and state that the fallback was used.
+**When determinism could not be forced**, the toggle takes a statistical form: three arms of N runs each, cause present, cause removed, and cause restored, reporting every failure rate. **Declare N before running, never after.** State N, state each rate, and state that the fallback was used.
 
-**The evidence bar for the statistical form:** N is at least 20, the cause-removed arm shows zero failures, and the present and restored arms each show at least 5. At a 25% failure rate, 20 clean runs happen by chance about 0.3% of the time, so a clean removed arm means something. Below that bar the run is not a proof. Report it as **reproduced, not explained**, with the three rates, and name the larger N that would settle it.
+**The evidence bar for the statistical form:** N is at least 20, the cause-removed arm shows zero failures, and the present and restored arms each show at least 5. At a 25% failure rate, 20 clean runs happen by chance about 0.3% of the time. Below that bar the run is not a proof. Report it as **reproduced, not explained**, with the three rates, and name the larger N that would settle it.
 
 The step is done when all three toggles, or all three arms, have quoted evidence that meets the bar.
 
@@ -137,15 +109,15 @@ The step is done when all three toggles, or all three arms, have quoted evidence
 
 Name the terminal state, then give it what it needs.
 
-**Proven cause.** Give the cause in one sentence, the on/off evidence, the failing reproduction, and the fix **described rather than applied**. Write the reproduction as a red test in the repo's own test layout when a runner exists, and as a command otherwise. A red test is the fix-round input a build skill takes, so it needs no translation.
+**Proven cause.** Give the cause in one sentence, the on/off evidence, the failing reproduction, and the fix **described rather than applied**. Write the reproduction as a red test in the repo's own test layout when a runner exists, and as a command otherwise.
 
-**Reproduced, not explained.** Give the shrunk reproduction, every hypothesis you eliminated, and the evidence that killed each one. This is the most valuable thing an unexplained bug can produce: the next attempt starts from a much smaller box instead of from zero.
+**Reproduced, not explained.** Give the shrunk reproduction, every hypothesis you eliminated, and the evidence that killed each one.
 
-**Instrumentation plan.** Give ranked hypotheses, each paired with the specific experiment or log line that would discriminate it. The deliverable answers *what to measure next*, never *what is wrong*. **A confidence percentage on an untested theory is exactly what the reproduce gate exists to prevent, wearing a number**, so do not attach one.
+**Instrumentation plan.** Give ranked hypotheses, each paired with the specific experiment or log line that would discriminate it. The deliverable answers *what to measure next*, never *what is wrong*. **Attach no confidence percentage to an untested theory.**
 
 ## The probe ledger
 
-The safety property that makes free mutation acceptable. **Assume the user had uncommitted work when debugging started**, because they usually did, and reverting a probe must never revert that.
+**Assume the user had uncommitted work when debugging started.** Reverting a probe must never revert that.
 
 **Take a baseline before the first probe.** Keep the ledger in a directory **outside the working tree**, so nothing in it shows up in `git status`.
 
@@ -156,7 +128,7 @@ git diff --binary --cached                  > <ledger>/index.pre
 git status --porcelain=v1 --untracked-files=all > <ledger>/status.pre
 ```
 
-`git stash create` touches no ref, no file, and no index, so it costs nothing. **Record whether it produced an object.** On a clean tree, and on a tree whose only changes are untracked files, it prints nothing, and there is no snapshot to recover from. Write `none` in the ledger in that case, and never print a recovery line for an object that does not exist.
+`git stash create` touches no ref, no file, and no index. **Record whether it produced an object.** On a clean tree, and on a tree whose only changes are untracked files, it prints nothing, and there is no snapshot to recover from. Write `none` in the ledger in that case, and never print a recovery line for an object that does not exist.
 
 The snapshot never covers untracked files. **When a probe can touch an untracked file** (it edits one, or runs a command that writes into its directory), copy that file into the ledger before the probe. The copy is the only recovery path for it.
 
@@ -179,7 +151,7 @@ git checkout -- <path>                                # banned, without exceptio
 
 **Use `patch -R`, not `git apply -R`.** `git apply` resolves the paths written in the patch header against the repository root, and a patch produced from an out-of-tree snapshot carries paths that do not resolve, so it fails with `invalid path` rather than applying. `patch -R` applies against the file you name and ignores the header, which is exactly the property you need here.
 
-`git checkout -- <path>` is the reflex move and the one that silently destroys a pre-existing uncommitted edit. The ban has no exceptions, including for files that looked clean at baseline, because a prohibition you have to reason about is one you will talk yourself out of at the wrong moment.
+`git checkout -- <path>` silently destroys a pre-existing uncommitted edit. The ban covers files that looked clean at baseline too.
 
 **When reverse-apply conflicts, stop and report.** Do not force it, and do not fall back to a restore. Name the file, the probe, and the patch location, and let the user resolve it.
 
@@ -191,29 +163,16 @@ git checkout -- <path>                                # banned, without exceptio
 
 **The reproduction test is the one write that survives.** It is the hand-off artifact for a proven cause, not a probe, so it is not in the ledger and is not reverted. Leave it red and unstaged, and name it by absolute path. Report by absolute path anything else deliberately left in place, and never touch a file the run did not modify.
 
-**Print the baseline in the hand-off, every run.** Use the first form when a snapshot exists, and the second when `git stash create` printed nothing:
-
-```
-baseline snapshot: <sha> · recover with git stash apply <sha>
-baseline snapshot: none (no tracked change at start) · probe patches in <ledger>
-```
-
-An object nobody can find is not a safety net, because an unreferenced commit is invisible without `git fsck`. Say plainly that git prunes unreachable objects on its own schedule, so this is a short-term net rather than an archive. Write no ref: a ref would outlive the run.
+**Print the baseline line in the [hand-off](#hand-off), every run**, because an unreferenced commit is invisible without `git fsck`. Say plainly that git prunes unreachable objects on its own schedule, so the snapshot is short-term recovery, not an archive. Write no ref: a ref would outlive the run.
 
 ## Web lookup decodes, it never diagnoses
-
-Looking things up is allowed and often necessary. The boundary is what you use the answer for.
 
 - **In bounds.** Translating an opaque error string, a vendor status code, a stack frame from a library you do not know, a changelog entry for the version you just bisected to. Decoding a signal you already observed.
 - **Out of bounds.** Sourcing a hypothesis from a blog post, or applying a fix an issue thread says worked. That is somebody else's diagnosis of somebody else's bug.
 
-In the reproducible branch this enforces itself: the on/off test is mandatory whatever the origin of an idea, so an untested suggestion cannot reach the report no matter where it came from.
-
-**In the instrumentation-plan branch nothing is tested**, so the enforcement is instead that **every entry names its discriminating experiment or is dropped**. A fix lifted from an issue thread has no experiment attached, since it says *do this*, not *measure this*, so the requirement filters it structurally, with no rule about sources for anyone to remember.
+**In an instrumentation plan, drop any entry with no discriminating experiment.**
 
 ## The artifact
-
-Keyed on the outcome, not on how hard the hunt was.
 
 | Outcome | File? |
 |---|---|
@@ -222,13 +181,13 @@ Keyed on the outcome, not on how hard the hunt was.
 | Proven cause, cause outside the code (environment, config, data, a dependency version) | **always** |
 | Proven cause, cause in the code | **no**, report inline |
 
-The rule states its own reason: **the file exists for what the commit history will not capture.** A proven in-code cause is fully recorded by the fix and its test, so a document would duplicate them. A stale environment variable and a list of dead hypotheses are recorded nowhere else, and they are exactly what nobody remembers next month.
+**The file records what the commit history will not capture.** A proven in-code cause is recorded by the fix and its test.
 
 Write it to `docs/debug/NNNN-debug-<slug>-YYYY-MM-DD.md`, built from a four-digit serial, a lowercase type prefix, a short lowercase kebab-case subject slug, and the ISO creation date at the end. To get the serial `NNNN`, take the highest leading four-digit serial in `docs/debug/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/debug/` after `git fetch origin`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. Keep the whole name stable when the file is edited, and update the same file in place when you return to the same bug rather than spawning a second copy. **When the repo already has an established home or naming scheme for postmortems, that convention wins**, so say that you followed it.
 
-The file is **durable and committable**: a postmortem is meant to be read later and belongs in version control, not in a scratch directory. debugkit still never commits it.
+The file is durable and belongs in version control. debugkit never commits it.
 
-**No writable filesystem** (a browser-based agent) → print the artifact as a codeblock under its canonical path and skip the write. **Writing no file is a legal outcome** and needs no apology.
+**No writable filesystem** (a browser-based agent) → print the artifact as a codeblock under its canonical path and skip the write.
 
 ## Hand off
 
@@ -236,7 +195,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **What changed.** Name the terminal state. List every probe you made and confirm you reverted it. Report the result of each baseline check. State that you applied no fix. Name the reproduction test by absolute path, and say that it stays on disk, red and unstaged. Name any file you deliberately left in place, by absolute path. Name any bisect worktree you failed to remove, by absolute path.
 
-**Where it landed.** Give the artifact path, or say that the outcome needed no file. Print the baseline line every run, in the form [the probe ledger](#the-probe-ledger) chose:
+**Where it landed.** Give the artifact path, or say that the outcome needed no file. Print the baseline line every run: the first form when `git stash create` produced an object, the second when it printed nothing.
 
 ```
 baseline snapshot: <sha> · recover with git stash apply <sha>
@@ -254,8 +213,4 @@ Do not start the next step yourself.
 
 ## Notes
 
-- **Never apply the fix.** Not conditionally, not for one-liners, not when it is obvious. The one-line fix is where this rule earns its keep, because that is when skipping it feels harmless.
-- **Never green-wash a gate.** An unproven cause is reported as unproven. A run that skipped the on/off test did not find a cause, whatever it found.
-- **Route, don't launch.** Name the next skill and its one-line invocation; do not invoke it. Whether to act on a diagnosis is the user's call.
-- **Route, don't require.** Every recommendation here degrades to a plain action when the named skill is absent. debugkit is useful in a bare repo with nothing but git.
-- **Follow the repo over these defaults.** An established postmortem location, a documented convention, or a stated policy in the repo's agent-guide file (`CLAUDE.md` or an equivalent) wins, so say that you followed it.
+- **Follow the repo over these defaults.** A documented convention or a stated policy in the repo's agent-guide file (`CLAUDE.md` or an equivalent) wins, so say that you followed it.
