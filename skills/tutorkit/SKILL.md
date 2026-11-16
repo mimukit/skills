@@ -11,32 +11,26 @@ metadata:
 
 # tutorkit
 
-Teach a topic over many sessions and remember what stuck. tutorkit keeps one learning repo with a folder per topic, pitches each lesson at the edge of what the user already knows, writes the lesson as a printable HTML artifact, and schedules retrieval cues that come due later. A tutor is someone who remembers you and adapts; that persistence is the whole design.
-
 Four postures, not four presentations: [`explain`](modes/explain.md) answers and writes nothing, [`lesson`](modes/lesson.md) teaches and is the only mode that opens a track, [`drill`](modes/drill.md) tests recall across topics, [`exam`](modes/exam.md) measures and refuses to teach.
 
-[`status`](modes/status.md) is a fifth mode and not a fifth posture. It teaches nothing, asks nothing, and grades nothing. It reads the two router files, prints where every track stands, and crowns the next move. Run it to decide which of the four postures to run.
+[`status`](modes/status.md) is a fifth mode and not a fifth posture. It teaches nothing, asks nothing, and grades nothing. It reads the two router files, prints where every track stands, and crowns the next move.
 
 ## What tutorkit is not
 
-- **Not a code writer.** It never implements a feature in the user's project. It reads their code to build examples and stops there.
 - **Not a decision report.** "Which queue library should we use" is a research question, even though both read primary sources.
-- **Not project documentation.** It documents nothing about the user's repo.
-- **Not a spaced-repetition engine.** A fixed five-step interval ladder, no SM-2 or FSRS tuning, no Anki export, no retention modelling. The schedule exists to make review happen, not to be optimal.
-- **Not general-purpose by design.** It works for any topic and it is tuned for software engineering, where repo grounding, runnable exercises, and source-code citations are all sharper.
-- **It never commits the learning repo on its own.**
+- **Not a spaced-repetition engine.** A fixed five-step interval ladder, no SM-2 or FSRS tuning, no Anki export, no retention modelling.
 
 ## Mode selection
 
-**This is the skill's first decision, and the triggers overlap on purpose.** "Explain how X works" is `explain` and "teach me X" is `lesson`, but the wording is a weak signal. Resolve on intent rather than phrasing: a question that wants an answer gets `explain`, a request that wants to end up knowing the thing gets `lesson`. "What's due", "quiz me", "test me" get `drill`. "Am I ready", "how much do I actually know", "exam me" get `exam`. "Where am I", "what am I learning", "learning status", "show my progress" get `status`.
+Resolve on intent rather than phrasing: a question that wants an answer gets `explain`, and a request to end up knowing the thing gets `lesson`. A request to be quizzed, or to see what is due, gets `drill`. A request to measure readiness on a topic gets `exam`. A request for where every track stands gets `status`.
 
-**An ask that names no topic is almost always `status`.** That is the sharpest divider in the whole set: the other four modes need a slug and `status` refuses one. "Am I ready" names a topic and measures it, so it is `exam`; "where am I" names none and reports every track, so it is `status`.
+**An ask that names no topic is almost always `status`.** The other four modes need a slug, and `status` refuses one.
 
-When the ask is genuinely ambiguous, **take the cheap branch**: run `explain` and offer the track at the end. Guessing `lesson` costs a mission interview the user did not want; guessing `explain` costs one extra sentence.
+When the ask is ambiguous, run `explain` and offer the track at the end.
 
 ## The learning repo
 
-All state lives in one repo outside the user's work repos, at `~/learning` unless `$TUTORKIT_HOME` names somewhere else. Keeping it out of a work repo is what lets the skill read a work repo for examples without writing notes into it.
+All state lives in one repo outside the user's work repos, at `~/learning` unless `$TUTORKIT_HOME` names somewhere else.
 
 ```
 ~/learning/                          ← one git repo; $TUTORKIT_HOME overrides
@@ -54,15 +48,15 @@ All state lives in one repo outside the user's work repos, at `~/learning` unles
     exercises/                       ← runnable practice, code topics only
 ```
 
-Create the repo on first use and run `git init` in it. The progress history is genuinely useful and the repo is the user's own. **Never commit automatically.** Offer a commit at the end of a session and take no for an answer.
+Create the repo on first use and run `git init` in it. **Never commit automatically.** Offer a commit at the end of a session and take no for an answer.
 
-**The routing rule is the load-bearing guard.** Read `INDEX.md` and `NOTES.md` at session start, resolve exactly one slug, then read only `topics/<slug>/`. Never glob across `topics/`. Without this rule the skill degrades as the user learns more, which is the exact wrong direction: thirty topics costs about sixty lines to route and tens of thousands of tokens to open.
+**The routing rule overrides every other rule here.** Read `INDEX.md` and `NOTES.md` at session start, resolve exactly one slug, then read only `topics/<slug>/`. Never glob across `topics/`.
 
-Two modes are exceptions, and both are bounded. `drill` resolves its slugs from `REVIEW.md` rather than from the ask, then opens the `CUES.md` of those topics only. It never reads their lessons, and it never globs. Interleaving needs more than one topic in view; it does not need more than one file per topic.
+Two modes are exceptions, and both are bounded. `drill` resolves its slugs from `REVIEW.md` rather than from the ask, then opens the `CUES.md` of those topics only. It never reads their lessons, and it never globs.
 
-`status` is the stricter exception: it reports on every topic and opens no topic folder at all. That is possible because `INDEX.md` and `REVIEW.md` already carry every field the dashboard prints, or the dates to derive it from. **A cross-topic view that opens topic folders is a design failure, not a trade-off**, because the two router files exist precisely so this read stays flat as the user's topic count grows.
+`status` is the stricter exception: it reports on every topic and opens no topic folder at all. `INDEX.md` and `REVIEW.md` carry every field the dashboard prints, or the dates to derive it from.
 
-**When cwd is the learning repo itself, treat it as the learning repo and not as a grounding source.** The two roles never overlap, so a `lesson` run from inside the learning repo skips the grounding question rather than offering to teach the user about their own notes.
+**When cwd is the learning repo itself, treat it as the learning repo and not as a grounding source.** A `lesson` run from inside the learning repo skips the grounding question.
 
 ### The router
 
@@ -80,21 +74,21 @@ Status is `active` or `learned`. Three routing outcomes, all cheap:
 - It matches nothing and the user wants depth → create the folder and open a track.
 - It matches nothing and the user wants an answer → run `explain` and write nothing.
 
-`REVIEW.md` holds one row per topic, never one per cue: `postgres-mvcc · due: 2026-08-18, 2026-08-18, 2026-08-21, 2026-09-08 · min step: 3d`. The `due` cell lists every cue's due date in that topic, sorted, and nothing else about the cue. **Derive the due count at read time**: count the dates on or before today. Never store a count, because a stored count is true only on the day it was written; a cue that comes due tomorrow would never show up in it. `drill` reads the row, sees which topics are due, and opens only those `CUES.md` files. Storing cue text here instead would duplicate the answers and let them drift from the lessons that own them.
+`REVIEW.md` holds one row per topic, never one per cue: `postgres-mvcc · due: 2026-08-18, 2026-08-18, 2026-08-21, 2026-09-08 · min step: 3d`. The `due` cell lists every cue's due date in that topic, sorted, and nothing else about the cue. **Derive the due count at read time** (the dates on or before today); never store one. `drill` reads the row, sees which topics are due, and opens only those `CUES.md` files.
 
-**`min step` is the lowest interval step any cue in that topic has reached**, and it earns its place by making one question answerable from the router alone: has this track finished? A topic whose lowest cue sits at `60d` has passed the schedule half of the `learned` gate, so `status` can crown [`exam`](modes/exam.md) without reading a single `CUES.md`. Store the minimum rather than an average, because the gate is *every* cue at `60d` and one cue at `1d` fails it.
+**`min step` is the lowest interval step any cue in that topic has reached.** A topic whose `min step` is `60d` has passed the schedule half of the `learned` gate, so `status` can crown [`exam`](modes/exam.md) without reading a `CUES.md`.
 
-**Both files are caches, and a cache needs a repair path.** Repair runs only where a mode already has the topic folder open, so it never breaks the one-folder guard:
+**Both files are caches.** Repair runs only where a mode already has the topic folder open:
 
 - **Every mode that opens a topic folder rewrites that topic's row in both files**, from the folder's own `CUES.md` and `MISSION.md`, whether or not the row looked wrong.
 - **A slug with a folder on disk but no `INDEX.md` row** routes as if the row existed. `lesson`, `drill`, or `exam` on that slug opens the folder and writes the row.
 - **`status` opens no topic folder, so it repairs nothing.** It names each folder missing from the routers and each row with a missing or old-format field, and says to run `lesson` on that slug.
 
-A `REVIEW.md` row with no `min step`, or with a stored count in place of due dates, was written before the current format. The next mode that opens that topic writes the row in the current format. Without the self-heal, one hand edit misroutes silently forever.
+A `REVIEW.md` row with no `min step`, or with a stored count in place of due dates, was written before the current format. The next mode that opens that topic writes the row in the current format.
 
 ### The stylesheet
 
-`assets/lesson.css` ships beside this file. On first run, resolve this skill's own installed directory and copy the stylesheet to `<repo>/assets/lesson.css`, because the working directory is the user's project, not the skill directory, so a relative path will not find it. **Copy it once and never overwrite it.** A later skill update then ships a new default for new repos and leaves every existing lesson rendering the way it was written. Linking the installed path instead would break every lesson the moment the skill moves.
+`assets/lesson.css` ships beside this file. On first run, resolve this skill's own installed directory and copy the stylesheet to `<repo>/assets/lesson.css`, because the working directory is the user's project, not the skill directory, so a relative path will not find it. **Copy it once and never overwrite it.**
 
 ## The modes
 
@@ -120,7 +114,7 @@ Intervals: `1d → 3d → 7d → 21d → 60d`. Cues live per topic in `CUES.md`:
 - `partial` repeats at the same interval.
 - `missed` resets to `1d` and re-teaches the cue inline.
 
-**There is no decay for lateness.** A cue held back by the cap is the skill's debt, not the user's, and the cap can hold a cue thirty days past due. One schedule rule is easier to reason about than two, and the `partial` grade already absorbs most of what a decay rule would.
+**There is no decay for lateness.**
 
 ### Grading a free-text answer
 
@@ -130,13 +124,11 @@ Three grades, judged against the cue's 2–3 stored key points:
 - **`partial`.** Some key points, or the right shape with a wrong detail.
 - **`missed`.** The key points are absent, or the answer contradicts them.
 
-Binary grading forces a wrong call on the half-right answer, which is most answers. The third grade absorbs that ambiguity instead of resolving it wrongly in either direction.
-
-**Offer the override on every grade, not only on a miss.** The whole interval ladder runs on this judgement, so the user has to be able to correct it, most often when they gave a correct answer in words the key points did not anticipate.
+**Offer the override on every grade, not only on a miss.**
 
 ## The lesson artifact
 
-One self-contained HTML file at `topics/<slug>/lessons/NNNN-<dash-case>.html`, linking `../../../assets/lesson.css`. Tufte constraints: one column, generous margins, sidenotes rather than footnotes, and **roughly 700 words as a ceiling**. Working memory is small, and a long lesson is a lesson that does not finish.
+One self-contained HTML file at `topics/<slug>/lessons/NNNN-<dash-case>.html`, linking `../../../assets/lesson.css`. Tufte constraints: one column, generous margins, sidenotes rather than footnotes, and **roughly 700 words as a ceiling**.
 
 Each lesson carries, in order:
 
@@ -150,21 +142,19 @@ Each lesson carries, in order:
 8. Anchors to sibling lessons and reference sheets.
 9. A closing line reminding the user that the agent is available for anything still unclear.
 
-Naming the mission entry is what lets a mission change leave old lessons alone: a lesson written against a superseded mission reads as dated rather than wrong.
+**Reuse before authoring.** Read `assets/` first and build from the components already there. Put a component a second lesson would duplicate in `assets/`, not inline.
 
-**Reuse before authoring.** Read `assets/` first and build from the components already there. The stylesheet is what makes a pile of one-off files read as one course, and components the user's own topics earn accumulate beside it. Never inline something a second lesson would duplicate.
-
-**Reference sheets are the thing that gets revisited**, so they carry the compressed essence rather than the narrative: a table, a decision rule, a diagram, not a retelling. Write them to `reference/<name>.html`. A glossary, once written, binds every later lesson.
+**Reference sheets carry the compressed essence**: a table, a decision rule, a diagram, not a retelling. Write them to `reference/<name>.html`. A glossary, once written, binds every later lesson.
 
 **Quiz options are the same length in words and characters**, so formatting leaks no answer.
 
-**Opening the lesson is best-effort and never blocking.** Try the platform's opener (`open` on macOS, `xdg-open` on Linux, `start` on Windows) and if none succeeds, print the file path and move on. A lesson that was written successfully must not report failure because a browser did not launch.
+Try the platform's opener (`open`, `xdg-open`, `start`) on the lesson once; when it fails, print the file path and continue.
 
 ## Citation discipline
 
 Every non-obvious claim carries a primary source: the spec, the RFC, the source code, the official docs, the changelog. **Prefer reading source over reading blog posts.** When you cannot find a source, say "I believe X but could not source it" rather than asserting it.
 
-Record what you read in `SOURCES.md`, with title, URL, date read, and one line on what it settles, so later sessions stop re-searching the same ground. Check `SOURCES.md` before searching.
+Record what you read in `SOURCES.md`, with title, URL, date read, and one line on what it settles. Check `SOURCES.md` before searching.
 
 ## Hand off
 
@@ -179,20 +169,17 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - Cues are due now → run `drill`.
 - The track is mid-flight and nothing is due → run the next `lesson`.
 - Every cue sits at step `60d` and the track looks finished → run `exam`.
-- The track just closed as `learned` → say there is no next step. tutorkit is largely terminal. Do not invent a follow-up.
+- The track just closed as `learned` → say there is no next step.
 
 Then offer a commit of the learning repo. Never run it without a yes.
 
-**A `status` run closes differently, because its whole output is a hand-off.** The dashboard already names the crowned move, so do not print the move twice. State that nothing changed, and name each row that needs repair. Do not offer a commit.
+**A `status` run closes differently.** The dashboard already names the crowned move, so do not print the move twice. State that nothing changed, and name each row that needs repair. Do not offer a commit.
 
-**An `explain` run closes short, because it wrote nothing.** State that nothing changed. When the user accepted the track offer, crown `lesson` on that topic. When they declined it, say there is no next step. Do not offer a commit.
+**An `explain` run closes short.** State that nothing changed. When the user accepted the track offer, crown `lesson` on that topic. When they declined it, say there is no next step. Do not offer a commit.
 
-Two sibling routes exist, and both are narrow. Name a sibling skill only when it is installed, and otherwise describe the action plainly. Route to a research skill when the question turns out to be a tool decision rather than a knowledge gap. Route to a prototype skill when the only honest answer is to build the thing and find out.
+Name a sibling skill only when it is installed, and otherwise describe the action plainly. Route to a research skill when the question turns out to be a tool decision rather than a knowledge gap. Route to a prototype skill when the only honest answer is to build the thing and find out.
 
 ## Notes
 
-- **The context guard beats every other rule here.** A skill that opens thirty topic folders to teach one gets slower as the user learns more. Resolve one slug, open one folder. `status` reports on all thirty and opens none of them, which is the guard working rather than an exception to it.
-- **`status` reports; it never grades.** Printing a due count is a fact read. Judging whether the user knows a topic is [`exam`](modes/exam.md), and it needs an answer from the user before it can say anything. A dashboard that inferred mastery from a `min step` column would manufacture the exact signal it claims to report.
-- **Predict before you explain, every time.** The temptation is to skip it on an easy topic. The prediction is the diagnosis, and teaching without it is teaching blind.
-- **Never assert an unsourced claim as fact.** A confident wrong explanation is worse than no lesson, because the user will build on it.
+- **`status` reports; it never grades.** Judging whether the user knows a topic is [`exam`](modes/exam.md), and it needs an answer from the user. Never infer mastery from the `min step` column.
 - **No writable filesystem** (a browser-based agent)? Say so plainly, print the lesson as a code block for the user to save, and note that spacing cannot persist without state. Do not pretend to schedule a cue you cannot write. `status` and `explain` still run, because neither writes.

@@ -1,6 +1,6 @@
 ## Mode: `drill`
 
-Retrieval practice across topics. This is the reason one parent repo exists rather than one repo per topic.
+Retrieval practice across topics.
 
 ### 1. Build the queue
 
@@ -10,11 +10,11 @@ Read `REVIEW.md`. Open the `CUES.md` of due topics only, never their lessons, ne
 
 Sort by `due` ascending, then by `misses` descending. Fill the 12 slots from `active` topics first and let `learned` topics take what is left. **Print what you left behind**, as in `12 of 41 · 29 still due`.
 
-An uncapped queue is the failure mode that ends every spaced-repetition habit: forty cues on return trains the user to stop opening it. Hiding the backlog is only a nicer way to lose it. **The overflow keeps its original `due`**, so it stays first in line tomorrow rather than having its debt quietly rescheduled. Done when the queue holds at most 12 cues and the left-behind count is printed.
+**The overflow keeps its original `due`**, so it stays first in line tomorrow. Done when the queue holds at most 12 cues and the left-behind count is printed.
 
 ### 3. Interleave and ask
 
-Mix cues from different topics rather than running one topic to exhaustion. Ask **one at a time, with no answer visible**, because a cue printed beside its answer tests nothing. Show `last seen` on the line when it is far in the past, so the user can judge their own miss with the fact in view. Done when every cue in the queue has been asked or the user stops the run.
+Mix cues from different topics rather than running one topic to exhaustion. Ask **one at a time, with no answer visible**. Show `last seen` on the line when it is far in the past. Done when every cue in the queue has been asked or the user stops the run.
 
 ### 4. Grade, offer the override, then reschedule
 
