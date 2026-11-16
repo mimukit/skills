@@ -48,7 +48,7 @@ What each mode may write:
 
 ### The token schema
 
-Front matter opens with a line of exactly `---` and closes the same way. This is the alpha schema as captured on 2026-08-06; prefer [reading it live](#the-cli-is-the-source-of-truth) when the CLI is available, because the format is explicitly still moving.
+Front matter opens with a line of exactly `---` and closes the same way. This is the alpha schema as captured on 2026-08-06 and rechecked against CLI v0.4.0 on 2026-11-16; prefer [reading it live](#the-cli-is-the-source-of-truth) when the CLI is available, because the format is explicitly still moving.
 
 ```yaml
 version: <string>          # optional, current: "alpha"
@@ -128,7 +128,7 @@ The format is at version `alpha` and openly under active development. Hardcoding
 | `npx @google/design.md spec [--rules] [--format json]` | the current schema and rule set |
 | `npx @google/design.md lint <file> [--format json]` | validate; JSON by default |
 | `npx @google/design.md diff <before> <after>` | compare two versions |
-| `npx @google/design.md export --format {json-tailwind\|css-tailwind\|dtcg} <file>` | emit tokens |
+| `npx @google/design.md export --format {json-tailwind\|css-tailwind\|dtcg\|css-vars} <file>` | emit tokens; `tailwind` is an alias for `json-tailwind` (v0.4.0, checked 2026-11-16) |
 
 Exit codes: `0` success, `1` errors or regressions, `2` file read failure. On Windows PowerShell use the `designmd` alias, because the `.md` file association hijacks the other form.
 
@@ -296,7 +296,7 @@ Show the token changes the write would make, and ask once. On a yes, write by th
 | Token home | How |
 |---|---|
 | Tailwind | the official `export --format json-tailwind` or `css-tailwind` |
-| Plain `:root` custom properties | written directly, since `css-tailwind` emits a v4 `@theme` block *of custom properties*, so this is transcription, not conversion |
+| Plain `:root` custom properties | the official `export --format css-vars`, which emits a `:root` block (`--prefix` adds a name prefix) |
 | SCSS maps, CSS-in-JS, WordPress `theme.json` | `export --format dtcg`, then route to a translator such as Style Dictionary |
 
 The seam is **transformation, not framework**: if the official exporter already emits the shape, designkit writes it; if it needs real conversion, designkit emits DTCG and names the tool. Hand-rolled converters drift the moment either format moves.
