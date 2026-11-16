@@ -373,7 +373,7 @@ Git worktrees store **absolute** paths. If a repo is bind-mounted into a contain
 
 A GUI dev tool that manages worktrees is welcome to **observe** these. Orca and its peers read `git worktree list` and typically have a setting to surface externally-created worktrees. That is a one-time UI configuration on whichever machine runs the GUI, and it is the only asymmetry between machines.
 
-**No skill may create or remove a worktree through a vendor CLI**: the moment one does, the two machines diverge. A vendor's own *metadata* about a worktree, such as the issue its card links to, a status, or a comment, is a different layer and is fair game, because it exists only inside that tool and has no git equivalent to diverge from. A companion skill may reconcile that layer (**orcakit** does, for Orca) as long as the worktree itself is still created and destroyed here. gitkit never calls in that direction: it must keep working on a machine where no such tool is installed.
+**No skill may create or remove a worktree through a vendor CLI**: the moment one does, the two machines diverge. A vendor's own *metadata* about a worktree, such as the issue its card links to, a status, or a comment, is a different layer and is fair game, because it exists only inside that tool and has no git equivalent to diverge from. A companion skill may reconcile that layer as long as the worktree itself is still created and destroyed here. gitkit never calls in that direction: it must keep working on a machine where no such tool is installed.
 
 ## Notes
 

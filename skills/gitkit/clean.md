@@ -152,4 +152,4 @@ Ends when every older folder is held with its branch, deleted, or struck by the 
 
 Report the buckets by count, then each removed worktree by path, each deleted local branch by name, and each deleted remote branch as `origin/<name>`. Name the dirty rows you left and what is in them. Name the remote rows you held and why. Name each QA screenshot folder deleted and each one held, with its branch. Say when nothing was reapable.
 
-Next, act on the tracker drift rows with **issuekit** `close <n>`, otherwise `gh issue close <n>`. With no drift, there is no next step. A workspace tool drops the row of a removed worktree by itself, so neither orcakit nor paseokit has a step to run after this sweep. Run `paseokit clean` only when Paseo shows duplicate rows.
+Next, act on the tracker drift rows with **issuekit** `close <n>`, otherwise `gh issue close <n>`. With no drift, there is no next step. A workspace tool drops the row of a removed worktree by itself, so it has no step to run after this sweep.

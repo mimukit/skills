@@ -155,6 +155,7 @@ Three collection files still name skills, and each stays cheap because it change
 - **Internal, always-on repo skills live in `.agents/skills/<name>/`** instead (none currently). Checked in there, they're auto-discovered by any tool that reads `.agents/skills` and by Claude Code via a committed relative symlink at `.claude/skills/<name>` — no `make link` needed. This is the right home for a meta-skill that only makes sense *inside this repo*; it keeps such skills off the global tool dirs and out of the `skills/`-based `make lint`/`make list`/skills.sh machinery by design.
 - Skills are **authored from scratch, never forked.** A skill may be "my version of" an upstream skill, rewritten to fit these conventions.
 - Bash lives in `scripts/`, surfaced through the `Makefile` (`make help`). `make link`/`unlink` mirror a dev symlink into **both** `~/.claude/skills` and `~/.agents/skills` so the skill is live in every AI tool at once. When a dev link collides with a **real install of the same name** (e.g. a `skills.sh` install of `commitkit`), `make link` moves the real one aside to a `<name>.skshbak` sibling and symlinks over it — the skill shows as `⇄ swapped` in `make list` — and `make unlink` restores the backup, so you can live-test the repo copy under its real name without losing the published install.
+- `archive/` holds retired skills. Nothing lints, installs, or trims them, and `make link` does not see them.
 
 ## Frontmatter template
 

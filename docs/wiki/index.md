@@ -24,7 +24,7 @@ Documentation for `mimukit/skills` — the skills themselves, and the repo that 
 Each name links to the skill's `SKILL.md`, the one source for what it does, its modes, and what it hands off to. For a one-line-per-skill recall list, read [the cheatsheet](./cheatsheet.md); for how they compose into one loop, read [the workflow](./workflow.md).
 
 **Git & GitHub**
-[`gitkit`](../../skills/gitkit/SKILL.md) · [`commitkit`](../../skills/commitkit/SKILL.md) · [`prkit`](../../skills/prkit/SKILL.md) · [`mergekit`](../../skills/mergekit/SKILL.md) · [`releasekit`](../../skills/releasekit/SKILL.md) · [`issuekit`](../../skills/issuekit/SKILL.md) · [`repokit`](../../skills/repokit/SKILL.md) · [`orcakit`](../../skills/orcakit/SKILL.md) · [`paseokit`](../../skills/paseokit/SKILL.md)
+[`gitkit`](../../skills/gitkit/SKILL.md) · [`commitkit`](../../skills/commitkit/SKILL.md) · [`prkit`](../../skills/prkit/SKILL.md) · [`mergekit`](../../skills/mergekit/SKILL.md) · [`releasekit`](../../skills/releasekit/SKILL.md) · [`issuekit`](../../skills/issuekit/SKILL.md) · [`repokit`](../../skills/repokit/SKILL.md)
 
 **Planning & Design**
 [`validatekit`](../../skills/validatekit/SKILL.md) · [`namekit`](../../skills/namekit/SKILL.md) · [`researchkit`](../../skills/researchkit/SKILL.md) · [`prototypekit`](../../skills/prototypekit/SKILL.md) · [`refactorkit`](../../skills/refactorkit/SKILL.md) · [`plankit`](../../skills/plankit/SKILL.md) · [`grillkit`](../../skills/grillkit/SKILL.md)

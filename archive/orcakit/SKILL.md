@@ -6,7 +6,7 @@ license: MIT
 disable-model-invocation: true
 allowed-tools: Bash, Read, Skill
 metadata:
-  internal: false
+  internal: true
 ---
 
 # orcakit
