@@ -1,6 +1,6 @@
 # dbkit: SQLite
 
-Read this file once [Stack detection](../SKILL.md#stack-detection) finds SQLite, libSQL, Turso, or Cloudflare D1. It holds the gotchas behind [the schema standard](../SKILL.md#the-schema-standard), not performance tuning. D1 and Turso have their own migration runners (`wrangler d1 migrations`, the Turso CLI); use the project's runner.
+D1 and Turso have their own migration runners (`wrangler d1 migrations`, the Turso CLI); use the project's runner.
 
 ## Locks per DDL statement
 

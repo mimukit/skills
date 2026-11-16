@@ -10,25 +10,21 @@ metadata:
 
 # dbkit
 
-Database mistakes pass every test on a 40-row seed and fail in production, under lock, at a size dev never reaches.
-
-dbkit holds one body of rules, [the schema standard](#the-schema-standard), and four modes that apply it.
-
 ## When this fires
 
 Route by the object of the ask, then follow that mode's file through [Run the mode](#run-the-mode).
 
-- **design.** "Design the schema for invoices", "model these tables", "how should I store this". It edits the schema source, generates the migration, and checks it.
-- **migrate.** "Write a migration to rename `email`", "is this migration safe", "check this migration", a migration file or a diff with a migration in it. It has two branches: **write** makes a migration for a stated change, and **check** gives a risk table for an existing one.
-- **tune.** "Why is this query slow", "explain this query plan", "add an index for this query", a pasted `EXPLAIN` output. It writes a report in chat and changes no code. A proposed index ships through `migrate` write.
-- **audit.** "Audit our database schema", "review our migrations history". It sweeps the whole schema and migration history and writes one ranked report.
+- **design.** A schema to model. It edits the schema source, generates the migration, and checks it.
+- **migrate.** A stated change, a migration file, or a diff with a migration in it. It has two branches: **write** makes a migration for a stated change, and **check** gives a risk table for an existing one.
+- **tune.** A named slow query or a pasted `EXPLAIN` output. It writes a report in chat and changes no code. A proposed index ships through `migrate` write.
+- **audit.** The whole schema and migration history. It writes one ranked report.
 
-When an ask names both a change and a check ("add a column and make sure it is safe"), run `migrate` write; its own check covers the second half. A schema question with no change and no file ("should this be a separate table?") runs `design` and stops at the decisions table.
+When an ask names both a change and a safety check, run `migrate` write; its own check covers the second half. A schema question with no change and no file runs `design` and stops at the decisions table.
 
 **Not this skill.**
 
-- A symptom with an unknown cause ("this page got slow") belongs to **debugkit** when installed, or a plain root-cause hunt; `tune` starts once a named query is the cause.
-- Behavior tests after a data change ("write a QA plan for this migration") belong to **qakit** when installed, or to a hand-written test plan; `migrate` keeps the safety check.
+- A symptom with an unknown cause, such as a page that got slow, belongs to **debugkit** when installed, or a plain root-cause hunt; `tune` starts once a named query is the cause.
+- A QA plan for a data change belongs to **qakit** when installed, or to a hand-written test plan; `migrate` keeps the safety check.
 - Document stores (MongoDB, DynamoDB, Firestore) are out of scope; say so in one line and stop.
 
 ## Guards
@@ -95,11 +91,10 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 ### Naming
 
-- Lowercase `snake_case` for every identifier, unquoted. A quoted mixed-case name needs quotes in every later query.
+- Lowercase `snake_case` for every identifier, unquoted.
 - One table-name form across the schema. The default is plural (`orders`, `order_items`); a join table names both sides (`user_roles`).
 - Foreign key columns are `<referenced singular>_id` (`customer_id`). Timestamps end in `_at`, dates in `_on` or `_date`, booleans start with `is_` or `has_`.
 - Name every index and constraint explicitly, `<table>_<columns>_<kind>` (`orders_customer_id_idx`, `orders_reference_key`), so a later migration can drop it by name.
-- Avoid reserved words (`user`, `order`, `group`) as names; they force quoting.
 
 ### Keys
 
@@ -117,7 +112,7 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 ### Constraints
 
-- Enforce an invariant in the database when the database can state it: `UNIQUE` for business uniqueness, `CHECK` for ranges and allowed values, `NOT NULL` for required fields. Application checks race; constraints do not.
+- Enforce an invariant in the database when the database can state it: `UNIQUE` for business uniqueness, `CHECK` for ranges and allowed values, `NOT NULL` for required fields.
 - A `CHECK` passes when its expression is `NULL`, so pair it with `NOT NULL` where the value is required.
 - A unique constraint allows many `NULL`s on most engines. When at most one row may have no value, use the engine's form for that (the engine file names it) or a partial unique index.
 - An upsert (`ON CONFLICT`, `ON DUPLICATE KEY`) needs a unique constraint or index on exactly its conflict columns.
@@ -147,10 +142,8 @@ Three or more tables carry a column such as `tenant_id`, `organization_id`, `org
 
 ### Normalize first
 
-- Start in third normal form: each fact in one place, each table about one thing.
-- Denormalize only when a `tune` plan shows the join is the cost. Record the source of truth and what keeps the copy in step.
-- Use a JSON column only for attributes that are sparse and never filtered, joined, or constrained. A field a query filters on is a column.
-- When updates dominate a wide table, split its hot columns (counters, status) from the rest.
+- Start in third normal form. Denormalize only when a `tune` plan shows the join is the cost.
+- Use a JSON column only for attributes that are sparse and never filtered, joined, or constrained.
 
 ### Indexes earn their write cost
 

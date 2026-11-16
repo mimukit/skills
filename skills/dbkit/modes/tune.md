@@ -1,7 +1,5 @@
 # Mode `tune`: find why a query is slow
 
-`tune` finds why one named query is slow and proposes one change. The evidence is a plan from the database where the query is slow; code supplies the SQL and the N+1 patterns. `tune` edits no file.
-
 ### 1. Find the SQL
 
 Run [Stack detection](../SKILL.md#stack-detection), then trace the named query to the code that builds it.

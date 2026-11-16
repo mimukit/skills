@@ -1,8 +1,6 @@
 # Mode `design`: model a schema change
 
-Design turns a feature's data needs into a schema edit that matches the project and passes [the schema standard](../SKILL.md#the-schema-standard). It edits the project's schema source, generates the migration through the project's tool, and checks that migration before it reports. It never applies the migration.
-
-Run the steps in order. At each choice, make the call and give the reason in one line; offer one answer, never a menu.
+At each choice, make the call and give the reason in one line; offer one answer, never a menu.
 
 ### 1. Read the existing schema
 

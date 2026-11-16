@@ -1,10 +1,6 @@
 # dbkit: Postgres
 
-It gives the Postgres facts behind [the schema standard](../SKILL.md#the-schema-standard); check each version limit against the detected major version.
-
 ## Locks per DDL statement
-
-The lock decides the risk first, and table size decides it second. `ACCESS EXCLUSIVE` blocks every read and write on the table; `SHARE` blocks writes and allows reads; `SHARE UPDATE EXCLUSIVE` allows both.
 
 | Statement | Lock | Cost | Safe path |
 | --- | --- | --- | --- |
@@ -119,24 +115,13 @@ After a large backfill, run `ANALYZE <table>`. A new expression index also has n
 
 ## Index types
 
-Take the first row that fits the query:
-
-| The query | Index |
-| --- | --- |
-| `=`, `<`, `>`, `BETWEEN`, `ORDER BY` | B-tree (the default) |
-| Prefix `LIKE 'abc%'` | B-tree under the C collation; under any other collation, B-tree with `text_pattern_ops` or `varchar_pattern_ops` |
-| `LIKE '%x%'`, `ILIKE`, similarity | GIN with `gin_trgm_ops` (the `pg_trgm` extension) |
-| Filters one hot subset (`WHERE status = 'active'`) | Partial B-tree with that `WHERE` |
-| Filters on an expression (`lower(email)`) | Expression index; the query must use the same expression |
-| Reads a few extra columns after the filter | Covering B-tree, `INCLUDE (col, …)`, for an index-only scan |
-| `jsonb` containment, arrays, full-text search | GIN. `jsonb_path_ops` is smaller and supports `@>`, `@?`, `@@`, but not `?`, `?\|`, `?&`. Full-text search uses the two-argument `to_tsvector('english', col)` in index and query; the one-argument form is not immutable, so an expression index cannot use it |
-| Ranges, geometry, `EXCLUDE` constraints (no overlapping bookings) | GiST; the scalar `=` part of an `EXCLUDE` (`room_id WITH =`) needs the `btree_gist` extension |
-| A very large table in natural insert order (time series) | BRIN |
+- **Prefix `LIKE 'abc%'`** uses a plain B-tree only under the C collation. Under any other collation, build the B-tree with `text_pattern_ops` or `varchar_pattern_ops`.
+- **`jsonb` containment** uses GIN. `jsonb_path_ops` is smaller and supports `@>`, `@?`, `@@`, but not `?`, `?|`, `?&`.
+- **Full-text search** uses the two-argument `to_tsvector('english', col)` in index and query. The one-argument form is not immutable, so an expression index cannot use it.
+- **An `EXCLUDE` constraint** (no overlapping bookings) uses GiST. Its scalar `=` part (`room_id WITH =`) needs the `btree_gist` extension.
 
 ## Partitioning
 
 - Partition only a table past about 100 million rows whose queries filter on one key, or whose retention drops data by that key. Below that, partitions add planning cost and gain nothing.
-- `RANGE` suits time, `LIST` suits a small set of discrete values, `HASH` spreads a table with no natural key. Use declarative partitioning, never table inheritance.
-- A query that does not filter on the partition key scans every partition.
 - A primary key or unique constraint must include the partition key; no constraint is unique across partitions.
 - Drop old data with `DETACH PARTITION` (concurrently on PG 14+) and `DROP TABLE`, never with a bulk `DELETE`.

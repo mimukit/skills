@@ -1,7 +1,5 @@
 # Mode `migrate`: write or check a migration
 
-Migrate makes a schema change safe on a live database, where one lock can block every write. It judges each statement by its lock before its table's size.
-
 ### 1. Pick the branch
 
 - **write**: the ask states a change ("write a migration to rename `email`"), or `tune` or `design` passed an index or a change here.

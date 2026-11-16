@@ -1,6 +1,6 @@
 # dbkit: migration tool gotchas
 
-Read this file when a mode writes a migration through a generator. It holds only what no config file and no `--help` page says. For every command and flag, read the installed tool's `--help` or its docs for the installed version, and say in the hand-off which you read; the syntax below is a pointer, never a pinned form. The two questions for any tool are the same: does it wrap a migration in a transaction (which breaks a concurrent index build), and which of its commands touch a database.
+For every command and flag, read the installed tool's `--help` or its docs for the installed version, and say in the hand-off which you read; the syntax below is a pointer, never a pinned form. The two questions for any tool are the same: does it wrap a migration in a transaction (which breaks a concurrent index build), and which of its commands touch a database.
 
 ## Drizzle
 

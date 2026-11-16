@@ -1,7 +1,5 @@
 # dbkit: Postgres plan reading
 
-`tune` reads this file on Postgres; [engines/postgres.md](postgres.md) is already loaded.
-
 ## Reading a plan for tune
 
 Compare each node's estimated `rows` with its actual `rows` and `loops` first; most bad plans start with a bad estimate.

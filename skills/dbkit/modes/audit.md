@@ -1,7 +1,5 @@
 # Mode `audit`: sweep a schema and its migration history
 
-`audit` sweeps the whole schema source and the whole migration history against [the schema standard](../SKILL.md#the-schema-standard) and the engine file, then writes one ranked report. It changes no code.
-
 ### 1. Map the schema
 
 Run [Stack detection](../SKILL.md#stack-detection) and [Project conventions win](../SKILL.md#project-conventions-win). List every schema source file and every migration file, oldest first.

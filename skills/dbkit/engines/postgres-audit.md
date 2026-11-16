@@ -1,7 +1,5 @@
 # dbkit: Postgres audit queries
 
-`audit` reads this file on Postgres; [engines/postgres.md](postgres.md) is already loaded.
-
 ## Catalog queries for audit
 
 Foreign keys with no index whose leading columns cover them:

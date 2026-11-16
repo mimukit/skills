@@ -1,7 +1,5 @@
 # dbkit: tenancy
 
-Read this file when the root's [Tenancy](SKILL.md#tenancy) trigger fires; the root and the engine file are already loaded, and their composite-key and scoping rules hold here.
-
 ## Postgres row-level security
 
 - **Turn it on and force it.** Run `ALTER TABLE … ENABLE ROW LEVEL SECURITY` and `ALTER TABLE … FORCE ROW LEVEL SECURITY` on every tenant-owned table. The table owner skips RLS without `FORCE`, and many apps connect as the owner.
@@ -29,5 +27,3 @@ Each of these is a tenant leak:
 ## MySQL and SQLite
 
 MySQL and SQLite have no row-level security, so only the root's composite-key and scoping rules apply there.
-
-The mode that read this file returns to its own steps.

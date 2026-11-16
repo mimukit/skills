@@ -1,6 +1,6 @@
 # dbkit: MySQL
 
-Read this file once [Stack detection](../SKILL.md#stack-detection) finds MySQL or MariaDB. It holds the gotchas behind [the schema standard](../SKILL.md#the-schema-standard), not server tuning. Write for MySQL 8.4 LTS or later: 8.0 reached end of life on 2026-04-30 (endoflife.date, checked 2026-11-16). On a server older than 8.0.18, `CHECK` may be parsed and ignored (before 8.0.16) and `EXPLAIN ANALYZE` is missing, so flag the version as a finding. MariaDB differs.
+Write for MySQL 8.4 LTS or later: 8.0 reached end of life on 2026-04-30 (endoflife.date, checked 2026-11-16). On a server older than 8.0.18, `CHECK` may be parsed and ignored (before 8.0.16) and `EXPLAIN ANALYZE` is missing, so flag the version as a finding. MariaDB differs.
 
 ## Locks per DDL statement
 
