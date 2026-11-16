@@ -93,7 +93,7 @@ This is done when the repo's naming, key type, and timestamp style are each name
 
 - Lowercase `snake_case` for every identifier, unquoted.
 - One table-name form across the schema. The default is plural (`orders`, `order_items`); a join table names both sides (`user_roles`).
-- Foreign key columns are `<referenced singular>_id` (`customer_id`). Timestamps end in `_at`, dates in `_on` or `_date`, booleans start with `is_` or `has_`.
+- Foreign key columns are `<referenced singular>_id` (`customer_id`). When a table references the same table twice, or a column's role differs from the referenced table's name, the column takes its role name (`owner_id`, `assignee_id`, both referencing `users`). Timestamps end in `_at`, dates in `_on` or `_date`, booleans start with `is_` or `has_`.
 - Name every index and constraint explicitly, `<table>_<columns>_<kind>` (`orders_customer_id_idx`, `orders_reference_key`), so a later migration can drop it by name.
 
 ### Keys

@@ -44,7 +44,7 @@ Report in chat:
 
 ### 6. Hand off
 
-**What changed.** Name each changed schema file and the migration file. State that no migration was applied. State whether a generator ran or you wrote the SQL by hand, and which `--help` or docs you read.
+**What changed.** Name each changed schema file and the migration file. State that no migration was applied. State whether a generator ran or you wrote the SQL by hand, and which `--help` or docs you read. Name each job or alert the engine file requires, such as partition creation, as operations work dbkit did not write.
 
 **Where it landed.** Give the path of each changed file.
 
