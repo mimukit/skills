@@ -82,7 +82,7 @@ Stakes: dev-env setup and release steps are *derivable from the repo*; a CONTRIB
 
 ---
 
-⏳ **Q8. Which renderer serves these pages?** Waiting on a sub-agent checking the repo for a docs generator. It gates the frontmatter decision, so it lands next round.
+⏳ **Q8. How do readers move between pages?** Waiting on a sub-agent checking the repo for a docs generator, because the generator decides whether a sidebar exists. It lands next round.
 
 Reply `6a 7b`, change a default with its number (`5b`), or say "go with your picks" to take everything.
 ```
@@ -94,7 +94,7 @@ Reply `6a 7b`, change a default with its number (`5b`), or say "go with your pic
 - **Stakes first, two sentences max.** Label it `Stakes:` and say what breaks or stays undecided downstream.
 - **The recommendation is one line.** `➡️ **(a)** <the concrete form it takes>`: the letter, then only the exact syntax, path, or shape. Never restate the option's description.
 - **Rule off between questions** with `---`.
-- **Number continuously across rounds.** Q1–Q3 in round one, Q4 onward in round two.
+- **Number continuously across rounds.** Q1–Q3 in round one, Q4 onward in round two. A `⏳` question keeps its number when it returns in a later round with the fact it waited for, and new questions continue from the highest number used so far.
 - **Code spans are for literals only.** Paths, filenames, flags, commands, identifiers. Use *italics* for conceptual emphasis.
 - **Show what's pending.** When a sub-agent is still fetching a fact a question depends on, list that question with `⏳` and name what it waits for.
 - **Defaults come first, as one table.** One row per default: the number, the decision, the pick with its letter, and a one-cell reason. A default needs no stakes line and no option list; a user who wants to override one asks for the options. A round with no defaults drops the table.
