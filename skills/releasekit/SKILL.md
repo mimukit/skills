@@ -53,13 +53,14 @@ falling back to `git symbolic-ref --short refs/remotes/origin/HEAD`, and asking 
 
 **Workspaces.** Look for `workspaces` in `package.json`, a `pnpm-workspace.yaml`, or `[workspace]` in `Cargo.toml`. A marker alone is not a monorepo, because plenty of repos have a `packages/` directory and one published artifact. **Refuse only when a marker is present and more than one manifest carries a version**, and list every versioned manifest you found. A workspace where only the root is versioned has one version and releases normally.
 
-**Branch protection.** Probe the base branch once:
+**Branch protection.** Probe the base branch once with both calls:
 
 ```sh
 gh api "repos/{owner}/{repo}/branches/$BASE/protection"
+gh api "repos/{owner}/{repo}/rules/branches/$BASE"
 ```
 
-A 404 means unprotected and selects [the direct path](#the-direct-path). Any other answer means protected and selects [the release-PR path](#the-release-pr-path). Getting this wrong is not cosmetic: the direct path pushes a commit straight to the base, and a protected repo rejects it after the changelog has already been written.
+A 404 from the first call and an empty array `[]` from the second together mean unprotected and select [the direct path](#the-direct-path). A branch guarded only by a ruleset returns 404 from the first call, so a non-empty array from the second means protected. Any other answer means protected and selects [the release-PR path](#the-release-pr-path). Getting this wrong is not cosmetic: the direct path pushes a commit straight to the base, and a protected repo rejects it after the changelog has already been written.
 
 **Phase.** Work out which phase this run is **from the repo, never from state you keep**. Check in this order, and take the first that matches:
 
@@ -160,7 +161,7 @@ Lead with the path, then the facts:
 **Verify CI first, on either path, and bind it to a SHA.** Read the check rollup for the exact commit the CI result has to cover, and **refuse to tag a failing one**, because a tag on red code spends a version number on something nobody can use. `--allow-red` overrides it for a known-flaky required check. When `gh` is unusable there is no rollup, so **say the check was skipped**; never let a missing signal read as green. A pending rollup is not green either, so stop and report it.
 
 ```sh
-gh api "repos/{owner}/{repo}/commits/$SHA/check-runs" \
+gh api --paginate "repos/{owner}/{repo}/commits/$SHA/check-runs" \
   --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv'
 gh api "repos/{owner}/{repo}/commits/$SHA/status" --jq .state
 ```
