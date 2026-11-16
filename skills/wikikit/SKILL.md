@@ -142,6 +142,8 @@ The allowlist is written here and **never inferred**. A command that looks harml
 
 ## The modes
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 The mode bodies live in one file each under `modes/`. Route with [When this fires](#when-this-fires), read that one file, and follow it. Everything above this line applies to every mode and is not restated in the mode files.
 
 - Mode `init` → read [modes/init.md](modes/init.md), then follow it.
