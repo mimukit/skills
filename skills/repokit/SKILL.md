@@ -11,29 +11,13 @@ metadata:
 
 # repokit
 
-Configure a GitHub repository through the [`gh` CLI](https://cli.github.com), in four explicit **modes**:
-
-- **`about`.** Infer a one-line *About* description and a focused set of topics from the repo's own contents (README, manifest, code), show them against whatever is already set, and apply what you approve.
-- **`labels`.** Provision the workflow labels: the **lifecycle and priority** sets issuekit uses to track work and rank it, and the **automation** label that asks a repo's AI review tooling to look at a PR. Create what's missing, reconcile what drifted.
-- **`setup`.** Bring an already-created repo up to convention in one span: apply the house repo settings (merge-commit-only, delete-branch-on-merge), scaffold the baseline files (LICENSE by visibility, README, `.gitignore`, `AGENTS.md`), then run `about` and `labels` on top, all on defaults with no questions. It configures; `gh repo create` stays with the user.
-- **`docs`.** Renumber the repo's `docs/` artifacts so a directory listing reads in creation order: a zero-padded serial in front of every artifact filename, assigned from when the artifact was created. A one-time migration per repo, idempotent on a re-run.
-
-Four jobs, one skill, because all four answer "make this repo match convention": the outward-facing blurb people read, the label vocabulary the issue workflow runs on, the settings-and-files baseline a new repo starts from, and the naming of the artifacts the other kits write into it.
-
-## When this fires
-
-The user wants to configure a repo on GitHub. Route to a mode from what they ask:
-
-- **about.** "Set the repo description", "add topics", "write an About blurb", "tag this repo", "update the repo's About".
-- **labels.** "Provision the workflow labels", "set up this repo's labels", "add the issuekit labels", "add priority labels", "add an `ai-review` label", "the `blocked` label is missing".
-- **setup.** "Set up this new repo", "configure this repo", "make this repo match my conventions", or a vague "set up this repo" / "configure repo metadata" — `setup` is the umbrella, and it subsumes the old "offer `about` then `labels`" answer.
-- **docs.** "Number my docs files", "renumber the docs", "add file number prefixes", "my docs don't sort by date", "migrate the doc filenames". `setup` does not run it: `setup` brings a fresh repo up to convention, and a fresh repo has no artifacts to renumber.
+Configure a GitHub repository through the [`gh` CLI](https://cli.github.com) in four modes. Route to a mode from what the user asks. A vague "set up this repo" or "configure this repo" is `setup`, the umbrella that runs `about` and `labels` on top of the house settings and baseline files. `setup` does not run `docs`, because a fresh repo has no artifacts to renumber.
 
 **If no mode is clear, ask first.** Present the four modes and let the user pick before touching anything.
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-The mode bodies live in one file each under `modes/`. Route with the list above, read that one file, and follow it. Everything in this root applies to every mode and is not restated in the mode files.
+Read the one mode file and follow it. Everything in this root applies to every mode and is not restated in the mode files.
 
 - Mode `about` → read [modes/about.md](modes/about.md), then follow it.
 - Mode `labels` → read [modes/labels.md](modes/labels.md), then follow it.
@@ -42,27 +26,19 @@ The mode bodies live in one file each under `modes/`. Route with the list above,
 
 ## Preflight (every mode)
 
-**`docs` is the exception to this section and the next one.** It renames files in the working tree and calls GitHub not at all, so it needs neither `gh` nor a remote — it runs on a local-only repo. Its own file states the checks it does need. Everything below applies to `about`, `labels`, and `setup`.
-
-Before any GitHub call, confirm the tooling and target:
-
-```sh
-gh --version                                          # gh installed?
-gh auth status                                        # authenticated?
-gh repo view --json nameWithOwner -q .nameWithOwner   # which repo? (the current dir's remote)
-```
+**`docs` is the exception to this section and the next one.** It renames files in the working tree and calls GitHub not at all, so it runs on a local-only repo. Its own file states the checks it does need. Everything below applies to `about`, `labels`, and `setup`.
 
 - If `gh` is missing or unauthenticated, say so and point to `https://cli.github.com` / `gh auth login`. Don't work around it.
-- If there's no GitHub remote (the `repo view` call fails), stop and say so, because repokit acts on a repo that exists on GitHub. That covers `setup` too: creating the repo is the user's move (`gh repo create`), and repokit begins after it exists.
-- **No shell or `gh` at all** (e.g. a browser-based agent)? You can't call `gh`. Do the reasoning from what the user provides and **print the exact `gh` commands** for them to run, whether the description/topics lines, the `gh label create` block, or the `gh repo edit` settings line, as a codeblock to paste. `setup`'s scaffold files degrade the same way: print each file as a fenced block with its path.
+- If there's no GitHub remote (`gh repo view` fails), stop and say so. That covers `setup` too: creating the repo is the user's move (`gh repo create`), and repokit begins after it exists.
+- **No shell or `gh` at all** (e.g. a browser-based agent)? Do the reasoning from what the user provides and **print the exact `gh` commands** for them to run, whether the description/topics lines, the `gh label create` block, or the `gh repo edit` settings line, as a codeblock to paste. `setup`'s scaffold files degrade the same way: print each file as a fenced block with its path.
 
-**Safety stance, for the whole skill.** A repo's description, topics, labels, and settings are outward-facing state. **Preview every mutation and get an OK before it runs, so nothing changes on GitHub unprompted.** `setup` is the one exception: the user asked for it to run on defaults, so it applies them and reports every change in its hand-off. `about` and `labels` run on their own keep their approval questions. Always echo the exact command(s) you run, so the change is auditable and replayable.
+**Safety stance, for the whole skill.** **Preview every mutation and get an OK before it runs.** `setup` is the one exception: the user asked for it to run on defaults, so it applies them and reports every change in its hand-off. `about` and `labels` run on their own keep their approval questions. Always echo the exact command(s) you run.
 
-**Re-run safe.** Every mode reconciles against what's already there, so running repokit a second time on an unchanged repo proposes nothing and mutates nothing. It's always safe to re-run.
+**Re-run safe.** Every mode reconciles against what's already there, so a second run on an unchanged repo proposes nothing and mutates nothing.
 
 ## Detect (every mode)
 
-Read the repo's current state once before proposing anything. It's the raw material every mode reconciles against, and it surfaces guardrails early. Fetch what the chosen mode needs plus the guardrail flags:
+Read the repo's current state once before proposing anything. Fetch what the chosen mode needs plus the guardrail flags:
 
 ```sh
 # guardrail flags + about state
@@ -80,10 +56,7 @@ Check the guardrail flags **before** any mutation:
 
 ## Notes
 
-- **Never** delete a repo's topics wholesale or its labels outside the canonical sets without an explicit ask; the default is additive and reconciling, not destructive.
+- **Never** delete a repo's topics wholesale or its labels outside the canonical sets without an explicit ask.
 - The lifecycle and priority maps are a **shared contract with issuekit**: the same names across both namespaces, with the same colors and meanings, and repokit's descriptions canonical. The automation set is repokit's alone, because issuekit runs the tracker and `ai-review` acts on a pull request.
-- **repokit provisions the vocabulary; it never applies it.** No mode here ever puts a label on an issue or a PR. Deciding that #42 is `high` is a judgment about the work, which is issuekit `create` and `triage`'s job; asking for an AI review is a call the author makes on their own PR. repokit only guarantees the word exists to say it with. Keeping that line is what makes the label mode safe to re-run on a repo with a live tracker.
 - **repokit never commits.** `setup` writes scaffold files and leaves them unstaged and `docs` leaves its renames staged; grouping and committing either is a commit skill's job, or the user's.
-- **Labels can't enforce one-per-namespace, so the writer has to.** GitHub will happily let an issue carry `critical` and `low` at once, and nothing here can prevent it. Provisioning is the only half repokit owns; the mutual exclusion is enforced at write time by whoever applies the label, which is why that rule lives in issuekit rather than in this map.
-- Defer to what the repo already curates: an existing scheme in any namespace is handled in `labels`' existing-scheme check, a curated About/topics is reconciled per-field (never blind-overwritten) in `about`, and `setup` never overwrites an existing file. Offer the canonical sets as an addition, not a replacement.
-- Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output, because the JSON fields are a stable contract and the display text isn't.
+- Prefer `gh`'s structured JSON (`--json`/`--jq`, the topics API) over scraping human-readable output.

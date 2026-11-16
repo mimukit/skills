@@ -1,6 +1,6 @@
 # Mode: `about`
 
-Infer the description and topics, reconcile against what's there, apply on approval. The root's [Preflight](../SKILL.md#preflight-every-mode) and [Detect](../SKILL.md#detect-every-mode) have already run; this file assumes their state and repeats none of it.
+Infer the description and topics, reconcile against what's there, apply on approval.
 
 ## 1. Start from what's already set
 You read the current description, topics, and homepage URL in Detect, so carry them in and reconcile against curated metadata instead of clobbering it. This step is done when the current description, topics, and homepage are stated, each as a value or as empty.
@@ -15,13 +15,13 @@ This step is done when you can state in one line what the repo is, citing the fi
 
 ## 3. Generate the description and topics
 - **Description.** One line, plain, specific about what the repo *is/does*, no trailing period, short enough for GitHub's About panel. Say what it is, not how great it is.
-- **Topics.** A focused, high-signal set (language, framework, domain, purpose), not keyword-stuffed. Enforce GitHub's format so they'll be accepted: lowercase, digits and single hyphens only, must start with a letter or number, ≤50 chars each, ≤20 topics total. Prefer widely-used topic slugs (e.g. `typescript`, `cli`, `github-actions`) so the repo surfaces under real topic pages.
+- **Topics.** A focused, high-signal set (language, framework, domain, purpose), not keyword-stuffed. Enforce GitHub's format so they'll be accepted: lowercase, digits and single hyphens only, must start with a letter or number, ≤50 chars each, ≤20 topics total. Prefer widely-used topic slugs (e.g. `typescript`, `cli`, `github-actions`).
 - **Homepage.** Optional, and proposed only when the repo names a real URL you can point at: a deployed site, a docs site, a package page on npm or PyPI or crates.io. Take it from the manifest (`homepage`, `documentation`, `repository.url`), the README's badges and links, or a GitHub Pages or deployment record. Propose no homepage when no such URL exists, and never invent one or reuse the repo's own GitHub URL, which the About panel already shows.
 
 This step is done when the description, every topic, and the homepage (or its absence) each pass the rules above.
 
 ## 4. Show current vs proposed, let the user decide per field
-Present a side-by-side so nothing is a surprise, and let the user accept, edit, or keep-current **each field independently**:
+Present a side-by-side and let the user accept, edit, or keep-current **each field independently**:
 
 | Field | Current | Proposed |
 |-------|---------|----------|
@@ -43,12 +43,12 @@ gh repo edit --homepage "https://example.com"   # only when a homepage was appro
 gh repo edit --add-topic new-one --add-topic another --remove-topic dropped-one
 ```
 
-To *replace the whole topic set* in one call instead of add/remove reconciliation, the topics API is cleaner: `gh api --method PUT repos/{owner}/{repo}/topics -f 'names[]=a' -f 'names[]=b'`. Either is fine, so pick whichever expresses the change more simply. This step is done when every approved field is written with its command echoed, and `gh repo view` shows the approved values.
+This step is done when every approved field is written with its command echoed, and `gh repo view` shows the approved values.
 
 ## 6. Hand off
 
-**What changed.** Report the description, topics, and homepage as they now stand, and anything the user chose to keep current rather than replace. A field you proposed and they rejected is worth one line; it's the part most likely to come up again.
+**What changed.** Report the description, topics, and homepage as they now stand, and anything the user chose to keep current rather than replace. Give one line to each field you proposed and they rejected.
 
 **Where it landed.** Name the repo's About panel, with its URL, so they can eyeball the result.
 
-**Next.** Name one move and stop. If `labels` hasn't run in this repo, that's it: the lifecycle and priority labels are what an issue workflow needs and the About panel isn't. If both modes are done, repokit is finished with this repo, so point at what the metadata unblocks (**issuekit** to start filing work, when installed) rather than manufacturing more configuration. When this run was delegated from `setup`, skip this hand-off; `setup` closes for the whole span.
+**Next.** Name one move and stop. If `labels` hasn't run in this repo, that's it. If both modes are done, repokit is finished with this repo, so point at **issuekit** to start filing work, when installed. When this run was delegated from `setup`, skip this hand-off; `setup` closes for the whole span.

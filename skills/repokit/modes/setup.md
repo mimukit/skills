@@ -1,9 +1,9 @@
 # Mode: `setup`
 
-Bring an already-created GitHub repo up to convention in one span: the repo settings, the baseline files, then the `about` and `labels` modes on top. **`setup` runs on defaults and asks nothing.** Every decision below has a default, and the run applies it and reports it in the hand-off; the user changes a value afterwards with `gh repo edit` or by editing the file. The only stops are the root's guardrails: an archived repo, or a fork or template the user does not confirm. `setup` **configures, never creates** — the root's preflight already stopped if there is no GitHub remote, and `gh repo create` stays with the user. It also never commits: every file it writes is left unstaged for a commit skill to group. The root's [Preflight](../SKILL.md#preflight-every-mode) and [Detect](../SKILL.md#detect-every-mode) have already run; this file assumes their state.
+Bring an already-created GitHub repo up to convention in one span: the repo settings, the baseline files, then the `about` and `labels` modes on top. **`setup` runs on defaults and asks nothing.** Every decision below has a default, and the run applies it and reports it in the hand-off; the user changes a value afterwards with `gh repo edit` or by editing the file. The only stops are the root's guardrails: an archived repo, or a fork or template the user does not confirm.
 
 ## 1. Report the repo's shape
-Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD`, which fails harmlessly on an empty repo) and the top-level file list. State what you found in one line: empty repo, fresh repo with a first commit, or a repo with real history. Every shape runs the identical flow below; history only shrinks the diffs, because the scaffold step writes only missing files and everything else reconciles. This step is done when the shape is stated.
+Read the state Detect fetched, plus the commit count (`git rev-list --count HEAD`, which fails harmlessly on an empty repo) and the top-level file list. State what you found in one line: empty repo, fresh repo with a first commit, or a repo with real history. Every shape runs the same flow below. This step is done when the shape is stated.
 
 ## 2. Settings
 Fetch the current settings and diff them against the canonical map, which is the user's default for every repo:
@@ -33,7 +33,7 @@ Apply every differing row without a question. A matching row needs no flag. Keep
 
 The default branch is report-only: state it when it isn't `main` and change nothing, because renaming a default branch breaks open PRs and clones.
 
-**Both secret-scanning rows are free on a public repo and need GitHub Advanced Security on a private one.** Apply them on either visibility; on a private repo the plan may reject them, and the cost of a rejected flag is one error message.
+**Both secret-scanning rows are free on a public repo and need GitHub Advanced Security on a private one.** Apply them on either visibility; on a private repo the plan may reject them.
 
 Apply the differing rows in one echoed command built from their flags. The full form, when every row differs:
 
@@ -57,7 +57,7 @@ List which baseline files exist and which are missing. Write every missing one w
 **The license follows the repo's visibility (fetched in the settings step), with no question.**
 
 - **Public repo → MIT.** Fetch the text from `gh api /licenses/mit --jq .body` rather than writing it from memory, then substitute the year and holder name.
-- **Private repo → a proprietary all-rights-reserved file.** A private repo holds proprietary code, and the file says so where a reader will find it. Write this text with the holder and the year:
+- **Private repo → a proprietary all-rights-reserved file.** Write this text with the holder and the year:
 
   ```text
   Copyright (c) <year> <holder>. All rights reserved.
@@ -72,7 +72,7 @@ A private repo that goes public later needs a new `LICENSE`; name that in the ha
 
 ### Docs artifact naming
 
-Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` is already present, check it for an artifact-naming rule. When none exists, append the section. A repo scaffolded by another tool, such as a project generator, arrives with an `AGENTS.md` but no naming rule, and that is the case this row exists for.
+Every `AGENTS.md` this mode writes carries the section below. When `AGENTS.md` is already present, check it for an artifact-naming rule. When none exists, append the section.
 
 ```markdown
 ## Docs artifact naming
