@@ -10,7 +10,7 @@ metadata:
 
 # statuskit
 
-Read and advise; write only the files the [write rules](#write-rules) list. statuskit never commits, pushes, closes an issue, edits a PR, merges, relabels, or writes code. A move names its kit and one-line command, and the user launches it. The `Skill` tool is for gitkit only, which the survey calls for the base ref, the branch-name pattern, and worktree paths. Every other kit is routed to, never invoked.
+Read and advise; write only the files the [write rules](#write-rules) list. statuskit never commits, except its own snapshot when the user explicitly asks. It never pushes, closes an issue, edits a PR, merges, relabels, or writes code. A move names its kit and one-line command, and the user launches it. The `Skill` tool is for gitkit only, which the survey calls for the base ref, the branch-name pattern, and worktree paths. Every other kit is routed to, never invoked.
 
 Tracker judgment belongs to issuekit. statuskit prints issue counts, the unblocked, blocked, and ready sets by ID, what each blocked issue says it waits on, and each issue's declared priority, and it computes one staleness count. It never renders an itemized tracker-health verdict, never explains which issues are stale and why, and never assigns a priority. When the dashboard needs that judgment, point at `issuekit triage` or `issuekit sync`.
 
@@ -90,10 +90,10 @@ The reading is one of four states, and every tracker-dependent rule in this file
 |---|---|---|---|
 | **present** | the prompt, the guide, or a non-empty array | run | runs |
 | **absent** | the prompt, the guide, or Issues disabled | skipped | skipped |
-| **unknown** | an empty array, or any other query error | skipped, and said once | skipped |
+| **unknown** | an empty array, or any other query error | rungs skipped, and said once; on a query error the Issues panel prints only the failed call | skipped |
 | **unavailable** | `gh` missing or unauthenticated, or no GitHub remote | the git-only ladder runs instead | skipped |
 
-*No tracker* below means absent or unknown. **A query error is never absent.** Name the failed call once on the Issues line and route like no tracker. The same holds when the prompt or the guide says present and the issue query fails: the issue rungs skip and the failed call is named.
+*No tracker* below means absent or unknown. **A query error other than Issues disabled is never absent.** The Issues line still prints and names the failed call once, and the ladder routes like no tracker. The same holds when the prompt or the guide says present and the issue query fails: the issue rungs skip and the failed call is named.
 
 **Unknown routes like no-tracker and says so.** It never asserts a plan is unfiled, never crowns "go file issues", and names both paths in one line. Do not probe for lifecycle labels to resolve it. When an empty-array unknown fires and a user is there to answer → read [declaration.md](declaration.md), then follow it.
 
@@ -114,7 +114,7 @@ Git signals always drive the survey; GitHub signals enrich it when available.
 Gather git always; gather GitHub only when `gh` is usable. All commands are read-only.
 
 **git (always):**
-- working tree: `git status --porcelain`, current branch, upstream ahead/behind, `git log @{u}.. --oneline` (unpushed; skip if the branch has no upstream, which is itself the "push/publish" signal), `git stash list --format='%h %gd %s'` (the SHA is the stash's stable identity), and any local branches carrying unmerged commits.
+- working tree: `git status --porcelain -- . ':!docs/status'` (the snapshot is statuskit's own file, not work), current branch, upstream ahead/behind, `git log @{u}.. --oneline` (unpushed; skip if the branch has no upstream, which is itself the "push/publish" signal), `git stash list --format='%h %gd %s'` (the SHA is the stash's stable identity), and any local branches carrying unmerged commits.
 - **the base branch**, from **gitkit**, never assumed to be `main`. Every "is this a feature branch?" and "is it unmerged?" judgment turns on it.
 - **branch → issue mapping.** Resolve the current branch from its open PR's `closingIssuesReferences`. **On a stack layer that field is empty**, so apply [the layer fallback](#unblock-leverage) before you drop to the branch name. **The branch-name pattern comes from gitkit** (`issue-<n>-<slug>`); a bare `#N` or a slug matching an issue title are the looser fallbacks. When the branch stays unmappable, treat a dirty branch that isn't the base as *continue*, not *commit*.
 - **worktrees.** Ask gitkit where a branch's code lives. statuskit never creates or removes one.
@@ -202,7 +202,7 @@ Print the dashboard in the shape below, under the [render rules](#render-rules),
 
 ## Working tree  <clean | N uncommitted · M unpushed · stash K>
 
-## Issues        in-progress N · ready N · in-review N · blocked N     (omit without gh, or without a tracker)
+## Issues        in-progress N · ready N · in-review N · blocked N     (omit per the render rules; on a failed query other than Issues disabled, name the call)
 
 Unblocked (N) · highest priority first
 | Issue | Priority | Unblocks | Status | Last active | Title |
@@ -254,7 +254,7 @@ Every rule for what prints, where, and in what order lives in this table. The sn
 | Element | Rule |
 |---|---|
 | Signal panel | Working tree, Issues, Pull requests, Plans, and Review each put the heading and counts on one line, followed only by a table. A reason for a move goes in the move line. |
-| Panel presence | Working tree, Issues, and Pull requests always print, zero counts included. A panel is omitted only when its source is unavailable: Issues and Pull requests without `gh`, Issues when the tracker reading is not present. Say the reason once. |
+| Panel presence | Working tree, Issues, and Pull requests always print, zero counts included. A panel is omitted only when its source is unavailable: Issues and Pull requests without `gh`, Issues when the tracker reading is absent or an empty-array unknown. Say the reason once. When the issue query fails with any error other than Issues disabled, the Issues line still prints and names the failed call in place of the counts. |
 | Plans panel | Prints only with a finding: an unfiled plan when the tracker reading is present, an unbuilt phase of a stamped plan when there is no tracker. Both can print together. No finding means no Plans line, no `## Plans` section in the file, and no mention of why. |
 | Review panel | Prints only with a finding: a doc stamped `Review: pending`. It is one count line with the doc names, and no table. No finding means no Review line and no `## Review` section in the file. |
 | Extra panel | At most one, for a first-class queue the standard set cannot see (an `IDEAS.md` backlog, an RFC index), filled from a file the survey read. Never a panel filled by running a build, test, or lint. |
@@ -318,21 +318,21 @@ Say `untracked` in place of `gitignored` when the [write rules](#write-rules) sk
 | a doc awaiting review | `review-<name>`, the file name minus its serial and date, such as `review-plan-sso-login` |
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-<sha>`, the stash commit's short SHA from `git stash list --format='%h'`; an index such as `stash@{0}` moves whenever a new stash is pushed |
-| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `repo-labels`, `declare-tracker` |
+| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `declare-tracker` |
 
 **Put priority and leverage in a queued move's line** when it carries a priority above `medium` or an `unblocks` count above zero: `**Start #12 (critical, unblocks 3)** · \`issuekit start 12\``. Omit `unblocks 0`, and omit `medium` or a blank priority. Priority leads when both are present.
 
-**Every move needs an observable retire signal**: the PR merged, the issue closed, the labels now exist, the tree went clean. The next survey detects completion from that signal, never from the ticks. A move with no such signal is a decision, so route it to `plankit` or file it with `issuekit create`.
+**Every move needs an observable retire signal**: the PR merged, the issue closed, the issue now carries a label, the tree went clean. The next survey detects completion from that signal, never from the ticks. A move with no such signal is a decision, so route it to `plankit` or file it with `issuekit create`.
 
 **One issue or PR per checkbox.** When a rung applies to several issues, split it into one item per issue, each with its own number, title, and command, in the rung's order. The `Surfaced, not queued` list follows the same rule: one line per PR. A long list keeps its length; cap it as the tables do, most-recently-updated first, then a `+N more` line.
 
 All three tables (unblocked, waiting for review, blocked issues) go into the file as printed, in that order. Beyond the provenance line and the checkbox lists, the file adds nothing the dashboard didn't contain.
 
-**Leave the file uncommitted.** Commit it only if the user explicitly asks.
+**Leave the file uncommitted.** Commit it only if the user explicitly asks: stage it with `git add` (`git add -f` when `docs/status/` is gitignored), then commit that path alone (`git commit -- <path>`).
 
 #### Write rules
 
-statuskit writes local files only, and this table is the complete list. Nothing here reaches a remote, a branch, or a tracker.
+statuskit writes local files only, and this table is the complete list. Nothing here reaches a remote or a tracker, and the one commit is the snapshot commit the user explicitly asks for.
 
 | Write | When | Gate |
 |---|---|---|
