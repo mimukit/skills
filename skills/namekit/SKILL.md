@@ -30,8 +30,8 @@ An ask that supplies a description gets `generate`. An ask that supplies names g
 Three namespaces, three commands. Each one is a public HTTP contract, so it is safe to pin.
 
 ```sh
-# domain registration: 404 = not registered, 200 = registered
-curl -s -o /dev/null -w '%{http_code}' -L --max-time 10 https://rdap.org/domain/<name>.com
+# domain registration: status, final URL, content type (read the rule below)
+curl -s -o /dev/null -w '%{http_code} %{url_effective} %{content_type}' -L --max-time 10 https://rdap.org/domain/<name>.com
 
 # npm package: 404 = free
 curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://registry.npmjs.org/<name>
@@ -39,6 +39,8 @@ curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://registry.npmjs.org/
 # GitHub org or user handle: exit 0 = taken; "HTTP 404" on stderr = free
 gh api /users/<name> --silent
 ```
+
+**A domain 404 is a verdict only when a registry answered it.** rdap.org redirects to the registry's own RDAP server, so a 404 means "not registered" only when the final URL is off rdap.org and the content type is `application/rdap+json`. A 404 that stays on rdap.org means the TLD has no RDAP service (`.de` and `.io` returned this for registered names), and a `text/html` 404 means the registry endpoint failed (`.ai` returned this for `google.ai`). Report both as unknown (checked 2026-11-16).
 
 **Read only the listed answers as verdicts.** A domain or npm status other than 200 or 404 (a 429, a 5xx, `000` on a timeout) is **unknown**. For `gh api`, only exit 0 means taken, and only a nonzero exit whose stderr says `HTTP 404` means free. Any other failure is unknown: `gh help exit-codes` lists 1 for any failure, 2 for a cancel, and 4 for missing authentication, and none of those proves the handle is free. Retry an unknown probe once. A name with an unknown result after the retry is neither removed nor crowned as free; report the namespace as unknown and name the reason.
 
