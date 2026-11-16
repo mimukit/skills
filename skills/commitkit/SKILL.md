@@ -10,13 +10,11 @@ metadata:
 
 # commitkit
 
-Turn the current changes into one or more clean commits with [Conventional Commits](https://www.conventionalcommits.org) messages inferred from the diff itself, not from a guess. The message describes what actually changed, in the imperative mood, with a correct type and scope. In a coding session the default is **multiple commits**, one per feature group or logically related change, never a single catch-all commit.
-
 ## When this fires
 
-The user asks to commit ("commit this", "make a commit", "/commitkit", "commit my changes"). A request for the *message only* ("draft a commit message", "what should the message say") takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push` ("commit only, do not push"); see [Commit each group](#5-commit-each-group). A commit request that defers the review of a doc ("we'll review later"), or a report that a doc is reviewed, takes the [Review stamp](#review-stamp) before the procedure.
+A request for the *message only* takes the [Message-only route](#message-only-route), which never stages, commits, or pushes. A caller that wants the commits without the push says `no-push`; see [Commit each group](#5-commit-each-group). A commit request that defers the review of a doc ("we'll review later"), or a report that a doc is reviewed, takes the [Review stamp](#review-stamp) before the procedure.
 
-This skill is built for AI coding sessions where the user hands off with a bare "commit". In that mode you are expected to work autonomously: stage this session's files yourself, group the work into as many commits as it deserves, commit them, push them, and report back a table of what you created, without stopping to ask at each step. The one planned question is the branch, when a branch-workflow repo has you [on the base branch](#on-the-base-branch).
+Stage, group, commit, and push without per-step confirmation. The only planned question is the branch, when a branch-workflow repo has you [on the base branch](#on-the-base-branch).
 
 ## Scope
 
@@ -33,7 +31,7 @@ A run commits **this session's changes**, not every change in the tree. One bran
 
 ## On the base branch
 
-A repo that works through issue branches and pull requests does not expect a commit straight on its base branch, so a run there asks first. A solo repo that commits to the base branch every day gets no question. Run this check before the commit chain in [Commit each group](#5-commit-each-group), and only when `HEAD` is the base branch. **gitkit** owns the base branch; without gitkit, take the branch `git symbolic-ref --short refs/remotes/origin/HEAD` names, minus `origin/`.
+A repo that works through branches and pull requests gets one question before a commit on its base branch. Run this check before the commit chain in [Commit each group](#5-commit-each-group), and only when `HEAD` is the base branch. **gitkit** owns the base branch; without gitkit, take the branch `git symbolic-ref --short refs/remotes/origin/HEAD` names, minus `origin/`.
 
 Skip the check when the user already named the branch for this run ("commit on main", "put it on a hotfix branch"), or when a calling skill passed `no-push`. A caller owns its own branch.
 
@@ -59,16 +57,15 @@ The new branch carries the working tree with it, out-of-scope changes included, 
 
 ## Message-only route
 
-A user in a live session wants the message, not the commit. This route reads and prints. The index, the refs, and the remote stay exactly as they were.
+This route reads and prints. It leaves the index, the refs, and the remote untouched.
 
-1. Record the opening state in one call: `git status --short && git rev-parse HEAD && git diff --cached --binary | git hash-object --stdin && git for-each-ref | git hash-object --stdin`. `hash-object` without `-w` writes nothing.
-2. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. The read limits in [Read the state](#1-read-the-state) apply.
-3. Apply [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message). Write one message for the subject. When the subject plainly spans several concerns, write one message per group and name each group's paths.
-4. Print each message in a code block.
+1. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. The read limits in [Read the state](#1-read-the-state) apply.
+2. Apply [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message). Write one message for the subject. When the subject plainly spans several concerns, write one message per group and name each group's paths.
+3. Print each message in a code block.
 
-The only git commands on this route are reads: `status`, `diff`, `log`, `rev-parse`, `for-each-ref`, and `hash-object` without `-w`.
+The only git commands on this route are reads: `status`, `diff`, `log`, and `rev-parse`.
 
-**Done when** every message is printed and a closing run of the record commands prints the same commit and the same two hashes as the opening run. Hand off in one line: say nothing changed, and name the next move, which is to say "commit" to commit with these messages.
+**Done when** every message is printed. Hand off in one line: say nothing changed, and name the next move, which is to say "commit" to commit with these messages.
 
 ## Review stamp
 
@@ -86,13 +83,11 @@ A doc committed for later review carries a stamp line, so a later session finds 
 
 Draft mode replaces [Scope](#scope), [Read the state](#1-read-the-state), [Group the work into multiple commits](#4-group-the-work-into-multiple-commits), [Commit each group](#5-commit-each-group), and [Hand off](#6-hand-off). [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message) apply unchanged, so the scope stays mandatory and the body stays required.
 
-- **Write exactly one commit message for the whole staged set.** The multiple-commits default does not apply here, because the caller owns the staging and you cannot restage anything.
+- **Write exactly one commit message for the whole staged set.**
 - **Emit the raw message and nothing else**: the subject line, one blank line, then the body. No preamble, no code fence, no summary table, no hand-off, no next move, no `Co-authored-by`, no tool advertising. The first character of your output is the first character of the subject.
 - **Read the whole payload for repo context.** It may carry `git log --oneline` output. Match the style of those subjects, per the repo-convention rule in [Notes](#notes).
 - **Expect a `[diff truncated]` marker.** Write the message from the visible part of the diff. Keep the truncation out of the commit.
 - **No diff, no output.** If the payload holds no diff, print nothing and stop.
-
-Draft mode outranks the codeblock fallback in [Notes](#notes). A code fence serves a human who copies the message by hand; a commit panel takes the message bare.
 
 ## Procedure
 
@@ -103,23 +98,18 @@ Start from the file-level shape of the change, never the full diff, in a single 
 git status --short && git diff --stat HEAD && git diff --cached --no-renames --name-only   # tree state, one line per file, the staged set
 ```
 
-**Record the staged set.** The last command lists every path that was staged before you touched anything. Keep that list for the whole run, because a `git add` only ever adds to the index: a path staged earlier rides into the next commit unless you place it on purpose. A path that shows `MM` in `git status --short` is **partially staged**. The user staged some of its hunks and left the rest, so its staged hunks are the content a group takes, and you never re-add the whole path unless the user says so.
+**Record the staged set.** The last command lists every path that was staged before you touched anything. Keep that list for the whole run, because a path staged earlier rides into the next commit unless you place it on purpose. A path that shows `MM` in `git status --short` is **partially staged**. The user staged some of its hunks and left the rest, so its staged hunks are the content a group takes, and you never re-add the whole path unless the user says so.
 
-**Batch every git call in this skill the same way.** This skill fires at the end of a session, when the context window is at its largest, and each extra Bash call re-pays that whole window as input. Chain commands with `&&` whenever no decision sits between them; spend a separate call only where you must stop and think between two commands.
+**Chain git calls with `&&` unless a decision sits between them**, here and in every later step.
 
-**Then decide how much diff you actually need, by asking who wrote these changes.**
+**Then decide how much diff you need, by asking who wrote these changes.**
 
-- **You did, in this same context** (the typical coding-session hand-off). You already know what the change does and, more importantly, *why*, and the why is the part a diff can't tell you: the approach you rejected, the test that caught a bug mid-way, the file you deliberately left alone. Group from the stat and write the body from what you know. Read a diff only for files you didn't touch yourself, or where you genuinely can't recall what landed.
-- **You didn't.** The scope is `all` or a named scope that reaches past your own edits, you were dispatched as a subagent, or the work happened far enough back that it's no longer in context. Then the diff is your only source, but take it group by group, never wholesale. Sketch the groups from the stat first, then read each group's diff with `git diff HEAD -- <paths>` and stop once that group's type, scope, and effect are clear. A pathless `git diff HEAD` pulls the whole session's changes into context at once; the per-group read caps each read at the group you're actually writing about.
+- **You did, in this same context**: group from the stat and write the body from memory.
+- **You didn't** (the scope is `all` or reaches past your own edits, you are a subagent, or the work has left your context): sketch the groups from the stat, then read each group's diff separately with `git diff HEAD -- <paths>`, never a pathless `git diff HEAD`.
 
-When in doubt, read. A vague commit message costs more than the tokens it saved. But re-reading code you wrote minutes ago buys nothing: the stat already tells you which files moved, and you already know what you did to them.
+**Never read the content of generated files**, meaning lockfiles (`*.lock`, `package-lock.json`, `pnpm-lock.yaml`, `go.sum`), build output, vendored directories, snapshots, compiled assets.
 
-**Never read the content of generated files** in either mode, meaning lockfiles (`*.lock`, `package-lock.json`, `pnpm-lock.yaml`, `go.sum`), build output, vendored directories, snapshots, compiled assets. Their stat line carries every bit of signal a commit message can use, and their diffs are the largest in most repos.
-
-- When the user has **delegated committing** (the typical coding-session "commit" / "commit my changes"), you are free to stage the files you need yourself, so `git add` the paths for each logical group as you commit it. You don't have to ask first; grouping and staging is your job here.
-- Only pause to ask when intent is genuinely ambiguous, e.g. the tree holds half-finished work, secrets, changes you suspect the user didn't mean to commit, or a file is partially staged and staging its whole path would include deliberately unstaged hunks. Never `git add -A` blindly across unrelated concerns; stage per group instead (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)).
-- If the user asked for a single specific commit, respect that and don't auto-split.
-- If **the scope holds no change**, stop and say so. Name the out-of-scope changes when the tree has some.
+If **the scope holds no change**, stop and say so. Name the out-of-scope changes when the tree has some. Pause and ask when the scope holds half-finished work, a secret, or a change the user likely did not mean to commit.
 
 **Done when** you hold the resolved [Scope](#scope) with its path list, the changed-path list, the recorded staged set with its partially staged paths marked, and the answer to who wrote the changes.
 
@@ -139,9 +129,9 @@ Pick the `type` from what the diff *does*, not what files it touches:
 | `style` | formatting/whitespace, no logic |
 | `chore` | routine maintenance that fits nothing above |
 
-**`hotfix` is `fix` in a hurry, and the branch decides it, not the severity.** A fix on a branch named `hotfix-<slug>` takes `hotfix`. A fix anywhere else stays `fix`, however urgent it felt. A hotfix branch also carries quick changes that are not fixes, and those keep the type their diff earns (`docs`, `chore`, `feat`), because the changelog files a `hotfix` under **Fixed**. This keeps the type checkable from the branch name rather than from a judgement about how bad the bug was. `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
+**Use `hotfix` only for a fix on a `hotfix-<slug>` branch.** A fix anywhere else stays `fix`, however urgent. Other changes on a hotfix branch keep their own type (`docs`, `chore`, `feat`). `hotfix` is an addition to the [Conventional Commits](https://www.conventionalcommits.org) set, so drop back to `fix` in a repo whose tooling validates types against the standard list; say once that you did.
 
-**Scope** is **mandatory** here. Unlike vanilla Conventional Commits, never omit it. Work out the module or feature group the diff belongs to (a package, module, directory, or feature area) and use that as the scope: `feat(auth): …`. When a change is genuinely global or fits no single area (repo-wide config, tooling, cross-cutting cleanup), use `repo` as the scope: `chore(repo): …`. Add a `!` (or a `BREAKING CHANGE:` footer) when the change breaks existing behavior.
+**Scope** is **mandatory** here. Unlike vanilla Conventional Commits, never omit it. Work out the module or feature group the diff belongs to (a package, module, directory, or feature area) and use that as the scope: `feat(auth): …`. When a change is global or fits no single area (repo-wide config, tooling, cross-cutting cleanup), use `repo` as the scope: `chore(repo): …`. Add a `!` (or a `BREAKING CHANGE:` footer) when the change breaks existing behavior.
 
 **Done when** every planned commit has exactly one type and one scope.
 
@@ -159,30 +149,24 @@ one-line summary of why the change was made
 Reference issues in a footer.
 ```
 
-The `(scope)` is required, so every message carries one, falling back to `(repo)` for global work.
-
 Rules:
 - **Imperative mood**, **all lowercase** subject. Never capitalize the first word or any word in the title (proper nouns and acronyms are the only exceptions), use **no trailing period**, and aim for ≤ 50 characters.
 - The summary states the *effect* of the change ("add retry to fetch client"), not the activity ("changes to fetch client").
-- **Keep every body line at 72 characters or fewer.** Break a longer bullet into two bullets, or continue it on an indented next line. Commit hooks such as commitlint's `body-max-line-length` reject long lines, and 72 clears the common 72/80/100 limits.
-- **A body is required.** Open with a short one-line summary of *why*, then a bullet list capturing the reasons and the concrete changes. Keep it to what a reviewer needs. Don't pad trivial commits, but always include the summary line and at least one bullet.
+- **Keep every body line at 72 characters or fewer.** Break a longer bullet into two bullets, or continue it on an indented next line. 72 clears the common commitlint `body-max-line-length` limits.
+- **A body is required.** Open with a one-line summary of *why*, then at least one bullet of reasons and concrete changes.
 - Do **not** add `Co-authored-by` or tool advertising unless the user asked for it.
 
 **Done when** every message has a lowercase imperative subject with a scope, a one-line why, at least one bullet, and no body line over 72 characters.
 
 ### 4. Group the work into multiple commits
-Before committing anything, map the changes to logical groups. Each **feature group or related unit of work** (a feature and its tests, a bugfix, a docs update, a refactor, a config bump) becomes its **own commit**. This is the default, not an exception: a session that touched three concerns should produce three commits, each with its own scope.
-
-Group by *what the change accomplishes*, not by file type or directory. Keep a feature together with the tests and docs that belong to it rather than splitting them across commits. Don't over-fragment either; a single cohesive change is one commit even if it spans several files.
-
-Order the groups so dependencies land first (e.g. a shared helper before the feature that uses it). When a file contains hunks from multiple groups, plan to stage it interactively rather than assigning the whole path to one group.
+Make one commit per logical change, with its tests and docs included, unless the user asked for a single commit. Order the groups so dependencies land first. Split a file that holds hunks from several groups by hunk.
 
 **Place every path in the recorded staged set.** A pre-staged path inside the [Scope](#scope) joins the group it belongs to. A pre-staged path outside the scope joins no group and stays staged after the run. List those paths as the **keep-staged set**.
 
 **Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, and every recorded staged path sits in a group or in the keep-staged set.
 
 ### 5. Commit each group
-When `HEAD` is the base branch, settle the branch first with [On the base branch](#on-the-base-branch). With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**, so the commit cannot take a path that belongs elsewhere:
+When `HEAD` is the base branch, settle the branch first with [On the base branch](#on-the-base-branch). With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**:
 
 ```sh
 git add -- <group 1 paths> && \
@@ -220,20 +204,20 @@ git apply --cached "$park"
 
 The patch holds the exact staged hunks, so a partially staged file comes back partially staged, and a staged new file or deletion comes back staged. `git commit -- <paths>` is shorter, but it commits the working-tree copy of each path, which pulls the unstaged hunks of a partially staged file into the commit. The `;` before `git apply` restores the parked paths even when the check or the commit fails. Because the `;` also lets a chain run on after a failed commit, run each parked group as its own call and start the next group only after its commit landed. If `git apply --cached` fails, stop and report the patch path, because the parked hunks are in that file.
 
-The `gh pr view` tail tells the hand-off whether this branch already has a pull request. It costs nothing extra, because it rides the same call. An empty result or a `gh` failure means no pull request, and that is a normal outcome rather than an error.
+The `gh pr view` tail tells the hand-off whether this branch already has a pull request. An empty or failed `gh pr view` means no pull request.
 
-**Push by default when the push is a plain fast-forward to `origin`.** A commit that lives only on this machine is one lost disk away from gone, and publishing it is the move the user makes almost every time. Push when the repo has an `origin` remote and the branch either tracks `origin` or has no upstream at all. The branch name does not gate this; a topic branch and the base branch push the same way, because many solo repos commit straight to the base branch and a prompt there would fire on every run. A branch-workflow repo asks which branch before the commit, in [On the base branch](#on-the-base-branch), never before the push.
+**Push by default** when the repo has an `origin` remote and the branch tracks `origin` or has no upstream. The branch name does not gate the push.
 
 Hold the push and ask in these cases:
 
-- **The remote rejects it.** Report the rejection and stop. Never reach for `--force` or `--force-with-lease` here; a rejected push means the branch moved on the remote, and rewriting it is gitkit's and prkit's business, not commitkit's.
+- **The remote rejects it.** Report the rejection and stop. Never use `--force` or `--force-with-lease` here; gitkit and prkit own a rewrite.
 - **There is no `origin`,** or the branch tracks some other remote. Report the commits and name the push the user would run.
 
-**Skip the push when the user or a calling skill says `no-push`** ("commit only, do not push", "commit, don't push", "don't publish yet"). Drop `git push -u origin HEAD` from the chain, keep `git status -sb`, and say the commits are local. A calling skill that passes `no-push` owns the push: afkkit, for one, publishes the branch once, when prkit opens the PR.
+**Skip the push when the user or a calling skill says `no-push`** ("commit only, do not push"). Drop `git push -u origin HEAD` from the chain, keep `git status -sb`, and say the commits are local. A calling skill that passes `no-push` owns the push.
 
 Interactive staging of a mixed file (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)) is the one step that can't join the chain. Commit up to that group in one call, handle the split, then chain the rest.
 
-When the user delegated the commit ("commit", "commit my changes"), just do this for every group, with no per-commit confirmation. A request for a message only never reaches this step; it ends on the [Message-only route](#message-only-route). If a commit fails (e.g. a pre-commit hook rejects it), the `&&` chain stops at the failing group and later groups stay uncommitted, so surface the hook output, fix or ask, then resume the chain from that group. Don't retry blindly or bypass hooks with `--no-verify` unless told to.
+If a commit fails, for example on a pre-commit hook, the chain stops at that group. Surface the hook output, fix or ask, then resume the chain from that group. Never bypass hooks with `--no-verify` unless told to.
 
 **Done when** each commit's file list in `git log --stat` equals its group's paths, the staged set left after the run equals the keep-staged set, every out-of-scope path shows the same `git status --short` line as at the start, and the push either ran or has a recorded reason to hold.
 
@@ -243,16 +227,16 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Close with what changed, where it landed, and the next move.
 
-**What changed.** Print a summary table of the commits you created so the user sees the result at a glance:
+**What changed.** Print a summary table of the commits you created:
 
 | # | commit message | files |
 |---|----------------|-------|
 | 1 | `feat(auth): add token refresh retry` | `auth/token.ts`, `auth/token.test.ts` |
 | 2 | `chore(repo): bump ci node version` | `.github/workflows/ci.yml` |
 
-List each commit's changed/created files in the last column. You already know them, since they're the paths you passed to `git add` for each group, so build the table from that rather than querying git again. If you do need to check, one `git log --stat --oneline -<n>` covers every commit you just made; don't run a separate `git show` per commit. If a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped, left for the user, or kept staged on purpose), note it under the table. Name the out-of-scope paths in one line, so the user sees which changes the run left for another session or for `/commitkit all`.
+Build the files column from the paths you staged for each group. When a commit touches many files, list the key ones and add "+N more". If anything remains uncommitted (intentionally skipped, left for the user, or kept staged on purpose), note it under the table. Name the out-of-scope paths in one line, so the user sees which changes the run left for another session or for `/commitkit all`.
 
-**Where it landed.** Report the branch the commits sit on, and say whether the push happened. The `git status -sb` at the end of the commit chain prints the branch and its upstream in one line; report from that output rather than running it again. When the push did not happen, say so and name the reason, because commits that exist nowhere but this machine are the most useful line in the report.
+**Where it landed.** Report the branch the commits sit on, and say whether the push happened. The `git status -sb` at the end of the commit chain prints the branch and its upstream in one line; report from that output rather than running it again. When the push did not happen, say so and name the reason.
 
 **Next.** Name one move and stop. Pick it from the state you already read, in this order:
 
@@ -270,6 +254,6 @@ Don't open a pull request yourself; commitkit's job ends at the push.
 
 ## Notes
 
-- **Never** run `git commit --amend`, `git rebase`, `git reset`, or any other history-rewriting command unless the user explicitly asks. A fast-forward push publishes work and is recoverable with a revert; rewriting a published branch is not, which is why the guard sits here and not on the push (see [Commit each group](#5-commit-each-group)).
+- **Never** run `git commit --amend`, `git rebase`, `git reset`, or any other history-rewriting command unless the user explicitly asks.
 - If a repo has its own commit convention (a `CONTRIBUTING.md`, a commit template, or an obviously different style in `git log`), follow that over these defaults and say you did.
 - No filesystem or shell? Then you can't run `git`. Instead read the diff the user provides and print the finished commit message as a codeblock for them to run themselves.
