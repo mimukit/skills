@@ -23,7 +23,7 @@ If the term or decision isn't actually resolved, don't manufacture certainty. Us
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Keep this short. domainkit usually fires *inside* someone else's work, so a long report is an interruption on top of an interruption.
+Keep this to three lines.
 
 **What changed.** One line: the term added or adjusted, or the ADR written with its number and title, plus each older record whose `Status` flipped.
 

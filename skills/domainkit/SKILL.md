@@ -10,28 +10,21 @@ metadata:
 
 # domainkit
 
-Scribe of the project's **domain model**. domainkit keeps two living artifacts current: **`CONTEXT.md`**, a short overview of what the product is and who it is for followed by a glossary of the project's ubiquitous language, and **`docs/adr/`**, the log of architectural decisions and why they were made. Its core loop is narrow on purpose, **detect the moment, offer to record it, write on consent**, so the vocabulary and the reasoning behind hard choices stay pinned down without anyone remembering to do it.
-
-It runs primarily as a **byproduct of design work**. While a decision is being grilled, a plan drafted, or code written, a term crystallizes or a decision lands. That's when domainkit fires, proposes the entry, and writes it once you say yes. Two explicit modes sit beside that loop: one seeds `CONTEXT.md` for a project in a single pass, and one checks later whether it still matches the code.
+domainkit keeps `CONTEXT.md` and `docs/adr/` current: detect the moment, offer the entry, write on consent.
 
 ## When this fires
 
 Route to one of three modes:
 
-- **`record`**, the default. A **domain term** needs pinning down, because it's vague, overloaded, or two words are being used for one concept. Or a **decision** gets settled that meets the [ADR bar](#the-adr-decision-record-format). Also on explicit asks: "record this decision", "write an ADR", "update the glossary", "add this term to the ubiquitous language", "/domainkit". And when another skill needs the domain model kept current, it defers here rather than carrying the format itself.
-- **`init`.** The user asks to seed the domain model: "set up CONTEXT.md", "write the project overview", "domainkit init". It reads the repo, interviews the owner once, and proposes a whole `CONTEXT.md`.
-- **`audit`.** The user asks whether the model still holds: "is CONTEXT.md still accurate", "audit the glossary", "domainkit audit". statuskit routes here when `CONTEXT.md` has fallen behind the code.
+- **`record`**, the default. A **domain term** needs pinning down, because it's vague, overloaded, or two words are being used for one concept. Or a **decision** gets settled that meets the [ADR bar](#the-adr-decision-record-format). Also on an explicit ask to record a term or a decision, and when another skill needs the domain model kept current.
+- **`init`.** The user asks to seed the domain model. It reads the repo, interviews the owner once, and proposes a whole `CONTEXT.md`.
+- **`audit`.** The user asks whether the model still holds. statuskit routes here when `CONTEXT.md` has fallen behind the code.
 
-**A model-fired run always routes to `record`.** `init` and `audit` run only when the user asks for them, because each reads the whole repo and proposes a large diff, and that cost is the user's to choose.
-
-Two things domainkit deliberately is **not**:
-
-- **Not the interrogator.** Challenging a term, inventing edge-case scenarios, stress-testing whether a decision holds: that's an interrogation step. domainkit records the *settled* understanding; if a term or decision is still genuinely unresolved, use grillkit when installed or ask the user to settle it directly rather than writing down a guess. `init` does ask the owner questions, but only for facts the code cannot answer, each with a recommended answer.
-- **Not a status tracker.** There is no `status.md` and no "current state" file. Project status is ambient: issues track what's planned, git and session history track what happened, a handoff compacts state on demand. domainkit persists only what those *can't* recover, meaning what the product is for, the vocabulary, and the reasoning behind irreversible choices.
+**A model-fired run always routes to `record`.** `init` and `audit` run only when the user asks for them.
 
 ## Consent (every mode)
 
-Every write is **consent-gated**: domainkit writes only after an explicit yes. `record` offers each entry on its own. `init` and `audit` show the whole proposed change, the full file or the full diff, and write it once on one yes. A misfire costs one dismissible offer, never a spurious file.
+Every write is **consent-gated**: domainkit writes only after an explicit yes. `record` offers each entry on its own. `init` and `audit` show the whole proposed change, the full file or the full diff, and write it once on one yes.
 
 ## The modes
 
@@ -43,7 +36,7 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 ## The CONTEXT.md format
 
-`CONTEXT.md` is the single source of truth for **what the product is and what its words mean**: a short overview, then a Domain-Driven-Design ubiquitous language. It is not a spec, not a status file, and not a README.
+`CONTEXT.md` is the single source of truth for **what the product is and what its words mean**: a short overview, then a Domain-Driven-Design ubiquitous language.
 
 ```markdown
 # <Context name>
@@ -95,7 +88,7 @@ _Avoid: <synonym to reject>, <another>_
 
 ## The ADR decision record format
 
-ADRs live in `docs/adr/` and use `NNNN-adr-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `0001-adr-use-postgres-2026-07-23.md`, `0002-adr-adopt-event-log-2026-07-24.md`, … The number leads so a listing reads in decision order, matching the serial every other `docs/` artifact carries. The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. To number a new one, scan `docs/adr/` for the highest existing decision number and increment. A repo whose ADRs still use the older `adr-NNNN-<slug>-YYYY-MM-DD.md` shape keeps its numbers; write the new ADR in the new shape, and point the user at repokit's `docs` mode (when installed) to rename the older ones. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it, including `Status` lines that name it.
+ADRs live in `docs/adr/` and use `NNNN-adr-<slug>-YYYY-MM-DD.md`, numbered sequentially with zero-padding: `0001-adr-use-postgres-2026-07-23.md`, `0002-adr-adopt-event-log-2026-07-24.md`, … The number leads so a listing reads in decision order, matching the serial every other `docs/` artifact carries. The number is the authoritative decision order and the ISO suffix is the creation date; never rename an ADR merely because its status changes later. A repo whose ADRs still use the older `adr-NNNN-<slug>-YYYY-MM-DD.md` shape keeps its numbers; write the new ADR in the new shape, and point the user at repokit's `docs` mode (when installed) to rename the older ones. Create the directory only when the first ADR is needed. Parallel branches may claim the same number; when that happens, renumber the later ADR during merge and update any references to it, including `Status` lines that name it.
 
 ```markdown
 # NNNN: <Title>
@@ -120,10 +113,7 @@ Title, the context/decision/why paragraph, and `Status` make a complete ADR. `St
 2. **Surprising without context.** A future reader will question the approach from the code alone.
 3. **A genuine trade-off.** Real alternatives existed and were weighed.
 
-Typical qualifiers: architectural structure (monorepo layout, event sourcing), integration approaches between contexts, technology choices with high switching cost (database, auth provider), boundary and scope definitions, deliberate deviations from convention, constraints invisible in code (compliance, performance), and non-obvious rejections of an alternative.
-
 ## Notes
 
-- **Consent holds even when auto-fired.** Being model-invoked never means writing unprompted, because the offer always comes first.
-- **Bias toward the high bar.** Better to fire on a genuinely conflicting term or a genuinely irreversible decision than to nag on every noun; when in doubt, stay quiet.
+- **Bias toward the high bar.** Fire on a conflicting term or an irreversible decision, not on every noun; when in doubt, stay quiet.
 - **No filesystem or shell** (e.g. a browser-based agent)? Print the proposed glossary entry, ADR, or whole `CONTEXT.md` as a codeblock for the user to save, and skip the file write. With no `git log`, `audit` compares against the current tree only. Everything else is unchanged.
