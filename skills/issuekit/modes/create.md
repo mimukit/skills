@@ -92,7 +92,7 @@ Then apply the [priority label](../SKILL.md#priority-labels-every-mode) shown in
 
 Priority is applied **regardless of the grill gate**. The gate governs the lifecycle namespace only: an ungrilled issue is `needs-planning` because nobody has settled its decisions, but "this matters more than that" is a judgment the preview table already states and it doesn't need a grill session to be true. Dropping it here would mean the ungrilled backlog, the exact pile that most needs ordering, is the one part of the tracker nothing can rank.
 
-Confirm each label exists first (`gh label list`), and if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself. Check both namespaces in that one call; a repo that predates priority will have the lifecycle nine and none of the four.
+Confirm each label exists first (`gh label list`), and if one is missing, stop and point the user at **repokit** or the `gh label create` line rather than creating it yourself. Check both namespaces in that one call; a repo that predates priority will have the lifecycle ten and none of the four.
 
 ```sh
 # grilled plan → ready / blocked, each with its approved priority
