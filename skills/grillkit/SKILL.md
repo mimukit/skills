@@ -113,7 +113,7 @@ With `AskUserQuestion` available, run the round **hybrid**: print the full text 
 - **Prefix every label with its letter**, as in `(a) Per-page metadata`, `(b) YAML frontmatter`. That makes the correspondence explicit rather than positional, so a `(b)` still reads as `(b)` even when the widget stamps its own numbering down the side.
 - Mark the recommended option `(Recommended)` at the end of its label, wherever in the order it happens to fall, so the picker agrees with the `➡️` line.
 - Keep the labels short; the rationale lives in the text round, not in the option descriptions.
-- The tool caps at 4 questions per call and 4 options per question, and it always appends an "Other" escape for the user's own answer. A wider frontier means batching calls in round order or falling back to the text round alone; never trim the frontier to fit the widget. A question with a fifth option can't be mirrored at all: either fold two options together in *both* views, or leave that one question to the text round rather than showing the picker a truncated list.
+- The tool caps at 4 questions per call and 4 options per question, and it always appends an "Other" escape for the user's own answer (checked 2026-11-16). A wider frontier means batching calls in round order or falling back to the text round alone; never trim the frontier to fit the widget. A question with a fifth option can't be mirrored at all: either fold two options together in *both* views, or leave that one question to the text round rather than showing the picker a truncated list.
 
 ## Facts are your job, decisions are theirs
 
