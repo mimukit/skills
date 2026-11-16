@@ -12,7 +12,7 @@ metadata:
 
 Two modes. `audit` ranks the untested surface and writes nothing but a ledger. `cover` writes the tests.
 
-Every kept test is observed red under a mutation, and takes its expectation from outside the implementation.
+Every kept test is observed red under a mutation, apart from a contradiction test, and takes its expectation from outside the implementation.
 
 ## When this fires
 
@@ -46,6 +46,7 @@ It carries:
 - the ranked untested surface, stamped `ranked against <sha> on <date>`;
 - what each run covered, with its date and its declared-versus-actual count;
 - what was deferred, and why;
+- **contradictions**, meaning each test marked skipped or expected-to-fail because the code contradicts its expectation, with its path and the behaviour in doubt;
 - **testability blockers**, meaning code that cannot be tested without restructuring;
 - **unproven tests**, meaning pre-existing tests that survived a mutation they should have caught;
 - **over-broad tests**, meaning pre-existing tests that failed under a mutation aimed at a behaviour they do not name.
@@ -160,6 +161,8 @@ Opt-in and narrow. It runs only when the app already launches non-interactively 
 
 **Every test testkit keeps has been observed red.**
 
+**A contradiction test needs no mutation.** It fails against the current code, so run it once unmarked, see it fail, then mark it skipped or expected-to-fail and report it under contradictions.
+
 The code already exists, so red-then-green is unavailable. The substitute: break the behaviour, run the test, watch it fail, restore.
 
 **A valid break is a semantic mutation, never a deletion.** Change a returned value, flip a comparison, drop a branch, skip a write. A deletion fails every test, including one that asserts nothing. Use the smallest edit that changes the behaviour the test claims to check.
@@ -197,7 +200,7 @@ Mutations are edits to tracked source. **The user may have had uncommitted work 
 "Done" means green, twice, shuffled, and clean. Discover the commands from the repo itself (`package.json` scripts, `Makefile`, `pyproject.toml`, `justfile`, CI config) rather than guessing.
 
 - The new suite **passes**.
-- Every kept test was **observed red**, against a named mutation.
+- Every kept test was **observed red**, against a named mutation, or against the current code for a contradiction test.
 - The suite **runs twice in a row and passes both times**, in randomised order where the runner supports it.
 - The repo's own **build/typecheck** still passes.
 - The source tree carries **no leftover mutation**.
@@ -221,8 +224,9 @@ _Write this section in the procedural register: one instruction per sentence, ac
 - the **mode** and where the slice came from, whether the ledger, the user, or an inline ranking;
 - **declared against actual**, as in "declared 8 behaviours, covered 8";
 - the **files** created and changed, including the runner wiring;
-- the **gate result**, meaning the commands that ran, that every kept test was observed red, and that the suite passed two consecutive runs;
+- the **gate result**, meaning the commands that ran, that every kept test was observed red (contradiction tests against the current code), and that the suite passed two consecutive runs;
 - **deletions**, meaning tests testkit wrote and then removed because they stayed green;
+- **contradictions found and tests skipped**, as counts, then each skipped or expected-to-fail test by path with the behaviour in doubt, or `none`;
 - **unproven** and **over-broad** pre-existing tests, by path;
 - the **baseline snapshot**: `baseline snapshot: <sha> · recover with git stash apply <sha>`, or `baseline snapshot: none (no tracked change at start) · mutation patches in <ledger>`;
 - **tree state**, meaning the result of each baseline check: mutated files, index, and untracked files, or the paths that still carry a mutation.
