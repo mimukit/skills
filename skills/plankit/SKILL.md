@@ -10,13 +10,7 @@ metadata:
 
 # plankit
 
-Turn a rough idea (a feature, a project, a spec, a PRD) into a structured plan document you can act on. plankit is generative: it brainstorms the approach, settles the decisions needed for a coherent draft, and writes a `NNNN-plan-<slug>-YYYY-MM-DD.md` grounded in the real codebase (not a guess). It is the front of a flow, **plankit drafts → grillkit hardens → issuekit files** where a project tracks work in GitHub Issues, and **plankit drafts → grillkit hardens → implementkit builds** where it doesn't. Either way the plan it writes is the exact input the next step expects. plankit **plans only**: it never writes application code and never creates issues.
-
-## When this fires
-
-The user wants to think a piece of work through *before* building it: "plan this feature", "brainstorm a plan / PRD / spec", "write a plan doc", "help me think through X first", "/plankit". One distinction matters:
-
-- **It is not the adversarial interrogator.** That's grillkit. plankit asks enough to draft a coherent plan and records the thin spots as open questions; grillkit is what pressure-tests them one decision at a time.
+plankit is the front of a flow: **plankit drafts → grillkit hardens → issuekit files** where a project tracks work in GitHub Issues, and **plankit drafts → grillkit hardens → implementkit builds** where it doesn't. plankit **plans only**: it never writes application code and never creates issues.
 
 ## Procedure
 
@@ -28,25 +22,16 @@ Get the concept, the problem it solves, who it's for, and the outcome that means
 **Done when** the concept, the problem, the user, and the success outcome each have a one-line answer, from the input or from the user, and the success outcome carries a target, a `Target: open, no baseline` line, or a reason no number fits that names what does show it worked.
 
 ### 2. Ground it in reality
-Research before proposing, so the plan reuses what exists instead of reinventing it.
-
-- **In an existing repo:** read the relevant code, docs, and config to find the patterns, utilities, and conventions the plan should build on. Look up facts yourself (`Read`, `Grep`, `Glob`); reserve questions for genuine decisions. Never propose new code where a suitable implementation already exists; name the existing thing in the plan instead.
-- **Greenfield (no repo yet):** skip the code research; ground the plan in the user's stated goals and constraints.
+Research before proposing, so the plan reuses what exists instead of reinventing it. In greenfield work (no repo yet), skip the code research and ground the plan in the user's stated goals and constraints.
 
 **Done when** every part of the system the work touches has its existing module, utility, or convention named by path, or is recorded as having none, and for a UI change the house rules and the visual reference are found or recorded as missing ([UI plans](#ui-plans)). In greenfield work, every stated goal and constraint is written down instead.
 
 ### 3. Diverge, explore approaches
 Brainstorm the real options and **recommend one**, something concrete to accept or redirect, not a naked menu. This is the generative half: don't settle for the first idea, and consider the unconstrained version of the work before narrowing to the practical one.
 
-When more than one credible path exists, default to a spread that is genuinely different rather than variants of one idea: a **minimal viable** (the smallest diff that ships and is useful), an **ideal** (the shape you'd choose with time to do it properly), and where one exists a **lateral** (a reframe that dissolves the problem instead of solving it). Name what each option **reuses** from the research above, so the plan stays anchored to the code you just read. Collapsing to a single approach is fine when the work warrants it, since "no credible alternative" beats an invented Option B.
+When more than one credible path exists, default to a spread of different approaches rather than variants of one idea: a **minimal viable** (the smallest diff that ships and is useful), an **ideal** (the shape you'd choose with time to do it properly), and where one exists a **lateral** (a reframe that dissolves the problem instead of solving it). Name what each option **reuses** from the research above, so the plan stays anchored to the code you just read. Collapsing to a single approach is fine when the work warrants it.
 
 **Done when** one approach is recommended, and each alternative either differs from it on a named axis or is replaced by a one-line reason that no credible alternative exists.
-
-The failure mode is options that only *look* plural:
-
-> **Variants (avoid):** cache the response · cache it with a shorter TTL · cache it behind a flag we can tune later. One idea in three hats, so there's no real choice to make.
->
-> **Distinct (aim for):** cache the response (smallest diff, ships this week, goes stale on writes) · denormalize the read path so there's nothing to cache (a migration, but the whole staleness class disappears) · don't fix it here at all, because it's only slow when called in a loop, so batch upstream and the endpoint stops mattering.
 
 ### 4. Converge, settle the structure
 Resolve the structural decisions a coherent draft needs (the architecture, the phases, the scope boundary, and the test approach when a phase asks for a new kind of test) one at a time, each with a recommended answer. Then **stop**: deliberately leave the deeper, thin, or still-uncertain spots for grillkit rather than grinding every edge case here. Record those under **Open questions** in the doc so the hardening step has a target.
@@ -111,7 +96,7 @@ Explicit scope boundaries, meaning what this plan deliberately does not cover.
 
 A hardened plan additionally carries a **`Grilled: YYYY-MM-DD` line directly under the title**. grillkit writes it when the plan survives a grill session, and issuekit reads it as the gate for filing issues `ready`. plankit never writes the stamp itself; a fresh draft is ungrilled by definition.
 
-**Every phase ends on a `Done when:` line**, the acceptance observable. It names something a person or a test can check after the phase ships, never an intent ("auth works"). It gives the build a finish line to check against, and a phase without one has no finish.
+**Every phase ends on a `Done when:` line**, the acceptance observable. It names something a person or a test can check after the phase ships, never an intent ("auth works").
 
 **The last phase's `Done when:` carries the target when the build can measure it**, so the build checks the number instead of only recording it. A metric that only shows after release stays in Context, marked `measured after release`, because no build can check it.
 
@@ -131,21 +116,18 @@ The stamp vouches for the plan as it stood at the grill. A **material** edit is 
 
 ### The phase-heading annotation slot
 
-**A phase heading ends in an optional annotation, and downstream skills write into it.** plankit writes a bare heading (`### Phase 2: auth`) and never annotates one itself, because a fresh plan has neither been filed nor built. Two vocabularies share the slot:
+**A phase heading ends in an optional annotation, and downstream skills write into it.** plankit writes a bare heading (`### Phase 2: auth`) and never annotates one itself. Two vocabularies share the slot:
 
 - **`(#41)`**, written by issuekit when it files that phase as an issue. It says where the phase is tracked.
 - **`(built YYYY-MM-DD)`**, written by implementkit when it finishes building that phase. It says the phase is done.
 
-They coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase that shipped. Keeping both in one slot is what lets a reader and a survey tool answer "what is left in this plan?" from the plan alone, with no tracker to consult, which is the only way that question has an answer on a project that files no issues.
+They coexist, so `### Phase 2: auth (#41) (built 2026-08-20)` is a tracked phase that shipped.
 
-**The stamp is opt-in per plan.** A plan with no annotation anywhere makes no claim about itself, so nothing may read its phases as unbuilt. That is what lets the convention arrive without a migration: plans written before it stay silent and correct, and a plan starts making claims the first time something stamps it.
+**The stamp is opt-in per plan.** A plan with no annotation anywhere makes no claim about itself, so nothing may read its phases as unbuilt.
 
 **Match the heading loosely.** A phase heading begins `Phase <n>` and the separator that follows varies across real plan sets, so anything reading these headings accepts a colon, a dash, or nothing.
 
 ## Notes
 
-- **Plan only.** No application code, no issues; those are separate steps (implementkit, issuekit). plankit hands off; it doesn't cross into them.
-- **Fewest honest sections.** Prefer a short, sharp plan over a padded one; drop a section rather than fill it with filler. Scale the doc to the work's real surface area.
-- **Defer the grilling.** Leaving open questions is fine and expected. Draft a coherent plan and let grillkit harden it; don't try to be both.
 - **Follow the repo's conventions.** If the codebase has its own plan/RFC/PRD location or template, follow that and say you did, rather than forcing `docs/plans`.
 - No filesystem or shell (e.g. a browser-based agent)? Then you can't write the file. Instead print the finished plan document as a codeblock and give the user the canonical `NNNN-plan-<slug>-YYYY-MM-DD.md` filename, with `0001` when you can't list their plans, to save wherever they keep plans.
