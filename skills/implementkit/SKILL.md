@@ -10,18 +10,7 @@ metadata:
 
 # implementkit
 
-Turn a hardened plan, spec, or issue into working code, and stop there. implementkit is the build step between a settled plan and a clean commit: it reads an explicit input, resolves *how* to build (straight-through, tests-after, or test-driven), writes the code, and proves it with the repo's own test and build gate before it calls the work done. It **never commits**, because that's commitkit's job, and it **never designs**, because an underspecified input is bounced back to plankit/grillkit, not guessed at.
-
-Its defining feature is **mode resolution**: the same request builds differently depending on whether the repo (or the user) wants tests, and when, and implementkit works that out by a fixed precedence rather than defaulting blindly.
-
-## When this fires
-
-The user hands off something concrete to be built: "implement this plan", "build issue #42", "write the code for `docs/plans/0007-plan-sso-2026-07-23.md`", "implement this spec", "do this the TDD way", "build it and add tests for it", "make this failing test pass". Tests for code that already runs and was never tested are a retrofit, which belongs to testkit when it is installed. It is the `implementkit` step of the plan → grill → file → **build** → commit workflow.
-
-Two hard boundaries:
-
-- **It does not commit or stage.** It leaves the finished work as unstaged changes and reports what it did; commitkit groups and commits.
-- **It does not design.** If the input is too thin to build without inventing the design, it stops and points back to grillkit/plankit. implementkit turns a *settled* intent into code; it doesn't settle the intent.
+Build a named input into working code and stop at green, unstaged code. It **never commits or stages**; commitkit groups and commits. It **never designs**; a thin input bounces to grillkit or plankit. Tests for code that already runs and was never tested are a retrofit, which belongs to testkit when it is installed.
 
 ## Procedure
 
@@ -33,7 +22,7 @@ Require the user to name what to build. The options are a plan file (`docs/plans
 ### 2. Assess implementability, bounce if thin
 Before writing anything, judge whether the input is concrete enough to build without inventing the design. A hardened plan or a fleshed-out issue passes.
 
-**Read a plan's own hardening signals.** A `Grilled: YYYY-MM-DD` line directly under the title means the plan survived a grill. An absent line means it is ungrilled, either never grilled or edited materially since, because a material edit deletes the line. Then read its `## Open questions` section. Warn the user when the plan is ungrilled or the section holds an entry, and name each open question. An open question that the phase in scope depends on is a gap, so bounce on it. The others stay warnings, and the build goes on. A bare title, a one-line ask, or a spec with unresolved core decisions does **not**. Stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit. Don't paper over a thin spec with assumptions; a wrong guess here costs more than the bounce.
+**Read a plan's own hardening signals.** A `Grilled: YYYY-MM-DD` line directly under the title means the plan survived a grill. An absent line means it is ungrilled, either never grilled or edited materially since, because a material edit deletes the line. Then read its `## Open questions` section. Warn the user when the plan is ungrilled or the section holds an entry, and name each open question. An open question that the phase in scope depends on is a gap, so bounce on it. The others stay warnings, and the build goes on. A bare title, a one-line ask, or a spec with unresolved core decisions does **not**. Stop and tell the user to harden it first with grillkit (to interrogate the decisions) or plankit (to draft a proper plan), naming the specific gaps you hit.
 
 **Thin for a different reason gets a different route.** When the input is unsettled because *nobody has seen the design work* (the state model looks fine on paper, the screen has never been laid out), no amount of interrogation settles it, because the missing input is evidence rather than a decision. That routes to prototypekit when it's installed, or to a deliberate throwaway spike otherwise; it comes back here once the question is answered.
 
@@ -65,14 +54,11 @@ When afkkit is installed, its **Dispatch rules** section holds the full brief ru
 
 Follow [Tool rules](#tool-rules) for every command and every file write, inline or delegated.
 
-**Straight-through.** Implement the production code to satisfy the input. Write **no new tests**; run the existing suite as part of the gate ([Run the done-gate](#5-run-the-done-gate)). Here the build/typecheck is the real safety net, since new code may be uncovered.
+**Straight-through.** Implement the production code to satisfy the input. Write **no new tests**; run the existing suite as part of the gate ([Run the done-gate](#5-run-the-done-gate)).
 
 **Tests-after.** Implement the production code first, as in straight-through. Then write one focused test per behavior the input names. **Watch each test fail before you keep it:** make a small semantic break in the code it covers (flip a comparison, change a returned value), run the test, see it go red, and reverse the break. A test that stays green under its break tests nothing, so rewrite or delete it. Reverse each break by undoing your own edit, never by restoring a file that also holds other changes.
 
-**TDD.** Strict **red → green → refactor**, per unit of behavior:
-1. **Red.** Write one focused failing test for the next slice of behavior, **run it, and confirm it fails** (a test that passes before the code exists is testing nothing, so fix it before continuing).
-2. **Green.** Write the minimal production code to make it pass; run it and confirm green.
-3. **Refactor.** Clean up code and test while the suite stays green.
+**TDD.** Per slice of behavior, write one test and see it fail, write the minimal code to pass it, then refactor while the suite stays green.
 
 Repeat per slice until the input is fully implemented. Match the surrounding code's conventions, naming, and structure in every mode, reusing what exists rather than reinventing it.
 
@@ -80,13 +66,10 @@ The step is done when every requirement in scope has code, and, in tests-after a
 
 **Visual surfaces delegate.** When the work includes UI (a page, a component, a screen) and **uikit** is installed, apply it to those files instead of writing them blind; it carries the project's design constraint and runs its own visual pre-flight. Without it, write the UI directly. implementkit keeps everything else either way: the input contract, the mode resolved above, and the done-gate below, which remains the **only** gate. uikit returns to implementkit without a hand-off of its own, so implementkit's [hand-off](#8-hand-off-to-commitkit) is the only one the user sees.
 
-**Check as you go, not only at the end.** Keep the feedback loop tight while building: typecheck and run the **single** affected test file as each slice lands, so breakage surfaces where it's cheap to fix. Save the **full** suite and the build for the [done-gate](#5-run-the-done-gate). TDD's red→green already runs one test at a time; this closes the same gap in straight-through mode, which otherwise gets no signal until the end.
+**Check as you go.** Typecheck and run the affected test file per slice. Save the full suite and the build for the [done-gate](#5-run-the-done-gate).
 
 ### 5. Run the done-gate
-"Done" means the repo's checks are green, not just that code was written. Discover the commands from the repo itself (`package.json` scripts, `Makefile`, `pyproject.toml`, `justfile`, CI config) rather than guessing, and run:
-
-- the **test** command, and
-- the **build / typecheck** command (and **lint**, if the repo runs one).
+Run the repo's **test** command and its **build / typecheck** command, plus **lint** if the repo runs one.
 
 **Run each gate command once, into a log file**, then print its exit code and a bounded tail or grep of the log:
 
@@ -94,16 +77,12 @@ The step is done when every requirement in scope has code, and, in tests-after a
 log="${TMPDIR:-/tmp}/gate-lint.log"; pnpm lint >"$log" 2>&1; echo "exit $?"; tail -n 40 "$log"
 ```
 
-The one run gives both the pass signal and the messages, so a second run of the same gate buys nothing. Read further into the log when the tail does not name the failure.
-
-All must pass before you declare done. If a command genuinely doesn't exist (no test script, no build step), say so and lean on what does exist; don't fabricate a command.
-
 **Green checks are not the whole bar.** An existing suite can pass while the new requirement goes untested. List each acceptance item of the input: a plan phase's `Done when:` line, an issue's acceptance criteria, each review finding, or the reproduction test. Give each one its evidence, such as a test name, a command and its output, or a file and line. Report an item with no evidence as **unverified**, never as done.
 
 The step is done when every command has run green and every acceptance item has its evidence or its `unverified` mark.
 
 ### 6. Fix on red, bounded
-If the gate fails, try to fix your own output and re-run, but stay **bounded** to roughly three attempts. If it's still red after that, **stop**: never declare done on a failing gate, and never loop indefinitely. Report the failure, what you tried, and where you think it's stuck, and hand it back.
+If the gate fails, fix your own output and re-run. After three failed fixes, stop and report red, with what you tried and where it is stuck.
 
 ### 7. Stamp the plan, when the input was one
 Skip this step entirely unless the input was a plan file and the gate passed. Then mark what you built, so the plan says what is left.
@@ -117,14 +96,11 @@ Append `(built YYYY-MM-DD)` to the heading of each phase you finished, using tod
 ### Phase 3: session refresh (#41) (built 2026-08-20)
 ```
 
-Four rules keep the stamp honest:
+Three rules keep the stamp honest:
 
 - **Stamp only the phases you actually built.** A run narrowed to one phase stamps that phase and leaves every other heading untouched. Never stamp a phase you skipped, and never stamp the whole plan because most of it is done.
-- **Stamp after the gate is green and the `Done when:` check holds**, never before. The stamp is a claim that the work passed, so writing it on unproven code makes the plan lie about the exact thing it exists to record.
 - **Keep an existing `(#41)` and add yours after it.** The two annotations coexist: the number says where the phase is tracked, the stamp says it is done.
 - **Leave the edit unstaged**, like every other change in the run, so commitkit picks up the plan alongside the code that implements it.
-
-Stamp on every run, whatever the project's tracker is. A project filing GitHub issues gets a plan that carries both annotations, and one filing none gets a plan that is its own work list. Deciding which kind of project this is would be a judgment implementkit does not need and should not make.
 
 ### 8. Hand off to commitkit
 
@@ -151,8 +127,6 @@ Name the next phase of the plan when one is left. Say the plan is fully built wh
 
 ## Tool rules
 
-Each rule removes a retry that a long build otherwise pays for again and again.
-
 - **Edit for exact changes.** Use Edit for a small, exact change. When a script writes files (a codemod, `sed -i`, a heredoc), the same command runs the repo's formatter on those files and prints the changed lines (`git diff --stat`, or `git diff -U0` on the files), so a bad pattern shows at once, not at the gate.
 - **Commands that run in zsh and bash alike.** Quote every glob argument (`--include='*.tsx'`, `'pkg@*'`). Iterate a file list with `printf '%s\n' … | while IFS= read -r f; do …; done` or `xargs`, never `for f in $files`. zsh does not split an unquoted variable, and it stops on a glob that matches nothing.
 - **Long-running processes by PID.** Start a dev server with the repo's own start and stop scripts when it has them. Otherwise start it in the background with its output to a log and its PID in a file. A package-manager wrapper can exit while its child keeps the port, so check the port (`curl -sf`, `lsof -ti :<port>`), not the wrapper's exit, to know whether the server runs. Before the hand-off, stop each process you started by its PID or by the PID on its port, and confirm the port is free.
@@ -160,10 +134,5 @@ Each rule removes a retry that a long build otherwise pays for again and again.
 
 ## Notes
 
-- **Build only.** No commit, no staging, no PR; those are commitkit and prkit. implementkit's job ends at green, unstaged code.
-- **Retrofits are testkit's.** Tests-after covers the code this run builds. Tests for code that already shipped without them belong to testkit when it is installed.
-- **`Skill` is here for the uikit delegation, and it is not free.** Invoking uikit on visual work pulls a large document into an already-large build context, and every later tool use in the run re-bills it. That is the trade: a UI surface built against the project's actual design constraint, with its own pre-flight, versus a cheaper run that writes the screen blind. Take it on UI work and nowhere else. implementkit invokes no other skill, and routing to commitkit at the end is naming a next move, not calling one.
-- **Never guess the design.** Bouncing a thin input back to grillkit/plankit is a success, not a failure; it's the boundary that keeps this skill honest.
-- **Never green-wash.** A declared "done" always means the gate actually passed. Red after the bounded fixes is reported as red.
-- **Follow the repo over these defaults.** If the codebase has its own test/build commands, layout, or a stated workflow, follow that and say you did.
+- Invoke uikit for UI files only; invoke no other skill.
 - No filesystem or shell (e.g. a browser-based agent)? Then you can't write files or run the gate. Instead print the finished code as fenced blocks (one per file, with its path) for the user to save, note the mode you'd use, and list the gate commands they should run themselves.
