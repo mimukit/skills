@@ -20,7 +20,7 @@ Produce a **status report**, as a table, surfacing:
 - **Zombie label.** A **closed** issue still carrying a status label (`in-review`, `in-progress`, …) → strip it; the closed state is the signal.
 - **Stale block.** An issue labeled `blocked` whose `Blocked by #N` target is already closed → it should be `ready` (hand the relabel to `sync`).
 - **Dangling / circular dependency.** A `Blocked by #N` pointing at a missing issue, or two issues blocking each other.
-- **Unmarked.** An open issue carrying no [lifecycle label](../SKILL.md#lifecycle-labels-every-mode) at all → offer to classify it (`triage` / `needs-planning` / `ready` / `blocked`).
+- **Unmarked.** An open issue carrying no [lifecycle label](../SKILL.md#lifecycle-labels-every-mode) at all, or only `triage` → offer to classify it as `needs-planning`, or as the label [the promotion](#promote-needs-planning-to-ready) computes once a grill settled it. Replace `triage` when it is there.
 - **Unassessed.** An open issue carrying no [priority label](../SKILL.md#priority-labels-every-mode) → offer to rank it. Report this as its own count, separate from *Unmarked*. Exclude `wontfix` and `duplicate`, which need no rank.
 - **Double-ranked.** An open issue carrying **more than one** priority label → offer to keep the highest and drop the rest, per the [one-at-a-time rule](../SKILL.md#priority-labels-every-mode).
 - **Stale `critical`.** An issue labeled `critical` that hasn't been updated in weeks → offer to demote it. Scale "weeks" to the repo's pace, the same way the *Stale* check does.
@@ -85,20 +85,20 @@ Closes follow [Apply the cleanup closes](#apply-the-cleanup-closes).
 
 #### Promote `needs-planning` to `ready`
 
-This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled or that afkkit escalated. It runs **only on the user's word**, because no agent can award `ready`.
+This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled or that afkkit escalated, and the way out of `triage` for an issue a human labeled. It runs **only on the user's word**, because no agent can award `ready`.
 
 1. **Look for the grill.** Read the issue body for a `Grilled: YYYY-MM-DD` stamp, then any plan file the body links. Report the stamp and its source when you find one.
 2. **Ask when there is no stamp.** Say that no `Grilled:` stamp exists, and ask whether a grill settled the decisions. A "yes" is the user's word; a "no" routes to **grillkit**, and the issue keeps `needs-planning`.
 3. **Compute the label.** Apply [the transition rule](../SKILL.md#promoting-a-dependent) to the issue's open prerequisites: `ready` when none remain, otherwise `stacked` or `blocked`. Where the rule keeps the current label for incompatible stack parents, set `blocked` and name the parents.
-4. **Replace the label** in one call: `gh issue edit 45 --remove-label needs-planning --add-label ready`.
+4. **Replace the label** in one call, removing `needs-planning` or `triage`, whichever the issue carries: `gh issue edit 45 --remove-label needs-planning --add-label ready`.
 
 This sub-step is done when the issue carries the label the rule computes, or keeps `needs-planning` with the reason named.
 
-This step is done when every open issue has exactly one lifecycle label and, except `wontfix` and `duplicate`, exactly one priority label, or is named in the hand-off as a declined or unresolved row. An issue that an approved close shut leaves this count, and every approved cleanup row has run.
+This step is done when every open issue has exactly one lifecycle label, and that label is not `triage`, and, except `wontfix` and `duplicate`, exactly one priority label, or is named in the hand-off as a declined or unresolved row. An issue that an approved close shut leaves this count, and every approved cleanup row has run.
 
 ### 4. Hand off
 **What changed.** Report what the report found, and which fixes you applied versus left alone. Name each flagged item the user declined. Count the closes by kind (completed, duplicate, not planned, stale), and name each narrowed issue and each merge's survivor.
 
-**Where it landed.** Give the tracker's state after the pass, per namespace: how many open issues now carry a lifecycle label and how many are still unmarked, and how many carry a priority and how many are still unassessed.
+**Where it landed.** Give the tracker's state after the pass, per namespace: how many open issues now carry a lifecycle label other than `triage` and how many are still unmarked, and how many carry a priority and how many are still unassessed.
 
 **Next.** Route by what survived: issues whose PR merged but that are still open → `sync`; a stale `blocked` whose prerequisite already landed → `sync`; an issue promoted to `ready` too early, or a `needs-planning` issue with no grill → a human grill session (**grillkit** when installed), then the promotion above; missing labels in either namespace → **repokit**. A label gap a merge surfaced → the promotion above or a rank row; started work a cleanup check skipped → `sync`. If the tracker came back clean, say so and point at the `ready` set, because the next move is `start` on the **highest-priority** one.

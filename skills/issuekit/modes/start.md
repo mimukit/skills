@@ -45,7 +45,7 @@ Refuse with the reason, not a bare error:
 - **`needs-planning`** → the decisions aren't settled. Route to a human grill session (**grillkit** when installed), then to `triage` for the `needs-planning → ready` promotion.
 - **`blocked`** → name the prerequisite and its state. When that prerequisite turns out to have an open PR, the issue should be `stacked`, so point at `sync` to promote it rather than starting it here.
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
-- **closed, or no lifecycle label** → say which, and offer `triage` to classify it.
+- **closed, no lifecycle label, or only `triage`** → say which, and offer `triage` to classify it.
 
 **Open-PR check: warn at 3, never refuse.** After the guard passes and before any worktree exists, count the user's open feature PRs in this repo:
 

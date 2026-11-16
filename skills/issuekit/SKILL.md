@@ -82,7 +82,7 @@ Exactly one **status** label is active at a time, moving left to right through t
 
 | label | color | means | typically set by |
 |-------|-------|-------|------------------|
-| `triage` | `FBCA04` | filed, not yet assessed or broken down | create (ad-hoc), triage |
+| `triage` | `FBCA04` | filed, not yet assessed or broken down | a human or an issue template; issuekit never sets it on its own, and `triage` mode reads it |
 | `needs-planning` | `F1C40F` | not yet specified enough to work; a human plan/grill session is still owed | issuekit create / afkkit gate |
 | `ready` | `0E8A16` | specified and **independent**, safe to take into its own git worktree now | issuekit create |
 | `blocked` | `D93F0B` | has an unmet prerequisite that has not started | issuekit create / sync |
