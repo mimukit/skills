@@ -1,6 +1,6 @@
 # dbkit: MySQL
 
-Read this file once [Stack detection](../SKILL.md#stack-detection) finds MySQL or MariaDB. It holds the gotchas behind [the schema standard](../SKILL.md#the-schema-standard), not server tuning. Check each version limit against the detected server; MariaDB differs.
+Read this file once [Stack detection](../SKILL.md#stack-detection) finds MySQL or MariaDB. It holds the gotchas behind [the schema standard](../SKILL.md#the-schema-standard), not server tuning. Write for MySQL 8.4 LTS or later: 8.0 reached end of life on 2026-04-30 (endoflife.date, checked 2026-11-16). On a server older than 8.0.18, `CHECK` may be parsed and ignored (before 8.0.16) and `EXPLAIN ANALYZE` is missing, so flag the version as a finding. MariaDB differs.
 
 ## Locks per DDL statement
 
@@ -18,7 +18,6 @@ A dbkit read session opens read-only with `mysql --init-command='SET SESSION TRA
 
 - The primary key is the clustered index: every secondary index carries a copy of it, and inserts land in its order. Use a short, increasing key; a random UUIDv4 key fragments the table and bloats each index. Store a time-ordered UUID as `BINARY(16)`.
 - Use `utf8mb4`. `utf8` is `utf8mb3`, which rejects emoji.
-- `CHECK` is enforced from 8.0.16 only; earlier versions parse it and ignore it.
 - `TIMESTAMP` stores UTC but ends in 2038; `DATETIME` has no zone. Store UTC in `DATETIME` and name the column for it.
 - No partial index and no `NULLS NOT DISTINCT`; a unique index allows many `NULL`s.
 
@@ -28,4 +27,4 @@ InnoDB indexes each foreign key itself, so that check is not a finding. Read `in
 
 ## Reading a plan for tune
 
-Use `EXPLAIN ANALYZE` on 8.0.18 and later, and `EXPLAIN FORMAT=JSON` before that. Take slow-query evidence from `performance_schema.events_statements_summary_by_digest`, ranked by `SUM_TIMER_WAIT`.
+Use `EXPLAIN ANALYZE`. Take slow-query evidence from `performance_schema.events_statements_summary_by_digest`, ranked by `SUM_TIMER_WAIT`.

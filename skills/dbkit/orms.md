@@ -7,11 +7,11 @@ Read this file when a mode writes a migration through a generator. It holds only
 - `drizzle-kit generate` writes SQL files and needs no database. `drizzle-kit push` changes the database directly and writes no file, so it is dev-only and never produces a migration.
 - A hand-written migration starts from `drizzle-kit generate --custom`, which writes an empty file the journal tracks. Statements in one file are split by `--> statement-breakpoint` lines.
 - `generate` asks interactively whether a changed column is a rename or a drop-and-add. With no terminal it stalls; when the change is a rename, write the expand, migrate, contract files by hand instead.
-- The migrator has run all pending migrations inside one transaction in the versions we know, so `CREATE INDEX CONCURRENTLY` fails there. Check the installed version's docs. When it holds, run the concurrent build outside the migrator and record that in the hand-off.
+- In drizzle-orm 0.45.4 and drizzle-kit 0.31.11, the current stable releases, the Postgres migrator runs all pending migrations inside one transaction, so `CREATE INDEX CONCURRENTLY` fails there, and it reads its order from `<out>/meta/_journal.json` (package source, checked 2026-11-16). On another version, check the installed package source. When it holds, run the concurrent build outside the migrator and record that in the hand-off.
 
 ## Prisma
 
-- `prisma migrate dev` connects to the database and to a shadow database, and on drift it offers to reset the database. Run it only on [a disposable target](SKILL.md#the-disposable-target), with `--create-only` so it writes the file without applying it.
+- `prisma migrate dev` connects to the database and to a shadow database (Prisma 7: `datasource.shadowDatabaseUrl` in `prisma.config.ts`, checked 2026-11-16), and on drift it offers to reset the database. Run it only on [a disposable target](SKILL.md#the-disposable-target), with `--create-only` so it writes the file without applying it.
 - `prisma migrate diff` can write SQL from two schema sources with no database; read its `--help` for the source flags, which changed across major versions.
 - `prisma migrate deploy` applies migrations in production; `prisma migrate reset` and `prisma db push` are dev-only.
 - A multi-statement `migration.sql` runs as one implicit transaction on Postgres, so a `CONCURRENTLY` statement goes alone in its own migration directory.
