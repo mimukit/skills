@@ -45,9 +45,9 @@ Pick **straight-through**, **tests-after**, or **TDD** by this precedence, takin
 **A long build runs as a conductor.** When the scope holds more than one heavy phase (one that needs a fresh context of its own), or one mechanical bulk phase such as a vendored port or a large lint sweep, this thread builds none of it. Every tool call re-bills the whole context, so each phase built inline taxes every phase after it. Instead:
 
 - Group the phases: a heavy phase stands alone, and consecutive light phases share a group.
-- Dispatch one subagent per group, in order, with the host's subagent tool (`Agent` on Claude Code, formerly `Task`; `spawn_agent` on Codex; checked 2026-11-16). Its brief carries the paths it touches, the signatures of the shared APIs it calls, the resolved mode, the phase's acceptance items, and the gate commands, so it reads nothing this thread already read.
-- The subagent builds and runs the **phase gate** under [Tool rules](#tool-rules): typecheck, lint, and only the tests of the packages the group changed (the affected test files in a single-package repo), each once into a log. It never runs the full suite. The brief carries this line in these words, because a subagent follows the brief and not this file. The subagent writes its notes and logs to a file and returns a short result: pass or fail, the files changed, the phase-gate result, and that file's path.
-- The conductor edits no code. It reads each result, dispatches the next group, then runs the full suite and the build once over the whole tree as the [done-gate](#5-run-the-done-gate). A full suite in every subagent repeats that gate once per group and loads the machine until the suite flakes.
+- Dispatch one subagent per group, in order, with the host's subagent tool (`Agent` on Claude Code, formerly `Task`; `spawn_agent` on Codex; checked 2026-11-16). Its brief carries the paths it touches, the signatures of the shared APIs it calls, the resolved mode, the phase's acceptance items, and the phase-gate commands, so it reads nothing this thread already read.
+- The subagent builds and runs the **phase gate** under [Tool rules](#tool-rules): the repo's own typecheck and lint commands, and its test command limited to the packages the group changed (the affected test files in a single-package repo), each once into a log. These are the repo's own commands for each check, from its agent-guide file or its scripts, and the brief names each one. It never runs the full suite, and never a declared gate command such as `make check` that runs it. The brief carries this line in these words, because a subagent follows the brief and not this file. The subagent writes its notes and logs to a file and returns a short result: pass or fail, the files changed, the phase-gate result, and that file's path.
+- The conductor edits no code. It reads each result, dispatches the next group, then runs the [done-gate](#5-run-the-done-gate) once over the whole tree. A full suite in every subagent repeats that gate once per group and loads the machine until the suite flakes.
 - A group whose subagent returns interrupted or errored gets one new subagent with the same brief, told to read `git diff` first and finish the group. A second failure stops the build and reports both.
 
 When afkkit is installed, its **Dispatch rules** section holds the full brief rules: a new agent, never a fork, inputs by path, the command rules, and the recovery of a broken dispatch. On a host with no subagent tool, build the groups inline in order and say so.
@@ -69,7 +69,7 @@ The step is done when every requirement in scope has code, and, in tests-after a
 **Check as you go.** Typecheck and run the affected test file per slice. Save the full suite and the build for the [done-gate](#5-run-the-done-gate).
 
 ### 5. Run the done-gate
-Run the repo's **test** command and its **build / typecheck** command, plus **lint** if the repo runs one.
+Run the repo's **test** command and its **build / typecheck** command, plus **lint** if the repo runs one. **A gate command the repo's agent-guide file (`CLAUDE.md` or an equivalent) declares, such as `make check`, is the done-gate**: run it in place of those commands.
 
 **Run each gate command once, into a log file**, then print its exit code and a bounded tail or grep of the log:
 
