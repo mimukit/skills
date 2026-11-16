@@ -38,7 +38,7 @@ Each fix is a one- to three-sentence edit to text that already exists. No new fi
 
 Rejected: retiring the `triage` label. It is cleaner, but it touches the shared label tables in issuekit and repokit, and every repo that already provisioned the label.
 
-### Phase 1: Fix the four one-rule contradictions
+### Phase 1: Fix the four one-rule contradictions (built 2026-11-16)
 - prkit Notes line, per the settled decision.
 - issuekit lifecycle table "Set by" cell for `triage`, and the same row in `skills/repokit/modes/labels.md` if it carries a "set by" text.
 - statuskit opening line.
@@ -46,20 +46,20 @@ Rejected: retiring the `triage` label. It is cleaner, but it touches the shared 
 
 Done when: a trial subagent per skill answers its plan-0050 scenario with one behavior and no reported conflict (prkit: a branch behind its base that needs a sync and push; issuekit: an ad-hoc issue filed by `create`, then asked which label it carries; statuskit: the user asks to commit the snapshot; tutorkit: an exam that passes one gate), and `make lint` exits 0 with 0 warnings.
 
-### Phase 2: Fix the verifykit serial scan and re-run
+### Phase 2: Fix the verifykit serial scan and re-run (built 2026-11-16)
 - In the root shared procedure, drop origin from the scan and add the re-run lookup.
 - In `AGENTS.md` "Documentation artifact naming", add the gitignored-directory clause.
 
 Done when: a trial subagent with two worktrees and a same-day earlier run names the `proof` bundle with the earlier directory's serial, and names a new run with the next serial across both worktrees, and `make lint` exits 0 with 0 warnings.
 
-### Phase 3: Fix afkkit nesting and headless `all`
+### Phase 3: Fix afkkit nesting and headless `all` (built 2026-11-16)
 - Replace the no-subagent batch sentence and the `:50` tail with the host-neutral form.
 - Add the headless-`all` rule.
 - Give the Hand off a next move for an issue the batch skipped (in-progress, stacked, or refused): name it and say how to run it by number.
 
 Done when: a trial subagent reading afkkit for a batch run on a nesting host dispatches implementkit's phase subagents and the invariant check rather than self-checking; a headless `afkkit all` trial prints the preview and starts nothing, and an `afkkit all yes` trial starts the queue; and `make lint` exits 0 with 0 warnings.
 
-### Phase 4: Close the smaller gaps
+### Phase 4: Close the smaller gaps (built 2026-11-16)
 - **motionkit:** a duration band for loops, hover, and badges; a reduced-motion rule for rotation; settle the "built-in keywords too gentle" line against the `ease` row for hover; settle "enter from almost there" against a request to slide in from an edge.
 - **mergekit:** the root preview-and-confirm line defers to Sync consent; `fix` reads fork status before triage, not in step 3.
 - **ideakit:** an explicit phrase rule beats the "idea" tie-break; "would anyone pay" routes to `validate`; `session` offers the save before the user switches mode.
