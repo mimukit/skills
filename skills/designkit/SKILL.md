@@ -166,7 +166,7 @@ Count occurrences. A value used ninety times and a value used once are not equal
 
 ### Classify every token
 
-Each token carries one of three states, and the classification is shown at the consent gate:
+Each token carries one of four states, and the classification is shown at the consent gate:
 
 | State | Means |
 |---|---|
@@ -205,7 +205,7 @@ No UI in the repo means nothing to extract. Ask for the essentials (brand intent
 
 ### 3. Propose, and gate on it
 
-Show the swatch sheet plus the `extracted` / `consolidated` / `omitted` breakdown, the cluster threshold, and every inconsistency found. **This is the gate that matters**, because the user accepts, trims, or redirects before a file exists. This step is done when the user accepts the proposal, with or without trims.
+Show the swatch sheet plus the `extracted` / `consolidated` / `omitted` / `supplied` breakdown, the cluster threshold, and every inconsistency found. **This is the gate that matters**, because the user accepts, trims, or redirects before a file exists. This step is done when the user accepts the proposal, with or without trims.
 
 ### 4. Write, stamp, validate
 
