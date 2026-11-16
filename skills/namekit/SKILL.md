@@ -16,12 +16,7 @@ Name a project against a **convention** rather than a blank page, and hand back 
 - **`generate`.** Turn a project description into a ranked shortlist of names built to the user's naming convention, then probe the two or three the user picks against the domain, npm, and GitHub namespaces and crown one.
 - **`check`.** Take names the user already has and report whether each one is free. No generation.
 
-The reason this is a skill and not a one-line ask: left alone, a model returns ten spellings of one idea, invents a convention nobody uses, and never checks whether any candidate is taken. namekit fixes all three, in that order.
-
 ## When this fires
-
-- **generate.** "Name this project", "what should I call this", "give me name ideas", "come up with a name for X", "I need a name for my new SaaS".
-- **check.** "Is `growaloy` taken", "check if this name is available", "did anyone grab this npm package".
 
 An ask that supplies a description gets `generate`. An ask that supplies names gets `check`. When the user supplies both, run `check` on their names first, then offer `generate`, because a name they already like outranks anything you invent.
 
@@ -50,7 +45,7 @@ Check `.com` plus whichever second TLD the project's surface implies (`.dev` for
 
 **Report each result as that probe's own claim.** A 404 from RDAP means the domain is not registered. It does not mean the domain is for sale, is affordable, or is free of a trademark. Say "not registered", and let the user find out the price.
 
-**Degrade rather than block.** With no shell, no network, or no `gh`, say which probes were skipped and hand back the ranked shortlist on the four rubric criteria alone. A shortlist with a stated gap beats no shortlist.
+**Degrade rather than block.** With no shell, no network, or no `gh`, say which probes were skipped and hand back the ranked shortlist on the four rubric criteria alone.
 
 ---
 
@@ -58,7 +53,7 @@ Check `.com` plus whichever second TLD the project's surface implies (`.dev` for
 
 ### 1. Restate, then interview
 
-Reflect the project description back in one sentence before asking anything. A misread costs one correcting line here and a whole shortlist later.
+Reflect the project description back in one sentence before asking anything.
 
 Then interview. Six items make the pool; ask only the ones the description leaves open, and check each item against the description rather than skipping the round because it reads complete ("AI growth platform for SMBs" still names no audience, tone, or surface), cap the round at five questions, and ask them in a single batch:
 
@@ -82,20 +77,20 @@ Work down this ladder and stop at the first rung that answers:
 
 **Read the convention fresh every run.** Never store it or fall back to a house default such as `kit`; a stored convention goes stale when the user changes their mind, while names already shipped stay current.
 
-**State the resolved convention in the output**, so a wrong read costs one correcting line rather than a discarded shortlist.
+**State the resolved convention in the output.**
 
 **Done when** the convention is written down as an affix plus its position, or the user has chosen to work without one.
 
 ### 3. Mine roots and build candidates
 
-Draw roots from **four separate sources**, so the set is genuinely plural instead of one idea in ten hats:
+Draw roots from **four separate sources**:
 
 - **The domain noun.** What the thing is about: `code`, `saas`, `ledger`.
 - **The outcome verb.** What it does for someone: `grow`, `ship`, `learn`.
 - **The user or their material.** Who holds it: `dev`, `shop`, `desk`.
 - **The metaphor, or a non-English root** when the interview named a non-English audience.
 
-A non-English root passes **one gate**: a single Latin transliteration dominates in common use. When a root has two spellings people genuinely both write, drop it rather than scoring it down, because a name the audience types three ways fails on the one job a name has.
+A non-English root passes **one gate**: a single Latin transliteration dominates in common use. When a root has two spellings people both write, drop it rather than scoring it down.
 
 Join each root to the affix with the [seam rule](#the-seam-rule), score it against the [rubric](#the-rubric), then cut. Generate **25 or more raw candidates**, and rank the best **12** into the shortlist. The width is deliberate: the user probes two or three names per batch, so the list has to feed several batches before it needs regenerating.
 
@@ -103,13 +98,13 @@ Join each root to the affix with the [seam rule](#the-seam-rule), score it again
 
 ### 4. Show the shortlist, then probe what the user picks
 
-**Print the ranked 12 before you probe anything.** The names come first, in a table of name, root and source, seam case, and rubric verdict, with no availability column yet. The user reads the whole list, reacts to the ideas, and keeps the creative half of the job in front of them.
+**Print the ranked 12 before you probe anything.** The names come first, in a table of name, root and source, seam case, and rubric verdict, with no availability column yet.
 
 Then ask the user to pick **two or three names** to probe. Use `AskUserQuestion` when it is available, and a plain one-line ask when it is not. **Probe only the names the user picks.** An unpicked name stays unprobed, however good its rubric score.
 
-Run [the probes](#the-probes-both-modes) over the picks. **Any hit removes that name.** Availability is a verdict here, not a score, because a name the user cannot have is not a candidate.
+Run [the probes](#the-probes-both-modes) over the picks. **Any hit removes that name.** Availability is a verdict here, not a score.
 
-**One exception: a namespace the user already owns passes, and reads *yours*.** Resolve their owner from the git remote when a repo exists (`gh repo view --json owner`), from the repos that sourced the convention otherwise, and by asking once when neither answers. Without this exception a house convention rejects its own portfolio, which is how `codealoy` fails a `codealoy` filter.
+**One exception: a namespace the user already owns passes, and reads *yours*.** Resolve their owner from the git remote when a repo exists (`gh repo view --json owner`), from the repos that sourced the convention otherwise, and by asking once when neither answers.
 
 **When a batch returns nothing free**, report each pick with the probe that killed it, reprint the candidates still unprobed, and ask for the next batch of two or three. Repeat the loop until one name is free or the user stops it. Never auto-select the next batch, because the pick is the user's.
 
@@ -121,7 +116,7 @@ Run [the probes](#the-probes-both-modes) over the picks. **Any hit removes that 
 
 Crown the free name that ranks highest on the rubric. Then run **one** web search, on that name alone, for the existing product or live trademark the registries miss. Fetch the top hit when the search result is ambiguous about what the thing is.
 
-A hit re-crowns the next free name and states the conflict in a line, and the new crown gets its own search before you report it. Repeat until a crowned name survives its search. When no free runner-up is left, say so and send the user back to the pick loop. Search only the crowned name: the registries are exact-match and cheap, the web is fuzzy and expensive, so a search earns its call only at the point the answer changes a decision.
+A hit re-crowns the next free name and states the conflict in a line, and the new crown gets its own search before you report it. Repeat until a crowned name survives its search. When no free runner-up is left, say so and send the user back to the pick loop. Search only the crowned name.
 
 **Done when** the final crowned name has been searched and survives, or no free name is left to crown.
 
@@ -143,7 +138,7 @@ Print the probed names as a ranked table before the three beats:
 
 ### The seam rule
 
-The join is where bad names come from, and three cases cover every convention, because the rule is about the letters meeting at the seam rather than about any one affix.
+Three cases cover every convention.
 
 - **Hard join.** The root's tail and the affix's head do not collide, so concatenate. `code` + `aloy` → `codealoy`. Prefix form: `open` + `forge` → `openforge`.
 - **Elision.** They overlap, so drop the duplicate. `data` + `aloy` → `dataloy`, not `dataaloy`. Prefix form: `auto` + `optimize` → `autoptimize`.
@@ -164,9 +159,9 @@ Availability is deliberately absent. It is a verdict in [Show the shortlist, the
 
 ## Mode: `check`
 
-Run [the probes](#the-probes-both-modes) over the names the user supplies. Generate nothing, rank nothing, and filter nothing, because there is no shortlist to cut down to.
+Run [the probes](#the-probes-both-modes) over the names the user supplies. Generate nothing, rank nothing, and filter nothing.
 
-Apply the same owner exception: a namespace resolving to the user's own owner reads *yours*, not *taken*. That is the common case here, since people check names they already half-own.
+Apply the same owner exception: a namespace resolving to the user's own owner reads *yours*, not *taken*.
 
 ### Hand off
 
