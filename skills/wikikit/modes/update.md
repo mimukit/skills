@@ -4,21 +4,19 @@ For a change that just landed. Resolve the target the same way a review does: **
 
 ### 1. Read the diff, not the whole repo
 
-The diff is the input. Reading the repo instead is how a one-flag change turns into a six-page rewrite. The step is done when every changed path in the diff is listed.
+The diff is the input, not the whole repo. The step is done when every changed path in the diff is listed.
 
 ### 2. Map changed code to affected pages
 
-Through the manifest's `documents:` globs. **State which pages are affected and which are deliberately untouched, before editing rather than in the report afterward.** The untouched list is the load-bearing half; it's what tells the user the skill knew what it was leaving alone. The step is done when every changed path maps to a page or to "no page documents this".
+Through the manifest's `documents:` globs. **State which pages are affected and which are deliberately untouched, before editing rather than in the report afterward.** The step is done when every changed path maps to a page or to "no page documents this".
 
 ### 3. Edit the affected pages, surgically and directly
 
-A changed flag edits the flag. It does not regenerate the page. These edits need no gate: they are bounded by the restraint rule and land in a reviewable diff. An adopted (unstamped) page is edited **only for a claim the diff actually broke**, never restyled, never expanded. The step is done when every affected page has each broken claim fixed or reported as unverified.
-
-**The discipline here is restraint.** A skill that rewrites six pages because one function moved is worse than no skill, because now the PR diff is unreviewable.
+A changed flag edits the flag. It does not regenerate the page, and it does not touch a page the diff did not affect. These edits need no gate. An adopted (unstamped) page is edited **only for a claim the diff actually broke**, never restyled, never expanded. The step is done when every affected page has each broken claim fixed or reported as unverified.
 
 ### 4. Flag the documentation-shaped gaps the diff created
 
-A new command with no how-to, a new env var absent from getting-started, a new failure mode with no runbook. A new self-documenting item, such as a new plugin or package, is a line on its index page, never a page of its own, per **No mirror pages** in [The page vocabulary](../SKILL.md#the-page-vocabulary). **New pages and deletions are consent-gated**, so propose, then write. That split is the whole write-mode policy: edits go straight in, creation and destruction ask. The step is done when every gap has a proposal and a verdict from the user.
+A new command with no how-to, a new env var absent from getting-started, a new failure mode with no runbook. A new self-documenting item, such as a new plugin or package, is a line on its index page, never a page of its own, per **No mirror pages** in [The page vocabulary](../SKILL.md#the-page-vocabulary). **New pages and deletions are consent-gated**, so propose, then write. The step is done when every gap has a proposal and a verdict from the user.
 
 ### 5. Re-stamp and reconcile
 
@@ -32,4 +30,4 @@ Update the manifest for every page created or removed. The step is done when eac
 
 **Where it landed.** Give the paths, and the manifest if it moved.
 
-**Next.** Run **commitkit**, then **prkit** (otherwise `git commit` and `gh pr create`). Docs land in the same PR as the code that changed them; that's the whole point of in-repo docs.
+**Next.** Run **commitkit**, then **prkit** (otherwise `git commit` and `gh pr create`). Docs land in the same PR as the code that changed them.

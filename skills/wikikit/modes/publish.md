@@ -2,17 +2,13 @@
 
 **Opt-in, explicit-ask-only.** Mirrors the doc set out to the repo's GitHub Wiki tab by installing a workflow that syncs on every push to the doc home. wikikit writes the workflow file; **GitHub Actions does the syncing**, so nothing here pushes to a wiki from your machine.
 
-The in-repo set stays the source of truth. The wiki is a **derived, disposable mirror**: delete it and re-sync and you lose nothing, because nothing originates there.
-
 ### What you are agreeing to
 
-Three properties of GitHub wikis make this sharper than it looks. Say all three out loud before writing anything, because a user who learns them from the aftermath will not thank you.
+Say these three properties of GitHub wikis to the user before writing anything.
 
 1. **The sync is destructive and one-way.** The action clears the wiki repo, copies the doc set in, and **force-pushes**. Any page created or edited in the wiki's web UI is **deleted on the next sync**, including on private repos, and including pages nobody in the doc set has ever heard of. The wiki becomes read-only in practice; the edit button stays there and lies. (This is true under both of the action's strategies, notwithstanding its own documentation, which describes force-push as `init`-only.)
 2. **The page namespace is flat.** Wiki source files may sit in folders, but page URLs are built from the title alone, so `how-to/deploy.md` and `runbooks/deploy.md` both resolve to `/wiki/deploy` and one silently wins. The template below flattens path segments into the page name to make collisions impossible; the [collision scan](#2-scan-for-page-name-collisions) catches the residue before anything is installed.
 3. **The wiki must be created by hand, once.** A repo's wiki has no git backend until a first page exists, and there is no API or `gh` command that creates one. The workflow will fail until a human clicks through the UI.
-
-Editing permissions are **not** on this list. GitHub restricts public-repo wiki editing to collaborators by default, so the "strangers overwrite each other" hazard is gone, but note that property 1 makes collaborator edits just as doomed.
 
 ### 1. Preflight
 
@@ -144,7 +140,7 @@ jobs:
 
 The template pins `actions/checkout@v7` and `Andrew-Chen-Wang/github-wiki-action@v5`, the current majors, and v5.0.6 still takes the `preprocess` and `dry-run` inputs (checked 2026-11-16).
 
-Four choices in there are load-bearing, so don't quietly drop them:
+Keep these four choices:
 
 - **`dry-run: true` on install.** The first run is a rehearsal. A destructive force-push should never be something the user discovers happening. Say clearly that publishing is not live until they flip it.
 - **`preprocess: false`.** The action's own link rewriting assumes wiki paths mirror source paths, which is exactly what the flatten step breaks. One owner for the transformation.

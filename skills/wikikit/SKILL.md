@@ -10,23 +10,21 @@ metadata:
 
 # wikikit
 
-The documentation a **reader** opens: how do I run this, how do I do the one task I came here for, how is it put together, and what do I do at 3am when it's down. wikikit generates that set from the codebase as it actually is, keeps it true as the code changes, and reports honestly when it has gone stale. **It is not the GitHub Wiki tab**, because everything it writes is in-repo Markdown, versioned with the code and reviewed in the same pull request. Mirroring that set out to the wiki tab is available as an opt-in [`publish`](modes/publish.md) mode, which never fires unless you ask for it by name.
-
-A repo built by agents accumulates plans, reviews, QA docs, and decision records, and still ships a README that says `npm install` because that's what the scaffold wrote a year ago. The knowledge exists; it's just scattered across artifacts nobody outside the project will ever read. wikikit is the half that faces outward.
+The documentation a **reader** opens: how do I run this, how do I do the one task I came here for, how is it put together, and what do I do at 3am when it's down.
 
 ## What wikikit is not
 
 - **Not the GitHub Wiki.** In-repo Markdown is the source of truth in every mode, versioned with the code and reviewed in the same PR. The wiki tab is at most a **derived, disposable mirror**, and only when [`publish`](modes/publish.md) is asked for by name. wikikit never reads the wiki as input and never treats it as canonical.
 - **Not the domain model.** A glossary (`CONTEXT.md`) and decision records (`docs/adr/`) have one owner, which is **domainkit** when it's installed and the human otherwise. A page that needs a term **links** to the glossary instead of defining it; an architecture page that needs a rationale links the ADR by number instead of paraphrasing it. A term missing from the glossary is routed, never invented inline. When `CONTEXT.md` carries an `## Overview`, a page that states the product's purpose links that overview instead of restating it, and `architecture.md` opens with the link.
-- **Not process artifacts.** Plans, QA plans, reviews, handoffs, and agent instruction files (`CLAUDE.md` and its equivalents) are written for a maintainer mid-flow, expire, and are never read as sources of truth for reader docs or written by this skill.
-- **Not an API reference generator.** Where a generator exists (TypeDoc, Sphinx autodoc, an OpenAPI spec) wikikit links its output unchanged rather than hand-writing reference material that drifts within a week.
+- **Not process artifacts.** Plans, QA plans, reviews, handoffs, and agent instruction files (`CLAUDE.md` and its equivalents) are never read as sources of truth for reader docs or written by this skill.
+- **Not an API reference generator.** Where a generator exists (TypeDoc, Sphinx autodoc, an OpenAPI spec) wikikit links its output unchanged and never hand-writes that reference material.
 
 ## When this fires
 
-- **`init`.** "Write docs for this project", "document this repo", "we have no docs", "generate a getting-started guide". Bootstraps the set from the codebase.
-- **`update`.** "Update the docs", "the docs are out of date after this change", or a docs pass right after a feature lands. Refreshes only what the change invalidated.
-- **`audit`.** "Are our docs stale", "check the docs against the code", "what's undocumented". Read-only sweep. **Writes nothing, ever.**
-- **`publish`.** **Explicit ask only.** "Publish the docs to the GitHub wiki", "sync `docs/wiki/` to the wiki tab", "set up the wiki action". Installs a workflow that mirrors the set to the wiki.
+- **`init`** bootstraps the set from the codebase.
+- **`update`** refreshes only what a change invalidated, including a docs pass right after a feature lands.
+- **`audit`** is a read-only sweep for stale, broken, and undocumented surface. **Writes nothing, ever.**
+- **`publish`** installs a workflow that mirrors the set to the GitHub wiki. **Explicit ask only.**
 
 **If no mode is clear, ask.** `audit` is free and `init` writes a dozen files; never guess between them.
 
@@ -34,11 +32,11 @@ A repo built by agents accumulates plans, reviews, QA docs, and decision records
 
 ## Locate the doc sets
 
-Every mode opens the same way, so all three agree on where docs live before anything reads or writes. **Name every set found in the mode's first line of output**, because a missing set has to be visible immediately, not inferred from an empty result.
+Every mode opens here. **Name every set found in the mode's first line of output.**
 
 ### Find existing sets
 
-One `**/.wikimap.yaml` glob, scoped to the repo root plus the workspace globs (`pnpm-workspace.yaml`, `package.json` `workspaces`, `go.work`, a Cargo workspace), honoring `.gitignore` so a vendored tree can't inject a set. No root registry: the manifest travels with the set it describes, and a set added later is found automatically.
+One `**/.wikimap.yaml` glob, scoped to the repo root plus the workspace globs (`pnpm-workspace.yaml`, `package.json` `workspaces`, `go.work`, a Cargo workspace), honoring `.gitignore` so a vendored tree can't inject a set.
 
 ### Run the detection ladder for a repo with no set
 
@@ -50,13 +48,13 @@ Take the first rung that matches, and **say which rung matched before writing an
 | 2 | **An existing reader-doc tree**: a populated `docs/` that isn't only agent artifact directories, or `documentation/`, `website/docs/` | adopt it as-is; do not migrate |
 | 3 | **Fallback** | `docs/wiki/`, created on first write |
 
-`docs/wiki/` keeps reader docs quarantined from the agent artifact directories that share the `docs/` parent, so a reader never lands in a QA plan. But **an existing engine always wins**, because wikikit writes into the site the repo already runs, and never introduces MkDocs or Docusaurus into a repo that doesn't have one.
+**An existing engine always wins.** wikikit writes into the site the repo already runs, and never introduces a docs engine into a repo that doesn't have one.
 
-**In a workspace, the root set is always written; a package earns its own set only when it is independently published or independently runnable.** Run the ladder once for the root, then once per qualifying package (`packages/<x>/docs/`). State the split before writing anything: root-only makes an architecture page unusable past about four packages, and always-per-package is wrong for an app monorepo where the reader wants one getting-started.
+**In a workspace, the root set is always written; a package earns its own set only when it is independently published or independently runnable.** Run the ladder once for the root, then once per qualifying package (`packages/<x>/docs/`). State the split before writing anything.
 
 ### Reconcile the manifest against disk
 
-A central manifest is the one map shape that can be wrong while looking right, so every mode pays this price up front, **before any work starts**:
+Every mode checks the manifest against disk **before any work starts**:
 
 - pages on disk with no manifest entry,
 - entries whose page is gone,
@@ -85,7 +83,7 @@ pages:
     documents: [src/**]
 ```
 
-`documents:` is what makes `update` cheap, giving a code-path → page lookup that doesn't read every page, and what gives `audit` its recency prefilter.
+`documents:` gives `update` its code-path → page lookup and `audit` its recency prefilter.
 
 ### The page vocabulary
 
@@ -102,13 +100,13 @@ pages:
 
 **This table is the vocabulary, not a quota.** The map is derived from the repo: a library with no deployment gets no runbooks, a CLI gets a commands page, a repo with a TypeDoc build gets no `reference.md` at all.
 
-Diátaxis governs internally and stays out of the reader's face, because the four modes are the rule that keeps doc types unmixed, not jargon to print on the page. A how-to must not drift into explanation; an architecture page must not turn into a tutorial.
+Diátaxis governs internally: never print its mode names on a page.
 
 Three boundaries the vocabulary encodes:
 
-- **`CONTRIBUTING.md` is linked, never written.** Dev-environment setup and release steps are in the repo and verify like any other how-to. PR etiquette, a code of conduct, and review norms are a social contract that exists nowhere in code, so writing them would break the grounding rule on the repo's most visible contributor page. `index.md` links the file if it exists.
-- **`reference.md` covers declared surface only**, meaning things declared in a single place and re-verifiable in a single grep: CLI commands, flags, env vars, config keys. Library symbols and hand-maintained HTTP endpoint tables are refused and routed to a generator. This narrow exception exists so a CLI with twenty flags and no docs tooling gets something rather than nothing.
-- **No mirror pages.** A mirror page restates one source file that already documents itself: one page per skill, plugin, module, command, or package, each copying its own `README`, `SKILL.md`, or doc comment. Every edit to the source then owes a second edit, and the copy drifts while it looks maintained. Cover such a series with **one index page** that names each item in a line and links its source, generated from the source's own metadata when the repo has a script for it. A page earns its place by saying what no single source file says: how parts connect, how to do a task across them, what to do when it breaks. Write a mirror series only when the user asks for it after hearing this cost, and record the choice in the manifest entry's comment.
+- **`CONTRIBUTING.md` is linked, never written.** Dev-environment setup and release steps are in the repo and verify like any other how-to. PR etiquette, a code of conduct, and review norms exist nowhere in code, so wikikit never writes them. `index.md` links the file if it exists.
+- **`reference.md` covers declared surface only**, meaning things declared in a single place and re-verifiable in a single grep: CLI commands, flags, env vars, config keys. Library symbols and hand-maintained HTTP endpoint tables are refused and routed to a generator.
+- **No mirror pages.** A mirror page restates one source file that already documents itself: one page per skill, plugin, module, command, or package, each copying its own `README`, `SKILL.md`, or doc comment. Cover such a series with **one index page** that names each item in a line and links its source, generated from the source's own metadata when the repo has a script for it. A page earns its place by saying what no single source file says: how parts connect, how to do a task across them, what to do when it breaks. Write a mirror series only when the user asks for it after you name the cost (every source edit owes a second edit), and record the choice in the manifest entry's comment.
 
 ### The provenance stamp
 
@@ -118,15 +116,15 @@ Every page wikikit authors ends with one line:
 _Verified against `main`@`a1b2c3d` on 2026-08-06._
 ```
 
-Both halves earn their place. `audit` diffs from the SHA while it is still reachable, and falls back to the date when a rebase or squash-merge has orphaned it, so it is precise when it can be and degrades instead of lying when it can't.
+`audit` diffs from the SHA while it is still reachable, and falls back to the date when a rebase or squash-merge has orphaned it.
 
 **A stamp asserts that every claim on the page was verified, and its SHA is a commit on the default branch.** Stamp a page only after a pass that checked the whole page, not only the claims a change moved. On a feature branch the verified commit does not exist on the default branch yet, so leave the old stamp in place (a new page gets none) and name the page in the hand-off as due a stamp after merge. The operator stamps it on the default branch after the merge, and until then `audit` keeps reporting it as due.
 
-**A page with no stamp is not stale, it is unverified.** That's how adopted pages are marked: a page found under rung 2 gets a manifest entry with `documents:` globs and `adopted: true`, and no stamp. wikikit can see it and route to it, and has never checked a claim on it. It earns its first stamp the first time a verification pass genuinely covers it. Adoption is a mapping act, not an authorship claim over prose a human wrote.
+**A page with no stamp is not stale, it is unverified.** That's how adopted pages are marked: a page found under rung 2 gets a manifest entry with `documents:` globs and `adopted: true`, and no stamp. It earns its first stamp the first time a verification pass covers the whole page.
 
 ## Grounding: verify before you write
 
-**Every factual claim is verified against the repo before it ships.** Commands come from the actual `package.json`, `Makefile`, `pyproject.toml`, or `justfile`; paths exist; env vars are actually read somewhere; endpoints are actually routed. **A feature wikikit cannot find in code does not get documented.** This is the single rule that separates a doc set from plausible fiction, and it holds in all three modes.
+**Every factual claim is verified against the repo before it ships.** Commands come from the actual `package.json`, `Makefile`, `pyproject.toml`, or `justfile`; paths exist; env vars are actually read somewhere; endpoints are actually routed. **A feature wikikit cannot find in code does not get documented.**
 
 Static reading is the default, and it proves a script is *declared*, not that it runs. So wikikit may also execute a **fixed allowlist of side-effect-free probes**, after **one consent ask per run**:
 
@@ -138,13 +136,13 @@ Static reading is the default, and it proves a script is *declared*, not that it
 | bare script listings (`npm run`, `pnpm run`, `yarn run`, `just --list`) | anything that deploys, publishes, or pushes |
 | read-only git (`git log`, `git diff`, `git show`, `git rev-parse`) | anything that writes outside the doc set, or calls a live service |
 
-The allowlist is written here and **never inferred**. A command that looks harmless but isn't on the list is not run, so report the claim as unverified instead. `audit`'s "read-only" means *it writes no files*, so probes are available there too; that is where they pay off most.
+The allowlist is written here and **never inferred**. A command that looks harmless but isn't on the list is not run, so report the claim as unverified instead. `audit`'s "read-only" means *it writes no files*, so probes are available there too.
 
 ## The modes
 
 _Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-The mode bodies live in one file each under `modes/`. Route with [When this fires](#when-this-fires), read that one file, and follow it. Everything above this line applies to every mode and is not restated in the mode files.
+The mode bodies live in one file each under `modes/`. Route with [When this fires](#when-this-fires), read that one file, and follow it. Everything in this root applies to every mode and is not restated in the mode files.
 
 - Mode `init` → read [modes/init.md](modes/init.md), then follow it.
 - Mode `update` → read [modes/update.md](modes/update.md), then follow it.
@@ -153,24 +151,15 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 ## Writing standards
 
-The rules that separate documentation from generated filler:
-
-- **Document intent and use, and leave the mechanics to the code.** A page that narrates what a function does line by line is worse than the function.
-- **Document only what the repo contains today.** If it isn't in the repo, it isn't in the docs.
 - **One Diátaxis mode per page.** A how-to answers one goal and leaves the architecture to the explanation page; an explanation stays an explanation to the end.
-- **Open at the first useful sentence.** An overview of what the document is about is a sentence the reader skips.
 - **Every command copy-pasteable and verified.** Real flags, real paths, real names.
-- **Task-shaped how-to titles**, so "Deploy to staging", not "Deployment".
+- **Open at the first useful sentence.** An overview of what the page is about is a sentence the reader skips.
 
-For general AI-writing tells (em-dash overuse, rule-of-three cadence, hedging, promotional puffery) offer a **humankit** pass when it's installed. wikikit does not re-carry that list.
+For general AI-writing tells, offer a **humankit** pass when it's installed.
 
 ## Notes
 
-- **GitHub Wiki publishing is opt-in and fenced, not a default.** [`publish`](modes/publish.md) exists, and nothing routes into it: the loop never suggests it, and a request has to name the wiki to reach it. The fence is there because the mirror is destructive and one-way, so the wiki's edit button keeps working and every edit made through it dies at the next sync. A repo that treats its wiki as a place people *write* should not install this; a repo that treats it as a rendered view of `docs/wiki/` should.
-- **The wiki is downstream, always.** wikikit never reads the wiki as a source of truth, never round-trips edits back into the repo automatically, and never runs `audit` against it. If the wiki and the doc set disagree, the doc set is right by definition.
-- **Consent, by operation.** The `init` map, new pages, deletions, the README markers, a doc-home migration, and the probe run all ask. Edits to existing pages in `update` do not, because they're bounded by the restraint rule and land in a reviewable diff. `audit` asks for nothing except probes, because it changes nothing.
-- **No mutating execution, ever.** The probe allowlist is fixed and side-effect-free. wikikit never installs, builds, migrates, or deploys to verify a claim, so an unverifiable claim is reported as unverified, not tested into existence.
-- **No doc-site scaffolding.** wikikit writes content and updates nav for an engine that already exists. It never adds one.
+- **Consent, by operation.** The `init` map, new pages, deletions, the README markers, a doc-home migration, and the probe run all ask. Edits to existing pages in `update` do not. `audit` asks for nothing except probes.
 - **No marketing copy, no translation.** Landing pages, feature blurbs, changelogs, and localization are all out.
 - **Existing project convention wins.** A repo with its own docs location, page naming, or engine layout gets followed, not overridden, and wikikit says which convention it followed.
 - **No filesystem** (e.g. a browser-based agent)? Print each page as a fenced block labeled with its path, print the manifest the same way, and name the probes the user should run themselves. Never report a page written that you could not write.
