@@ -122,7 +122,7 @@ The file is durable and meant for review in a PR. refactorkit never commits it.
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Turn the crowned candidate into a plan with phases. Name **plankit** when it's installed, with the proposal file as its input; otherwise write the plan yourself, one phase per safe intermediate state, each with a check that proves it. The plan then goes to **grillkit** for interrogation and to **implementkit** for the build, in that order.
+**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Crown the user's next move, and do not write the plan yourself. The move is to turn the crowned candidate into a plan with phases, with **plankit** when it's installed and the proposal file as its input. Otherwise the user writes the plan by hand, one phase per safe intermediate state, each with a check that proves it. The plan then goes to **grillkit** for interrogation and to **implementkit** for the build, in that order.
 
 Runner-up: route to a decision-record skill (**domainkit** when installed) when the proposal supersedes an existing record.
 
