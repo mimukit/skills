@@ -1,6 +1,6 @@
 ## Mode `proof`: capture and publish evidence for the PR
 
-The output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Name the bundle `NNNN-verify-<slug>-YYYY-MM-DD`, with the next serial from the shared procedure and the run's ISO creation date at the end.
+The output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Name the bundle `NNNN-verify-<slug>-YYYY-MM-DD`, with the serial from the shared procedure and the run's ISO creation date at the end.
 
 ### 1. Drive and capture
 
@@ -25,7 +25,7 @@ url: <entry URL driven>
 captured: <ISO 8601 capture time with offset>
 ```
 
-Take `commit:` and `dirty:` from the tested revision the shared procedure recorded. A `dirty: yes` bundle shows uncommitted code, so a reader can treat it as matching no commit. A bundle stays fresh across later commits that change only `docs/` (a QA plan, the bundle itself); any other change after `commit:` makes it stale. Commit before you capture when the work is ready, so the bundle can read `dirty: no`. Keep the whole bundle name stable when updating the same bundle. The bundle directory is **ephemeral**, because the assets publish to a hidden git ref, so add `docs/verify/` to `.gitignore`.
+Take `commit:` and `dirty:` from the tested revision the shared procedure recorded. A `dirty: yes` bundle shows uncommitted code, so a reader can treat it as matching no commit. A bundle stays fresh across later commits that change only `docs/` (a QA plan, the bundle itself); any other change after `commit:` makes it stale. Commit before you capture when the work is ready, so the bundle can read `dirty: no`. A same-day re-run for the same slug reuses the bundle the shared procedure found, keeps its whole name, and empties it before it saves the new captures, so the bundle holds only the latest run. The bundle directory is **ephemeral**, because the assets publish to a hidden git ref, so add `docs/verify/` to `.gitignore`.
 
 ### 3. Publish so a PR can embed the proof
 

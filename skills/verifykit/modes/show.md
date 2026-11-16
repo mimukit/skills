@@ -9,7 +9,7 @@ Take the first that resolves:
 1. the system temporary directory: `mktemp -d` on POSIX, `%TEMP%` on Windows;
 2. otherwise `docs/verify/` inside the repo. This writes files into the working tree. Check `git check-ignore -q docs/verify/x`: when the path is not ignored, the screenshots appear as untracked files, and the hand-off must say so.
 
-Inside it, create one run directory named `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, prefix it with the next serial from the shared procedure: `NNNN-show-<slug>-YYYY-MM-DD/`. Keep the name stable when re-running the same slug on the same day; later captures overwrite by file name. This step is done when the run directory exists and you know whether it sits in the repo.
+Create one run directory there. In the temporary directory, name it `show-<slug>-YYYY-MM-DD/` (the slug from the shared procedure, today's ISO date). Under `docs/verify/`, name it `NNNN-show-<slug>-YYYY-MM-DD/` with the serial from the shared procedure, which reuses a same-day directory for the same slug; later captures overwrite by file name. This step is done when the run directory exists and you know whether it sits in the repo.
 
 ### 2. Drive and screenshot
 
