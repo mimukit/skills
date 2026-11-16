@@ -7,13 +7,13 @@ A **stack** is a chain of branches in one repository where each branch targets t
 ## Preflight
 
 ```sh
-gh --version                         # 2.94.0 or newer
-git --version                        # 2.20 or newer
+gh --version                         # 2.94.0 or newer for the issue-dependency flags
+git --version                        # 2.36 or newer
 gh extension list | grep gh-stack    # extension installed?
 ```
 
 - **Missing extension** → `gh extension install github/gh-stack`. Say the line rather than working around it.
-- **`gh` older than 2.94.0** → the stack commands need 2.90.0, and the issue-dependency flags a caller may pair with them need 2.94.0. Treat 2.94.0 as the floor, and when the version is below it say which half is unavailable rather than refusing outright.
+- **`gh` older than 2.94.0** → the extension itself runs on `gh` 2.0 or newer with Git 2.36 or newer (gh-stack v0.3.0 README, checked 2026-11-16), but the issue-dependency flags a caller may pair with it (`--blocked-by`, `--add-blocked-by`) need 2.94.0. Below 2.94.0, say that the dependency flags are unavailable and keep the stack commands.
 - **A fork** → stop. All branches in a stack must live in **one repository**; cross-fork stacks are not supported. Say this at setup, not when a push fails.
 - **A repo requiring signed commits** → say that a server-side rebase produces **unsigned** commits, and rebase locally with `gh stack rebase` instead of letting GitHub do it.
 
