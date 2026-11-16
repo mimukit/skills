@@ -4,13 +4,15 @@
 
 ### 1. Gather the feedback
 
+**Read the fork status first**, with `gh pr view <n> --json isCrossRepository`. A fork PR takes no push, per [Sync consent](../SKILL.md#sync-consent), so on `true` say so and stop before you gather or triage anything.
+
 Assemble the punch list before touching code:
 
 - **Unresolved review threads** with `file:line` and comment text, bot or human, via the same GraphQL `reviewThreads` query [`list`](./list.md) uses. These are the change requests.
 - **Failing checks** from `gh pr checks <n>`, with each failing job's name and, where reachable, its log tail. Red CI is feedback too.
 - **The review decision** from `gh pr view <n> --json reviewDecision`, so you know whether a re-request of review is warranted at the end.
 
-If there is nothing to service, meaning no unresolved threads and green CI, say so and stop. Ends when every unresolved thread and every failing check is on the punch list.
+If there is nothing to service, meaning no unresolved threads and green CI, say so and stop. Ends when every unresolved thread and every failing check is on the punch list, or on a stop for a fork PR.
 
 ### 2. Triage the punch list
 
@@ -34,7 +36,7 @@ Rules:
 
 Adopt the branch's existing worktree as [`start` does](./start.md#2-get-a-worktree-adopting-first-and-creating-only-if-needed). Then **sync it**, per [Sync consent](../SKILL.md#sync-consent). Hand the sync to gitkit; without gitkit, rebase onto the base and push with `--force-with-lease`.
 
-A rebase outdates the threads you have not replied to yet, so gather and triage the punch list first, and report the outdated count in the hand-off. On conflict, resolve it yourself by gitkit's conflict rule: write mechanical resolutions without asking, and ask the user to rule on any resolution that is a decision. Without gitkit, resolve additive conflicts directly and ask before any resolution that drops either side's code. Run the repo's test and build gate before you push. A PR you opened from a fork you don't control is the read-only case, where you cannot push; say so and stop. Ends when the worktree is on the latest base and `origin` matches it, or on a declined or stopped sync.
+A rebase outdates the threads you have not replied to yet, so gather and triage the punch list first, and report the outdated count in the hand-off. On conflict, resolve it yourself by gitkit's conflict rule: write mechanical resolutions without asking, and ask the user to rule on any resolution that is a decision. Without gitkit, resolve additive conflicts directly and ask before any resolution that drops either side's code. Run the repo's test and build gate before you push. Ends when the worktree is on the latest base and `origin` matches it, or on a declined or stopped sync.
 
 ### 4. Fix, gate, commit, push
 

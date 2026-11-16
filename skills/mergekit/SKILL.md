@@ -40,7 +40,7 @@ Every merge requires an explicit, per-PR confirmation from a human who has just 
 - **Never default-yes.** When mergekit does ask, don't phrase the prompt so silence merges. No answer means no merge.
 - **Never as a side effect.** `start` never merges. A fix round never merges. Only `close` merges, and only after the confirmation.
 
-The same preview-and-confirm rule covers every other outward-facing mutation: pushing a sync, commenting, closing an issue. Show what will happen, wait for the OK.
+The same preview-and-confirm rule covers every other outward-facing mutation, such as commenting or closing an issue. Show what will happen, wait for the OK. A sync push is the one exception: [Sync consent](#sync-consent) alone decides whether it runs, and it takes no second prompt.
 
 **Label writes are exempt, in every mode.** Adding or removing a label on an issue or a PR runs straight through, with no prompt: strip a merged PR's status label, strip a closed issue's `in-review` or `in-progress`, flip its dependents `blocked → ready`, set a priority. Report every label move in the hand-off. The exemption reaches the labels and nothing else.
 
