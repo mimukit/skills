@@ -62,7 +62,7 @@ _Write every hand-off in this skill in the procedural register: one instruction 
 
 ## The prompt-slop catalog
 
-Folklore that survives in prompts because it once helped on a 2023-era model. Each entry carries **the reason it's slop**, not just a ban: the technique may be correct on a different model or a different task, and a rule you understand survives a model generation that a rule you memorized does not.
+Folklore that survives in prompts because it once helped on an earlier model generation. Each entry carries **the reason it's slop**, not just a ban: the technique may be correct on a different model or a different task, and a rule you understand survives a model generation that a rule you memorized does not.
 
 **The cap is ~30 entries, enforced by displacement: adding one means deleting one.** A capped list that can only improve beats an exhaustive one that can only grow.
 
@@ -76,22 +76,22 @@ Folklore that survives in prompts because it once helped on a 2023-era model. Ea
 | S | A persona with no behavioral consequence ("a friendly assistant") | a role that settles no decision is decoration | name the scope and the decisions the role actually settles |
 | B | Stacked personas ("act as a team of five experts who debate") | one model answers either way; the committee is theatre | one role, one scope |
 | B | Bribery and threats ("I'll tip you $200", "my career depends on this") | current models don't price incentives; it's noise in the context window | if the stakes change the output, state them as a constraint |
-| B | ALL-CAPS imperative stacking (`You WILL`, `MUST`, `CRITICAL`, `MANDATORY`) on every line | when everything is critical, nothing is; caps are volume, not precision | one plain imperative per rule, emphasis reserved for the genuinely load-bearing one |
+| B | ALL-CAPS imperative stacking (`You WILL`, `MUST`, `CRITICAL`, `MANDATORY`) on every line | forceful wording makes current models over-trigger and over-comply (Anthropic prompting guidance, checked 2026-11-16) | one plain imperative per rule, emphasis reserved for the genuinely load-bearing one |
 | B | "This is very important", "do not fail" | names no testable behavior | name the failure and what to do instead |
 
 ### Reasoning scaffolding
 
 | | Slop | Why | Instead |
 |---|---|---|---|
-| B | "Think step by step" or "take a deep breath" on a reasoning-native model | it already reasons, so the instruction competes with its own process; the second is folklore from one 2023 paper about a model generation that's gone | state the goal once and stop |
+| B | "Think step by step" or "take a deep breath" on a call with thinking on | the model already reasons in its thinking, so the instruction competes with its own process | state the goal once and stop |
 | B | Tree-of-Thought, Mixture-of-Experts, "debate with yourself" in a single-turn prompt | prompt-shaped imitations of multi-call architectures that a single call can't run | make it multi-call, or drop it |
-| B | Version-pinned instructions inside the prompt ("as GPT-4, you…") | goes stale the moment the model changes, and the model can't verify it | describe the behavior you want, not the model |
+| B | Version-pinned instructions inside the prompt ("as model X, you…") | goes stale the moment the model changes, and the model can't verify it | describe the behavior you want, not the model |
 
 ### Structure and padding
 
 | | Slop | Why | Instead |
 |---|---|---|---|
-| B | Emoji section headers | tokens spent on decoration, and some tokenizers split them badly | plain headings |
+| B | Emoji section headers | tokens spent on decoration | plain headings |
 | B | Politeness padding ("please", "if you would", "thanks in advance") | costs tokens, changes nothing | delete |
 | B | Negative-only instruction ("don't be verbose") | naming the behavior activates it, and the negation is a weak modifier over it, so the ban makes it *more* available | "answer in at most three sentences" |
 | B | Restating what the repo's instruction file already says | duplication invites contradiction with the file itself | one pointer line, and an explicit override where you mean to override |
@@ -128,7 +128,7 @@ Folklore that survives in prompts because it once helped on a 2023-era model. Ea
 A catalog that guts legitimate prompts makes prompts worse. Leave these alone:
 
 - **A role line that genuinely narrows behavior** in a `system` prompt. "You are the refund policy engine for a store that never refunds shipping" is a constraint, not a preamble.
-- **Explicit structure and step lists for a non-reasoning model.** Model *shape* decides this; see below.
+- **Explicit structure and step lists for a call with thinking off.** The call's thinking setting decides this; see below.
 - **Repetition of a constraint that actually gets violated.** Repeating something the model keeps ignoring is a fix, not slop.
 - **Few-shot examples where the format matters and is hard to describe.** Show it once rather than describing it three times.
 - **Length, when the task has genuine surface.** Long isn't slop; padded is.
@@ -136,18 +136,18 @@ A catalog that guts legitimate prompts makes prompts worse. Leave these alone:
 
 **Measured results beat the catalog.** When a user reports that an entry tested better on their model, **stand that entry down for the run and name it in the diagnosis.** This catalog has no maintained external source behind it, and its entries are model-generation-specific: some of this folklore was genuinely useful three years ago and some may be again. A skill that argues with a measurement has become superstition. Deferring *silently* would be just as bad, because the record of *why this prompt has a role preamble* is exactly what a later reader needs.
 
-## Model shape, never model versions
+## Thinking mode, never model versions
 
-Adopt the durable rule and never a version-pinned table:
+Current frontier models from Anthropic, OpenAI, and Google are hybrid: each call sets whether the model thinks and at what effort (checked 2026-11-16). Key the prompt shape on that call setting, never on the model family:
 
-- **A reasoning-native model** wants the goal stated once, with no chain-of-thought scaffolding competing with its own process.
-- **A non-reasoning model** benefits from explicit structure: steps, headings, an output skeleton.
+- **A call with thinking or reasoning on** wants the goal stated once, with no chain-of-thought scaffolding competing with its own process.
+- **A call with thinking off** benefits from explicit structure: steps, headings, an output skeleton.
 
 Written as a behavioral test rather than a name test, because that sentence survives a model generation and a list of names does not. Any model-recommendation table is stale within two quarters; this skill never ships one.
 
 **One prompt out, never one per model family.** Emitting a Gemini variant, an OpenAI variant, and a Claude variant looks generous and is a decision handed back to the user, three artifacts to keep in sync, and a per-vendor style table (the exact thing that goes stale) dressed as output. Write for the receiver you identified. Where a vendor's own convention genuinely applies, apply it silently in the one prompt you deliver.
 
-`system` infers the shape from the call site it already read. `task` assumes reasoning-native.
+`system` reads the thinking setting from the call site it already read. `task` assumes thinking is on.
 
 ## The routing note
 

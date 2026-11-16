@@ -8,9 +8,9 @@
 
 When a repo is present, read the existing prompt if there is one, and what surrounds it: **which model, whether tools are attached, whether a structured-output schema is enforced.** This runs *before* the capture round so the questions don't ask for what the code already says. A prompt that duplicates a schema the API already enforces is waste.
 
-This is also where the **model shape** is inferred, from the model identifier already sitting in that call. Ask only when the call site genuinely isn't there.
+This is also where the **thinking mode** is read, from the thinking or reasoning-effort setting in that call, or the model's default when the call sets none (some current models think by default, and some always do). Ask only when the call site genuinely isn't there.
 
-Done when the model, the tools, and the schema are each named or reported as not found.
+Done when the model, the thinking setting, the tools, and the schema are each named or reported as not found.
 
 ### 2. One capture round
 

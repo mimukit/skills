@@ -41,7 +41,7 @@ Every `task` prompt carries all five:
 | **Done signal** | a concrete check, meaning a command, a test, or an observable state. Never "when it works". Prefer a check that exists before the receiver starts (an existing test, a command, a measurement). A check the receiver writes itself must be watched to fail before the change, for the stated reason and not from a setup error, because a check written after the change only proves the change agrees with itself |
 | **Stop condition** | where to stop, so the agent doesn't keep going past the ask |
 
-Bake real content in. Long context on top, the ask at the bottom. `task` **assumes a reasoning-native receiver**, and every current coding agent is one, so spending a question on it buys nothing.
+Bake real content in. Long context on top, the ask at the bottom. `task` **assumes the receiver runs with thinking on**, as current coding agents do, so spending a question on it buys nothing.
 
 On a review-only run, skip this step and check the input against the five parts instead. A Done signal the receiver writes and grades itself, with no fail-first step, is present but **weak**; name it as weak, separately from a missing part. Done when each of the five parts is present in the prompt, or, on a review-only run, named as present or missing, with a self-graded Done signal named as weak.
 
