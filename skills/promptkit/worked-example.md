@@ -1,6 +1,6 @@
 ## A worked `task` run
 
-One example, because the five parts are faster to recognize than to describe. This is the default mode doing its ordinary job, with no questions asked, because the tree answered them.
+The default mode, with no questions asked, because the tree answered them.
 
 **In.** What the user pasted:
 
@@ -39,4 +39,4 @@ resolved "don't break anything else" → named auth.ts as explicitly out of scop
 assumed the bug is the stale-token return path; stated in the prompt, correct it if wrong
 ```
 
-The order follows the contract's layout rule: the context the receiver needs (the bug, the scope, the constraints) comes first, and the ask, its done signal, and its stop condition come last, where the receiver reads them just before it acts. Read the prompt and the ledger together and the mechanism is visible. Every vague phrase in the input has a row; the one thing the tree couldn't settle is a row too, and it names the assumption rather than hiding it, so a wrong guess costs one correction instead of a wasted run. Note also what the prompt *doesn't* say: nothing about error handling, because the instruction file covers it, and one pointer line is cheaper than a restatement that can contradict it.
+The order follows the contract's layout rule: the context the receiver needs (the bug, the scope, the constraints) comes first, and the ask, its done signal, and its stop condition come last, where the receiver reads them just before it acts.
