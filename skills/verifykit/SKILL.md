@@ -10,21 +10,17 @@ metadata:
 
 # verifykit
 
-Drive a just-built frontend feature the way a user would and capture what happens. In `show` mode the capture is a screenshot handed to the operator in the session, cheap enough to answer "did the button move". In `proof` mode it is screenshots plus one short animated GIF, published so a pull request can embed them inline. `setup` readies a machine and a repo for both. verifykit is the step between reviewing the code and opening the PR: reviewing reads the source, this **exercises the running feature**.
-
-It is a **driver and recorder, nothing more**. It does not write tests (that's a test-suite skill, **testkit** when it's installed), does not produce a human checklist (that's a manual-QA skill), and does not provision environments beyond its own driver. It drives the UI it's given and records what it sees.
+Drive a just-built frontend feature the way a user would and capture what happens. `show` hands the operator screenshots in the session. `proof` captures screenshots plus one short GIF and publishes them so a pull request can embed them inline. `setup` readies a machine and a repo for both.
 
 ## When this fires
 
-After a frontend feature is built and you want to look at it or prove it works. It captures a running feature with a visual surface. If the change is backend/CLI-only with nothing to drive, say so without inventing a flow, and route to **qakit** for a manual test plan (`/qakit`); without qakit, name the commands and endpoints a person should exercise by hand.
+After a frontend feature is built and you want to look at it or prove it works. If the change is backend/CLI-only with nothing to drive, say so without inventing a flow, and route to **qakit** for a manual test plan (`/qakit`); without qakit, name the commands and endpoints a person should exercise by hand. For tests, a hand-test checklist, or a source review, route to **testkit**, a manual-QA skill, or a code-review skill instead of capturing.
 
-- **`show`.** "Show me what it looks like", "screenshot this", "what does the page look like now", "did the button move". Screenshots to a local path, nothing published.
-- **`proof`.** "Verify this feature", "record the flow working", "prove the UI change", "capture proof for the PR", or a PR step that needs proof artifacts. Screenshots plus a GIF, bundled and published for the PR body.
-- **`setup`.** "Set up verifykit", "install the browser driver", "get this machine ready to capture". Installs what is missing and reports what is present.
+- **`show`.** Screenshots to a local path, nothing published.
+- **`proof`.** A request that names a PR, proof, a record, or proving, or a PR step that needs proof artifacts. Screenshots plus a GIF, bundled and published for the PR body.
+- **`setup`.** A request to set up verifykit or install the driver. Installs what is missing and reports what is present.
 
-**When the verb is ambiguous, run `show`.** An invocation that names a PR, proof, a record, or proving is `proof`. Everything else is `show`, because it is cheap and reversible, and escalating to `proof` costs one sentence.
-
-Distinct from a manual-QA plan (which a *human* runs) and from a code review (which reads source). verifykit is the *automated* drive-and-record; if the user actually wants a hand-test checklist or a source review, point them at the right skill instead of capturing.
+**When the verb is ambiguous, run `show`.**
 
 ## Shared procedure
 
@@ -32,11 +28,11 @@ Every capture mode (`show` and `proof`) runs these steps first. `setup` skips th
 
 ### 1. Scope the feature and find the entry point
 
-Ground the run in what actually changed. Plain `git diff` shows only unstaged edits, so resolve the **full change target**: staged and unstaged edits (`git diff HEAD`), untracked files (`git ls-files --others --exclude-standard`, read each one), and the branch's committed changes against its base (`git diff <base>...HEAD`). Take the base from **gitkit** when it is installed; otherwise use `git symbolic-ref --short refs/remotes/origin/HEAD` with the `origin/` prefix removed, else the first of `main` or `master` that resolves. Read the linked issue or plan when there is one. From these, learn which screens, routes, components, or flows the change touches.
+Resolve the **full change target**: `git diff HEAD`, untracked files (`git ls-files --others --exclude-standard`, read each one), and `git diff <base>...HEAD`. Take the base from **gitkit** when it is installed; otherwise use `git symbolic-ref --short refs/remotes/origin/HEAD` with the `origin/` prefix removed, else the first of `main` or `master` that resolves. Read the linked issue or plan when there is one. From these, learn which screens, routes, components, or flows the change touches.
 
-Record the **tested revision** before you drive: the application commit (`git rev-parse HEAD`) and the dirty state (`yes` when `git status --porcelain` prints anything, else `no`). `proof` writes both into the bundle, so a later reader can tell whether the captures match the branch. Determine how to launch the app and reach the feature: the dev-server command and URL. If the project already documents how it runs, follow that; otherwise infer it and confirm the entry URL before driving.
+Record the **tested revision** before you drive: the application commit (`git rev-parse HEAD`) and the dirty state (`yes` when `git status --porcelain` prints anything, else `no`). Find the dev-server command and the entry URL, and confirm the URL before driving.
 
-Pick a **slug** for this run: the linked **issue number** when there is one, else a short lowercase kebab-case **feature slug** from the branch/diff (e.g. `login-throttle`). Each mode forms its run directory from the slug and the run's ISO creation date.
+Pick a **slug** for this run: the linked **issue number** when there is one, else a short lowercase kebab-case **feature slug** from the branch/diff (e.g. `login-throttle`). Each mode forms its run directory from the slug and the run's ISO creation date. A run directory under `docs/verify/` takes the next serial: take the highest leading four-digit serial in `docs/verify/` across this worktree, every other worktree that `git worktree list` names, and `origin/<default branch>` (`git ls-tree --name-only origin/<base> docs/verify/` after `git fetch origin <base>`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused.
 
 This step is done when every changed, staged, untracked, and committed path is classified as visual or not, the entry URL is confirmed, and the commit and dirty state are recorded.
 
@@ -54,7 +50,7 @@ This step is done when every flow to drive is named, by the invocation, by the s
 
 Detect what's available and use the best, in order:
 
-1. a **CLI browser driver on `PATH`** that takes a URL and writes a screenshot to disk, for example `playwright-cli`. Probe each listed binary with `command -v`. Preferred, because it runs from `Bash` and keeps the accessibility tree out of context;
+1. a **CLI browser driver on `PATH`** that takes a URL and writes a screenshot to disk, for example `playwright-cli`. Probe each listed binary with `command -v`;
 2. a **browser-automation MCP** (drives a real browser, takes screenshots);
 3. **computer use** / desktop screen capture;
 4. **none of them** → degrade: don't fake it. Print a short manual capture recipe (what to click, what to screenshot), name verifykit `setup` as the next move to install the driver, and stop. Never run `setup` from inside a capture.
@@ -65,7 +61,7 @@ Record which backend was used in the hand-off. This step is done when one backen
 
 verifykit reuses state; it never manufactures it. In order: **reuse** an already-authenticated session, a stored browser state file, or test credentials the project already exposes. If the flow is gated and none is available, **ask once** for the entry URL and credentials (or a seed command to run). If the user can't or won't provide them, **degrade gracefully**: capture up to the auth boundary and note where it stopped. Run a seed command you're *handed*, but never invent one, seed a database, or run migrations yourself.
 
-**Bound state-changing flows before you drive them.** Driving the UI can write data: a create, delete, submit, payment, invite, or email-sending action writes through the app as a user would. When any selected flow takes such an action:
+**Bound state-changing flows before you drive them.** When any selected flow takes a create, delete, submit, payment, invite, or email-sending action:
 
 - Name the environment from the entry URL and the app's config: local, a dev or preview deploy, or a shared or production host.
 - List each state-changing action the flows will take, and the record or account it touches.
@@ -86,9 +82,5 @@ The mode bodies live in one file each under `modes/`. Route with [When this fire
 
 ## Notes
 
-- **`allowed-tools` covers the primary path.** `Bash` runs the CLI browser driver, git, `gh`, `ffmpeg`, `npm`, and the bundled `verify-assets.sh`; `Read` reads the diff and the linked issue; `Write` writes the `proof` bundle; `AskUserQuestion` asks the flow choice, the one auth ask, and `setup`'s install confirm. The **browser MCP fallback is not in that list and cannot be**, because it arrives as MCP tools whose names the server chooses (commonly `mcp__<server>__*`). On a host that enforces `allowed-tools` strictly with no CLI driver installed, grant the browser MCP alongside these four, or verifykit takes its documented degradation: print the manual capture recipe and stop. That degradation is the honest failure, and it never fakes proof.
-- **Driver + recorder, not a provisioner.** It reuses or asks for auth and runs a seed command it's handed; it never creates fixtures, seeds databases, or runs migrations. `setup` installs the driver and nothing about the project. This keeps it portable across projects. It does not make it read-only: a driven create, delete, or submit writes data through the app, which is why [Handle auth and required state](#4-handle-auth-and-required-state) bounds those actions before the drive.
-- **`show` is never published.** No GIF, no bundle, no `.gitignore` edit, no hidden ref. The image goes to the operator and nowhere else.
+- **`allowed-tools` covers the primary path.** The browser MCP fallback arrives as server-named tools (commonly `mcp__<server>__*`) that the list cannot name. A host that enforces `allowed-tools` strictly must grant the browser MCP; else the capture step degrades to the manual recipe.
 - **No mp4.** A hosted mp4 does not embed inline in a PR body, because GitHub only renders video uploaded through its web composer, so the proof format is screenshots + GIF. A `raw.githubusercontent.com` mp4 renders as a bare link, and a `<video>` tag is stripped (GitHub Markdown API, checked 2026-11-16).
-- **Private repos.** Inline rendering needs a public repo. On a private one, `verify-assets.sh check` fails, so `proof` skips publishing and hands off the local bundle path for manual attachment rather than embedding dead links.
-- **No shell, no browser, or nothing to drive?** If there's no way to run the app or capture it (e.g. a browser-only agent with no automation surface), don't fake proof. Say what's missing and print the manual capture recipe for the user to run themselves.

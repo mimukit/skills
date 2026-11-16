@@ -18,7 +18,7 @@ The npm package is `@playwright/cli`. The unscoped `playwright-cli` package is d
 
 ### 2. Confirm and install the misses
 
-When at least one item is missing, list every miss and its install command in **one** `AskUserQuestion` (ffmpeg and Node are listed with their print-only commands), and run the installs only on a yes. A global npm install and a browser download change the machine, and this skill runs on machines that are not the author's. On a no, report the misses as skipped and continue to the repo half.
+When at least one item is missing, list every miss and its install command in **one** `AskUserQuestion` (ffmpeg and Node are listed with their print-only commands), and run the installs only on a yes. On a no, report the misses as skipped and continue to the repo half.
 
 Then ask once whether to install the driver's bundled agent skills with `playwright-cli install --skills -g`. Recommend no, and give the reason: a second skill on the same browser verbs double-triggers with verifykit. Record the answer in the report.
 
@@ -26,7 +26,7 @@ This step is done when every miss is installed, printed, or skipped, and the bun
 
 ### 3. Prove the machine half
 
-Take one screenshot of `about:blank` into the system temporary directory (`mktemp -d` on POSIX, `%TEMP%` on Windows) with the driver. The checklist proves each binary exists; only this screenshot proves the browser launches. Record the absolute path. When the screenshot fails, report the machine half as failed with the driver's error and continue to the repo half. This step is done when the screenshot path or the driver error is recorded.
+Take one screenshot of `about:blank` into the system temporary directory (`mktemp -d` on POSIX, `%TEMP%` on Windows) with the driver. Record the absolute path. When the screenshot fails, report the machine half as failed with the driver's error and continue to the repo half. This step is done when the screenshot path or the driver error is recorded.
 
 ### 4. Check the repo half
 
@@ -39,7 +39,7 @@ Run each check and record its state. Skip this half when the current directory i
 | `docs/verify/` ignored | `git check-ignore -q docs/verify/x` | Append `docs/verify/` to `.gitignore` |
 | Push access to `refs/verify-assets/*` | `git push --dry-run origin HEAD:refs/verify-assets/setup-probe` | Report skipped with the push error |
 
-The dry run leaves no ref behind on the remote or locally. The `.gitignore` line is the one repo mutation `setup` makes, and the capture modes need it before their first `proof` run.
+The dry run leaves no ref behind on the remote or locally. The `.gitignore` line is the one repo mutation `setup` makes.
 
 This step is done when every repo item is marked present, fixed, or skipped, or the half is skipped as not a git repository.
 
