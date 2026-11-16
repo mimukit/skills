@@ -51,7 +51,7 @@ button, a, [role="button"] {
 }
 ```
 
-`interactive-widget=resizes-content` makes the Android keyboard shrink the layout viewport, so `100dvh` and bottom-pinned inputs react to it as they do on iOS. Take the theme colors from `DESIGN.md` or the shipped header, never a brand color picked here.
+`interactive-widget=resizes-content` makes the keyboard shrink the layout viewport in Chrome for Android 108+ and Firefox for Android 133+, so `100dvh` and bottom-pinned inputs react to it. iOS Safari ignores it before 27.3, which is in beta (MDN browser-compat-data, checked 2026-11-16); there the keyboard shrinks only the visual viewport, which `window.visualViewport` reports. Take the theme colors from `DESIGN.md` or the shipped header, never a brand color picked here.
 
 Press feedback is motion: its curve and duration come from **motionkit** when installed, and otherwise stay at 100 to 160 ms with an ease-out curve on `transform` and `background`.
 
