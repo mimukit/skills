@@ -76,6 +76,8 @@ This step is done when the auth state is reused, given, or recorded as a boundar
 
 ## Modes
 
+_Write every hand-off in this skill in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
+
 The mode bodies live in one file each under `modes/`. Route with [When this fires](#when-this-fires), read that one file, and follow it. Everything above this line applies to every mode and is not restated in the mode files.
 
 - Mode `show` → read [modes/show.md](modes/show.md), then follow it.

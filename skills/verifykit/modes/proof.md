@@ -1,6 +1,6 @@
 ## Mode `proof`: capture and publish evidence for the PR
 
-A PR reader is not present, so the output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Form the bundle name as `NNNN-verify-<slug>-YYYY-MM-DD`, using the next serial in `docs/verify/` and the run's ISO creation date at the end. To get the serial, take the highest leading four-digit serial in `docs/verify/` across this worktree, every other worktree that `git worktree list` names, and `origin/HEAD` (`git ls-tree --name-only origin/HEAD docs/verify/` after `git fetch origin`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. Everything for the run is grouped under it.
+A PR reader is not present, so the output is a bundle with a GIF and a ready-to-embed `proof.md`, published to a hidden git ref. Form the bundle name as `NNNN-verify-<slug>-YYYY-MM-DD`, using the next serial in `docs/verify/` and the run's ISO creation date at the end. To get the serial, take the highest leading four-digit serial in `docs/verify/` across this worktree, every other worktree that `git worktree list` names, and `origin/<default branch>` (`git ls-tree --name-only origin/<base> docs/verify/` after `git fetch origin <base>`), and add one; start at `0001` when there is none. Scan all three, because parallel worktrees otherwise take the same serial. Skip a source that fails, such as no remote, and without git list the directory only. The serial is per directory and never reused. Everything for the run is grouped under it.
 
 ### 1. Drive and capture
 
@@ -57,8 +57,6 @@ Then write the ready-to-embed proof into the bundle's fixed **`proof.md`** (`doc
 This step is done when `proof.md` embeds every capture in the bundle, by raw URL or by local path.
 
 ### 4. Hand off
-
-_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
 **What changed.** Report the flows verified with pass/fail, the capture backend used, the `.gitignore` line added or already present, and, when published, the commit SHA and the ready-to-embed raw URLs. Give the tested `commit:` and `dirty:` values. On a private repo, say that publish was skipped. When ffmpeg was missing, say that the bundle has no GIF.
 

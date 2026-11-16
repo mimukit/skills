@@ -45,8 +45,6 @@ This step is done when every repo item is marked present, fixed, or skipped, or 
 
 ### 5. Hand off
 
-_Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
-
 **What changed.** Print the checklist: one line per item, each marked present, installed, or skipped, with the reason on every skipped line. Name the bundled-skills answer. Name the `.gitignore` edit when it happened.
 
 **Where it landed.** Print the absolute path of the `about:blank` screenshot. Print the path of the edited `.gitignore` when it changed.
