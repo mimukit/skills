@@ -44,7 +44,7 @@ The work reuses the repo's own tools: `make lint` checks anchors, step reference
 
 Rejected: a single collection-wide rewrite pass. It mixes bug fixes into trims, makes review impossible, and loses the per-skill revert.
 
-### Phase 1: Fix the authoring rules
+### Phase 1: Fix the authoring rules (built 2026-11-16)
 - In `skills/skillkit/SKILL.md`, apply the five Propagators items in the research file: the "why" rule, "slightly pushy", the base-model claim, the Quality bar pointer list, and the live-test reason.
 - In `AGENTS.md` "Pruning", add one bullet: "A skill body carries no argument after a rule, no trigger list, no Notes that repeat the body, and no note to a future maintainer."
 - In `scripts/lint.sh`, add the trigger-list warning.
@@ -52,7 +52,7 @@ Rejected: a single collection-wide rewrite pass. It mixes bug fixes into trims, 
 
 Done when: `grep -n 'slightly pushy\|base model can.t handle\|Explain the \*why\*' skills/skillkit/SKILL.md` prints nothing, the new AGENTS.md bullet exists, `make lint` passes, and `make lint` prints the new warning for at least one skill that still has a trigger list.
 
-### Phase 2: Retire paseokit and orcakit
+### Phase 2: Retire paseokit and orcakit (built 2026-11-16)
 - `git mv` both directories to `archive/`, and set `internal: true` in each frontmatter.
 - Remove both from `skills.sh.json`, `README.md`, `docs/wiki/index.md`, `docs/wiki/workflow.md`, and `docs/wiki/architecture.md`. Run `make cheatsheet`.
 - Delete the skill names from `skills/gitkit/SKILL.md` and `skills/gitkit/clean.md`. Keep the generic vendor-tool rule.
@@ -62,13 +62,13 @@ Done when: `grep -n 'slightly pushy\|base model can.t handle\|Explain the \*why\
 
 Done when: `make lint` passes, `skills add /home/dev/projects/skills --list` names neither skill, `grep -rn 'paseokit\|orcakit' skills/ skills.sh.json README.md docs/wiki/` prints nothing, and neither name exists in `~/.claude/skills` or `~/.agents/skills`.
 
-### Phase 3: Fix the bugs
+### Phase 3: Fix the bugs (built 2026-11-16)
 - Fix every item under "Confirmed bugs" in the research file.
 - Check every item under "Reported bugs, not yet checked", except the paseokit item. Fix it, or record in the commit body why it is not a bug.
 
 Done when: every bug item is fixed or recorded as not a bug, the repaired `gh api` read in repokit setup runs on this repo without error, the issuekit triage regex matches `hotfix(auth): fix crash`, and `make lint` passes.
 
-### Phase 4: Update stale facts
+### Phase 4: Update stale facts (built 2026-11-16)
 - Install `github/gh-stack` with `gh extension install`.
 - Check each row in "Stale facts to verify" against a primary source, except the paseokit and orcakit rows.
 - Rewrite promptkit's model-generation entries to key on the call's thinking or effort setting, not the model family.
@@ -77,17 +77,17 @@ Done when: every bug item is fixed or recorded as not a bug, the repaired `gh ap
 
 Done when: every remaining row is updated, or confirmed with its source named in the commit body, or listed in the commit body as unverifiable with the reason.
 
-### Phase 5: Trim the high-yield skills
+### Phase 5: Trim the high-yield skills (built 2026-11-16)
 Apply the per-skill findings, with the no-behavior-change proof, to statuskit, testkit, researchkit, refactorkit, prkit, reviewkit, designkit, releasekit, debugkit, and prototypekit (19–35% each, about 12,400 words).
 
 Done when: every finding for these ten skills is applied or skipped with a reason in the commit body, each commit body carries the reviewer's class counts and the skill's word count before and after, `make lint` passes, and `make cheatsheet` shows no diff.
 
-### Phase 6: Trim the middle band
+### Phase 6: Trim the middle band (built 2026-11-16)
 Apply the per-skill findings, with the no-behavior-change proof, to promptkit, verifykit, grillkit, implementkit, motionkit, qakit, commitkit, humankit, issuekit, gitkit, plankit, repokit, tutorkit, uikit, mergekit, seokit, wikikit, afkkit, ideakit, and validatekit (12–18% each). skillkit was trimmed in Phase 1.
 
 Done when: the same checks as Phase 5 hold for these 20 skills.
 
-### Phase 7: Trim the lean skills and measure
+### Phase 7: Trim the lean skills and measure (built 2026-11-16)
 Apply the per-skill findings, with the no-behavior-change proof, to domainkit, handoffkit, namekit, and dbkit. Then measure the whole collection and push the backup ref.
 
 Done when: the same checks as Phase 5 hold for these four skills, `find skills -name '*.md' | xargs cat | wc -w` prints 163,000 or fewer, and `origin/skill-trim-wip` points at local `main`.
