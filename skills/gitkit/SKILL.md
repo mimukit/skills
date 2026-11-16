@@ -164,7 +164,7 @@ git -C "$REPO" worktree remove "$WT"
 git -C "$REPO" branch -d "$BRANCH"
 ```
 
-**This is the one removal rule in the collection.** Every skill that removes a worktree or deletes a branch, whether a sweep here, a workspace tool's cleanup, or an issue close-out, follows it and cites it rather than restating its own. Four rules, each one guarding against a real way to lose work:
+**This is the one removal rule in the collection.** Every skill that removes a worktree or deletes a branch, whether a sweep here, a workspace tool's cleanup, or an issue close-out, follows it and cites it rather than restating its own. Five rules, each one guarding against a real way to lose work:
 
 - **A dirty worktree stops teardown.** Show exactly what would be lost (uncommitted changes, untracked files, unpushed commits) and let the human decide. Never reach for `--force` on their behalf.
 - **Remove only a worktree whose marker says gitkit created it.** A worktree without the marker was adopted: it is someone else's context, and you have no idea what is open in it.
@@ -306,7 +306,7 @@ git merge "origin/$BASE" -m "chore(repo): sync with origin $BASE"
 
 ### Never bare `git pull`
 
-`git pull` on a branch behind its remote merges by default, and writes `Merge branch 'main' of github.com:owner/repo` without asking anyone. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself: configure it or pass the flag, but never let the default run.
+A bare `git pull` does whatever the user's `pull.rebase` and `pull.ff` config says, so it may merge, rebase, or refuse a divergent branch. Use `git pull --rebase`, or `git pull --ff-only` when you want the sync to fail loudly rather than resolve itself. The same holds for `git pull` invoked to refresh the base branch itself: configure it or pass the flag, but never let the default run.
 
 ## `prepare`
 

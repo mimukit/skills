@@ -43,7 +43,7 @@ Ends with each remote row marked reapable or held, and each held row carrying it
 
 ## 3. Decide "merged", the part that is not obvious
 
-**`git branch --merged` misses a squash-merged branch entirely.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges — the common GitHub default — a sweep built on `--merged` alone finds nothing reapable on every run and reports a tidy repo that is full of dead branches.
+**`git branch --merged` misses a squash-merged branch entirely.** A squash merge writes one new commit with a new SHA and no parent link back to the branch, so ancestry says the branch never landed. On a repo that squash-merges, a sweep built on `--merged` alone finds nothing reapable on every run and reports a tidy repo that is full of dead branches.
 
 Three tests, each catching a merge shape the one before it misses. Run them in order and stop at the first that answers:
 
