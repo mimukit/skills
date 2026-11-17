@@ -77,15 +77,17 @@ Take the first row that fits.
 
 | The element is | Curve |
 | --- | --- |
+| Responding to a press, alone or with a hover on the same property | ease-out |
 | Changing color, changing opacity alone, or responding to hover | `ease` |
 | Moving at a constant rate (marquee, progress bar, spinner) | `linear` |
+| A drawer or sheet entering or leaving from a viewport edge | `--ease-drawer` |
 | Entering or leaving the screen | ease-out |
 | Moving or morphing while it stays on screen | ease-in-out |
 | Anything else | ease-out |
 
 `ease-in` on UI is a finding.
 
-The built-in `ease-out` and `ease-in-out` keywords are too gentle to read as deliberate, so the ease-out and ease-in-out rows use strong curves, as tokens. Plain `ease` and `linear` stay keywords, so a hover runs on plain `ease`.
+The built-in `ease-out` and `ease-in-out` keywords are too gentle to read as deliberate, so the ease-out and ease-in-out rows use strong curves, as tokens. Plain `ease` and `linear` stay keywords, so a hover alone runs on plain `ease`, and a press, with any hover on the same property, runs on the `--ease-out` token.
 
 ```css
 --ease-out: cubic-bezier(0.23, 1, 0.32, 1);      /* entrances, exits, most UI */
