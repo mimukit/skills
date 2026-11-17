@@ -167,8 +167,6 @@ This step is done when every approved action has run, or the first failure is re
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-Name a sibling skill only when it's installed; otherwise describe the action plainly.
-
 **What changed.** Give a brief recap of the decisions you settled together, each in a line. Name each question you raised and didn't resolve as deferred. Mark each decision as asked or defaulted. Name each phase that stays attended, and each outward action the user approved.
 
 **Where it landed.** Name the plan file you rewrote in place and its `Grilled:` stamp, or the file you were asked to write instead, or nothing at all when the user declined a file. Give the commit SHA, the pushed branch, the issue URL, and its label after [Publish the result](#publish-the-result), or say which of those the user skipped or which failed.
@@ -176,6 +174,6 @@ Name a sibling skill only when it's installed; otherwise describe the action pla
 **Next.** Pick the first route that applies. Do not start it.
 
 - The publish step moved an existing issue to `ready`: run **afkkit** on it (`run issue #<n> unattended`), otherwise **issuekit** `start <n>`, otherwise create a branch and build it by hand.
-- The project tracks work in GitHub Issues and no issue exists yet: file the plan with **issuekit**, which reads the stamp to file the issues as `ready`.
-- The project tracks work elsewhere or nowhere: build the first phase with **implementkit**. The prompt or the repo's agent-guide file says which tracker applies; a GitHub project may still run its backlog in Linear, Jira, or a file.
-- No plan file: name what the decisions feed, the build (**implementkit**) or a decision record (**domainkit**).
+- No plan file: name what the decisions feed, the build (**implementkit**, otherwise by hand) or a decision record (**domainkit**, otherwise a glossary entry or ADR the user writes).
+- The project tracks work in GitHub Issues and no issue exists yet: file the plan with **issuekit**, which reads the stamp to file the issues as `ready`, otherwise run `gh issue create` once per phase with the plan path in each body.
+- The project tracks work elsewhere or nowhere: build the first phase with **implementkit**, otherwise build it by hand on a new branch. The prompt or the repo's agent-guide file says which tracker applies; a GitHub project may still run its backlog in Linear, Jira, or a file.
