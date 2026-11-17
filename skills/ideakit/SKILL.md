@@ -64,7 +64,7 @@ All state lives in one repo outside the user's work repos, at `~/ideas` unless `
 
 **Resolve `$IDEAKIT_HOME` first and write absolute paths.** No mode changes the working directory. A mode fired from a work repo touches no file in that repo, so the host repo's own conventions never apply to what ideakit writes.
 
-Create the repo on first use and run `git init` in it. **Never commit automatically.** Offer a commit at the end of a session and take no for an answer.
+Create the repo on first use and run `git init` in it. **Never commit automatically.** Offer a commit at the end of a run that wrote a file, and take no for an answer.
 
 ### The router
 
