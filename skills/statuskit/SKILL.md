@@ -10,7 +10,7 @@ metadata:
 
 # statuskit
 
-Read and advise; write only the files the [write rules](#write-rules) list. statuskit never commits, except its own snapshot when the user explicitly asks. It never pushes, closes an issue, edits a PR, merges, relabels, or writes code. A move names its kit and one-line command, and the user launches it. The `Skill` tool is for gitkit only, which the survey calls for the base ref, the branch-name pattern, and worktree paths. Every other kit is routed to, never invoked.
+Read and advise; write only what the [write rules](#write-rules) list. statuskit never commits, except its own snapshot when the user explicitly asks. It never pushes, closes an issue, edits a PR, merges, relabels, or writes code. A move names its kit and one-line command, and the user launches it. The `Skill` tool is for gitkit only, which the survey calls for the base ref, the branch-name pattern, and worktree paths. Every other kit is routed to, never invoked.
 
 Tracker judgment belongs to issuekit. statuskit prints issue counts, the unblocked, blocked, and ready sets by ID, what each blocked issue says it waits on, and each issue's declared priority, and it computes one staleness count. It never renders an itemized tracker-health verdict, never explains which issues are stale and why, and never assigns a priority. When the dashboard needs that judgment, point at `issuekit triage` or `issuekit sync`.
 
@@ -318,7 +318,8 @@ Say `untracked` in place of `gitignored` when the [write rules](#write-rules) sk
 | a doc awaiting review | `review-<name>`, the file name minus its serial and date, such as `review-plan-sso-login` |
 | a local branch | `branch-issue-12-retry-budget` |
 | a stash entry | `stash-<sha>`, the stash commit's short SHA from `git stash list --format='%h'`; an index such as `stash@{0}` moves whenever a new stash is pushed |
-| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `triage`, `prioritize`, `declare-tracker` |
+| rung 9 or rung 10 on one issue | `triage-12` for rung 9, `prioritize-12` for rung 10, because one issue can fire both rungs |
+| a ladder rung with no subject | one fixed slug per rung: `push`, `reconcile`, `new-plan` (run `plankit`), `context` (the `CONTEXT.md` move), `declare-tracker` |
 
 **Put priority and leverage in a queued move's line** when it carries a priority above `medium` or an `unblocks` count above zero: `**Start #12 (critical, unblocks 3)** · \`issuekit start 12\``. Omit `unblocks 0`, and omit `medium` or a blank priority. Priority leads when both are present.
 
@@ -332,13 +333,14 @@ All three tables (unblocked, waiting for review, blocked issues) go into the fil
 
 #### Write rules
 
-statuskit writes local files only, and this table is the complete list. Nothing here reaches a remote or a tracker, and the one commit is the snapshot commit the user explicitly asks for.
+statuskit writes local state only, and this table is the complete list. Nothing here changes a remote or a tracker, and the one commit is the snapshot commit the user explicitly asks for.
 
 | Write | When | Gate |
 |---|---|---|
 | The snapshot, `docs/status/NNNN-status-<slug>-YYYY-MM-DD.md` (a `Write`) | Every run, unless the user asked to skip it or no filesystem is writable. Creates `docs/status/` when missing. | None. Say where it went in the saved line. |
 | One `docs/status/` line appended to the root `.gitignore` (an `Edit`) | Before the first snapshot, only when a root `.gitignore` exists and `git check-ignore -q docs/status/x.md` fails. With no root `.gitignore`, create none: the snapshot stays untracked. | None. Say it in the saved line. |
 | One declaration sentence appended to an existing agent-guide file (an `Edit`) | Only from [the declaration offer](declaration.md), on an empty-array unknown reading. | A preview and the user's OK. |
+| `git fetch origin <base>`, which writes under `.git` only (the remote-tracking ref `origin/<base>`, `FETCH_HEAD`, and the fetched objects), never a local branch or the working tree | Only in the snapshot serial scan, when the origin source is not skipped. | None. |
 
 `Edit` makes only those two appends. On a host that strips it, the snapshot stays untracked and [the declaration offer](declaration.md) prints the line for the user to place.
 
