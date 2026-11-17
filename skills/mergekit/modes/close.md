@@ -23,7 +23,7 @@ Take the Merge path or the [Fix path](#fix-path), whichever verdict the reviewer
 
    - The instruction is not a direct merge ask, for example "looks fine?" or "what do you think".
    - The instruction covers more than one PR, for example "merge them all".
-   - The head moved after `start` recorded it in this run.
+   - The head moved after `start` last recorded the reviewed head in this run.
    - The PR is a layer in a stack, and the merge lands layers the reviewer did not name.
 
    Ends when the head SHA is bound, or on the reviewer's answer for that SHA.

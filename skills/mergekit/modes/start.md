@@ -10,7 +10,7 @@ gh pr view <n> --json headRefName,headRefOid,headRepositoryOwner,isCrossReposito
 
 A **cross-repository (fork) PR** is read-only from here. Say so at setup time. A fork PR also refuses the "and sync" ask: say so here, and carry on with a plain `start`.
 
-Record `headRefOid`. It is the **reviewed head**, the commit the reviewer is about to judge, and [`close`](./close.md#merge-path) merges that commit and no other. Ends when the head branch, the reviewed head SHA, and the fork status are known.
+Record `headRefOid`. It is the **reviewed head**, the commit the review pack is built on and the reviewer is about to judge, and [`close`](./close.md#merge-path) merges that commit and no other. A sync in [Measure the base-branch gap](#3-measure-the-base-branch-gap-and-report-it) replaces it. Ends when the head branch, the reviewed head SHA, and the fork status are known.
 
 ### 2. Get a worktree, adopting first and creating only if needed
 
@@ -31,9 +31,9 @@ git rev-list --left-right --count origin/<base>...HEAD    # "<behind>\t<ahead>";
 
 **Report the two numbers.** Without a sync request, stop there: no rebase, no merge of the base, no push.
 
-On a sync request, hand the sync to **gitkit** in the worktree. It resolves to a rebase, stops on a dirty tree or a conflict that needs a ruling, and reports the review threads the push outdated. Run it here, before [Set the project up](#4-set-the-project-up), so the install matches the synced lockfile. Without gitkit, rebase onto the base and push with `--force-with-lease`. A behind count of `0` needs no sync; say so. A stopped sync leaves the branch where it was: report why, and carry on unsynced.
+On a sync request, hand the sync to **gitkit** in the worktree. It resolves to a rebase, stops on a dirty tree or a conflict that needs a ruling, and reports the review threads the push outdated. Run it here, before [Set the project up](#4-set-the-project-up), so the install matches the synced lockfile. Without gitkit, rebase onto the base and push with `--force-with-lease`. A behind count of `0` needs no sync; say so. After the sync pushes, read `headRefOid` again and record it as the reviewed head, and measure the two numbers again. A stopped sync leaves the branch where it was: report why, and carry on unsynced.
 
-This step ends when both numbers are reported, and, on a sync request, when the sync has pushed or stopped with its reason.
+This step ends when both numbers are reported, and, on a sync request, when the sync has pushed and the synced head is recorded, or the sync has stopped with its reason.
 
 ### 4. Set the project up
 
