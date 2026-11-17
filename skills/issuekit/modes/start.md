@@ -42,6 +42,7 @@ Never soften this into a warning.
 
 Refuse with the reason, not a bare error:
 
+- **a `hotfix(scope):` title** → its work lives on its `hotfix-<slug>` branch, which no mode here creates or adopts. Name that branch and stop, whatever its label.
 - **`needs-planning`** → the decisions aren't settled. Route to a human grill session (**grillkit** when installed), then to `triage` for the `needs-planning → ready` promotion.
 - **`blocked`** → name the prerequisite and its state. When that prerequisite turns out to have an open PR, the issue should be `stacked`, so point at `sync` to promote it rather than starting it here.
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.

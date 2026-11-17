@@ -37,7 +37,7 @@ The **Stack** column says what happens to a dependent once its prerequisite is i
 
 **Propose `high`, never `critical`, for the most important row.** `critical` means *preempt work already in progress*, which a plan cannot know; the user escalates it if they mean it.
 
-For an **ad-hoc** description, skip the table: draft one issue (title + body) and confirm it before creating.
+For an **ad-hoc** description, skip the table: draft one issue (title, body, and priority) and confirm it before creating. Its priority is the one the user's words state; with none stated, the draft says `none`, and the issue stays unassessed for `triage` unless the user sets one at the confirm.
 
 ### 3. Create the issues
 **Guard against duplicates first**, so running `create` twice on one plan files no second set. Before creating, list existing issues and skip (or flag for the user) any whose title already matches:
@@ -81,11 +81,12 @@ Use a temp file for each body (multi-line markdown through `--body` is flaky) an
 Apply the [lifecycle labels](../SKILL.md#lifecycle-labels-every-mode) so the fresh issues advertise their state. The **grill gate** decides which vocabulary applies:
 
 - **Grilled source.** The input plan file carries a `Grilled: YYYY-MM-DD` stamp (grillkit writes it when it hardens a plan), *or* the user explicitly says the work is grilled/ready. The decisions are settled, so the normal pair applies: every independent issue gets `ready`, every dependent one gets `blocked` plus a [recorded dependency](../SKILL.md#recording-a-dependency) naming the prerequisite.
-- **Ungrilled source.** An ad-hoc description, or a plan with no grill stamp, including one whose `Grilled:` line a later material edit removed. **Every issue gets `needs-planning`.** Record the dependency anyway; it takes effect once the issue is grilled into `ready`.
+- **Hotfix source.** An issue filed for a `hotfix-<slug>` branch skips the gate and takes its label from [the hotfix rule](../SKILL.md#title-convention-every-issue-this-skill-creates).
+- **Ungrilled source.** Any other ad-hoc description, or a plan with no grill stamp, including one whose `Grilled:` line a later material edit removed. **Every issue gets `needs-planning`.** Record the dependency anyway; it takes effect once the issue is grilled into `ready`.
 
 **Nothing is labeled `stacked` at creation time**, because no prerequisite has a PR yet. The label arrives later, from the PR-authoring skill or from [`sync`](./sync.md).
 
-Then apply the [priority label](../SKILL.md#priority-labels-every-mode) shown in the preview table, **one per issue, in the same `gh issue edit` call** as the lifecycle label, so a concurrent survey never reads a half-labeled issue.
+Then apply the [priority label](../SKILL.md#priority-labels-every-mode) shown in the preview, **at most one per issue, in the same `gh issue edit` call** as the lifecycle label, so a concurrent survey never reads a half-labeled issue.
 
 Priority is applied **regardless of the grill gate**, which governs the lifecycle namespace only.
 
@@ -123,5 +124,6 @@ Use `Edit` for this. For an ad-hoc issue with no plan file, skip this step.
 
 - **`ready` issues exist** → pick one up with `start <n>`, which gets it a worktree and flips it `in-progress`. Crown the **highest-priority** one rather than listing all of them, breaking a tie on whichever frees the most other work.
 - **everything is `needs-planning`** (an ungrilled source) → the next move is a human grill session, meaning **grillkit** on the plan, then the `triage` promotion for each issue (`#45 is grilled, mark it ready`), which moves it to `ready`, `stacked`, or `blocked`. Say that nothing is workable unattended yet, and do not offer `start`.
+- **a hotfix issue** → route on its PR. With no PR yet, open one with `Closes #<n>` (**prkit** when installed, otherwise `gh pr create`). With an open PR, run `sync`, which adds `Closes #<n>` to its body. With a merged PR there is no next step, because `create` closed the issue.
 - **everything is `blocked`** → surface the root prerequisite. When the breakdown marked dependents as stack candidates, say so here: starting the root frees them as soon as its PR opens, not when it merges.
 

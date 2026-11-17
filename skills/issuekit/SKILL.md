@@ -70,7 +70,7 @@ Rules, applied to **every** title you generate:
 - **Imperative mood**, stating the *effect* ("add sso login"), not the activity ("changes to auth"). **No trailing period.**
 - **Title the whole issue, not its first phase.** A multi-phase issue names the capability it delivers end to end (`feat(auth): add sso login`), and its phases live in the body.
 
-**A hotfix needs no issue before the branch.** Somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker, so no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, title it `hotfix(scope): …`, label it `in-review` when its PR is already open, and never label it `ready`, because `ready` promises work nobody has begun.
+**A hotfix needs no issue before the branch.** Somebody cuts a `hotfix-<slug>` branch and opens a `hotfix(scope):` pull request without waiting for the tracker, so no mode here gates a hotfix, and `start` is not on its path. When the user files one after the fact for the record, `create` titles it `hotfix(scope): …` and skips the grill gate, because the work has begun. Read the PR's state first by its head branch (`gh pr list --state all --head hotfix-<slug> --json number,state`), and ask the user for the branch when nothing names it. This lookup needs no link, because a hotfix PR predates its issue. Label the issue `in-review` when the PR is open, `in-progress` when no PR exists yet, and never `ready` or `needs-planning`. When the PR has merged, `create` files the issue with no lifecycle label and closes it with the PR's link, in the same preview.
 
 ---
 
@@ -168,7 +168,7 @@ The **second** label namespace, and the one that decides what gets picked up nex
 | `low` | `C5DEF5` | worth doing eventually; never preempts anything | issuekit create / triage |
 
 - **One lifecycle and one priority label, independent.** Never infer one from the other: a `critical` issue is not `ready` because it is `critical`.
-- **No priority label means unassessed, not `medium`.** Never default an issue to `medium` silently; `triage` hunts for the gap. Every open issue carries a priority except the side-exits (`wontfix`, `duplicate`).
+- **No priority label means unassessed, not `medium`.** Never default an issue to `medium` silently; `triage` hunts for the gap. Every open issue except the side-exits (`wontfix`, `duplicate`) gets a priority from `create` or from `triage`.
 - **Every write replaces the sibling present.** GitHub has no mutual exclusion between labels, so read the issue's current labels and remove whichever sibling it actually carries in the same call that adds the new one, rather than blind-removing all three:
 
 ```sh
