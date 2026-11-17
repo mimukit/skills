@@ -13,9 +13,9 @@
 | `ADD COLUMN … NOT NULL`, no default | `ACCESS EXCLUSIVE` | Fails on a table with rows | Add nullable or with a constant default |
 | `ALTER COLUMN … SET NOT NULL` | `ACCESS EXCLUSIVE` | Scans the table under the lock | `ADD CONSTRAINT c CHECK (col IS NOT NULL) NOT VALID`, `VALIDATE CONSTRAINT c`, `SET NOT NULL` (PG 12+ skips the scan), drop `c` |
 | `ADD CONSTRAINT … FOREIGN KEY` | `SHARE ROW EXCLUSIVE` on both tables | Scans the referencing table | Add it `NOT VALID`, then `VALIDATE CONSTRAINT` in a separate migration |
-| `ADD CONSTRAINT … CHECK` | `ACCESS EXCLUSIVE` | Scans the table | Add it `NOT VALID`, then `VALIDATE CONSTRAINT` |
+| `ADD CONSTRAINT … CHECK` | `ACCESS EXCLUSIVE` | Scans the table | Add it `NOT VALID`, then `VALIDATE CONSTRAINT` in a separate migration |
 | `VALIDATE CONSTRAINT` | `SHARE UPDATE EXCLUSIVE` | Scans; reads and writes continue | Safe |
-| `CREATE INDEX` | `SHARE` | Blocks writes for the whole build | `CREATE INDEX CONCURRENTLY` |
+| `CREATE INDEX` | `SHARE` | Blocks writes for the whole build | `CREATE INDEX CONCURRENTLY`; on a partitioned table, the per-partition form in [Concurrent index builds](#concurrent-index-builds) |
 | `CREATE INDEX CONCURRENTLY` | `SHARE UPDATE EXCLUSIVE` | Two scans; waits for open transactions | Safe; see [Concurrent index builds](#concurrent-index-builds) |
 | `DROP INDEX` | `ACCESS EXCLUSIVE` | Instant once the lock is held | `DROP INDEX CONCURRENTLY` |
 | `ADD UNIQUE` or `ADD PRIMARY KEY` | `ACCESS EXCLUSIVE` | Builds an index under the lock | `CREATE UNIQUE INDEX CONCURRENTLY idx …`, then `ADD CONSTRAINT name UNIQUE USING INDEX idx` (or `PRIMARY KEY USING INDEX`) |
@@ -26,6 +26,10 @@
 | `ALTER COLUMN … TYPE` | `ACCESS EXCLUSIVE` | Rewrites table and indexes, `int` to `bigint` included. No rewrite for `varchar(n)` to a larger `n` or `text`, or for more `numeric` precision at the same scale | New column, backfill, switch reads, drop the old one |
 | `SET DEFAULT` or `DROP DEFAULT` | `ACCESS EXCLUSIVE` | Catalog only | Safe with a lock timeout |
 | `ALTER TYPE … ADD VALUE` (enum) | `ACCESS EXCLUSIVE` on the type | Catalog only; the new value is unusable in the same transaction | Its own migration |
+| `CREATE TABLE … PARTITION OF` | `ACCESS EXCLUSIVE` on the parent | Catalog only for a new partition; scans a DEFAULT partition under the lock | Safe with a lock timeout. When that timeout keeps failing on a busy parent, create the table alone and `ATTACH PARTITION` it, which takes a weaker lock on the parent |
+| `ATTACH PARTITION` | `SHARE UPDATE EXCLUSIVE` on the parent; `ACCESS EXCLUSIVE` on the attached table and on a DEFAULT partition | Scans the attached table, and a DEFAULT partition, under the lock, and builds each parent index the table lacks | Build the parent's indexes on the table first. Add a `CHECK` that admits only rows inside the partition bounds, with `col IS NOT NULL` because a `CHECK` passes on `NULL` (`NOT VALID`, then `VALIDATE CONSTRAINT` in a separate migration), so the attach skips the scan; drop the `CHECK` after |
+| `DETACH PARTITION` | `ACCESS EXCLUSIVE` on the parent and the partition; `SHARE` on each table whose foreign key references the parent | Catalog only | `DETACH PARTITION … CONCURRENTLY` on PG 14+ |
+| `DETACH PARTITION … CONCURRENTLY` | `SHARE UPDATE EXCLUSIVE` on the parent; `ACCESS EXCLUSIVE` on the partition at the end | Waits for every transaction that uses the parent; refused in a transaction block or when a DEFAULT partition exists | Safe, with the `statement_timeout` of a concurrent index build. An interrupted run leaves the partition pending detach (`pg_inherits.inhdetachpending`), a rerun of the same statement fails, and no other partition of the table can detach; a rerun checks for that state first and finishes it with `ALTER TABLE parent DETACH PARTITION p FINALIZE` |
 
 `DEFAULT now()` is a constant default: `now()` is stable, so the add is instant on PG 11+. Every existing row gets the migration's transaction time, so a `created_at` added to an old table dates every old row falsely.
 
@@ -40,7 +44,7 @@ SET lock_timeout = '5s';
 SET statement_timeout = '15min';
 ```
 
-Inside a transaction, use `SET LOCAL`. A migration that hits the lock timeout fails cleanly and holds nothing; retry it a few times with a pause, and never raise the timeout instead. A concurrent index build can run long, so give that statement a `statement_timeout` of `0` or one that fits the build.
+Inside a transaction, use `SET LOCAL`. A migration that hits the lock timeout fails cleanly and holds nothing; retry it a few times with a pause, and never raise the timeout instead. A concurrent statement is the exception: a failure partway can leave an `INVALID` index or a partition pending detach, so its retry checks for that state first. A concurrent index build can run long, so give that statement a `statement_timeout` of `0` or one that fits the build.
 
 - **Run migrations over a direct or session-mode connection**, never a transaction-mode or statement-mode pooler (PgBouncer in those modes, a Neon `-pooler` host, Supabase port 6543). That pooler can hand each statement to a different server connection, so the session `SET` may not reach the next statement and the lock timeout silently does nothing. Session-mode pooling is safe.
 - **A file outside a transaction ends with `RESET lock_timeout; RESET statement_timeout;`**, so its settings do not stay on a reused connection.
@@ -67,6 +71,7 @@ WHERE NOT i.indisvalid;
 ```
 
 - Recover with `DROP INDEX CONCURRENTLY name;` and build it again, or with `REINDEX INDEX CONCURRENTLY name;` on PG 12+.
+- `CREATE INDEX CONCURRENTLY` is refused on a partitioned table. Create the parent's index with `CREATE INDEX parent_idx ON ONLY parent (…)`, which builds nothing and starts `INVALID`. Build each partition's index with `CREATE INDEX CONCURRENTLY`, then run `ALTER INDEX parent_idx ATTACH PARTITION partition_idx` for each. The parent's index turns valid once every partition has an attached index; until then the query above lists it, so finish the attaches rather than drop it.
 
 ## Batched backfill
 
