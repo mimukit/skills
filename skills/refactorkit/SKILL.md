@@ -106,7 +106,7 @@ Give every agent this fixed return shape, so the main session can rank findings 
 
 ### 5. Report, then write the artifact
 
-Print a compact table first (candidate, pattern, strength, blast radius), then the crowned move with its reasoning, then the runners-up.
+Print a compact table first (candidate, pattern, strength, blast radius), then the crowned candidate with its reasoning, then the runners-up.
 
 **Every report carries a coverage line**, in the terminal and in the file: *"ranked 1,240 files by churn, read the top 40 across 4 areas."*
 
@@ -122,9 +122,9 @@ The file is durable and meant for review in a PR. refactorkit never commits it.
 
 _Write this section in the procedural register: one instruction per sentence, active voice, present tense, no metaphor._
 
-**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Crown the user's next move, and do not write the plan yourself. The move is to turn the crowned candidate into a plan with phases, with **plankit** when it's installed and the proposal file as its input. Otherwise the user writes the plan by hand, one phase per safe intermediate state, each with a check that proves it. The plan then goes to **grillkit** for interrogation and to **implementkit** for the build, in that order.
+**What changed.** Report the file written, and explicitly that no source file was touched. **Where it landed.** Give the path. **Next.** Crown the user's next move, and do not write the plan yourself. The move is to turn the crowned candidate into a plan with phases, with **plankit** when it's installed and the proposal file as its input. Otherwise the user writes the plan by hand, one phase per safe intermediate state, each with a check that proves it. The plan then goes to **grillkit** for interrogation when it is installed, otherwise the user reviews it, and then to **implementkit** for the build when it is installed, otherwise the user builds it by hand.
 
-Runner-up: route to a decision-record skill (**domainkit** when installed) when the proposal supersedes an existing record.
+When the proposal supersedes an existing decision record, name a second next move after the crowned one: route it to a decision-record skill (**domainkit** when installed), otherwise the user writes the superseding record by hand.
 
 **On an empty or all-weak result, say there is no next move.** See [When nothing clears the gates](#when-nothing-clears-the-gates).
 
