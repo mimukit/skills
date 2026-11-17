@@ -80,7 +80,7 @@ Status is `active` or `learned`. Three routing outcomes, all cheap:
 
 **Both files are caches.** Repair runs only where a mode already has the topic folder open:
 
-- **Every mode that opens a topic folder rewrites that topic's row in both files**, from the folder's own `CUES.md` and `MISSION.md`, whether or not the row looked wrong. The rewrite carries the `Status` cell over, or writes `active` on a new row. The one exception is `exam`, which sets the cell from its two gates.
+- **Every mode that opens a topic folder rewrites that topic's row in both files**, whether or not the row looked wrong. The `REVIEW.md` row comes from the folder's own `CUES.md`. The `INDEX.md` rewrite keeps the existing `Topic` and `Also called` cells, sets `Last touched` to today, and carries the `Status` cell over. A new row writes `active` and takes `Topic` and `Also called` from the names the user gives the topic: in the mission interview on a new track, or in `MISSION.md` for a folder that has no row. When `MISSION.md` names none, ask the user once. The one exception is `exam`, which sets the `Status` cell from its two gates.
 - **A slug with a folder on disk but no `INDEX.md` row** routes as if the row existed. `lesson`, `drill`, or `exam` on that slug opens the folder and writes the row.
 - **`status` opens no topic folder, so it repairs nothing.** It names each folder missing from the routers and each row with a missing or old-format field, and says to run `lesson` on that slug.
 
@@ -164,12 +164,12 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **Where it landed.** Give the topic folder path and the lesson path. Give the repo path when this run created the repo.
 
-**Next.** Crown one move, chosen by state:
+**Next.** Crown one move, chosen by state. Take the first rule that matches, top to bottom:
 
-- Cues are due now → run `drill`.
-- The track is mid-flight and nothing is due → run the next `lesson`.
-- Every cue sits at step `60d` and the track looks finished → run `exam`.
 - The track just closed as `learned` → say there is no next step.
+- Cues are due now → run `drill`.
+- The track is mid-flight (`min step` below `60d`) and nothing is due → run the next `lesson`.
+- Every cue sits at step `60d` and the track looks finished → run `exam`.
 
 Then offer a commit of the learning repo. Never run it without a yes.
 

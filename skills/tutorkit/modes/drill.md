@@ -4,7 +4,7 @@ Retrieval practice across topics.
 
 ### 1. Build the queue
 
-Read `REVIEW.md`. Open the `CUES.md` of due topics only, never their lessons, never a glob. Collect every cue whose `due` is today or earlier. Due topics are the rows with at least one date on or before today. Rewrite each opened topic's row in `INDEX.md` and `REVIEW.md` from its `CUES.md` as you go. Done when every due cue in the opened files is in the queue.
+Read `REVIEW.md`. Open the `CUES.md` of due topics only, never their lessons, never a glob. Collect every cue whose `due` is today or earlier. Due topics are the rows with at least one date on or before today. Rewrite each opened topic's row in `INDEX.md` and `REVIEW.md` as you go, per [The router](../SKILL.md#the-router). Done when every due cue in the opened files is in the queue.
 
 ### 2. Cap it at 12
 
