@@ -73,6 +73,24 @@ Done when: a trial subagent reading afkkit for a batch run on a nesting host dis
 
 Done when: each fix has a trial subagent answer showing one behavior with no reported conflict, each new number cites its source in the commit body, and `make lint` exits 0 with 0 warnings.
 
+### Phase 5: Close the gaps the Phase 1–4 trials found (built 2026-11-17)
+The Phase 1–4 trial agents reported more pre-existing gaps. The owner asked on 2026-11-17 to fix them too.
+- **afkkit:** define "the base branch" as the branch the issue's worktree is cut from (for a stacked issue, the parent layer's branch, per gitkit), name it as the PR target, and state what the batch does with an issue that issuekit refuses.
+- **statuskit:** list the `git fetch` it runs in the write-rules table; give rungs 9 and 10 distinct keys.
+- **issuekit:** state where an ad-hoc issue's priority comes from; settle the hotfix label conflict.
+- **mergekit:** after `start` syncs, record the head the review pack was built on as the reviewed head.
+- **implementkit:** name who fixes a red done-gate (the conductor dispatches a fix subagent and still edits no code); give the Next line a plain fallback.
+- **prkit:** state the lease push once; name the cascading stack rebase as a sync push under the same rule.
+- **motionkit:** add an Easing row for `--ease-drawer`; settle the hover and press curves.
+- **dbkit:** add lock rows for `CREATE TABLE … PARTITION OF` and `DETACH PARTITION`, and the rule for `CREATE INDEX CONCURRENTLY` on a partitioned parent.
+- **ideakit:** no commit offer for a run that wrote nothing.
+- **testkit:** an order for the next-move triggers after `cover`.
+- **refactorkit:** one meaning for "runner-up".
+- **grillkit:** a plain fallback in the Next line.
+- **tutorkit:** a rule that sets `Last touched`; a source for `Also called` on a row rewrite.
+
+Done when: each fix has a trial subagent answer showing one behavior with no reported conflict, each new number or vendor fact cites its source in the commit body, and `make lint` exits 0 with 0 warnings. A reported gap that proves not to be a fault is recorded in the commit body or the hand-off with the reason.
+
 ## Open questions
 
 None. The three questions of the first draft were settled by the owner's "fix all" instruction on 2026-11-16, with the recommended answers recorded in Design decisions; the owner checks them at review.
