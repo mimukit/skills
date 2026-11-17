@@ -233,10 +233,10 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Leave every change **unstaged**. Do not `git add`. Do not commit.
 
-Then crown one next move:
+Then crown one next move. Take the first trigger that matches, top to bottom, and name any other match after it:
 
+- **The run found a contradiction** → route it to a debugging skill when one is installed, otherwise say plainly that somebody must decide whether the behaviour or the expectation is wrong. It comes first because it may be a live bug.
 - **Deferred work remains in the ledger** → run `cover` again on the next slice.
-- **The run found a contradiction** → route it to a debugging skill when one is installed, otherwise say plainly that somebody must decide whether the behaviour or the expectation is wrong.
 - **The run found testability blockers** → route them to a refactoring skill when one is installed, otherwise say the code needs a seam before it can be tested.
 - **Nothing remains** → say the slice is done and name committing as the next move. Name **commitkit** when it is installed; otherwise suggest the type and scope `test(<area>)` for a `git commit` the user runs. Never commit automatically.
 
