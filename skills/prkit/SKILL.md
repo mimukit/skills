@@ -45,7 +45,7 @@ git diff origin/<base>...HEAD --stat                     # files touched
 
 Read the full diff (`git diff origin/<base>...HEAD`) only when commits are thin or the stat shows unexplained files. Skip lockfiles, build output, and vendored directories.
 
-**gitkit owns base-ref resolution.** A hotfix branch can target the branch production deploys from, and gitkit returns that branch. Without gitkit, `git config --get branch.<branch>.gh-merge-base` comes first when it is set, then `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` is the authoritative fallback, and ask rather than guess when it can't answer. Re-check the current branch against the base gitkit returns and stop if they match.
+**A base branch the caller names wins.** afkkit passes the base branch it recorded for the issue; use it for every `origin/<base>` below and for `--base`, and skip gitkit's resolution. **Otherwise gitkit owns base-ref resolution.** A hotfix branch can target the branch production deploys from, and gitkit returns that branch. Without gitkit, `git config --get branch.<branch>.gh-merge-base` comes first when it is set, then `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` is the authoritative fallback, and ask rather than guess when it can't answer. Re-check the current branch against the base gitkit returns and stop if they match.
 
 **A stack layer's base is the branch below it, not the repo default.** When this branch is a layer in a stack, gitkit returns the parent branch, and every `origin/<base>` below means that branch instead. The diff is then the layer's own change, and the "current branch equals base" stop does not fire. Ask gitkit whether the branch is a layer rather than inferring it; without gitkit, `gh pr view --json baseRefName` on an existing PR is the fallback.
 
@@ -57,7 +57,7 @@ git rev-list --left-right --count origin/<base>...HEAD   # "<behind>\t<ahead>"; 
 ```
 
 - **Behind by zero**: nothing to do, so go to [Push the branch](#4-push-the-branch).
-- **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**, and it resolves to **rebase** (`git rebase origin/<base>`). **Inside a stack, the rebase is cascading** (`gh stack rebase --upstack`), because replaying this layer moves every layer above it; hand that to gitkit rather than rebasing the one branch. The sync runs without an OK, published branch or not, except the unattended case in [Preview and authorization](#preview-and-authorization): gitkit stops to ask only on a problem, such as a conflict that needs a ruling or a rejected lease. Without gitkit, rebase and push with `--force-with-lease`, and stop on any of those problems.
+- **Behind**: the branch needs `origin/<base>` brought in. **gitkit owns the sync rule**, and it resolves to **rebase** (`git rebase origin/<base>`). **Inside a stack, the rebase is cascading** (`gh stack rebase --upstack`), because replaying this layer moves every layer above it; hand that to gitkit rather than rebasing the one branch. The `--force-with-lease` push of this layer and of each layer above that the cascade rewrote is part of this sync. The sync runs without an OK, published branch or not, except the unattended case in [Preview and authorization](#preview-and-authorization): gitkit stops to ask only on a problem, such as a conflict that needs a ruling or a rejected lease. Without gitkit, rebase and push each rewritten branch with `--force-with-lease`, and stop on any of those problems.
 - **Rebase conflicts**: if the rebase stops on a conflict, **resolve it yourself**; the user never edits a conflicted file. List the conflicted files (`git diff --name-only --diff-filter=U`). gitkit owns the conflict rule: it writes mechanical resolutions without asking and asks the user to rule on any resolution that is a decision, then writes the chosen one. Without gitkit, resolve additive conflicts directly and ask before any resolution that drops either side's code. Then complete the rebase (`git rebase --continue`). Do not push, and do not open the PR, until the working tree is clean and the sync is finished. If the user says not to sync, say the PR may show conflicts and proceed only if they confirm.
 
 After a rebase with resolved conflicts, re-read only the resolved files (`git diff origin/<base>...HEAD -- <paths>`); after a clean rebase, keep the title and body you derived.
@@ -82,7 +82,7 @@ Push the branch:
 git push -u origin HEAD
 ```
 
-If the branch was rebased ([Sync with the base branch](#3-sync-with-the-base-branch)) and the remote rejects a normal push, use `git push --force-with-lease`, not bare `--force`, which needs an explicit ask. A rejected lease means somebody else pushed: fetch, show their commits, and ask before any retry.
+This push is never a force-push, because [Sync with the base branch](#3-sync-with-the-base-branch) already pushed its rebase with the lease. A rejected push means somebody else pushed after the sync: fetch, show their commits, and ask before any retry.
 
 ### 5. Write the title and body
 - **Title**: one line, imperative, in the repo's commit style (match `git log`, often Conventional Commits like `feat(auth): add SSO login`). No trailing period.
@@ -192,6 +192,6 @@ _Write this section in the procedural register: one instruction per sentence, ac
 ## Notes
 
 - **Never** merge or close without an explicit ask. Creating or editing a PR is fine; `gh pr merge` is not, unless requested.
-- **Force-push follows gitkit's sync rule.** The `--force-with-lease` push of this branch after its own sync rebase needs no ask, except the unattended case in [Preview and authorization](#preview-and-authorization). A bare `--force`, or a force-push for any other reason, needs an explicit ask.
+- **Force-push follows gitkit's sync rule.** The `--force-with-lease` push of this branch after its own sync rebase, and of each stack layer above it that the cascading rebase rewrote, needs no ask, except the unattended case in [Preview and authorization](#preview-and-authorization). A bare `--force`, or a force-push for any other reason, needs an explicit ask.
 - If the branch is not ahead of the base (no commits), stop and say there's nothing to open a PR for.
 - No shell or `gh` available (e.g. a browser-based agent)? Then you can't push or call `gh`. Instead read the diff the user provides and print the finished PR **title** and **body** as codeblocks for them to paste into the GitHub "New pull request" form.
