@@ -64,7 +64,7 @@ Makefile                        command surface (run `make help`)
 | `handoffkit` | compact the session into a handoff another agent can pick up cold | public |
 | `domainkit` | scribe the domain model as a byproduct of design — a CONTEXT.md glossary and docs/adr/ decision records | public |
 | `statuskit` | survey a project read-only and crown one finish-first next move, routing to the kit that does it | public |
-| `afkkit` | run a groomed `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — escalating cleanly when it hits a wall | public |
+| `afkkit` | run a groomed `ready` issue to an open PR unattended — worktree, implement, commit, review, fix, QA, PR — deciding open points itself and opening a draft PR when a problem stays | public |
 | `tutorkit` | teach a topic across sessions from one learning repo, with lessons pitched at what you know and spaced review that makes it stick | public |
 | `ideakit` | think an idea through across sessions from one ideas repo — a folder per idea, one open at a time, research and validation folded back into its own log | public |
 | `seokit` | audit a page or crawl a site for SEO and AEO gaps, local dev server first, and write an evidence-backed fix report with a long-term search and AI-visibility plan | public |

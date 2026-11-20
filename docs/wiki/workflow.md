@@ -365,7 +365,7 @@ It has three modes:
 
 ## Unattended: afkkit
 
-[`afkkit`](../../skills/afkkit/SKILL.md) runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** the steps: start the issue, spec gate, implement (committing through `commitkit` with `no-push` at every phase boundary), QA plan, one acceptance check, fix, open the PR, hand off. It owns exactly one thing the others don't: the escalation policy. Think of it as the autonomous sibling of `statuskit`: `statuskit` tells you what to do next, `afkkit` does the next several things and stops where a human is genuinely required.
+[`afkkit`](../../skills/afkkit/SKILL.md) runs the middle of the loop with nobody at the keyboard. It adds no worktree, tracker, or PR behavior of its own; it **sequences** the steps: start the issue, spec gate, implement (committing through `commitkit` with `no-push` at every phase boundary), QA plan, one acceptance check, fix, open the PR, hand off. It owns exactly one thing the others don't: the decision policy. Think of it as the autonomous sibling of `statuskit`: `statuskit` tells you what to do next, `afkkit` does the next several things and decides on your behalf where a human would normally be asked.
 
 **It runs in one warm session.** The whole issue, from start to PR, stays in the session you invoke it in, so no step rediscovers what an earlier one read. That shape came from the history: the old one-subagent-per-step conductor took about 87 minutes on its one recorded run, and the same chain pasted by hand into one session took a median of 21. The run makes one dispatch of its own, the acceptance check, which gets a fresh context on purpose: a reviewer that shares the builder's transcript shares its blind spots. A batch gives each issue its own agent.
 
@@ -373,7 +373,7 @@ It has three modes:
 
 Invoke it per issue (`afkkit 42`) or as a batch (`afkkit all`, which drains the `ready` queue sequentially, starting each issue just in time). A batch prints the queue and waits for one OK before it begins; a single issue doesn't ask, because naming the number is the intent.
 
-The span **starts** at a `ready` issue and **ends** at an open PR. It does not plan, does not grill, does not merge, and does not tear anything down. When it hits a wall it escalates rather than pushing through: no PR, work and commits kept intact, a stuck-state comment on the issue, and a label set by cause — a *planning* gap flips the issue back to `needs-planning`, an *execution* gap keeps it `in-progress`, because the issue isn't waiting on a decision. Then it moves on to the next issue in the batch.
+The span **starts** at a `ready` issue and **ends** at an open PR. It does not plan, does not grill, does not merge, and does not tear anything down. Once the issue starts, it asks you nothing. An open question gets the best available answer, written down with the alternative and the reason, and the PR body lists those decisions first. A problem it cannot fix (a red gate, a blocker that survives the fix round) goes into an Open problems section, and the PR opens as a draft. It stops with no PR only before it builds anything, or when it finds commits or changes it did not make. Then it moves on to the next issue in the batch.
 
 ## The side kits
 
@@ -397,7 +397,7 @@ Invoked on demand, from wherever you already are. None of them is a step in the 
 
 **The grill stamp gates unattended work.** No `Grilled: YYYY-MM-DD` on the plan means `issuekit create` files everything as `needs-planning`, which means `issuekit start` refuses it, which means `afkkit` can't touch it. That's the chain working as designed, not a bug — but it surprises people who skip the grill.
 
-**A grilled issue can still need a person.** A phase marked `Attended:` (a design pick, a mockup approval) or an outward action the issue body does not approve, such as filing follow-up issues, sends a `ready` issue back to `needs-planning` at `afkkit`'s spec gate, before any code is written. The cure sits upstream: `plankit` marks attended phases and puts them first, and `grillkit`'s build-stop round settles each one or records the approval in the plan.
+**A grilled issue can still need a person.** A phase marked `Attended:` (a design pick, a mockup approval) gets decided by `afkkit` itself, and an outward action the issue body does not approve, such as filing follow-up issues, becomes a line in the PR body instead. You see both in the PR's decisions section, after the work is built. If you want to make those calls yourself, settle them upstream: `plankit` marks attended phases and puts them first, and `grillkit`'s build-stop round settles each one or records the approval in the plan.
 
 **Rebase on both sides of review.** `prkit` rebases onto the base when it opens the PR. `mergekit fix` also rebases once the PR is under review, pushes with `--force-with-lease`, and reports how many review threads it outdated. Merging the base in is the exception, with a stated reason and your consent. Same rule from `gitkit`, applied on either side of the moment the PR becomes shared.
 
