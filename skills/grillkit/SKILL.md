@@ -140,20 +140,20 @@ If grilling settled a domain term or a hard-to-reverse trade-off decision worth 
 
 ## Publish the result
 
-Offer the closing chores (commit, push, issue body, label) as one action with one confirmation. Skip this section when the grill wrote no file and settled no issue, or when there is no git repository.
+Run the closing chores (commit, push, follow-up issues, issue body, label) as one action, without a confirmation. The grill itself is the approval. Run fewer actions only when the user said so during the grill, for example "commit only" or "don't publish". Skip this section when the grill wrote no file and settled no issue, or when there is no git repository.
 
-**Build one preview.** List each action that applies, and leave out a line that has nothing to do:
+**Build one action list.** Print each action that applies before you run it, and leave out a line that has nothing to do:
 
 - **Commit.** The paths: the plan file you rewrote, plus any glossary or decision record written during the grill. The Conventional Commits subject, for example `docs(plan): grill the <slug> plan`.
 - **Push.** The current branch and its `origin` target, as a plain fast-forward.
+- **Follow-up issues.** Each issue the build-stop round approved for filing, with its title.
 - **Issue body.** The issue the grill hardened, either the one it started from or the one the plan names. Say what changes: the settled decisions, the link to the plan, and the open questions the grill closed.
 - **Label.** `needs-planning → ready`, only when the plan carries the `Grilled:` stamp and no decision is deferred. With a deferred decision, the label stays and the preview says why. issuekit owns the promotion rule, and it can resolve to `blocked` when the issue names an open dependency; without issuekit, promote to `ready` only when the issue names no open dependency.
 
-**Ask once.** Offer three answers: publish everything, commit only, or skip. With `AskUserQuestion`, use it.
-
-**Run the approved actions in this order:** commit, push, issue body, label.
+**Run the actions in this order:** commit, push, follow-up issues, issue body, label.
 
 - Commit and push with **commitkit**, handing it the exact paths. Without commitkit, run `git add -- <paths> && git commit -m "<subject>" && git push`.
+- File the follow-up issues with **issuekit**. Without it, run `gh issue create` once per issue.
 - Edit the issue body with **issuekit**. Without it, run `gh issue edit <n> --body-file <file>`.
 - Promote the label with **issuekit** `triage` as a targeted request (`#<n> is grilled, mark it ready`). Without it, run `gh issue edit <n> --remove-label needs-planning --add-label ready`.
 
@@ -161,7 +161,7 @@ The label goes last, because unattended work on a `ready` issue needs the plan o
 
 **Stop at the first failure.** A refused push (a protected branch, a non-fast-forward, no permission) stops the sequence: report the error, leave the issue body and the label unchanged, and name the plain fix. Never force-push, and never open a pull request the user did not ask for.
 
-This step is done when every approved action has run, or the first failure is reported and nothing after it ran.
+This step is done when every listed action has run, or the first failure is reported and nothing after it ran.
 
 ## Hand off
 
@@ -169,7 +169,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 **What changed.** Give a brief recap of the decisions you settled together, each in a line. Name each question you raised and didn't resolve as deferred. Mark each decision as asked or defaulted. Name each phase that stays attended, and each outward action the user approved.
 
-**Where it landed.** Name the plan file you rewrote in place and its `Grilled:` stamp, or the file you were asked to write instead, or nothing at all when the user declined a file. Give the commit SHA, the pushed branch, the issue URL, and its label after [Publish the result](#publish-the-result), or say which of those the user skipped or which failed.
+**Where it landed.** Name the plan file you rewrote in place and its `Grilled:` stamp, or the file you were asked to write instead, or nothing at all when the user declined a file. Give the commit SHA, the pushed branch, the follow-up issue URLs, the issue URL, and its label after [Publish the result](#publish-the-result), or say which of those the user held back or which failed.
 
 **Next.** Pick the first route that applies. Do not start it.
 
