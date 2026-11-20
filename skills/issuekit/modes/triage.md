@@ -85,7 +85,7 @@ Closes follow [Apply the cleanup closes](#apply-the-cleanup-closes).
 
 #### Promote `needs-planning` to `ready`
 
-This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled or that afkkit escalated, and the way out of `triage` for an issue a human labeled. It runs **only on the user's word**, because no agent can award `ready`.
+This promotion is the way back from `needs-planning`, for an issue that `create` filed ungrilled, and the way out of `triage` for an issue a human labeled. It runs **only on the user's word**, because no agent can award `ready`.
 
 1. **Look for the grill.** Read the issue body for a `Grilled: YYYY-MM-DD` stamp, then any plan file the body links. Report the stamp and its source when you find one.
 2. **Ask when there is no stamp.** Say that no `Grilled:` stamp exists, and ask whether a grill settled the decisions. A "yes" is the user's word; a "no" routes to **grillkit**, and the issue keeps `needs-planning`.

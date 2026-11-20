@@ -228,7 +228,7 @@ Guards on every resolution:
 - **Run `git diff --check` before each `git rebase --continue`.** It flags a leftover conflict marker.
 - **Record resolutions with rerere.** Run the rebase as `git -c rerere.enabled=true rebase …`, so a conflict resolved once replays on the next sync or restack.
 - **The gate judges the result.** A resolution is a code change, so the repo's test and build gate runs afterward. A gate failure in a resolved file is yours to fix: rework the resolution and rerun the gate. Ask only when the fix needs one of the decisions above.
-- **An unattended caller cannot answer.** With nobody to ask, run `git rebase --abort` and return each open ask, with its recommended resolution, to the caller to escalate. When the run resumes with a ruling, re-run the sync and write that resolution.
+- **An unattended caller cannot answer.** With nobody to ask, run `git rebase --abort` and return each open ask, with its recommended resolution, to the caller. The caller rules, or records the recommended resolution as its own decision, then re-runs the sync, which writes that resolution.
 
 ### `sync`
 
