@@ -51,7 +51,7 @@ Does the change look like the rest of *this* repository wrote it? For each chang
 - **Established patterns.** Does the repo already have a way to do this (an HTTP client, an error type, a logging helper, a test factory) that the change reinvents instead of reusing? Grep for prior art before accepting a new abstraction.
 - **Idiom & style.** Error handling, async style, imports, formatting conventions the linter doesn't catch. Match what's there.
 - **Dependencies.** Did it add a library for something the repo already solves, or that the project's conventions forbid? Check the manifest and existing imports.
-- **Stated conventions.** If the repo documents its conventions (a `CLAUDE.md`, an agent-guide file, a `CONTRIBUTING.md`, or a style guide), read it and hold the change to it. A documented repo rule always overrides a general "best practice."
+- **Stated conventions.** If the repo documents its conventions (a `CODING_STANDARDS.md`, a `CLAUDE.md`, an agent-guide file, a `CONTRIBUTING.md`, or a style guide), read it and hold the change to it. `CODING_STANDARDS.md` holds the judgement-call rules written for the reviewer, so read it whenever it exists. A documented repo rule always overrides a general "best practice."
 
 The pass is done when every changed file has been compared against at least one sibling or documented convention, and against each check above.
 
