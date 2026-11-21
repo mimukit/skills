@@ -35,6 +35,7 @@ Makefile                        command surface (run `make help`)
 |-------|--------------|------------|
 | `skillkit` | author a new skill from scratch — conventions, testing, and publishing included | public |
 | `promptkit` | sharpen the prompt before you send it — a one-shot agent instruction grounded in the real repo, or the system prompt your app ships | public |
+| `retrokit` | run a retrospective on a hard agent session and route each fix (a check, a pointer, a skill edit, a deletion) to the kit that owns it | public |
 | `gitkit` | the shared git layer — worktree convention and lifecycle, base-ref resolution, rebase-vs-merge policy, branch sync, merged-worktree cleanup, lost-work recovery, and stacked branches | public |
 | `commitkit` | conventional git commits from the diff | public |
 | `prkit` | draft & open a GitHub PR from the branch diff | public |

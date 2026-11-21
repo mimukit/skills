@@ -45,7 +45,7 @@ Each name links to the skill's `SKILL.md`, the one source for what it does, its 
 [`handoffkit`](../../skills/handoffkit/SKILL.md) · [`domainkit`](../../skills/domainkit/SKILL.md) · [`statuskit`](../../skills/statuskit/SKILL.md)
 
 **Skill & Prompt Authoring**
-[`skillkit`](../../skills/skillkit/SKILL.md) · [`promptkit`](../../skills/promptkit/SKILL.md)
+[`skillkit`](../../skills/skillkit/SKILL.md) · [`promptkit`](../../skills/promptkit/SKILL.md) · [`retrokit`](../../skills/retrokit/SKILL.md)
 
 **Automation & Orchestration**
 [`afkkit`](../../skills/afkkit/SKILL.md)

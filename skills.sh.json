@@ -34,8 +34,8 @@
     },
     {
       "title": "Skill & Prompt Authoring",
-      "description": "Author the instructions an agent reads — new kit-convention skills from scratch, and the prompts you hand an agent or ship inside an application.",
-      "skills": ["skillkit", "promptkit"]
+      "description": "Author the instructions an agent reads — new kit-convention skills from scratch, the prompts you hand an agent or ship inside an application, and the fixes a retrospective on a hard session says the agent's environment needs.",
+      "skills": ["skillkit", "promptkit", "retrokit"]
     },
     {
       "title": "Context & Handoffs",
