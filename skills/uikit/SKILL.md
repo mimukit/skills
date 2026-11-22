@@ -1,7 +1,7 @@
 ---
 name: uikit
 description: >-
-  Build production UI that reads as a deliberate choice for this project rather than an LLM default, audit shipped UI for the tells that give it away, or mock up a screen as an image before the build. Use when the user says "build this page", "make this UI not look AI-generated", "audit our UI", "make the frontend look good", "mock up this screen", "show me a few options for this screen", or "/uikit". Reads a project's DESIGN.md when one exists.
+  Build production UI, audit shipped UI, or create and publish screen mockups. Use when the user says "build this page", "audit our UI", "make the frontend look good", "mock up this screen", "show me a few options for this screen", "publish this mockup round", or "/uikit". Reads a project's DESIGN.md when one exists.
 license: MIT
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion, Task, Agent
 metadata:
@@ -18,7 +18,7 @@ Route by the request, read that mode's file, then follow it.
 
 - **`build`.** Generates the UI, including UI work handed over by an implementation step. Mode `build` → read [modes/build.md](modes/build.md), then follow it.
 - **`audit`.** Read-only sweep of shipped UI. **Writes nothing, ever.** Mode `audit` → read [modes/audit.md](modes/audit.md), then follow it.
-- **`mockup`.** Produces an image, and code only when the user asks for code. Writes no source. Mode `mockup` → read [modes/mockup.md](modes/mockup.md), then follow it.
+- **`mockup`.** Creates screen images or publishes a mockup round. Mode `mockup` → read [modes/mockup.md](modes/mockup.md), then follow it.
 
 Ask only when a request could go either way between `audit` and `build`, such as "look at the dashboard". A mockup request that asks for code is a `build`.
 

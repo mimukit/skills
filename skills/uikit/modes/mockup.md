@@ -14,26 +14,17 @@ Walk [the ladder](../SKILL.md#the-precedence-ladder) and name the rung that matc
 
 ### 2. Pick the image path
 
-Probe what the session has, in this order:
+Use the built-in Codex image generator if the session already runs Codex on the latest Sol model and exposes the generator. Use the host's model list to find the latest Sol model it offers. If the host has no model list, check the `*-sol` entries in `~/.codex/models_cache.json`. If the current session cannot use that path, start a Codex subagent with the host's delegation tool when it supports the provider and model. Where the host uses the CLI to run Codex, use `codex exec -m <sol-model>`. Give the runner the prompt and PNG output path. Confirm that the runner returns the PNG.
 
-1. An image-generation tool in the current tool list.
-2. A CLI browser driver on `PATH` that writes a screenshot, for example `playwright-cli`.
+If this path is unavailable or fails, tell the user what is missing. Ask the user to choose among available image generators or offer to prepare a prompt they can run elsewhere. Wait for the choice. In an unattended run, report the blocker and stop. Use HTML only if the user asks for code, which routes to `build`.
 
-**Take the generator first.** One word from the user moves a single screen to the render when a driver exists: "exact", "match the real layout", or "use the real copy". Two generators in the list means ask once which to use. A non-interactive run takes the first.
-
-With neither path, say what is missing, offer to write the HTML file and give its path, then stop. Raw HTML is never the mockup, and a path to it is a fallback the user chose.
-
-**Done when** one line names the path and the reason, or the fallback is stated and the run has stopped.
+**Done when** the generator is selected or the user has the available options.
 
 ### 3. Produce it
 
-**Generator path.** Write one prompt per option. Each carries the design read, the screen's real copy, the `DESIGN.md` tokens as values (hex codes, face names, radii), and the surface. Show the options labeled A to D in one reply.
+Write one prompt per option. Include the design read, the screen's real copy, the `DESIGN.md` token values, and the surface. Follow the [catalog](../SKILL.md#the-anti-slop-catalog) rules on content. Save the PNG files outside the code repository. Show the options labeled A to D in one reply.
 
-**Render path.** Write one throwaway HTML file outside the repo tree, with all options in a row on one page. Edit that file for every change. Screenshot it once, and show the PNG by path when the tool accepts a path.
-
-Both paths follow the [catalog](../SKILL.md#the-anti-slop-catalog) rule on content: real copy, or the real empty state, never invented names, metrics, or logos.
-
-**Collect every fix before you resend.** Several screens or four options is a large run. Run it in a subagent that returns the image paths and a one-line summary.
+Collect all requested changes before you generate the next round.
 
 **Done when** every option exists as an image and the user has seen all of them in one reply.
 
@@ -43,12 +34,18 @@ Look at each option against [the catalog](../SKILL.md#the-anti-slop-catalog), fi
 
 **Done when** each option has a catalog result and a signature result.
 
-### 5. Hand off
+### 5. Publish the round if requested
+
+When the user asks to publish a round or the project instructions require publication, read [the mockup gist workflow](../mockup-gist.md). Follow it once you have authorization to publish and post the issue comment. Use this step for an existing round when the user asks to publish it. In that case, start here with the supplied PNG files.
+
+**Done when** the issue comment contains the round, or the user has the image paths and the reason publication stopped.
+
+### 6. Hand off
 
 **Called by a build skill** (implementkit, afkkit, or another kit that runs uikit as a step)? Return the image paths and the design read of each option, then stop.
 
-**What changed.** List the image files created. Name the throwaway HTML file when the render path made one. Say that no repository source changed.
+**What changed.** List the image files created or published.
 
-**Where it landed.** Give the image paths, and the design read of each option verbatim.
+**Where it landed.** Give the image paths and the design read of each option verbatim. Include the gist and issue comment URLs when available.
 
-**Next.** Crown one move: the user picks an option or sends every fix at once. After the user approves an option, the next move is [`build`](build.md) with that option's design read, built from scratch. The mockup is never promoted to production code. A plan that settles how the screen looks records the approval as a Design decisions row with the date, so name that as the runner-up when a plan exists. Delete the throwaway HTML file once the user approves.
+**Next.** Ask the user to pick an option or send all changes at once. If the user approves a published mockup for a plan, record approval as specified in [the mockup gist workflow](../mockup-gist.md). For a local mockup, record the date and visual reference in the plan's Design decisions row. Use the approved design read for the next [`build`](build.md).
