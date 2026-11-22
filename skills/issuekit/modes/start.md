@@ -48,17 +48,7 @@ Refuse with the reason, not a bare error:
 - **`in-progress`** → it's already started; go to the adopt path below rather than treating this as a failure.
 - **closed, no lifecycle label, or only `triage`** → say which, and offer `triage` to classify it.
 
-**Open-PR check: warn at 3, never refuse.** After the guard passes and before any worktree exists, count the user's open feature PRs in this repo:
-
-```sh
-gh pr list --author @me --state open --json number,title,headRefName,isDraft,createdAt
-```
-
-Drop drafts and `hotfix-*` branches; what remains is review work waiting on the user. **When 3 or more remain**, print each one (number, title, age in days) under one warning line: every new start adds a PR to a queue the user cannot QA yet. Then ask once whether to start anyway, and start on a yes.
-
-**An unattended caller gets no question.** When the caller says the run is unattended (afkkit does), skip the ask, start the issue, and return the open-PR count and numbers with the result, so the caller reports them in its hand-off. A query that errors is skipped with a one-line note; it never blocks the start.
-
-This step is done when the issue passed the guard with its label and, for `stacked`, its parent branch named, and the open-PR count is checked (and, at 3 or more, warned about and answered, or returned to an unattended caller), or the run has stopped with the refusal reason.
+This step is done when the issue passed the guard with its label and, for `stacked`, its parent branch named, or the run has stopped with the refusal reason.
 
 ### 2. Derive the branch name
 
@@ -93,7 +83,7 @@ A failed setup is a report, not a refusal: the issue is started and the worktree
 
 ### 6. Hand off
 
-**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). Report what gitkit `prepare` ran, or that it failed and why. When the open-PR check fired, repeat the count in one line.
+**What changed.** Report the label move (`ready → in-progress`, `stacked → in-progress`, or that it was left alone on the adopt path). Report what gitkit `prepare` ran, or that it failed and why.
 
 **Where it landed.** Give the branch and the worktree path. Print gitkit's workspace block as the last lines of the reply, after **Next**, with `for: issue #<n>` and the base from gitkit (the parent branch for a `stacked` issue). An unattended caller such as afkkit gets the path, the branch, and the prepare result returned instead, and no block.
 

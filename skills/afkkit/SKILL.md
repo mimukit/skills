@@ -154,8 +154,6 @@ Invoke **issuekit** `start <n>` and say the run is unattended. [The contract](#t
 
 issuekit returns the result of gitkit `prepare` with the path. **A failed prepare is an open problem**: record the failed command, its exit code, and the log path in `problems.md`, and continue. A later gate that fails for the same cause points at that entry.
 
-issuekit's open-PR check returns the open-PR count and numbers to an unattended caller. It warns at 3 and never refuses, so the run continues either way; hold the count for the [Hand off](#8-hand-off).
-
 Then verify what came back, as **one** shell call, and hold the path as this issue's run state:
 
 ```sh
@@ -255,7 +253,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Stop the dev server first, and confirm its port is free.
 
-**What changed.** Give one outcome line for the issue: **opened** (PR link), **opened as draft** (PR link and the count of open problems), **stopped** (the stop-list entry, one-line reason, issue link), or **skipped** (issuekit refused it, or the batch passed over it as `in-progress` or `stacked`, with the reason, and the fact that nothing was mutated). Then list every `problems.md` entry, one line each. Then list every `decision` line of `assumptions.md`, one line each, with the choice, the alternative, and the reason: these are the decisions the run took for the user. Give the count of `mechanic` lines and point at the PR body for them. When the start returned 3 or more open PRs, add one line with the count and the PR numbers. In a batch, accumulate the outcome lines for the batch summary.
+**What changed.** Give one outcome line for the issue: **opened** (PR link), **opened as draft** (PR link and the count of open problems), **stopped** (the stop-list entry, one-line reason, issue link), or **skipped** (issuekit refused it, or the batch passed over it as `in-progress` or `stacked`, with the reason, and the fact that nothing was mutated). Then list every `problems.md` entry, one line each. Then list every `decision` line of `assumptions.md`, one line each, with the choice, the alternative, and the reason: these are the decisions the run took for the user. Give the count of `mechanic` lines and point at the PR body for them. In a batch, accumulate the outcome lines for the batch summary.
 
 **Where it landed.** Give the worktree path and branch. Give the session log path: on Claude Code, `ls ~/.claude/projects/*/"$CLAUDE_CODE_SESSION_ID".jsonl`; on another host, the path the host names, or say that it is unknown. In a batch, each issue's agent log sits in that session's `subagents/` directory. A skipped issue gets no new worktree. Give the path of any worktree it already had, such as one an earlier stop left (find it in `git worktree list --porcelain` by its `issue-<n>-` branch), or say plainly that it has none.
 
@@ -315,7 +313,7 @@ A stop does four things:
 
 **The invoking session becomes a thin conductor, and each issue gets a new agent.** The conductor holds only the queue and each issue's one-line outcome. Per issue:
 
-1. **Dispatch an issue agent** under [the dispatch rules](#dispatch-rules). Its brief is the issue number, the authorization, and this skill: run the [pipeline](#the-pipeline-per-issue) from [Start the issue](#1-start-the-issue) through [Implement](#3-implement) and return the worktree path, the open-PR count, the outcome so far, and the `progress.md` tail.
+1. **Dispatch an issue agent** under [the dispatch rules](#dispatch-rules). Its brief is the issue number, the authorization, and this skill: run the [pipeline](#the-pipeline-per-issue) from [Start the issue](#1-start-the-issue) through [Implement](#3-implement) and return the worktree path, the outcome so far, and the `progress.md` tail.
 2. **Dispatch part one of the [acceptance check](#5-acceptance-check) from the conductor, and continue the issue agent through the [QA plan](#4-qa-plan) at the same time.** When the issue agent returns the `qa` line, continue the checker for part two. The conductor makes this dispatch, not the issue agent, so the check runs in a context that shares nothing with the agent that built the change. The continuation brief tells the issue agent to skip the acceptance-check dispatch in [QA plan](#4-qa-plan).
 3. **Continue the issue agent** with the blocker count and the `findings.md` path, using the host's message-to-agent tool, so it keeps its warm context through [Fix](#6-fix), [Open the PR](#7-open-the-pr), and [Hand off](#8-hand-off). On a host that cannot continue an agent, dispatch a new one from the resume table's row instead.
 
@@ -324,7 +322,7 @@ A stop does four things:
 The conductor **never writes to a worktree**. It dispatches, reads `progress.md` and the labels to verify a claim, and decides the next move. Between dispatches it says what it is doing in one line.
 
 - **Order the queue by priority.** issuekit's priority labels come back in the same `labels` array: highest first, then oldest-updated within a level, unassessed last. Fall back to oldest-first when no issue carries a priority, and say so in the preview. An explicit order the user names beats both. **Priority orders the queue and relaxes nothing.**
-- **One confirmation, up front.** Print the queue (number, priority, title, in walk order) and wait for a single OK before starting anything. Above the queue, print how many feature PRs the user already has open (issuekit's open-PR check, run once here); at 3 or more, say so. The OK covers it, and the issues then start without the per-issue question. After that OK the run is unattended: no further prompts, whatever happens. A single-issue invocation needs no confirmation.
+- **One confirmation, up front.** Print the queue (number, priority, title, in walk order) and wait for a single OK before starting anything. The OK covers every issue in the queue. After that OK the run is unattended: no further prompts, whatever happens. A single-issue invocation needs no confirmation.
 - **`afkkit all yes` gives the OK up front.** Print the preview, then start the queue without waiting. A plain `afkkit all` in a session with nobody to answer, such as a headless `claude -p` or `codex exec` run, prints the preview and stops, starting nothing. That preview-only stop prints no batch summary, and its one next move is `afkkit all yes`. Either way the preview goes to the session output, which is the only run-level log a batch keeps.
 - **The queue is fixed at that OK**, never re-read before each issue.
 - **Issues start just in time**, each at the top of its own pipeline run: the worktree branches off a freshly fetched base, and a batch that stops early leaves unreached issues untouched in `ready`.
