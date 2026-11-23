@@ -26,7 +26,7 @@ If the user names neither an issue number nor `all`, ask which.
 
 **Run it from the main checkout, in the session you are already in.** One command does the whole span: issuekit `start` acquires the worktree, and every step works inside it by path. There is no separate session to open in the worktree and no build prompt to type there.
 
-**Start an unattended single issue through `relaunch.sh`**, the script beside this file: `relaunch.sh [--agent '<cmd>'] <n>` runs `<cmd> "afkkit <n>"` headless in the main checkout (`claude -p` by default, `--agent 'codex exec'` on Codex) and starts it again when the session dies mid-run, under [Session relaunch](#session-relaunch). When the script cannot run (no `gh`, or no headless command on the host), run the headless command once; nothing restarts it. `relaunch.sh` takes one issue number only; start a headless batch as `<cmd> "afkkit all yes"`, run once, under [Batch mode](#batch-mode-all). A run in an interactive session is attended: when the session's own turn ends, a person restarts it.
+**Start a detached run only when the user asks for a detached or background run.** A detached run uses `relaunch.sh`, the script beside this file: `relaunch.sh [--agent '<cmd>'] <n>` runs `<cmd> "afkkit <n>"` headless in the main checkout (`claude -p` by default, `--agent 'codex exec'` on Codex) and starts it again when the session dies mid-run, under [Session relaunch](#session-relaunch). The user cannot watch a detached run in their session. When the script cannot run (no `gh`, or no headless command on the host), run the headless command once; nothing restarts it. `relaunch.sh` takes one issue number only; start a detached batch as `<cmd> "afkkit all yes"`, run once, under [Batch mode](#batch-mode-all). An in-session run gets no automatic restart: when its session dies, the user runs `afkkit <n>` again and the [resume table](#resume-an-interrupted-run) picks the resume point.
 
 ## Preflight (once per invocation)
 
@@ -140,7 +140,7 @@ Every commit named in `progress.md` must be on the branch (`git merge-base --is-
 
 ## Session relaunch
 
-`relaunch.sh` starts a headless run again when its session ends mid-run, and the resume table above makes every new start safe. The script's header is its reference: the stop rules, the restart limit and waits, and the state paths.
+`relaunch.sh` starts a detached run again when its session ends mid-run, and the resume table above makes every new start safe. The script's header is its reference: the stop rules, the restart limit and waits, and the state paths.
 
 The run keeps one promise to the script: **every stop appends `escalated <label> <reason>` as the last `progress.md` line**, under [the stop list](#the-stop-list). A draft PR also ends the loop, because the script stops once a PR exists. That line is how the script tells a run that stopped on purpose from one that crashed.
 
