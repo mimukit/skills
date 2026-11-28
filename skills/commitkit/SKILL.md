@@ -53,6 +53,8 @@ Any output is a signal: an `issue-*` or `hotfix-*` worktree, a merged pull reque
 
 The new branch carries the working tree with it, out-of-scope changes included, and they stay uncommitted. The run stays on the new branch after the push. Never invent a branch name with another prefix.
 
+A repo with no commit yet skips this check, because its initial commit sets the base branch.
+
 **Done when** the run is on the branch the user chose, or the signal call printed nothing and the run stays on the base branch.
 
 ## Message-only route
@@ -61,7 +63,8 @@ This route reads and prints. It leaves the index, the refs, and the remote untou
 
 1. Pick the subject. A non-empty staged set is the subject, so read `git diff --cached`. With nothing staged, the subject is the [Scope](#scope), so read `git diff HEAD -- <scope paths>`, or a pathless `git diff HEAD` under `all`. An untracked path has no diff against `HEAD`, so read it with `git diff --no-index /dev/null <path>` or read the file itself. `git diff --no-index` exits 1 when the file has content, so keep it out of an `&&` chain. The read limits in [Read the state](#1-read-the-state) apply.
 2. Apply [Decide type and scope from the diff](#2-decide-type-and-scope-from-the-diff) and [Write the message](#3-write-the-message). Write one message for the subject. When the subject plainly spans several concerns, write one message per group and name each group's paths.
-3. Print each message in a code block.
+3. In a repo with no commit, or with only the auto-init commit, print the initial commit message first, as [Group the work into multiple commits](#4-group-the-work-into-multiple-commits) defines it.
+4. Print each message in a code block.
 
 The only git commands on this route are reads: `status`, `diff` (including `diff --no-index`), `log`, and `rev-parse`.
 
@@ -98,6 +101,8 @@ Start from the file-level shape of the change, never the full diff, in a single 
 git status --short && git diff --stat HEAD && git diff --cached --no-renames --name-only   # tree state, one line per file, the staged set
 ```
 
+In a repo with no commit, `git diff --stat HEAD` fails, so use `git diff --cached --stat` in its place. Every path there is new, so read untracked files directly.
+
 **Record the staged set.** The last command lists every path that was staged before you touched anything. Keep that list for the whole run, because a path staged earlier rides into the next commit unless you place it on purpose. A path that shows `MM` in `git status --short` is **partially staged**. The user staged some of its hunks and left the rest, so its staged hunks are the content a group takes, and you never re-add the whole path unless the user says so.
 
 **Chain git calls with `&&` unless a decision sits between them**, here and in every later step.
@@ -109,7 +114,7 @@ git status --short && git diff --stat HEAD && git diff --cached --no-renames --n
 
 **Never read the content of generated files**, meaning lockfiles (`*.lock`, `package-lock.json`, `pnpm-lock.yaml`, `go.sum`), build output, vendored directories, snapshots, compiled assets.
 
-If **the scope holds no change**, stop and say so. Name the out-of-scope changes when the tree has some. Pause and ask when the scope holds half-finished work, a secret, or a change the user likely did not mean to commit.
+If **the scope holds no change**, stop and say so, unless the auto-init reword in [Group the work into multiple commits](#4-group-the-work-into-multiple-commits) is due. Then run the reword and its push alone. Name the out-of-scope changes when the tree has some. Pause and ask when the scope holds half-finished work, a secret, or a change the user likely did not mean to commit.
 
 **Done when** you hold the resolved [Scope](#scope) with its path list, the changed-path list, the recorded staged set with its partially staged paths marked, and the answer to who wrote the changes.
 
@@ -161,9 +166,25 @@ Rules:
 ### 4. Group the work into multiple commits
 Make one commit per logical change, with its tests and docs included, unless the user asked for a single commit. Order the groups so dependencies land first. Split a file that holds hunks from several groups by hunk.
 
+**Initial commit of a new repository.** When `git rev-parse --verify -q HEAD` fails, the repo has no commit yet. Its first commit is always the initial commit, even when the user asks for a single commit.
+
+- The subject is `chore(repo): initial commit`, and the body follows [Write the message](#3-write-the-message).
+- The commit keeps the minimum valuable content. Take `README.md` when it is in scope, because it names the project. Otherwise take the in-scope file with the least content: the smallest by `wc -c`, with ties broken by path name.
+- Put every other in-scope path in a later group. Park the other staged paths as [Commit each group](#5-commit-each-group) describes.
+
+**Auto-init commit.** A new GitHub repo may already hold one commit with the subject `Initial commit`, which GitHub's auto-init created. Test for it with `test "$(git rev-list --count HEAD)" = 1 && test "$(git log -1 --format=%s HEAD)" = "Initial commit"`. When the test passes, reword that commit in place instead of adding a new one. Its tree stays as GitHub made it:
+
+```sh
+old="$(git rev-parse HEAD)" && \
+new="$(git commit-tree 'HEAD^{tree}' -m 'chore(repo): initial commit' -m '<body>')" && \
+git update-ref "refs/heads/<branch>" "$new" "$old"
+```
+
+The reword leaves the index and the working tree untouched, so the groups in this step still apply. The reword rewrites history that origin holds, so its push uses the lease in [Commit each group](#5-commit-each-group).
+
 **Place every path in the recorded staged set.** A pre-staged path inside the [Scope](#scope) joins the group it belongs to. A pre-staged path outside the scope joins no group and stays staged after the run. List those paths as the **keep-staged set**.
 
-**Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, and every recorded staged path sits in a group or in the keep-staged set.
+**Done when** every in-scope changed path sits in exactly one group or on a stated skip list, every out-of-scope path sits on the out-of-scope list, every recorded staged path sits in a group or in the keep-staged set, and a repo with no commit, or with only the auto-init commit, starts with its initial commit.
 
 ### 5. Commit each group
 When `HEAD` is the base branch, settle the branch first with [On the base branch](#on-the-base-branch). With every group and message already planned, stage and commit them all in **one Bash call**, chained with `&&`, and close the chain with the push and the `git status -sb` the hand-off needs. **Before each commit, check that the staged set equals exactly that group's paths**:
@@ -204,16 +225,20 @@ git apply --cached "$park"
 
 The patch holds the exact staged hunks, so a partially staged file comes back partially staged, and a staged new file or deletion comes back staged. `git commit -- <paths>` is shorter, but it commits the working-tree copy of each path, which pulls the unstaged hunks of a partially staged file into the commit. The `;` before `git apply` restores the parked paths even when the check or the commit fails. Because the `;` also lets a chain run on after a failed commit, run each parked group as its own call and start the next group only after its commit landed. If `git apply --cached` fails, stop and report the patch path, because the parked hunks are in that file.
 
+With an unborn `HEAD`, swap `git restore --staged --` for `git rm -r --cached -q --`, since `git restore` fails without a `HEAD`.
+
 The `gh pr view` tail tells the hand-off whether this branch already has a pull request. An empty or failed `gh pr view` means no pull request.
 
 **Push by default** when the repo has an `origin` remote and the branch tracks `origin` or has no upstream. The branch name does not gate the push.
 
 Hold the push and ask in these cases:
 
-- **The remote rejects it.** Report the rejection and stop. Never use `--force` or `--force-with-lease` here; gitkit and prkit own a rewrite.
+- **The remote rejects it.** Report the rejection and stop. Never use `--force` here; gitkit and prkit own a rewrite. The auto-init reword is the one force push, and it uses a lease, so the push fails when origin moved.
 - **There is no `origin`,** or the branch tracks some other remote. Report the commits and name the push the user would run.
 
 **Skip the push when the user or a calling skill says `no-push`** ("commit only, do not push"). Drop `git push -u origin HEAD` from the chain, keep `git status -sb`, and say the commits are local. A calling skill that passes `no-push` owns the push.
+
+**After an auto-init reword**, replace `git push -u origin HEAD` in the chain with `git push --force-with-lease=<branch>:<old sha> -u origin HEAD`. Write the old SHA from the reword in [Group the work into multiple commits](#4-group-the-work-into-multiple-commits) as a literal value, because shell state does not carry over between calls. When `git ls-remote origin <branch>` does not print the old SHA, origin never held the commit, so keep the plain push. Before a lease push, ask the user once and stop until they answer, because it replaces a commit on origin. When they decline, keep the reword local and report the push they would run.
 
 Interactive staging of a mixed file (see [Group the work into multiple commits](#4-group-the-work-into-multiple-commits)) is the one step that can't join the chain. Commit up to that group in one call, handle the split, then chain the rest.
 
@@ -227,7 +252,7 @@ _Write this section in the procedural register: one instruction per sentence, ac
 
 Close with what changed, where it landed, and the next move.
 
-**What changed.** Print a summary table of the commits you created:
+**What changed.** Print a summary table of the commits you created. When the run reworded the auto-init commit, list its old and new SHA under the table:
 
 | # | commit message | files |
 |---|----------------|-------|
@@ -245,8 +270,9 @@ Build the files column from the paths you staged for each group. When a commit t
 3. **The run stamped docs `Review: pending`.** Crown the review: name each stamped file, and say "read it, then tell commitkit you reviewed it". Crown no pull request for a docs-only run.
 4. **The branch already has an open pull request** (the `gh pr view` tail printed one). The commits are on it now, so crown the review move, not a new pull request. Say the pull request updated, give its number and URL, and name the move that fits the reason you committed. After review fixes, that is to reply to the reviewer and re-request review with **mergekit**, otherwise `gh pr comment <number>`. Never crown opening a pull request for a branch that has one.
 5. **The pull request is merged or closed.** Say so and crown a new branch for this work with **gitkit**, otherwise `git switch -c <name> <base>`.
-6. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
-7. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
+6. **The run made the initial commit of a new repo.** Crown the next piece of work on its own branch with **gitkit**, otherwise `git switch -c <name>`. Crown no pull request for the base branch.
+7. **The branch has no pull request.** Crown opening one from exactly these commits: **prkit** when it is installed, otherwise `gh pr create`.
+8. **The feature clearly is not finished.** Say that and crown the plain action, which is to keep building, then re-run commitkit for the next group.
 
 Don't open a pull request yourself; commitkit's job ends at the push.
 
@@ -254,6 +280,6 @@ Don't open a pull request yourself; commitkit's job ends at the push.
 
 ## Notes
 
-- **Never** run `git commit --amend`, `git rebase`, `git reset`, or any other history-rewriting command unless the user explicitly asks.
+- **Never** run `git commit --amend`, `git rebase`, `git reset`, or any other history-rewriting command unless the user explicitly asks. The auto-init reword in [Group the work into multiple commits](#4-group-the-work-into-multiple-commits) is the one exception.
 - If a repo has its own commit convention (a `CONTRIBUTING.md`, a commit template, or an obviously different style in `git log`), follow that over these defaults and say you did.
 - No filesystem or shell? Then you can't run `git`. Instead read the diff the user provides and print the finished commit message as a codeblock for them to run themselves.
